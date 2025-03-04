@@ -1,12 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { Timer } from '../models/timer';
+import { FormsModule } from '@angular/forms';
+import { MatButton } from '@angular/material/button';
 
 @Component({
-  selector: 'app-timer-library',
-  standalone: false,
-  
-  templateUrl: './timer-library.component.html',
-  styleUrl: './timer-library.component.scss'
+    selector: 'app-timer-library',
+    templateUrl: './timer-library.component.html',
+    styleUrl: './timer-library.component.scss',
+    imports: [FormsModule, MatButton]
 })
 export class TimerLibraryComponent implements OnInit {
     
