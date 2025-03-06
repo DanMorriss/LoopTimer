@@ -1,1 +1,14 @@
-<p>timer-setup works!</p>
+<div class="shadow-lg rounded-xl m-4 p-4 w-80">
+    <span>Timer Title</span><input [(ngModel)]="newTimerTitle" placeholder="Timer Name">
+    <p>Timer:</p>
+    <span>Minutes</span><input [(ngModel)]="newTimerMinutes" placeholder="Timer Minutes">
+    <span>Seconds</span><input [(ngModel)]="newTimerSeconds" placeholder="Timer Seconds">
+    <p>Rest:</p>
+    <span>Minutes</span><input [(ngModel)]="newRestMinutes" placeholder="Rest Minutes">
+    <span>Seconds</span><input [(ngModel)]="newRestSeconds" placeholder="Rest Seconds">
+    <p>Repeats:</p>
+    <input [(ngModel)]="newRepeats" placeholder="Repeats">
+    <button mat-raised-button (click)="addTimer()">Add Timer</button>
+</div>
+
+<app-timer-library [timers]="timers" (timerDeleted)="deleteTimer($event)"></app-timer-library>

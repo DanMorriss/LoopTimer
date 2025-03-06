@@ -1,29 +1,15 @@
-
-
-<div class="shadow-lg rounded-xl m-4 p-4">
-    <span>Timer Title</span><input [(ngModel)]="newTimerTitle" placeholder="Timer Name">
-    <p>Timer:</p>
-    <span>Minutes</span><input [(ngModel)]="newTimerMinutes" placeholder="Timer Minutes">
-    <span>Seconds</span><input [(ngModel)]="newTimerSeconds" placeholder="Timer Seconds">
-    <p>Rest:</p>
-    <span>Minutes</span><input [(ngModel)]="newRestMinutes" placeholder="Rest Minutes">
-    <span>Seconds</span><input [(ngModel)]="newRestSeconds" placeholder="Rest Seconds">
-    <p>Repeats:</p>
-    <input [(ngModel)]="newRepeats" placeholder="Repeats">
-    <button mat-raised-button (click)="addTimer()">Add Timer</button>
+<div class="p-4">
+    <p class="text-2xl">Timers Library</p>
+    <ul class="">
+        @for (timer of timers; track timer.id) {
+            <li class="p-4 shadow-lg m-4 w-64">
+                <p>Id: {{timer.id}}</p>
+                <p>Timer Title: {{timer.title}}
+                    <p>Timer length: {{timer.timerMinutes}}:{{timer.timerSeconds}}</p>
+                    <p>Rest: {{timer.restMinutes}}:{{timer.restSeconds}}</p>
+                    <p>Repeats: {{timer.repeats}}</p>
+                    <button mat-raised-button class="!bg-red-500 !text-white" (click)="deleteTimer(timer.id)">Delete</button>
+                </li>
+            }
+        </ul>
 </div>
-
-<p>Timers List</p>
-<ul>
-    @for (timer of timers; track timer.id) {
-
-        <li>
-            <p>Id: {{timer.id}}</p>
-            <p>Timer Title: {{timer.title}}
-                <p>Timer length: {{timer.timerMinutes}}:{{timer.timerSeconds}}</p>
-                <p>Rest: {{timer.restMinutes}}:{{timer.restSeconds}}</p>
-                <p>Repeats: {{timer.repeats}}</p>
-                <button (click)="deleteTimer(timer.id)">Delete</button>
-            </li>
-        }
-</ul>
