@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import {MatInputModule} from '@angular/material/input';
 import {MatFormFieldModule} from '@angular/material/form-field';
@@ -10,7 +11,15 @@ import { TimerLibraryComponent } from "../timer-library/timer-library.component"
     selector: 'app-timer-setup',
     templateUrl: './timer-setup.component.html',
     styleUrl: './timer-setup.component.scss',
-    imports: [FormsModule, MatButtonModule, TimerLibraryComponent, MatInputModule, MatFormFieldModule]
+    imports: [
+        FormsModule, 
+        MatButtonModule, 
+        TimerLibraryComponent, 
+        MatInputModule, 
+        MatFormFieldModule, 
+        CommonModule
+    ],
+    standalone: true
 })
 export class TimerSetupComponent {
     newTimerTitle: string = '';

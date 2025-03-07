@@ -1,15 +1,16 @@
 <div class="p-4">
-    <p class="text-2xl">Timers Library</p>
-    <ul class="">
+    <p class="text-2xl text-center">Timers Library</p>
+    <ul class="flex flex-wrap justify-center">
         @for (timer of timers; track timer.id) {
-            <li class="p-4 shadow-lg m-4 w-64">
-                <p>Id: {{timer.id}}</p>
-                <p>Timer Title: {{timer.title}}
-                    <p>Timer length: {{timer.timerMinutes}}:{{timer.timerSeconds}}</p>
-                    <p>Rest: {{timer.restMinutes}}:{{timer.restSeconds}}</p>
-                    <p>Repeats: {{timer.repeats}}</p>
-                    <button mat-raised-button class="!bg-red-500 !text-white" (click)="deleteTimer(timer.id)">Delete</button>
-                </li>
+            <li class="p-4 shadow-lg rounded m-4 w-64">
+                <p class="text-center text-2xl" matTooltip="ID: {{timer.id}}">{{timer.title}}</p>
+                <p>Timer length: {{timer.timerMinutes}}:{{timer.timerSeconds}}</p>
+                <p>Rest: {{timer.restMinutes}}:{{timer.restSeconds}}</p>
+                <p>Repeats: {{timer.repeats}}</p>
+                <div class="flex justify-center">
+                    <button mat-raised-button color="warn" (click)="deleteTimer(timer.id)">Delete</button>
+                </div>
+            </li>
             }
         </ul>
 </div>

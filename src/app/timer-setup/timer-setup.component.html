@@ -1,55 +1,49 @@
+<p class="text-4xl text-center pt-6">LoopTimer</p>
 <div class="flex justify-center">
     <div class="shadow-lg rounded-xl m-4 p-4 w-auto">
-        <mat-form-field>
-            <mat-label>Timer Title</mat-label>
-            <input matInput>
-        </mat-form-field>
-        <p class="p-4 text-center">Timer</p>
-        <mat-form-field>
-            <mat-label>Minutes</mat-label>
-            <input matInput type="number">
-        </mat-form-field>
-        <mat-form-field>
-            <mat-label>Seconds</mat-label>
-            <input matInput type="number">
-        </mat-form-field>
-        <p class="p-4 text-center">Rest</p>
-        <mat-form-field>
-            <mat-label>Minutes</mat-label>
-            <input matInput type="number">
-        </mat-form-field>
-        <mat-form-field>
-            <mat-label>Seconds</mat-label>
-            <input matInput type="number">
-        </mat-form-field>
-        <br>
-        <mat-form-field>
-            <mat-label>Repeats</mat-label>
-            <input matInput type="number">
-        </mat-form-field>
-        <div class="flex justify-center m-4">
-            <button mat-raised-button (click)="addTimer()">Add Timer</button>
-        </div>
-    </div>
+        <form (ngSubmit)="addTimer()">
 
-    
-    <div class="shadow-lg rounded-xl m-4 p-4 w-auto">
-        <mat-form-field>
-            <mat-label>Timer Title</mat-label>
-            <input matInput>
-        </mat-form-field>
-        <span class="p-4">Timer Title</span><input [(ngModel)]="newTimerTitle" placeholder="Timer Name">
-        <p class="p-4 text-center">Timer</p>
-        <span class="p-4">Minutes</span><input [(ngModel)]="newTimerMinutes" placeholder="Timer Minutes">
-        <span class="p-4">Seconds</span><input [(ngModel)]="newTimerSeconds" placeholder="Timer Seconds">
-        <p class="p-4 text-center">Rest</p>
-        <span class="p-4">Minutes</span><input [(ngModel)]="newRestMinutes" placeholder="Rest Minutes">
-        <span class="p-4">Seconds</span><input [(ngModel)]="newRestSeconds" placeholder="Rest Seconds"><br>
-        <span class="p-4">Repeats:</span>
-        <input class="p-4" [(ngModel)]="newRepeats" placeholder="Repeats"><br>
-        <div class="flex justify-center m-4">
-            <button mat-raised-button (click)="addTimer()">Add Timer</button>
-        </div>
+            <mat-form-field class="w-full">
+                <mat-label>Timer Title</mat-label>
+                <input matInput [(ngModel)]="newTimerTitle" name="newTimerTitle" required>
+            </mat-form-field>
+
+            <p class="p-4 text-center font-bold">Timer</p>
+
+            <mat-form-field>
+                <mat-label>Minutes</mat-label>
+                <input matInput type="number" [(ngModel)]="newTimerMinutes" name="newTimerMinutes">
+            </mat-form-field>
+
+            <mat-form-field>
+                <mat-label>Seconds</mat-label>
+                <input matInput type="number" [(ngModel)]="newTimerSeconds" name="newTimerSeconds">
+            </mat-form-field>
+
+            <p class="p-4 text-center font-bold">Rest</p>
+
+            <mat-form-field>
+                <mat-label>Minutes</mat-label>
+                <input matInput type="number" [(ngModel)]="newRestMinutes" name="newRestMinutes">
+            </mat-form-field>
+
+            <mat-form-field>
+                <mat-label>Seconds</mat-label>
+                <input matInput type="number" [(ngModel)]="newRestSeconds" name="newRestSeconds">
+            </mat-form-field>
+
+            <br>
+            <div class="flex justify-center m-4">
+                <mat-form-field>
+                    <mat-label>Repeats</mat-label>
+                    <input matInput type="number" [(ngModel)]="newRepeats" name="newRepeats">
+                </mat-form-field>
+            </div>
+            
+            <div class="flex justify-center m-4">
+                <button mat-raised-button color="primary" type="submit">Add Timer</button>
+            </div>
+        </form>
     </div>
 </div>
 
