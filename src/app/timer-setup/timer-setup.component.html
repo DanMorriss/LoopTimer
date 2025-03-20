@@ -1,6 +1,6 @@
-<p class="text-7xl text-center pt-6 text-sky-50">Loo<span id="infinity"></span>pTimer</p>
+<p class="text-6xl text-center pt-6 text-sky-50">L<span class="text-transparent">oo</span><span id="infinity"></span>pTimer</p>
 <div class="flex justify-center">
-    <div class="shadow-lg rounded-xl m-4 p-6 w-auto bg-indigo-900/25">
+    <div class="shadow-lg rounded-xl m-4 p-6 w-auto bg-sky-50/50">
         <form (ngSubmit)="addTimer()">
 
             <mat-form-field class="w-full">
@@ -10,15 +10,17 @@
 
             <p class="p-4 text-center font-bold">Timer</p>
 
-            <mat-form-field>
-                <mat-label>Minutes</mat-label>
-                <input matInput type="number" [(ngModel)]="newTimerMinutes" name="newTimerMinutes">
-            </mat-form-field>
-
-            <mat-form-field>
-                <mat-label>Seconds</mat-label>
-                <input matInput type="number" [(ngModel)]="newTimerSeconds" name="newTimerSeconds">
-            </mat-form-field>
+            <div>
+                <mat-form-field>
+                    <mat-label>Minutes</mat-label>
+                    <input matInput type="number" [(ngModel)]="newTimerMinutes" name="newTimerMinutes">
+                </mat-form-field>
+                
+                <mat-form-field>
+                    <mat-label>Seconds</mat-label>
+                    <input matInput type="number" [(ngModel)]="newTimerSeconds" name="newTimerSeconds">
+                </mat-form-field>
+            </div>
 
             <p class="p-4 text-center font-bold">Rest</p>
 
@@ -41,7 +43,7 @@
             </div>
             
             <div class="flex justify-center m-4">
-                <button mat-raised-button color="primary" type="submit">Add Timer</button>
+                <button mat-raised-button color="primary" type="submit"><mat-icon>add</mat-icon> Add Timer</button>
             </div>
         </form>
     </div>

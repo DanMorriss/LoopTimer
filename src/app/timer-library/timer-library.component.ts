@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatTooltipModule } from '@angular/material/tooltip'
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Timer } from '../models/timer';
 
 
@@ -8,7 +9,7 @@ import { Timer } from '../models/timer';
     selector: 'app-timer-library',
     templateUrl: './timer-library.component.html',
     styleUrl: './timer-library.component.scss',
-    imports: [MatButtonModule, MatTooltipModule]
+    imports: [MatButtonModule, MatTooltipModule, MatIconModule]
 })
 export class TimerLibraryComponent {
     @Input() timers: Timer[] = [];
