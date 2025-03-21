@@ -7,6 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { Timer } from '../models/timer';
 import { TimerLibraryComponent } from "../timer-library/timer-library.component";
+import { TimerComponent } from '../timer/timer.component';
 
 
 @Component({
@@ -14,9 +15,10 @@ import { TimerLibraryComponent } from "../timer-library/timer-library.component"
     templateUrl: './timer-setup.component.html',
     styleUrl: './timer-setup.component.scss',
     imports: [
+        TimerLibraryComponent, 
+        TimerComponent,
         FormsModule, 
         MatButtonModule, 
-        TimerLibraryComponent, 
         MatInputModule, 
         MatFormFieldModule, 
         CommonModule, 

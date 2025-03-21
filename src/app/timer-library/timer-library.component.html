@@ -1,5 +1,5 @@
 <div class="p-4 text-sky-50">
-    <p class="text-4xl text-center ">Timers Library</p>
+    <p class="text-4xl text-center">Timers Library</p>
     <ul class="flex flex-wrap justify-center">
         @for (timer of timers; track timer.id) {
             <li class="flex-1 min-w-[300px] max-w-[400px] p-6 shadow-lg rounded m-4 bg-indigo-900/25">
@@ -7,8 +7,13 @@
                 <p>Timer length: {{timer.timerMinutes}}:{{timer.timerSeconds}}</p>
                 <p>Rest: {{timer.restMinutes}}:{{timer.restSeconds}}</p>
                 <p>Repeats: {{timer.repeats}}</p>
-                <div class="flex justify-center">
-                    <button class="" mat-raised-button color="warn" (click)="deleteTimer(timer.id)"><mat-icon class="m-3">delete</mat-icon>Delete</button>
+                <div class="flex justify-center gap-4">
+                    <button class="flex-1" mat-raised-button color="primary">
+                        <mat-icon>play_circle</mat-icon>Start
+                    </button>
+                    <button class="flex-1" mat-raised-button color="warn" (click)="deleteTimer(timer.id)">
+                        <mat-icon class="m-3">delete</mat-icon>Delete
+                    </button>
                 </div>
             </li>
             }

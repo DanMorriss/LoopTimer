@@ -1,6 +1,6 @@
 <p class="text-6xl text-center pt-6 text-sky-50">L<span class="text-transparent">oo</span><span id="infinity"></span>pTimer</p>
 <div class="flex justify-center">
-    <div class="shadow-lg rounded-xl m-4 p-6 w-auto bg-sky-50/50">
+    <div class="shadow-lg rounded-xl m-4 p-6 w-full max-w-md bg-sky-50/50">
         <form (ngSubmit)="addTimer()">
 
             <mat-form-field class="w-full">
@@ -10,13 +10,13 @@
 
             <p class="p-4 text-center font-bold">Timer</p>
 
-            <div>
-                <mat-form-field>
+            <div class="flex w-full">
+                <mat-form-field class="flex-1 min-w-0">
                     <mat-label>Minutes</mat-label>
                     <input matInput type="number" [(ngModel)]="newTimerMinutes" name="newTimerMinutes">
                 </mat-form-field>
                 
-                <mat-form-field>
+                <mat-form-field class="flex-1 min-w-0">
                     <mat-label>Seconds</mat-label>
                     <input matInput type="number" [(ngModel)]="newTimerSeconds" name="newTimerSeconds">
                 </mat-form-field>
@@ -24,15 +24,17 @@
 
             <p class="p-4 text-center font-bold">Rest</p>
 
-            <mat-form-field>
+            <div class="flex w-full">
+            <mat-form-field class="flex-1 min-w-0">
                 <mat-label>Minutes</mat-label>
                 <input matInput type="number" [(ngModel)]="newRestMinutes" name="newRestMinutes">
             </mat-form-field>
 
-            <mat-form-field>
+            <mat-form-field class="flex-1 min-w-0">
                 <mat-label>Seconds</mat-label>
                 <input matInput type="number" [(ngModel)]="newRestSeconds" name="newRestSeconds">
             </mat-form-field>
+        </div>
 
             <br>
             <div class="flex justify-center m-4">
@@ -50,3 +52,4 @@
 </div>
 
 <app-timer-library [timers]="timers" (timerDeleted)="deleteTimer($event)"></app-timer-library>
+<app-timer></app-timer>
