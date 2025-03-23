@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -34,7 +34,7 @@ export class TimerSetupComponent {
     newRestSeconds: number = 0;
     newRepeats: number = 0;
     
-    timers: Timer[] = [];
+    timers = signal<Timer[]>([]);
 
     ngOnInit(): void {
         let savedTimers = localStorage.getItem('timers')
@@ -53,18 +53,16 @@ export class TimerSetupComponent {
             repeats: this.newRepeats
         };
 
-        this.timers.push(newTimer);
+        this.timers.update(timers => [...timers, newTimer]);
+
         this.resetForm();
         this.saveTimers()
     }
     
     deleteTimer(timerId: number) {
-        const index = this.timers.findIndex(timer => timer.id === timerId);
-        if (index !== -1) {
-            this.timers.splice(index, 1);
-        }
+        this.timers.update(timers => timers.filter(timer => timer.id !== timerId));
 
-        localStorage.setItem('timers', JSON.stringify(this.timers))
+        this.saveTimers();
     }
 
     resetForm() {
