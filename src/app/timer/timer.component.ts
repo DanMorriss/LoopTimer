@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
+import { Timer } from '../models/timer';
 
 @Component({
   selector: 'app-timer',
@@ -7,5 +8,6 @@ import { Component } from '@angular/core';
   styleUrl: './timer.component.scss'
 })
 export class TimerComponent {
+  @Input() timer: Timer | null = null;
 
 }

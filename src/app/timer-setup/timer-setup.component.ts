@@ -35,6 +35,7 @@ export class TimerSetupComponent {
     newRepeats: number = 0;
     
     timers: Timer[] = [];
+    activeTimer: Timer | null = null;
 
     ngOnInit(): void {
         let savedTimers = localStorage.getItem('timers')
@@ -76,5 +77,13 @@ export class TimerSetupComponent {
     saveTimers() {
         localStorage.setItem('timers', JSON.stringify(this.timers))
     }
-    
+
+    startTimer(timer: Timer) {
+        this.activeTimer = timer;
+    }
+
+    onTimerStarted(timer: Timer) {
+        console.log("Timer received in TimerSetupComponent", timer);
+        this.activeTimer = timer;
+      }
 }

@@ -51,5 +51,11 @@
     </div>
 </div>
 
-<app-timer-library [timers]="timers" (timerDeleted)="deleteTimer($event)"></app-timer-library>
-<app-timer></app-timer>
+@if(activeTimer) {
+    <app-timer [timer]="activeTimer"></app-timer>
+}
+
+<app-timer-library 
+    [timers]="timers" 
+    (timerDeleted)="deleteTimer($event)" 
+    (timerStarted)="onTimerStarted($event)"></app-timer-library>

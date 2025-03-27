@@ -15,8 +15,14 @@ import { Timer } from '../models/timer';
 export class TimerLibraryComponent {
     @Input() timers: Timer[] =[];
     @Output() timerDeleted = new EventEmitter<number>();
+    @Output() timerStarted = new EventEmitter<Timer>();
     
     deleteTimer(timerId: number) {
         this.timerDeleted.emit(timerId);
+    }
+
+    startTimer(timer: Timer) {
+        this.timerStarted.emit(timer);
+        console.log(timer);
     }
 }
