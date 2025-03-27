@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -9,12 +9,14 @@ import { Timer } from '../models/timer';
     selector: 'app-timer-library',
     templateUrl: './timer-library.component.html',
     styleUrl: './timer-library.component.scss',
-    imports: [MatButtonModule, MatTooltipModule, MatIconModule]
+    imports: [MatButtonModule, MatTooltipModule, MatIconModule],
+    standalone: true
 })
 export class TimerLibraryComponent {
-    @Input() timers!: () => Timer[];
+    @Input() timers: Timer[] =[];
+    @Output() timerDeleted = new EventEmitter<number>();
     
     deleteTimer(timerId: number) {
-        console.log("Deleting timer: ", timerId);
+        this.timerDeleted.emit(timerId);
     }
 }
