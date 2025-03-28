@@ -23,6 +23,5 @@ export class TimerLibraryComponent {
 
     startTimer(timer: Timer) {
         this.timerStarted.emit(timer);
-        console.log(timer);
     }
 }
