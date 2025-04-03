@@ -62,7 +62,7 @@ export class TimerSetupComponent {
     
     deleteTimer(timerId: number) {
         this.timers = this.timers.filter(timer => timer.id !== timerId);
-        this.saveTimers;
+        this.saveTimers();
     }
 
     resetForm() {
