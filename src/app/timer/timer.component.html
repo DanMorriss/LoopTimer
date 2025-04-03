@@ -1,4 +1,19 @@
 <div class="text-4xl text-sky-50 text-center">
-    <p >{{timer?.title}}</p>
+    <p>{{timer?.title}}</p>
+
+    @if (isTimerActive) {
+        <p>Timer</p>
         <p>{{minutes}}:{{seconds}}</p>
+    }
+
+    @if (isRestActive) {
+        <p>Rest</p>
+        <p>{{restMinutes}}:{{restSeconds}}</p>
+    }
+
+    <p>Remaining Repeats: {{repeats}}</p>
+
+    @if(isComplete) {
+        <p>Well done, you're finished!</p>
+    }
 </div>
