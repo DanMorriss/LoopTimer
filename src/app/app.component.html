@@ -1,1 +1,15 @@
-<app-timer-setup></app-timer-setup>
+<p class="text-6xl text-center pt-6 text-sky-50">L<span class="text-transparent">oo</span><span id="infinity"></span>pTimer</p>
+
+<div class="flex justify-center">
+    <nav class="p-4 text-sky-50 text-2xl text-center">
+        <ul class="flex">
+            <li class="p-4 hover:bg-violet-800 rounded-xl">
+                <a routerLink="/setup" routerLinkActive="active" ariaCurrentWhenActive="page">Create</a>
+            </li>
+            <li class="p-4 hover:bg-violet-800 rounded-xl">
+                <a routerLink="/library" routerLinkActive="active" ariaCurrentWhenActive="page">Library</a>
+            </li>
+        </ul>
+    </nav>
+</div>
+<router-outlet></router-outlet>
