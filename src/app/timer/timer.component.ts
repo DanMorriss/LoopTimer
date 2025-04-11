@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { Timer } from '../models/timer';
 
 @Component({
@@ -8,7 +8,7 @@ import { Timer } from '../models/timer';
     styleUrl: './timer.component.scss'
 })
 export class TimerComponent {
-    @Input() timer: Timer | null = null;
+    readonly timer = input<Timer | null>(null);
 
     minutes: number | undefined = undefined;
     seconds: number | undefined = undefined;
@@ -24,8 +24,8 @@ export class TimerComponent {
     private restIntervalId: any;
 
     startTimer () {
-        this.minutes = this.timer?.timerMinutes
-        this.seconds = this.timer?.timerSeconds
+        this.minutes = this.timer()?.timerMinutes
+        this.seconds = this.timer()?.timerSeconds
         this.isTimerActive = true;
 
         this.timerIntervalId = setInterval(() => {
@@ -47,8 +47,9 @@ export class TimerComponent {
     }
 
     startRest () {
-        this.restMinutes = this.timer?.restMinutes
-        this.restSeconds = this.timer?.restSeconds
+        const timer = this.timer();
+        this.restMinutes = timer?.restMinutes
+        this.restSeconds = timer?.restSeconds
         this.isRestActive = true;
 
         this.restIntervalId = setInterval(() => {
@@ -78,11 +79,12 @@ export class TimerComponent {
     }
 
     ngOnInit() {
-        this.minutes = this.timer?.timerMinutes
-        this.seconds = this.timer?.timerSeconds
-        this.restMinutes = this.timer?.restMinutes
-        this.restSeconds = this.timer?.restSeconds
-        this.repeats = this.timer?.repeats
+        const timer = this.timer();
+        this.minutes = timer?.timerMinutes
+        this.seconds = timer?.timerSeconds
+        this.restMinutes = timer?.restMinutes
+        this.restSeconds = timer?.restSeconds
+        this.repeats = timer?.repeats
         this.isTimerActive = true;
 
         this.startTimer()

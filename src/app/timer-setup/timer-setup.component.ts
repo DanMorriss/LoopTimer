@@ -51,7 +51,10 @@ export class TimerSetupComponent {
             timerSeconds: this.newTimerSeconds,
             restMinutes: this.newRestMinutes,
             restSeconds: this.newRestSeconds,
-            repeats: this.newRepeats
+            repeats: this.newRepeats,
+            isTimerActive: false,
+            isRestActive: false, 
+            isComplete: false
         };
 
         this.timers.push(newTimer);
