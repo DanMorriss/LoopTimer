@@ -1,8 +1,9 @@
-import { Component, input, output } from '@angular/core';
+import { Component } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Timer } from '../models/timer';
+import { TimerStore } from '../shared/state/timer-store.service';
 
 
 @Component({
@@ -13,15 +14,18 @@ import { Timer } from '../models/timer';
     standalone: true
 })
 export class TimerLibraryComponent {
-    readonly timers = input<Timer[]>([]);
-    readonly timerDeleted = output<number>();
-    readonly timerStarted = output<Timer>();
+
+    constructor(public timerStore: TimerStore) {}
     
     deleteTimer(timerId: number) {
-        this.timerDeleted.emit(timerId);
+        this.timerStore.deleteTimer(timerId);
     }
 
     startTimer(timer: Timer) {
-        this.timerStarted.emit(timer);
+        this.timerStore.setActiveTimer(timer);
+    }
+
+    onTimerStarted(timer: Timer) {
+        this.timerStore.setActiveTimer(timer);
     }
 }

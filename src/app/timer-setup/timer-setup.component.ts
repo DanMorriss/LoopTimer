@@ -6,6 +6,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { Timer } from '../models/timer';
+import { TimerStore } from '../shared/state/timer-store.service';
 import { TimerLibraryComponent } from "../timer-library/timer-library.component";
 import { TimerComponent } from '../timer/timer.component';
 
@@ -14,17 +15,17 @@ import { TimerComponent } from '../timer/timer.component';
     selector: 'app-timer-setup',
     templateUrl: './timer-setup.component.html',
     styleUrl: './timer-setup.component.scss',
+    standalone: true,
     imports: [
-        TimerLibraryComponent, 
-        TimerComponent,
+        CommonModule, 
         FormsModule, 
         MatButtonModule, 
         MatInputModule, 
         MatFormFieldModule, 
-        CommonModule, 
-        MatIconModule
+        MatIconModule,
+        TimerLibraryComponent, 
+        TimerComponent,
     ],
-    standalone: true
 })
 export class TimerSetupComponent {
     newTimerTitle: string = '';
@@ -34,17 +35,10 @@ export class TimerSetupComponent {
     newRestSeconds: number = 0;
     newRepeats: number = 0;
     
-    timers: Timer[] = [];
-    activeTimer: Timer | null = null;
-
-    ngOnInit(): void {
-        let savedTimers = localStorage.getItem('timers')
-        
-        this.timers = savedTimers ? JSON.parse(savedTimers) : []
-    }
+    constructor(public timerStore: TimerStore) {}
 
     addTimer() {
-        let newTimer: Timer = {
+        const newTimer: Timer = {
             id: Date.now(),
             title: this.newTimerTitle,
             timerMinutes: this.newTimerMinutes,
@@ -57,15 +51,12 @@ export class TimerSetupComponent {
             isComplete: false
         };
 
-        this.timers.push(newTimer);
-
+        this.timerStore.addTimer(newTimer);
         this.resetForm();
-        this.saveTimers()
     }
     
     deleteTimer(timerId: number) {
-        this.timers = this.timers.filter(timer => timer.id !== timerId);
-        this.saveTimers();
+        this.timerStore.deleteTimer(timerId);
     }
 
     resetForm() {
@@ -77,16 +68,11 @@ export class TimerSetupComponent {
         this.newRepeats = 0;
     }
 
-    saveTimers() {
-        localStorage.setItem('timers', JSON.stringify(this.timers))
-    }
-
     startTimer(timer: Timer) {
-        this.activeTimer = timer;
+        this.timerStore.setActiveTimer(timer);
     }
 
     onTimerStarted(timer: Timer) {
-        console.log("Timer received in TimerSetupComponent", timer);
-        this.activeTimer = timer;
+        this.timerStore.setActiveTimer(timer);
       }
 }

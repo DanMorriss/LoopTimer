@@ -1,6 +1,6 @@
 <div class="p-4 text-sky-50">
     <ul class="flex flex-wrap justify-center">
-        @for (timer of timers(); track timer.id) {
+        @for (timer of timerStore.timers(); track timer.id) {
             <li class="flex-1 min-w-[300px] max-w-[400px] p-6 shadow-lg rounded m-4 bg-indigo-900/25">
                 <p class="text-center text-2xl" matTooltip="ID: {{timer.id}}">{{timer.title}}</p>
                 <p>Timer length: {{timer.timerMinutes}}:{{timer.timerSeconds}}</p>
