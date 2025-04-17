@@ -1,4 +1,4 @@
-import { Component, effect, OnDestroy, OnInit } from '@angular/core';
+import { Component, effect, OnDestroy } from '@angular/core';
 import { Timer } from '../models/timer';
 import { TimerStore } from '../shared/state/timer-store.service';
 
@@ -9,22 +9,20 @@ import { TimerStore } from '../shared/state/timer-store.service';
     styleUrl: './timer.component.scss',
     standalone: true
 })
-export class TimerComponent implements OnDestroy, OnInit {
+export class TimerComponent implements OnDestroy {
     timer: Timer | null = null;
 
-    constructor(public timerStore: TimerStore) {}
-
-    ngOnInit(): void {
+    constructor(public timerStore: TimerStore) {
         effect(() => {
-             const timer = this.timerStore.activeTimer();
-            
+            const timer = this.timerStore.activeTimer();
              
-             if (timer) {
+            if (timer) {
                 this.timer = timer;
-                 this.initializeTimer();
-                 this.startTimer();
-                }
-            })
+                this.initializeTimer();
+                this.startTimer();
+            }
+        })
+
     }
 
     minutes: number | undefined = undefined;
@@ -50,6 +48,13 @@ export class TimerComponent implements OnDestroy, OnInit {
         this.restSeconds = timer.restSeconds;
         this.repeats = timer.repeats;
         this.isComplete = false;
+    }
+
+    resetTimer() {
+        this.minutes = this.timer?.timerMinutes;
+        this.seconds = this.timer?.timerSeconds;
+        this.restMinutes = this.timer?.restMinutes;
+        this.restSeconds = this.timer?.restSeconds;
     }
 
     startTimer () {
@@ -79,10 +84,11 @@ export class TimerComponent implements OnDestroy, OnInit {
             if (this.restMinutes === 0 && this.restSeconds === 0) {
                 clearInterval(this.restIntervalId)
                 this.isRestActive = false;
-
+                
                 if (this.repeats! > 0) {
                     this.repeats!--;
-                    this.initializeTimer();
+
+                    this.resetTimer()
                     this.startTimer()
                 } else {
                     this.isComplete = true;
