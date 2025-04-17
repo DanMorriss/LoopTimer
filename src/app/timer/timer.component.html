@@ -1,9 +1,9 @@
 <div class="text-4xl text-sky-50 text-center">
-    <p>{{timer()?.title}}</p>
+    <p>{{timerStore.activeTimer()?.title}}</p>
 
     @if (isTimerActive) {
         <p>Timer</p>
-        <p>{{minutes}}:{{seconds}}</p>
+        <p>{{timerStore}}:{{seconds}}</p>
     }
 
     @if (isRestActive) {

@@ -1,4 +1,4 @@
-import { Component, input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
+import { Component, effect, OnDestroy, OnInit } from '@angular/core';
 import { Timer } from '../models/timer';
 import { TimerStore } from '../shared/state/timer-store.service';
 
@@ -9,11 +9,23 @@ import { TimerStore } from '../shared/state/timer-store.service';
     styleUrl: './timer.component.scss',
     standalone: true
 })
-export class TimerComponent implements OnChanges, OnDestroy {
-    readonly timer = input<Timer | null>(null);
+export class TimerComponent implements OnDestroy, OnInit {
+    timer: Timer | null = null;
 
     constructor(public timerStore: TimerStore) {}
 
+    ngOnInit(): void {
+        effect(() => {
+             const timer = this.timerStore.activeTimer();
+            
+             
+             if (timer) {
+                this.timer = timer;
+                 this.initializeTimer();
+                 this.startTimer();
+                }
+            })
+    }
 
     minutes: number | undefined = undefined;
     seconds: number | undefined = undefined;
@@ -28,15 +40,8 @@ export class TimerComponent implements OnChanges, OnDestroy {
     private timerIntervalId: any;
     private restIntervalId: any;
 
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes['timer'] && this.timer()) {
-            this.initializeTimer();
-            this.startTimer();
-        }
-    }
-
     initializeTimer() {
-        const timer = this.timer();
+        const timer = this.timer;
         if (!timer) return;
 
         this.minutes = timer.timerMinutes;
