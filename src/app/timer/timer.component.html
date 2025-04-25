@@ -1,19 +1,40 @@
-<div class="text-4xl text-sky-50 text-center">
-    <p>{{timerStore.activeTimer()?.title}}</p>
+<div class="flex justify-center items-center flex-col">
 
-    @if (isTimerActive) {
-        <p>Timer</p>
-        <p>{{minutes}}:{{seconds}}</p>
-    }
+    <p class="text-4xl text-sky-50">{{timerStore.activeTimer()?.title}}</p>
+        <div class="text-4xl text-sky-50 text-center w-[400px] h-[400px] rounded-full flex justify-center items-center"
+        [class]="{
+        'bg-rose-400': isTimerActive, 
+        'bg-sky-50': isRestActive,
+        'bg-sky-50/50': isComplete,
+        }"
+        >
 
-    @if (isRestActive) {
-        <p>Rest</p>
-        <p>{{restMinutes}}:{{restSeconds}}</p>
-    }
-
-    <p>Remaining Repeats: {{repeats}}</p>
-
-    @if(isComplete) {
-        <p>Well done, you're finished!</p>
-    }
+        @if (!isComplete) {
+            <div>
+                
+                @if (isTimerActive) {
+                    <p class="text-transparent">Timer</p>
+                    <p>{{minutes}}:{{seconds}}</p>
+                }
+                
+                @if (isRestActive) {
+                    <p class="text-black">Rest</p>
+                    <p class="text-black">{{restMinutes}}:{{restSeconds}}</p>
+                }
+                
+                <p 
+                    class="pt-3 relative right-2"><span class="text-2xl relative bottom-5 left-7"
+                    [class]="isRestActive ? 'text-black' : ''"
+                >{{repeats}}</span> 🔁</p>
+            </div>
+        }
+        
+        @if(isComplete) {
+            <div>
+                <p>You're finished!</p>
+                <p>👍</p>
+            </div>
+        }
+    </div>
+    
 </div>
