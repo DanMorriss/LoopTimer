@@ -1,31 +1,3 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-#infinity {
-    position: relative;
-    width: 106px;
-    height: 50px;
-    box-sizing: content-box;
-    left: -91px;
-    top: 20px;
-  }
-  #infinity:before,
-  #infinity:after {
-    content: "";
-    box-sizing: content-box;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 25px;
-    height: 25px;
-    border: 10px solid oklch(0.977 0.013 236.62);
-    border-radius: 50px 50px 0 50px;
-    transform: rotate(-45deg);
-  }
-  #infinity:after {
-    left: auto;
-    right: -95px;
-    border-radius: 50px 50px 50px 0;
-    transform: rotate(45deg);
-  }
