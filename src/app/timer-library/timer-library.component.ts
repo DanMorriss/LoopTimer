@@ -12,7 +12,6 @@ import { TimerStore } from '../shared/state/timer-store.service';
     templateUrl: './timer-library.component.html',
     styleUrl: './timer-library.component.scss',
     imports: [MatButtonModule, MatTooltipModule, MatIconModule],
-    standalone: true
 })
 export class TimerLibraryComponent {
 

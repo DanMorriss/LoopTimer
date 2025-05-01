@@ -5,10 +5,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { Router } from '@angular/router';
 import { Timer } from '../models/timer';
 import { TimerStore } from '../shared/state/timer-store.service';
-import { TimerLibraryComponent } from "../timer-library/timer-library.component";
-import { TimerComponent } from '../timer/timer.component';
 
 
 @Component({
@@ -23,8 +22,6 @@ import { TimerComponent } from '../timer/timer.component';
         MatInputModule, 
         MatFormFieldModule, 
         MatIconModule,
-        TimerLibraryComponent, 
-        TimerComponent,
     ],
 })
 export class TimerSetupComponent {
@@ -35,7 +32,7 @@ export class TimerSetupComponent {
     newRestSeconds: number = 0;
     newRepeats: number = 0;
     
-    constructor(public timerStore: TimerStore) {}
+    constructor(public timerStore: TimerStore, private router: Router) {}
 
     addTimer() {
         const newTimer: Timer = {
@@ -53,12 +50,14 @@ export class TimerSetupComponent {
 
         this.timerStore.addTimer(newTimer);
         this.resetForm();
+        this.timerStore.setActiveTimer(newTimer);
+        this.router.navigate(['/timer']);
     }
     
     deleteTimer(timerId: number) {
         this.timerStore.deleteTimer(timerId);
     }
-
+    
     resetForm() {
         this.newTimerTitle = '';
         this.newTimerMinutes = 0;
@@ -66,6 +65,7 @@ export class TimerSetupComponent {
         this.newRestMinutes = 0;
         this.newRestSeconds = 0;
         this.newRepeats = 0;
+        
     }
 
     startTimer(timer: Timer) {
