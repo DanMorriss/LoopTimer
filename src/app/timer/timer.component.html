@@ -1,10 +1,10 @@
 <div class="flex justify-center items-center flex-col">
 
     <p class="text-4xl text-sky-50">{{timerStore.activeTimer()?.title}}</p>
-        <div class="text-4xl text-sky-50 text-center w-[400px] h-[400px] rounded-full flex justify-center items-center"
+        <div class="text-4xl text-black text-center w-[400px] h-[400px] rounded-full flex justify-center items-center"
         [class]="{
-        'bg-rose-400': isTimerActive, 
-        'bg-sky-50': isRestActive,
+        'flash-fade': isTimerActive, 
+        'flash-fade-blue': isRestActive,
         'bg-sky-50/50': isComplete,
         }"
         >
@@ -18,13 +18,12 @@
                 }
                 
                 @if (isRestActive) {
-                    <p class="text-black">Rest</p>
-                    <p class="text-black">{{restMinutes}}:{{restSeconds}}</p>
+                    <p>Rest</p>
+                    <p>{{restMinutes}}:{{restSeconds}}</p>
                 }
                 
                 <p 
                     class="pt-3 relative right-2"><span class="text-2xl relative bottom-5 left-7"
-                    [class]="isRestActive ? 'text-black' : ''"
                 >{{repeats}}</span> 🔁</p>
             </div>
         }

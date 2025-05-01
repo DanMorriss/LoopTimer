@@ -1,0 +1,26 @@
+@keyframes flashFade {
+    0% {
+      background-color: oklch(97.7% 0.013 236.62);
+    }
+    100% {
+      background-color: oklch(81% 0.117 11.638);
+    }
+}
+  
+.flash-fade {
+    animation: flashFade 1s ease-in-out infinite;
+}
+
+@keyframes flashFadeBlue {
+    0% {
+      background-color: oklch(97.7% 0.013 236.62);
+    }
+    100% {
+      background-color: oklch(90.1% 0.058 230.902);
+    }
+}
+  
+.flash-fade-blue {
+    animation: flashFadeBlue 1s ease-in-out infinite;
+}
+
