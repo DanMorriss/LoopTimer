@@ -14,7 +14,6 @@ import { TimerStore } from '../shared/state/timer-store.service';
     selector: 'app-timer-setup',
     templateUrl: './timer-setup.component.html',
     styleUrl: './timer-setup.component.scss',
-    standalone: true,
     imports: [
         CommonModule, 
         FormsModule, 

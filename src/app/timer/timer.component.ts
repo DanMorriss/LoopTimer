@@ -7,7 +7,6 @@ import { TimerStore } from '../shared/state/timer-store.service';
     imports: [],
     templateUrl: './timer.component.html',
     styleUrl: './timer.component.scss',
-    standalone: true
 })
 export class TimerComponent implements OnDestroy {
     timer: Timer | null = null;
@@ -22,7 +21,6 @@ export class TimerComponent implements OnDestroy {
                 this.startTimer();
             }
         })
-
     }
 
     minutes: number | undefined = undefined;
