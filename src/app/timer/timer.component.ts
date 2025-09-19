@@ -76,6 +76,11 @@ export class TimerComponent implements OnDestroy {
     }
 
     startRest () {
+        if (this.repeats === 0) {
+            this.isComplete = true;
+            return;
+        }
+
         this.isRestActive = true;
 
         this.restIntervalId = setInterval(() => {
@@ -88,11 +93,8 @@ export class TimerComponent implements OnDestroy {
 
                     this.resetTimer()
                     this.startTimer()
-                } else {
-                    this.isComplete = true;
                 }
                 return;
-
             } 
             
             if (this.restSeconds! > 0) {
