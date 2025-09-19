@@ -28,6 +28,10 @@ export class TimerComponent implements OnDestroy {
     restMinutes: number | undefined = undefined;
     restSeconds: number | undefined = undefined;
     repeats: number | undefined = undefined;
+
+    get repeatArray(): number[] {
+        return Array.from({ length: this.repeats ?? 0}, (_, i) => i);
+    }
     
     isTimerActive: boolean = false;
     isRestActive: boolean = false;

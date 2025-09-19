@@ -1,7 +1,19 @@
 <div class="flex justify-center items-center flex-col">
 
     <p class="text-4xl text-sky-50">{{timerStore.activeTimer()?.title}}</p>
-        <div class="text-4xl text-black text-center w-[350px] h-[350px] rounded-full flex justify-center items-center"
+    @if (repeatArray.length > 0) {
+        <div class="text-2xl text-sky-50">
+            <span>remaining repeats: </span>
+            @for (i of repeatArray; track i) {
+                <span>| </span>
+            }
+        </div>
+    }
+    @if (repeatArray.length === 0 && isTimerActive) {
+        <p class="text-3xl text-sky-50">Last one!</p>
+    }
+    
+    <div class="text-4xl text-black text-center w-[350px] h-[350px] rounded-full flex justify-center items-center"
         [class]="{
         'flash-fade': isTimerActive, 
         'flash-fade-blue': isRestActive,
@@ -10,6 +22,7 @@
         >
 
         @if (!isComplete) {
+
             <div>
                 
                 @if (isTimerActive) {
@@ -21,10 +34,6 @@
                     <p>Rest</p>
                     <p>{{restMinutes}}:{{restSeconds}}</p>
                 }
-                
-                <p 
-                    class="pt-3 relative right-2"><span class="text-2xl relative bottom-5 left-7"
-                >{{repeats}}</span> 🔁</p>
             </div>
         }
         
