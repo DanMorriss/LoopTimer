@@ -5,7 +5,7 @@
         <div class="text-2xl text-sky-50">
             <span>remaining repeats: </span>
             @for (i of repeatArray; track i) {
-                <span>| </span>
+                <span class="rubik-spray-paint-regular">| </span>
             }
         </div>
     }
@@ -13,7 +13,7 @@
         <p class="text-3xl text-sky-50">Last one!</p>
     }
     
-    <div class="text-4xl text-black text-center w-[350px] h-[350px] rounded-full flex justify-center items-center"
+    <div class="text-4xl text-black text-center w-[350px] h-[350px] rounded-full flex justify-center items-center mt-4"
         [class]="{
         'flash-fade': isTimerActive, 
         'flash-fade-blue': isRestActive,

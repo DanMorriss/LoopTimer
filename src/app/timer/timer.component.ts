@@ -6,7 +6,7 @@ import { TimerStore } from '../shared/state/timer-store.service';
     selector: 'app-timer',
     imports: [],
     templateUrl: './timer.component.html',
-    styleUrl: './timer.component.scss',
+    styleUrls: ['./timer.component.scss'],
 })
 export class TimerComponent implements OnDestroy {
     timer: Timer | null = null;
