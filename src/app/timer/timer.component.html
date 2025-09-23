@@ -12,37 +12,49 @@
     @if (repeatArray.length === 0 && isTimerActive) {
         <p class="text-3xl text-sky-50">Last one!</p>
     }
-    
-    <div class="text-4xl text-black text-center w-[350px] h-[350px] rounded-full flex justify-center items-center mt-4"
-        [class]="{
-        'flash-fade': isTimerActive, 
-        'flash-fade-blue': isRestActive,
-        'bg-sky-50/50': isComplete,
-        }"
-        >
 
-        @if (!isComplete) {
-
-            <div>
-                
-                @if (isTimerActive) {
-                    <p class="text-transparent">Timer</p>
-                    <p>{{minutes}}:{{seconds}}</p>
-                }
-                
-                @if (isRestActive) {
-                    <p>Rest</p>
-                    <p>{{restMinutes}}:{{restSeconds}}</p>
-                }
-            </div>
-        }
+    <div
+    class="timer-ring"
+    [style.--progress-color]="
+        isTimerActive
+        ? 'oklch(81% 0.117 11.638)'
+        : isRestActive
+        ? 'oklch(90.1% 0.058 230.902)'
+        : '#ddd'
+    "
+    [style.--progress-deg]="progress * 360 + 'deg'"
+    >
+        <div class="timer-inner">
+            <div class="text-4xl text-black text-center w-[340px] h-[340px] rounded-full flex justify-center items-center"
+                [class]="{
+                    'flash-fade': isTimerActive, 
+                    'flash-fade-blue': isRestActive,
+                    'bg-sky-50/50': isComplete,
+                }"
+            >
         
-        @if(isComplete) {
-            <div>
-                <p>You're finished!</p>
-                <p>👍</p>
+            @if (!isComplete) {
+                <div>
+                    @if (isTimerActive) {
+                        <p class="text-transparent">Timer</p>
+                        <p>{{minutes}}:{{seconds}}</p>
+                    }
+                        
+                        @if (isRestActive) {
+                            <p>Rest</p>
+                            <p>{{restMinutes}}:{{restSeconds}}</p>
+                        }
+                    </div>
+                }
+                
+                @if(isComplete) {
+                    <div>
+                        <p>You're finished!</p>
+                        <p>👍</p>
+                    </div>
+                }
             </div>
-        }
+        </div>
     </div>
     
 </div>

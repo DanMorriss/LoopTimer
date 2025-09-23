@@ -37,6 +37,26 @@ export class TimerComponent implements OnDestroy {
     isRestActive: boolean = false;
     isComplete: boolean = false;
 
+    get progress(): number {
+        if (this.isComplete) {
+            return 1;
+        }
+
+        if (this.isTimerActive) {
+            const total = (this.timer?.timerMinutes ?? 0) * 60 + (this.timer?.timerSeconds ?? 0);
+            const remaining = (this.minutes ?? 0) * 60 + (this.seconds ?? 0);
+            return total > 0 ? 1 - remaining / total : 0;
+        }
+
+        if (this.isRestActive) {
+            const total = (this.timer?.restMinutes ?? 0) * 60 + (this.timer?.restSeconds ?? 0);
+            const remaining = (this.restMinutes ?? 0) * 60 + (this.restSeconds ?? 0);
+            return total > 0 ? 1 - remaining / total : 0;
+        }
+
+        return 0;
+    }
+
     private timerIntervalId: any;
     private restIntervalId: any;
 

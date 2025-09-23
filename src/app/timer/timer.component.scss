@@ -1,3 +1,10 @@
+/* Put this in your component SCSS (top of file) */
+@property --progress-deg {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
 @keyframes flashFade {
     0% {
       background-color: oklch(97.7% 0.013 236.62);
@@ -24,3 +31,28 @@
     animation: flashFadeBlue 1s ease-in-out infinite;
 }
 
+.timer-ring {
+  position: relative;
+  width: 380px;
+  height: 380px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: conic-gradient(
+    var(--progress-color, #00bcd4) var(--progress-deg, 0deg),
+    #e5e7eb 0deg
+  );
+
+  transition: --progress-deg 950ms linear;
+}
+
+.timer-inner {
+  width: 350px;
+  height: 350px;
+  border-radius: 50%;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
