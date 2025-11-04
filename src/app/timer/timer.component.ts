@@ -100,7 +100,8 @@ export class TimerComponent implements OnDestroy {
     }
 
     startRest () {
-        if (this.repeats === 0) {
+        if (this.repeats === 1) {
+            this.repeats!--;
             this.isComplete = true;
             return;
         }
@@ -112,7 +113,7 @@ export class TimerComponent implements OnDestroy {
                 clearInterval(this.restIntervalId)
                 this.isRestActive = false;
                 
-                if (this.repeats! > 0) {
+                if (this.repeats! > 1) {
                     this.repeats!--;
 
                     this.resetTimer()

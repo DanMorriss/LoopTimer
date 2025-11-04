@@ -1,7 +1,7 @@
 <div class="flex justify-center items-center flex-col">
 
     <p class="text-4xl text-sky-50">{{timerStore.activeTimer()?.title}}</p>
-    @if (repeatArray.length > 0) {
+    @if (repeatArray.length > 1) {
         <div class="text-2xl text-sky-50">
             <span>remaining repeats: </span>
             @for (i of repeatArray; track i) {
@@ -9,7 +9,7 @@
             }
         </div>
     }
-    @if (repeatArray.length === 0 && isTimerActive) {
+    @if (repeatArray.length === 1 && isTimerActive) {
         <p class="text-3xl text-sky-50">Last one!</p>
     }
 
@@ -50,7 +50,6 @@
                 @if(isComplete) {
                     <div>
                         <p>You're finished!</p>
-                        <p>👍</p>
                     </div>
                 }
             </div>
