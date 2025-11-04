@@ -1,25 +1,8 @@
-<div class="flex justify-center">
-    <button mat-button [matMenuTriggerFor]="menu">
-        <p class="text-6xl text-center pt-6 text-sky-50 hover:underline">L<span class="text-transparent">oo</span><span id="infinity"></span>pTimer</p>
+<div class="home-nav">
+    <button class="home-button" (click)="navigateToHome()" title="Go to Home">
+        <svg class="home-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9,22 9,12 15,12 15,22"/>
+        </svg>
     </button>
-</div>
-
-<mat-menu #menu="matMenu">
-
-    <ul class="flex flex-col">
-        <li class="p-4 hover:text-violet-800 rounded-xl">
-            <a routerLink="/home" routerLinkActive="active" ariaCurrentWhenActive="page">Home</a>
-        </li>
-        <li class="p-4 hover:text-violet-800 rounded-xl">
-            <a routerLink="/setup" routerLinkActive="active" ariaCurrentWhenActive="page">Create</a>
-        </li>
-        <li class="p-4 hover:text-violet-800 rounded-xl">
-            <a routerLink="/library" routerLinkActive="active" ariaCurrentWhenActive="page">Library</a>
-        </li>
-    </ul>
-</mat-menu>
-
-<div class="flex justify-center">
-    <nav class="p-4 text-sky-50 text-2xl text-center">
-    </nav>
 </div>
