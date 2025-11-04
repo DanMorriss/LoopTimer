@@ -1,27 +1,42 @@
-#infinity {
-    position: relative;
-    width: 106px;
-    height: 50px;
-    box-sizing: content-box;
-    left: -91px;
-    top: 20px;
+.home-nav {
+  display: flex;
+  justify-content: flex-end;
+  padding: 1rem;
+  margin-right: 10vw;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  width: 100%;
+}
+
+.home-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: rgba(139, 92, 246, 0.1);
+  border: 2px solid rgba(240, 249, 255, 0.2);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: rgba(240, 249, 255, 0.8);
+  
+  &:hover {
+    background: rgba(139, 92, 246, 0.2);
+    border-color: rgba(240, 249, 255, 0.4);
+    transform: scale(1.05);
+    color: rgba(240, 249, 255, 1);
   }
-  #infinity:before,
-  #infinity:after {
-    content: "";
-    box-sizing: content-box;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 25px;
-    height: 25px;
-    border: 10px solid oklch(0.977 0.013 236.62);
-    border-radius: 50px 50px 0 50px;
-    transform: rotate(-45deg);
+  
+  &:active {
+    transform: scale(0.95);
   }
-  #infinity:after {
-    left: auto;
-    right: -95px;
-    border-radius: 50px 50px 50px 0;
-    transform: rotate(45deg);
-  }
+}
+
+.home-icon {
+  width: 24px;
+  height: 24px;
+  stroke-width: 2;
+}

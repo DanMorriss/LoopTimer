@@ -1,10 +1,34 @@
-<div class="flex justify-center">
-    <ul class="flex flex-col text-sky-50 text-2xl">
-        <li class="p-4 hover:text-violet-800 rounded-xl">
-            <a routerLink="/setup">Create</a>
-        </li>
-        <li class="p-4 hover:text-violet-800 rounded-xl">
-            <a routerLink="/library">Library</a>
-        </li>
-    </ul>
+<div class="infinity-container">
+    <div class="infinity-logo">
+        <svg viewBox="0 0 200 100" class="infinity-svg">
+            <!-- Infinity symbol path -->
+            <path 
+                d="M 50 50 C 50 25, 75 25, 100 50 C 125 75, 150 75, 150 50 C 150 25, 125 25, 100 50 C 75 75, 50 75, 50 50 Z"
+                class="infinity-path"
+                fill="none"
+                stroke="rgba(240, 249, 255, 0.3)"
+                stroke-width="4"
+            />
+            <!-- Animated light dot -->
+            <circle r="4" class="light-dot">
+                <animateMotion 
+                    dur="1.5s" 
+                    repeatCount="indefinite"
+                    path="M 50 50 C 50 25, 75 25, 100 50 C 125 75, 150 75, 150 50 C 150 25, 125 25, 100 50 C 75 75, 50 75, 50 50 Z"
+                />
+            </circle>
+        </svg>
+        
+        <!-- Interactive zones -->
+        <div class="interaction-zone left-zone" (click)="navigateToCreate()" title="Create Timer">
+            <div class="zone-label">Create</div>
+        </div>
+        <div class="interaction-zone right-zone" (click)="navigateToLibrary()" title="Timer Library">
+            <div class="zone-label">Library</div>
+        </div>
+    </div>
+    
+    <div class="title-text">
+        <p>Click the infinity symbol to navigate</p>
+    </div>
 </div>

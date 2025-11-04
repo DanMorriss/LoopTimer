@@ -1,13 +1,17 @@
 import { Component } from '@angular/core';
-import { MatMenuModule } from '@angular/material/menu';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-nav',
   templateUrl: './nav.component.html',
   styleUrl: './nav.component.scss',
-  imports: [MatMenuModule,  RouterLink, RouterLinkActive]
+  imports: []
 })
 export class NavComponent {
+  
+  constructor(private router: Router) {}
 
+  navigateToHome() {
+    this.router.navigate(['/home']);
+  }
 }
