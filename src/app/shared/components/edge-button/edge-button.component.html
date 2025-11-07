@@ -1,0 +1,8 @@
+<button 
+  [type]="type"
+  [class]="buttonClasses"
+  [disabled]="disabled()"
+  (click)="onClick()">
+  {{ text() }}
+  <span class="edge-button__border"></span>
+</button>

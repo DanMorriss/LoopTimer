@@ -4,6 +4,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router } from '@angular/router';
 import { Timer } from '../models/timer';
+import { CrosshairButtonComponent } from '../shared/components/crosshair-button/crosshair-button.component';
+import { EdgeButtonComponent } from '../shared/components/edge-button/edge-button.component';
+import { PillButtonComponent } from "../shared/components/pill-button/pill-button.component";
+import { SlideButtonComponent } from '../shared/components/slide-button/slide-button.component';
 import { TimerStore } from '../shared/state/timer-store.service';
 
 
@@ -11,7 +15,7 @@ import { TimerStore } from '../shared/state/timer-store.service';
     selector: 'app-timer-library',
     templateUrl: './timer-library.component.html',
     styleUrl: './timer-library.component.scss',
-    imports: [MatButtonModule, MatTooltipModule, MatIconModule],
+    imports: [MatButtonModule, MatTooltipModule, MatIconModule, SlideButtonComponent, EdgeButtonComponent, CrosshairButtonComponent, PillButtonComponent],
 })
 export class TimerLibraryComponent {
     protected isExistingContent = input<boolean>();

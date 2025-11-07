@@ -1,8 +1,9 @@
 <div class="p-4 text-sky-50">
     @let existingContent = isExistingContent();
     @if (!existingContent) {
-        <div class="flex justify-center">
-            <p (click)="navigateToCreateTimer()">nothing in here yet, best make one.</p>
+        <div class="flex justify-center items-center flex-col">
+            <p>Nothing in the library yet, best go make a timer.</p>
+            <app-crosshair-button (click)="navigateToCreateTimer()" text="Create a Timer" size="small" variant="primary" class="mt-12" />
         </div>
         
     }

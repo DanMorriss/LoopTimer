@@ -1,0 +1,11 @@
+<button 
+  [type]="type"
+  [class]="buttonClasses"
+  [disabled]="disabled()"
+  (click)="onClick()">
+  <span class="crosshair-button__line crosshair-button__line--left"></span>
+  <span class="crosshair-button__line crosshair-button__line--top"></span>
+  <span class="crosshair-button__line crosshair-button__line--right"></span>
+  <span class="crosshair-button__line crosshair-button__line--bottom"></span>
+  {{ text() }}
+</button>

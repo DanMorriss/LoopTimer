@@ -1,0 +1,158 @@
+.edge-button {
+  background-color: transparent;
+  border: none;
+  position: relative;
+  text-transform: uppercase;
+  text-align: center;
+  letter-spacing: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  font-family: sans-serif;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  
+  // Top border - slides from left to right
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 4px;
+    transition: left 0.5s ease;
+  }
+  
+  // Bottom border - slides from right to left
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: -100%;
+    width: 100%;
+    height: 4px;
+    transition: right 0.5s ease;
+  }
+  
+  // Hover effects for top and bottom borders
+  &:hover::before {
+    left: 0;
+  }
+  
+  &:hover::after {
+    right: 0;
+  }
+  
+  // Disabled state
+  &--disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    
+    &:hover::before {
+      left: -100%;
+    }
+    
+    &:hover::after {
+      right: -100%;
+    }
+    
+    .edge-button__border::before,
+    .edge-button__border::after {
+      transition: none;
+    }
+    
+    &:hover .edge-button__border::before {
+      top: -100%;
+    }
+    
+    &:hover .edge-button__border::after {
+      top: 100%;
+    }
+  }
+  
+  // Size variations
+  &--small {
+    width: 200px;
+    height: 60px;
+    font-size: 16px;
+    line-height: 60px;
+    letter-spacing: 2px;
+  }
+  
+  &--medium {
+    width: 300px;
+    height: 80px;
+    font-size: 24px;
+    line-height: 80px;
+    letter-spacing: 4px;
+  }
+  
+  &--large {
+    width: 400px;
+    height: 120px;
+    font-size: 32px;
+    line-height: 120px;
+    letter-spacing: 6px;
+  }
+  
+  // Color variations
+  &--primary {
+    color: #f0f9ff;
+    
+    &::before,
+    &::after {
+      background-color: #f0f9ff;
+    }
+    
+    .edge-button__border::before,
+    .edge-button__border::after {
+      background-color: #f0f9ff;
+    }
+  }
+  
+  &--secondary {
+    color: #06b6d4;
+    
+    &::before,
+    &::after {
+      background-color: #06b6d4;
+    }
+    
+    .edge-button__border::before,
+    .edge-button__border::after {
+      background-color: #06b6d4;
+    }
+  }
+}
+
+.edge-button__border {
+  // Right border - slides from top to bottom
+  &::before {
+    content: '';
+    position: absolute;
+    top: -100%;
+    right: 0;
+    width: 4px;
+    height: 100%;
+    transition: top 0.5s ease;
+  }
+  
+  // Left border - slides from bottom to top
+  &::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    transition: top 0.5s ease;
+  }
+}
+
+// Hover effects for left and right borders
+.edge-button:hover .edge-button__border::before {
+  top: 0;
+}
+
+.edge-button:hover .edge-button__border::after {
+  top: 0;
+}
