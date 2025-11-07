@@ -1,0 +1,189 @@
+.pill-button {
+  position: relative;
+  margin: 20px;
+  
+  // Top accent bar
+  &::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: -5px;
+    width: 30px;
+    height: 10px;
+    border-radius: 10px;
+    transition: all 0.5s ease;
+    transition-delay: 0s;
+    z-index: 1;
+  }
+  
+  // Bottom accent bar
+  &::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: -5px;
+    width: 30px;
+    height: 10px;
+    border-radius: 10px;
+    transition: all 0.5s ease;
+    transition-delay: 0s;
+    z-index: 1;
+  }
+  
+  // Hover effects for accent bars
+  &:hover::before {
+    top: 0;
+    height: 50%;
+    width: 80%;
+    border-radius: 30px;
+    transition-delay: 0.5s;
+  }
+  
+  &:hover::after {
+    bottom: 0;
+    height: 50%;
+    width: 80%;
+    border-radius: 30px;
+    transition-delay: 0.5s;
+  }
+  
+  // Disabled state
+  &--disabled {
+    opacity: 0.6;
+    pointer-events: none;
+    
+    &:hover::before,
+    &:hover::after {
+      width: 30px;
+      height: 10px;
+      top: -5px;
+      bottom: -5px;
+      transition-delay: 0s;
+    }
+    
+    .pill-button__inner:hover {
+      letter-spacing: 1px;
+    }
+    
+    .pill-button__inner:hover::before {
+      transform: skewX(45deg);
+      transition-delay: 0.5s;
+    }
+  }
+  
+  // Size variations
+  &--small {
+    width: 120px;
+    height: 40px;
+  }
+  
+  &--medium {
+    width: 155px;
+    height: 50px;
+  }
+  
+  &--large {
+    width: 200px;
+    height: 65px;
+  }
+  
+  // Color variations - Primary (Pink/Red)
+  &--primary {
+    &::before,
+    &::after {
+      background: #ff0461;
+      box-shadow: 0 0 5px #ff0461, 0 0 15px #ff0461, 0 0 30px #ff0461, 0 0 60px #ff0461;
+    }
+  }
+  
+  // Color variations - Secondary (Cyan/Blue)
+  &--secondary {
+    &::before,
+    &::after {
+      background: #04c9ff;
+      box-shadow: 0 0 5px #04c9ff, 0 0 15px #04c9ff, 0 0 30px #04c9ff, 0 0 60px #04c9ff;
+    }
+  }
+  
+  // Color variations - Success (Green)
+  &--success {
+    &::before,
+    &::after {
+      background: #11ff04;
+      box-shadow: 0 0 5px #11ff04, 0 0 15px #11ff04, 0 0 30px #11ff04, 0 0 60px #11ff04;
+    }
+  }
+}
+
+.pill-button__inner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-left: none;
+  border-right: none;
+  z-index: 10;
+  color: white;
+  border-radius: 30px;
+  font-weight: 400;
+  letter-spacing: 1px;
+  text-decoration: none;
+  transition: all 0.5s ease;
+  overflow: hidden;
+  backdrop-filter: blur(15px);
+  cursor: pointer;
+  font-family: sans-serif;
+  
+  // Shine effect
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(to left, rgba(255, 255, 255, 0.15), transparent);
+    transform: skewX(45deg);
+    transition: all 0.5s ease;
+    transition-delay: 0.5s;
+  }
+  
+  // Hover effects
+  &:hover {
+    letter-spacing: 3px;
+  }
+  
+  &:hover::before {
+    transform: skewX(45deg) translateX(200%);
+    transition-delay: 0s;
+  }
+  
+  // Size-specific font sizes
+  .pill-button--small & {
+    font-size: 14px;
+  }
+  
+  .pill-button--medium & {
+    font-size: 16px;
+  }
+  
+  .pill-button--large & {
+    font-size: 18px;
+  }
+  
+  // Disabled state
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+}

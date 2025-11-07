@@ -1,25 +1,6 @@
-.home-nav {
-  display: flex;
-  justify-content: flex-end;
-  padding: 1rem;
-  margin-right: 10vw;
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 1000;
-  width: 100%;
-}
-
 .home-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
   background: rgba(139, 92, 246, 0.1);
   border: 2px solid rgba(240, 249, 255, 0.2);
-  border-radius: 12px;
-  cursor: pointer;
   transition: all 0.3s ease;
   color: rgba(240, 249, 255, 0.8);
   
@@ -36,7 +17,5 @@
 }
 
 .home-icon {
-  width: 24px;
-  height: 24px;
   stroke-width: 2;
 }

@@ -1,11 +1,5 @@
 .infinity-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
   min-height: 80vh;
-  padding: 2rem;
-  gap: 2rem;
 }
 
 .infinity-logo {
@@ -141,24 +135,6 @@
 .title-text {
   text-align: center;
   color: rgba(240, 249, 255, 0.9);
-  
-  h1 {
-    font-size: 2.5rem;
-    font-weight: 700;
-    margin-bottom: 0.5rem;
-    background: linear-gradient(135deg, #06b6d4, #8b5cf6);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    
-    @media (max-width: 640px) {
-      font-size: 2rem;
-    }
-    
-    @media (max-width: 480px) {
-      font-size: 1.5rem;
-    }
-  }
   
   p {
     font-size: 1.125rem;

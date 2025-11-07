@@ -1,4 +1,12 @@
 <div class="p-4 text-sky-50">
+    @let existingContent = isExistingContent();
+    @if (!existingContent) {
+        <div class="flex justify-center items-center flex-col">
+            <p>Nothing in the library yet, best go make a timer.</p>
+            <app-crosshair-button (click)="navigateToCreateTimer()" text="Create a Timer" size="small" variant="primary" class="mt-12" />
+        </div>
+        
+    }
     <ul class="flex flex-wrap justify-center">
         @for (timer of timerStore.timers(); track timer.id) {
             <li class="flex-1 min-w-[300px] max-w-[400px] p-6 shadow-lg rounded m-4 bg-indigo-900/25">
