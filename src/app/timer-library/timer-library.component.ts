@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -14,6 +14,7 @@ import { TimerStore } from '../shared/state/timer-store.service';
     imports: [MatButtonModule, MatTooltipModule, MatIconModule],
 })
 export class TimerLibraryComponent {
+    protected isExistingContent = input<boolean>();
 
     constructor(public timerStore: TimerStore, private router: Router) {}
     
@@ -28,5 +29,9 @@ export class TimerLibraryComponent {
 
     onTimerStarted(timer: Timer) {
         this.timerStore.setActiveTimer(timer);
+    }
+
+    navigateToCreateTimer() {
+        this.router.navigate(['/setup']);
     }
 }
