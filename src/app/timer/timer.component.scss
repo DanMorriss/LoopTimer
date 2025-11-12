@@ -32,7 +32,8 @@
 }
 
 .timer-ring {
-  position: relative;
+  position: absolute;
+  top: 20vh;
   width: 380px;
   height: 380px;
   border-radius: 50%;
