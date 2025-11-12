@@ -4,7 +4,7 @@
 
             <mat-form-field class="w-full">
                 <mat-label>Timer Title</mat-label>
-                <input matInput [(ngModel)]="newTimerTitle" name="newTimerTitle" required>
+                <input matInput [(ngModel)]="newTimerTitle" name="newTimerTitle">
             </mat-form-field>
 
             <p class="p-4 text-center font-bold">Timer</p>
@@ -38,13 +38,16 @@
             <br>
             <div class="flex justify-center m-4">
                 <mat-form-field>
-                    <mat-label>Repeats</mat-label>
-                    <input matInput type="number" [(ngModel)]="newRepeats" name="newRepeats">
+                    <mat-label>Rounds</mat-label>
+                    <input matInput type="number" [(ngModel)]="newRepeats" name="newRepeats" min="1" required #repeatsInput="ngModel">
+                    @if (repeatsInput.invalid && (repeatsInput.dirty || repeatsInput.touched)) {
+                        <mat-error>Rounds must be at least 1</mat-error>
+                    }
                 </mat-form-field>
             </div>
             
             <div class="flex justify-center m-4">
-                <button mat-raised-button color="primary" type="submit"><mat-icon>play_circle</mat-icon> Start Timer</button>
+                <button mat-raised-button color="primary" type="submit" [disabled]="!isFormValid()"><mat-icon>play_circle</mat-icon> Start Timer</button>
             </div>
         </form>
     </div>

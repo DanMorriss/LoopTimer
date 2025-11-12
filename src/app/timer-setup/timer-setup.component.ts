@@ -29,11 +29,19 @@ export class TimerSetupComponent {
     newTimerSeconds: number = 0;
     newRestMinutes: number = 0;
     newRestSeconds: number = 0;
-    newRepeats: number = 0;
+    newRepeats: number = 1;
     
     constructor(public timerStore: TimerStore, private router: Router) {}
 
+    isFormValid(): boolean {
+        return this.newRepeats > 0;
+    }
+
     addTimer() {
+        if (!this.isFormValid()) {
+            return;
+        }
+
         const newTimer: Timer = {
             id: Date.now(),
             title: this.newTimerTitle,
