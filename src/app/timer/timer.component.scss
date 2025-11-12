@@ -32,19 +32,33 @@
 }
 
 .timer-ring {
-  position: relative;
+  position: absolute;
+  top: 20vh;
   width: 380px;
   height: 380px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: conic-gradient(
-    var(--progress-color, #00bcd4) var(--progress-deg, 0deg),
-    #e5e7eb 0deg
-  );
 
   transition: --progress-deg 950ms linear;
+
+  /* Clockwise gradient for timer (filling up) */
+  &.clockwise {
+    background: conic-gradient(
+      var(--progress-color, #00bcd4) var(--progress-deg, 0deg),
+      #e5e7eb 0deg
+    );
+  }
+
+  /* Anticlockwise gradient for rest (draining) */
+  &.anticlockwise {
+    background: conic-gradient(
+      from 0deg,
+      #e5e7eb calc(360deg - var(--progress-deg, 0deg)),
+      var(--progress-color, #00bcd4) 0deg
+    );
+  }
 }
 
 .timer-inner {
