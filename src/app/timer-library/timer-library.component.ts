@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, computed } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -18,7 +18,7 @@ import { TimerStore } from '../shared/state/timer-store.service';
     imports: [MatButtonModule, MatTooltipModule, MatIconModule, SlideButtonComponent, EdgeButtonComponent, CrosshairButtonComponent, PillButtonComponent],
 })
 export class TimerLibraryComponent {
-    protected isExistingContent = input<boolean>();
+    protected isExistingTimers = computed(() => this.timerStore.timers().length > 0);
 
     constructor(public timerStore: TimerStore, private router: Router) {}
     
