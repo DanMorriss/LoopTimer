@@ -1,13 +1,10 @@
-import { Component, computed } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router } from '@angular/router';
 import { Timer } from '../models/timer';
 import { CrosshairButtonComponent } from '../shared/components/crosshair-button/crosshair-button.component';
-import { EdgeButtonComponent } from '../shared/components/edge-button/edge-button.component';
-import { PillButtonComponent } from "../shared/components/pill-button/pill-button.component";
-import { SlideButtonComponent } from '../shared/components/slide-button/slide-button.component';
 import { TimerStore } from '../shared/state/timer-store.service';
 
 
@@ -15,13 +12,15 @@ import { TimerStore } from '../shared/state/timer-store.service';
     selector: 'app-timer-library',
     templateUrl: './timer-library.component.html',
     styleUrl: './timer-library.component.scss',
-    imports: [MatButtonModule, MatTooltipModule, MatIconModule, SlideButtonComponent, EdgeButtonComponent, CrosshairButtonComponent, PillButtonComponent],
+    imports: [MatButtonModule, MatTooltipModule, MatIconModule, CrosshairButtonComponent],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TimerLibraryComponent {
+    timerStore = inject(TimerStore);
+    router = inject(Router);
+
     protected isExistingTimers = computed(() => this.timerStore.timers().length > 0);
 
-    constructor(public timerStore: TimerStore, private router: Router) {}
-    
     deleteTimer(timerId: number) {
         this.timerStore.deleteTimer(timerId);
     }
@@ -31,11 +30,11 @@ export class TimerLibraryComponent {
         this.router.navigate(['/timer']);
     }
 
-    onTimerStarted(timer: Timer) {
-        this.timerStore.setActiveTimer(timer);
-    }
-
     navigateToCreateTimer() {
         this.router.navigate(['/setup']);
+    }
+
+    formatTime(minutes: number, seconds: number): string {
+        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
     }
 }

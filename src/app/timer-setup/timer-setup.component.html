@@ -1,10 +1,10 @@
 <div class="flex justify-center">
     <div class="shadow-lg rounded-xl m-4 p-6 w-full max-w-md bg-sky-50/50">
-        <form (ngSubmit)="addTimer()">
+        <form [formGroup]="timerForm" (ngSubmit)="addTimer()">
 
             <mat-form-field class="w-full">
                 <mat-label>Timer Title</mat-label>
-                <input matInput [(ngModel)]="newTimerTitle" name="newTimerTitle">
+                <input matInput formControlName="title">
             </mat-form-field>
 
             <p class="p-4 text-center font-bold">Timer</p>
@@ -12,12 +12,12 @@
             <div class="flex w-full">
                 <mat-form-field class="flex-1 min-w-0">
                     <mat-label>Minutes</mat-label>
-                    <input matInput type="number" [(ngModel)]="newTimerMinutes" name="newTimerMinutes">
+                    <input matInput type="number" formControlName="timerMinutes" min="0">
                 </mat-form-field>
                 
                 <mat-form-field class="flex-1 min-w-0">
                     <mat-label>Seconds</mat-label>
-                    <input matInput type="number" [(ngModel)]="newTimerSeconds" name="newTimerSeconds">
+                    <input matInput type="number" formControlName="timerSeconds" min="0">
                 </mat-form-field>
             </div>
 
@@ -26,12 +26,12 @@
             <div class="flex w-full">
             <mat-form-field class="flex-1 min-w-0">
                 <mat-label>Minutes</mat-label>
-                <input matInput type="number" [(ngModel)]="newRestMinutes" name="newRestMinutes">
+                <input matInput type="number" formControlName="restMinutes" min="0">
             </mat-form-field>
 
             <mat-form-field class="flex-1 min-w-0">
                 <mat-label>Seconds</mat-label>
-                <input matInput type="number" [(ngModel)]="newRestSeconds" name="newRestSeconds">
+                <input matInput type="number" formControlName="restSeconds" min="0">
             </mat-form-field>
         </div>
 
@@ -39,15 +39,18 @@
             <div class="flex justify-center m-4">
                 <mat-form-field>
                     <mat-label>Rounds</mat-label>
-                    <input matInput type="number" [(ngModel)]="newRepeats" name="newRepeats" min="1" required #repeatsInput="ngModel">
-                    @if (repeatsInput.invalid && (repeatsInput.dirty || repeatsInput.touched)) {
-                        <mat-error>Rounds must be at least 1</mat-error>
+                    <input matInput type="number" formControlName="repeats" min="1">
+                    @if (timerForm.controls.repeats.invalid && (timerForm.controls.repeats.dirty || timerForm.controls.repeats.touched)) {
+                        <mat-error>Must have at least 1 round</mat-error>
                     }
                 </mat-form-field>
             </div>
             
+            @if (timerForm.invalid && timerForm.hasError('noTime')) {
+                <mat-error>Timer must have some time</mat-error>
+            }
             <div class="flex justify-center m-4">
-                <button mat-raised-button color="primary" type="submit" [disabled]="!isFormValid()"><mat-icon>play_circle</mat-icon> Start Timer</button>
+                <button mat-raised-button color="primary" type="submit" [disabled]="!timerForm.valid"><mat-icon>play_circle</mat-icon> Start Timer</button>
             </div>
         </form>
     </div>
