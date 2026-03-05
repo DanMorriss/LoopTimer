@@ -1,23 +1,6 @@
 import { computed, Injectable, signal } from "@angular/core";
 import { Timer } from "../../models/timer";
 
-const initialTimer: Timer = {
-    id: 1,
-    title: '',
-    timerMinutes: 0,
-    timerSeconds: 0,
-    restMinutes: 0,
-    restSeconds: 0,
-    repeats: 0,
-    isTimerActive: false,
-    isRestActive: false,
-    isComplete: false
-}
-
-export const timerSignal = signal<Timer>(initialTimer);
-
-export const setTimer = (timer:Timer) => timerSignal.set(timer);
-
 @Injectable({ providedIn: 'root'})
 export class TimerStore {
     private _timers = signal<Timer[]>([]);
@@ -33,10 +16,19 @@ export class TimerStore {
         }
     }
 
-    addTimer(timer: Timer) {
-        const updated = [...this._timers(), timer];
-        this._timers.set(updated);
+    addTimer(timer: Omit<Timer, 'id'>): Timer {
+        const newTimer: Timer = {
+            ...timer,
+            id: this.generateNextId()
+        };
+        this._timers.update(timers => [...timers, newTimer]);
         this.saveTimers();
+        return newTimer;
+    }
+
+    private generateNextId(): number {
+        const timers = this._timers();
+        return timers.length > 0 ? Math.max(...timers.map(timers => timers.id)) + 1 : 1;
     }
 
     deleteTimer(timerId: number) {
@@ -52,6 +44,4 @@ export class TimerStore {
     private saveTimers() {
         localStorage.setItem('timers', JSON.stringify(this._timers()));
     }
-
-
 }

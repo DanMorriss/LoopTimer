@@ -1,6 +1,15 @@
-import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import {
+    ChangeDetectionStrategy,
+    Component,
+    inject
+} from '@angular/core';
+import {
+    AbstractControl,
+    FormBuilder,
+    ReactiveFormsModule,
+    ValidationErrors,
+    Validators
+} from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -15,71 +24,57 @@ import { TimerStore } from '../shared/state/timer-store.service';
     templateUrl: './timer-setup.component.html',
     styleUrl: './timer-setup.component.scss',
     imports: [
-        CommonModule, 
-        FormsModule, 
+        ReactiveFormsModule, 
         MatButtonModule, 
         MatInputModule, 
         MatFormFieldModule, 
         MatIconModule,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TimerSetupComponent {
-    newTimerTitle: string = '';
-    newTimerMinutes: number = 0;
-    newTimerSeconds: number = 0;
-    newRestMinutes: number = 0;
-    newRestSeconds: number = 0;
-    newRepeats: number = 1;
-    
-    constructor(public timerStore: TimerStore, private router: Router) {}
+    timerStore = inject(TimerStore);
+    router = inject(Router);
 
-    isFormValid(): boolean {
-        return this.newRepeats > 0;
+    timerForm = inject(FormBuilder).nonNullable.group({
+        title: [''],
+        timerMinutes: [0, Validators.min(0)],
+        timerSeconds: [0, Validators.min(0)],
+        restMinutes: [0, Validators.min(0)],
+        restSeconds: [0, Validators.min(0)],
+        repeats: [1, Validators.min(1)]
+    }, {
+        validators: [this.timerTimeValidator.bind(this)]
+    });
+
+    private timerTimeValidator(group: AbstractControl): ValidationErrors | null {
+        const minutes = group.get('timerMinutes')?.value ?? 0;
+        const seconds = group.get('timerSeconds')?.value ?? 0;
+        return (minutes + seconds) > 0 ? null : { noTime: true };
     }
 
     addTimer() {
-        if (!this.isFormValid()) {
+        if (!this.timerForm.valid) {
             return;
         }
 
-        const newTimer: Timer = {
-            id: Date.now(),
-            title: this.newTimerTitle,
-            timerMinutes: this.newTimerMinutes,
-            timerSeconds: this.newTimerSeconds,
-            restMinutes: this.newRestMinutes,
-            restSeconds: this.newRestSeconds,
-            repeats: this.newRepeats,
+        const formValue = this.timerForm.getRawValue();
+
+        const newTimer: Omit<Timer, 'id'> = {
+            title: formValue.title,
+            timerMinutes: formValue.timerMinutes,
+            timerSeconds: formValue.timerSeconds,
+            restMinutes: formValue.restMinutes,
+            restSeconds: formValue.restSeconds,
+            repeats: formValue.repeats,
             isTimerActive: false,
             isRestActive: false, 
             isComplete: false
         };
 
-        this.timerStore.addTimer(newTimer);
-        this.resetForm();
-        this.timerStore.setActiveTimer(newTimer);
+        const savedTimer = this.timerStore.addTimer(newTimer);
+        this.timerForm.reset({ repeats: 1 });
+        this.timerStore.setActiveTimer(savedTimer);
         this.router.navigate(['/timer']);
     }
-    
-    deleteTimer(timerId: number) {
-        this.timerStore.deleteTimer(timerId);
-    }
-    
-    resetForm() {
-        this.newTimerTitle = '';
-        this.newTimerMinutes = 0;
-        this.newTimerSeconds = 0;
-        this.newRestMinutes = 0;
-        this.newRestSeconds = 0;
-        this.newRepeats = 0;
-        
-    }
-
-    startTimer(timer: Timer) {
-        this.timerStore.setActiveTimer(timer);
-    }
-
-    onTimerStarted(timer: Timer) {
-        this.timerStore.setActiveTimer(timer);
-      }
 }

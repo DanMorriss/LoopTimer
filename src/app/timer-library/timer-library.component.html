@@ -11,8 +11,8 @@
         @for (timer of timerStore.timers(); track timer.id) {
             <li class="flex-1 min-w-[300px] max-w-[400px] p-6 shadow-lg rounded m-4 bg-indigo-900/25">
                 <p class="text-center text-2xl" matTooltip="ID: {{timer.id}}">{{timer.title}}</p>
-                <p>Timer length: {{timer.timerMinutes}}:{{timer.timerSeconds}}</p>
-                <p>Rest: {{timer.restMinutes}}:{{timer.restSeconds}}</p>
+                <p>Timer length: {{formatTime(timer.timerMinutes, timer.timerSeconds)}}</p>
+                <p>Rest: {{formatTime(timer.restMinutes, timer.restSeconds)}}</p>
                 <p>Repeats: {{timer.repeats}}</p>
                 <div class="flex justify-center gap-4">
                     <button class="flex-1" mat-raised-button color="primary" (click)="startTimer(timer)">
@@ -23,6 +23,6 @@
                     </button>
                 </div>
             </li>
-            }
-        </ul>
+        }
+    </ul>
 </div>
