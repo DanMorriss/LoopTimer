@@ -9,47 +9,47 @@
             }
         </div>
     }
-    @if (repeatArray.length === 1 && isTimerActive) {
+    @if (repeatArray.length === 1 && isTimerActive() === true) {
         <p class="text-3xl text-sky-50">Last one!</p>
     }
 
     <div
     class="timer-ring"
-    [class.clockwise]="isTimerActive"
-    [class.anticlockwise]="isRestActive"
+    [class.clockwise]="isTimerActive()"
+    [class.anticlockwise]="isRestActive()"
     [style.--progress-color]="
-        isTimerActive
+        isTimerActive() === true
         ? 'oklch(81% 0.117 11.638)'
-        : isRestActive
+        : isRestActive() === true
         ? 'oklch(90.1% 0.058 230.902)'
         : '#ddd'
     "
-    [style.--progress-deg]="progress * 360 + 'deg'"
+    [style.--progress-deg]="progress() * 360 + 'deg'"
     >
         <div class="timer-inner">
             <div class="text-4xl text-black text-center w-[340px] h-[340px] rounded-full flex justify-center items-center"
                 [class]="{
-                    'flash-fade': isTimerActive, 
-                    'flash-fade-blue': isRestActive,
-                    'bg-sky-50/50': isComplete,
+                    'flash-fade': isTimerActive(), 
+                    'flash-fade-blue': isRestActive(),
+                    'bg-sky-50/50': isComplete(),
                 }"
             >
         
-            @if (!isComplete) {
+            @if (isComplete() === false) {
                 <div>
-                    @if (isTimerActive) {
+                    @if (isTimerActive() === true) {
                         <p class="text-transparent">Timer</p>
-                        <p>{{minutes}}:{{seconds}}</p>
+                        <p>{{minutes()}}:{{seconds()}}</p>
                     }
                         
-                        @if (isRestActive) {
+                        @if (isRestActive() === true) {
                             <p>Rest</p>
-                            <p>{{restMinutes}}:{{restSeconds}}</p>
+                            <p>{{restMinutes()}}:{{restSeconds()}}</p>
                         }
                     </div>
                 }
                 
-                @if(isComplete) {
+                @if(isComplete() === true) {
                     <div>
                         <p>You're finished!</p>
                     </div>
