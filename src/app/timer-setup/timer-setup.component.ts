@@ -13,7 +13,6 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
 import { Router } from '@angular/router';
 import { Timer } from '../models/timer';
 import { TimerStore } from '../shared/state/timer-store.service';
@@ -26,7 +25,6 @@ import { TimerStore } from '../shared/state/timer-store.service';
     imports: [
         ReactiveFormsModule, 
         MatButtonModule, 
-        MatInputModule, 
         MatFormFieldModule, 
         MatIconModule,
     ],
@@ -35,6 +33,9 @@ import { TimerStore } from '../shared/state/timer-store.service';
 export class TimerSetupComponent {
     timerStore = inject(TimerStore);
     router = inject(Router);
+    minuteOptions = Array.from({ length: 100 }, (_, index) => index);
+    secondOptions = Array.from({ length: 60 }, (_, index) => index);
+    repeatOptions = Array.from({ length: 30 }, (_, index) => index + 1);
 
     timerForm = inject(FormBuilder).nonNullable.group({
         title: [''],
@@ -48,9 +49,13 @@ export class TimerSetupComponent {
     });
 
     private timerTimeValidator(group: AbstractControl): ValidationErrors | null {
-        const minutes = group.get('timerMinutes')?.value ?? 0;
-        const seconds = group.get('timerSeconds')?.value ?? 0;
+        const minutes = this.toNumber(group.get('timerMinutes')?.value);
+        const seconds = this.toNumber(group.get('timerSeconds')?.value);
         return (minutes + seconds) > 0 ? null : { noTime: true };
+    }
+
+    private toNumber(value: unknown): number {
+        return typeof value === 'number' ? value : Number(value ?? 0);
     }
 
     addTimer() {
@@ -62,11 +67,11 @@ export class TimerSetupComponent {
 
         const newTimer: Omit<Timer, 'id'> = {
             title: formValue.title,
-            timerMinutes: formValue.timerMinutes,
-            timerSeconds: formValue.timerSeconds,
-            restMinutes: formValue.restMinutes,
-            restSeconds: formValue.restSeconds,
-            repeats: formValue.repeats,
+            timerMinutes: this.toNumber(formValue.timerMinutes),
+            timerSeconds: this.toNumber(formValue.timerSeconds),
+            restMinutes: this.toNumber(formValue.restMinutes),
+            restSeconds: this.toNumber(formValue.restSeconds),
+            repeats: this.toNumber(formValue.repeats),
             isTimerActive: false,
             isRestActive: false, 
             isComplete: false

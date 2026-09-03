@@ -1,0 +1,55 @@
+.picker-row {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0.75rem;
+}
+
+.picker-field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+
+.picker-field--single {
+	width: min(220px, 100%);
+}
+
+.picker-field__label {
+	font-size: 0.9rem;
+	color: #bfccdd;
+}
+
+.picker-field__select {
+	width: 100%;
+	appearance: none;
+	border: 1px solid rgba(148, 163, 184, 0.45);
+	border-radius: 0.75rem;
+	background: rgba(15, 23, 42, 0.75);
+	color: #e6edf6;
+	padding: 0.7rem 0.9rem;
+	line-height: 1.2;
+	font-size: 1rem;
+}
+
+.picker-field__input {
+	width: 100%;
+	border: 1px solid rgba(148, 163, 184, 0.45);
+	border-radius: 0.75rem;
+	background: rgba(15, 23, 42, 0.75);
+	color: #e6edf6;
+	padding: 0.7rem 0.9rem;
+	line-height: 1.2;
+	font-size: 1rem;
+}
+
+.picker-field__select:focus,
+.picker-field__input:focus {
+	outline: 2px solid #38bdf8;
+	outline-offset: 2px;
+	border-color: #38bdf8;
+}
+
+.picker-field__select option {
+	background: #0b1220;
+	color: #e6edf6;
+}
