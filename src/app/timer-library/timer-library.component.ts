@@ -1,10 +1,10 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router } from '@angular/router';
 import { Timer } from '../models/timer';
-import { CrosshairButtonComponent } from '../shared/components/crosshair-button/crosshair-button.component';
+import { InfinityButtonComponent } from "../shared/components/infinity-button/infinity-button.component";
 import { TimerStore } from '../shared/state/timer-store.service';
 
 
@@ -12,17 +12,52 @@ import { TimerStore } from '../shared/state/timer-store.service';
     selector: 'app-timer-library',
     templateUrl: './timer-library.component.html',
     styleUrl: './timer-library.component.scss',
-    imports: [MatButtonModule, MatTooltipModule, MatIconModule, CrosshairButtonComponent],
+    imports: [MatButtonModule, MatTooltipModule, MatIconModule, InfinityButtonComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TimerLibraryComponent {
     timerStore = inject(TimerStore);
     router = inject(Router);
+    protected timerPendingDelete = signal<Timer | null>(null);
+    protected activeTimerCardId = signal<number | null>(null);
+    protected openTimerMenuId = signal<number | null>(null);
 
     protected isExistingTimers = computed(() => this.timerStore.timers().length > 0);
 
-    deleteTimer(timerId: number) {
-        this.timerStore.deleteTimer(timerId);
+    requestDelete(timer: Timer) {
+        this.activeTimerCardId.set(null);
+        this.openTimerMenuId.set(null);
+        this.timerPendingDelete.set(timer);
+    }
+
+    cancelDelete() {
+        this.timerPendingDelete.set(null);
+    }
+
+    confirmDelete() {
+        const timer = this.timerPendingDelete();
+        if (!timer) {
+            return;
+        }
+
+        this.timerStore.deleteTimer(timer.id);
+        this.timerPendingDelete.set(null);
+        this.activeTimerCardId.set(null);
+        this.openTimerMenuId.set(null);
+    }
+
+    setActiveTimerCard(timerId: number) {
+        this.activeTimerCardId.set(timerId);
+    }
+
+    clearActiveTimerCard() {
+        this.activeTimerCardId.set(null);
+        this.openTimerMenuId.set(null);
+    }
+
+    toggleTimerMenu(timerId: number) {
+        this.activeTimerCardId.set(timerId);
+        this.openTimerMenuId.update(currentMenuId => currentMenuId === timerId ? null : timerId);
     }
 
     startTimer(timer: Timer) {
@@ -32,6 +67,12 @@ export class TimerLibraryComponent {
 
     navigateToCreateTimer() {
         this.router.navigate(['/setup']);
+    }
+
+    navigateToEditTimer(timerId: number) {
+        this.openTimerMenuId.set(null);
+        this.activeTimerCardId.set(null);
+        this.router.navigate(['/setup'], { queryParams: { editId: timerId } });
     }
 
     formatTime(minutes: number, seconds: number): string {

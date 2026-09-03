@@ -1,0 +1,24 @@
+<button 
+    [type]="type()"
+    [class]="buttonClasses"
+    [disabled]="disabled()"
+    (click)="onClick()">
+    <!-- Animated traveling dot -->
+    <svg class="infinity-button__border-svg" viewBox="0 0 100 40" preserveAspectRatio="none">
+        <defs>
+            <path 
+                id="borderPath"
+                d="M 8,2 L 92,2 Q 98,2 98,8 L 98,32 Q 98,38 92,38 L 8,38 Q 2,38 2,32 L 2,8 Q 2,2 8,2 Z"
+            />
+        </defs>
+        <circle r="2" class="infinity-button__traveling-dot">
+            <animateMotion 
+                dur="3s" 
+                repeatCount="indefinite"
+            >
+                <mpath href="#borderPath" />
+            </animateMotion>
+        </circle>
+    </svg>
+    <span class="infinity-button__text">{{ text() }}</span>
+</button>

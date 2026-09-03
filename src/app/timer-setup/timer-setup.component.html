@@ -1,56 +1,75 @@
 <div class="flex justify-center">
-    <div class="shadow-lg rounded-xl m-4 p-6 w-full max-w-md bg-sky-50/50">
+    <div class="m-4 w-full max-w-md rounded-xl border border-slate-700/60 bg-slate-900/35 p-6 shadow-xl shadow-black/30 backdrop-blur-sm">
         <form [formGroup]="timerForm" (ngSubmit)="addTimer()">
 
-            <mat-form-field class="w-full">
-                <mat-label>Timer Title</mat-label>
-                <input matInput formControlName="title">
-            </mat-form-field>
+            <label class="picker-field" for="title">
+                <span class="picker-field__label">Timer Title</span>
+                <input class="picker-field__input" id="title" formControlName="title">
+            </label>
 
-            <p class="p-4 text-center font-bold">Timer</p>
+            <p class="p-4 text-center font-bold text-slate-100">Timer</p>
 
-            <div class="flex w-full">
-                <mat-form-field class="flex-1 min-w-0">
-                    <mat-label>Minutes</mat-label>
-                    <input matInput type="number" formControlName="timerMinutes" min="0">
-                </mat-form-field>
-                
-                <mat-form-field class="flex-1 min-w-0">
-                    <mat-label>Seconds</mat-label>
-                    <input matInput type="number" formControlName="timerSeconds" min="0">
-                </mat-form-field>
+            <div class="picker-row">
+                <label class="picker-field" for="timerMinutes">
+                    <span class="picker-field__label">Minutes</span>
+                    <select class="picker-field__select" id="timerMinutes" formControlName="timerMinutes">
+                        @for (minute of minuteOptions; track minute) {
+                            <option [value]="minute">{{ minute.toString().padStart(2, '0') }}</option>
+                        }
+                    </select>
+                </label>
+
+                <label class="picker-field" for="timerSeconds">
+                    <span class="picker-field__label">Seconds</span>
+                    <select class="picker-field__select" id="timerSeconds" formControlName="timerSeconds">
+                        @for (second of secondOptions; track second) {
+                            <option [value]="second">{{ second.toString().padStart(2, '0') }}</option>
+                        }
+                    </select>
+                </label>
             </div>
 
-            <p class="p-4 text-center font-bold">Rest</p>
+            <p class="p-4 text-center font-bold text-slate-100">Rest</p>
 
-            <div class="flex w-full">
-            <mat-form-field class="flex-1 min-w-0">
-                <mat-label>Minutes</mat-label>
-                <input matInput type="number" formControlName="restMinutes" min="0">
-            </mat-form-field>
+            <div class="picker-row">
+                <label class="picker-field" for="restMinutes">
+                    <span class="picker-field__label">Minutes</span>
+                    <select class="picker-field__select" id="restMinutes" formControlName="restMinutes">
+                        @for (minute of minuteOptions; track minute) {
+                            <option [value]="minute">{{ minute.toString().padStart(2, '0') }}</option>
+                        }
+                    </select>
+                </label>
 
-            <mat-form-field class="flex-1 min-w-0">
-                <mat-label>Seconds</mat-label>
-                <input matInput type="number" formControlName="restSeconds" min="0">
-            </mat-form-field>
-        </div>
+                <label class="picker-field" for="restSeconds">
+                    <span class="picker-field__label">Seconds</span>
+                    <select class="picker-field__select" id="restSeconds" formControlName="restSeconds">
+                        @for (second of secondOptions; track second) {
+                            <option [value]="second">{{ second.toString().padStart(2, '0') }}</option>
+                        }
+                    </select>
+                </label>
+            </div>
 
-            <br>
             <div class="flex justify-center m-4">
-                <mat-form-field>
-                    <mat-label>Rounds</mat-label>
-                    <input matInput type="number" formControlName="repeats" min="1">
-                    @if (timerForm.controls.repeats.invalid && (timerForm.controls.repeats.dirty || timerForm.controls.repeats.touched)) {
-                        <mat-error>Must have at least 1 round</mat-error>
-                    }
-                </mat-form-field>
+                <label class="picker-field picker-field--single" for="repeats">
+                    <span class="picker-field__label">Rounds</span>
+                    <select class="picker-field__select" id="repeats" formControlName="repeats">
+                        @for (repeat of repeatOptions; track repeat) {
+                            <option [value]="repeat">{{ repeat }}</option>
+                        }
+                    </select>
+                </label>
             </div>
             
             @if (timerForm.invalid && timerForm.hasError('noTime')) {
                 <mat-error>Timer must have some time</mat-error>
             }
             <div class="flex justify-center m-4">
-                <button mat-raised-button color="primary" type="submit" [disabled]="!timerForm.valid"><mat-icon>play_circle</mat-icon> Start Timer</button>
+                <button mat-raised-button color="primary" type="submit" [disabled]="!timerForm.valid">
+                    <mat-icon>play_circle</mat-icon>
+                    {{ editingTimerId() ? 'Save & Start Timer' : 'Start Timer' }}
+                </button>
             </div>
         </form>
     </div>

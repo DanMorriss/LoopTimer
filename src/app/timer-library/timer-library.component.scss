@@ -1,0 +1,326 @@
+.library-screen {
+	padding-bottom: 6.5rem;
+}
+
+.library-list {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(280px, 420px));
+	justify-content: center;
+	gap: 1rem;
+	padding: 0;
+	margin: 1rem 0 0;
+}
+
+.timer-card {
+	list-style: none;
+	position: relative;
+	overflow: visible;
+	border-radius: 0.9rem;
+	border: 1px solid rgba(148, 163, 184, 0.35);
+	background: rgba(15, 23, 42, 0.42);
+	box-shadow: 0 10px 30px rgba(2, 6, 23, 0.45);
+	padding: 0.9rem 0.8rem;
+	backdrop-filter: blur(8px);
+	cursor: pointer;
+}
+
+.timer-card--active::before {
+	content: "";
+	position: absolute;
+	offset-path: inset(0.5px round 0.9rem);
+	offset-distance: 0%;
+	animation: card-edge-orbit 2.6s linear infinite;
+	offset-rotate: auto;
+	pointer-events: none;
+	z-index: 3;
+	width: 36px;
+	height: 8px;
+	border-radius: 999px;
+	background: rgba(56, 189, 248, 0.42);
+	filter: blur(0.35px);
+	box-shadow:
+		0 0 4px rgba(34, 211, 238, 0.28),
+		0 0 8px rgba(34, 211, 238, 0.18);
+}
+
+.timer-card--menu-open::before {
+	display: none;
+}
+
+.timer-card__content {
+	transition: opacity 0.2s ease, filter 0.2s ease;
+}
+
+.timer-card__content--muted {
+	opacity: 0.35;
+	filter: grayscale(0.25);
+}
+
+.timer-card__title {
+	margin: 0 0 0.5rem;
+	text-align: center;
+	font-size: 1rem;
+	color: #e2e8f0;
+	letter-spacing: 0.02em;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.timer-card__row {
+	display: grid;
+	grid-template-columns: 44px 1fr 44px;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.timer-card__spacer {
+	width: 44px;
+	height: 44px;
+}
+
+.timer-card__summary {
+	margin: 0;
+	text-align: center;
+	color: #dbe7f8;
+	font-size: 1.03rem;
+	letter-spacing: 0.03em;
+}
+
+.timer-card__action {
+	width: 44px;
+	height: 44px;
+	border: 1px solid rgba(148, 163, 184, 0.35);
+	border-radius: 999px;
+	background: rgba(15, 23, 42, 0.65);
+	display: inline-grid;
+	place-items: center;
+	padding: 0;
+	cursor: pointer;
+	transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.timer-card__action:hover {
+	transform: translateY(-1px);
+	border-color: rgba(148, 163, 184, 0.6);
+	background: rgba(30, 41, 59, 0.78);
+}
+
+.timer-card__action:active {
+	transform: translateY(0);
+}
+
+.timer-card__action-icon {
+	width: 24px;
+	height: 24px;
+	font-size: 24px;
+	line-height: 24px;
+	color: #dbe7f8;
+}
+
+.timer-card__action--start .timer-card__action-icon {
+	color: #38bdf8;
+}
+
+.timer-card__action--delete .timer-card__action-icon {
+	color: #f87171;
+}
+
+.timer-card__action--menu .timer-card__action-icon {
+	color: #cbd5e1;
+}
+
+.timer-card__action:focus-visible {
+	outline: 2px solid #38bdf8;
+	outline-offset: 2px;
+}
+
+.timer-card__menu-wrap {
+	position: absolute;
+	right: 0.8rem;
+	top: 50%;
+	transform: translateY(-50%);
+	z-index: 8;
+}
+
+.timer-card__menu {
+	position: absolute;
+	top: calc(100% + 0.2rem);
+	right: 0;
+	min-width: 130px;
+	border: 1px solid rgba(148, 163, 184, 0.4);
+	border-radius: 0.65rem;
+	background: rgba(15, 23, 42, 0.97);
+	box-shadow: 0 10px 24px rgba(2, 6, 23, 0.55);
+	overflow: hidden;
+	z-index: 9;
+}
+
+.timer-card__menu-item {
+	width: 100%;
+	padding: 0.55rem 0.7rem;
+	border: 0;
+	border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+	background: transparent;
+	color: #e2e8f0;
+	display: flex;
+	align-items: center;
+	gap: 0.45rem;
+	cursor: pointer;
+	text-align: left;
+}
+
+.timer-card__menu-item:last-child {
+	border-bottom: 0;
+}
+
+.timer-card__menu-item:hover {
+	background: rgba(30, 41, 59, 0.72);
+}
+
+.timer-card__menu-item:focus-visible {
+	outline: 2px solid #38bdf8;
+	outline-offset: -2px;
+}
+
+.timer-card__menu-item--danger {
+	color: #fecaca;
+}
+
+.timer-card__menu-icon {
+	font-size: 18px;
+	width: 18px;
+	height: 18px;
+	line-height: 18px;
+}
+
+.timer-card__overlay-play {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+	width: 78px;
+	height: 78px;
+	border-radius: 999px;
+	border: 1px solid rgba(56, 189, 248, 0.55);
+	background: rgba(15, 23, 42, 0.88);
+	display: inline-grid;
+	place-items: center;
+	padding: 0;
+	cursor: pointer;
+	box-shadow: 0 14px 28px rgba(2, 6, 23, 0.6);
+	z-index: 2;
+}
+
+.timer-card__overlay-play:hover {
+	background: rgba(15, 23, 42, 0.98);
+	border-color: rgba(56, 189, 248, 0.8);
+}
+
+.timer-card__overlay-icon {
+	width: 42px;
+	height: 42px;
+	font-size: 42px;
+	line-height: 42px;
+	color: #38bdf8;
+}
+
+.timer-card__overlay-play:focus-visible {
+	outline: 2px solid #e2e8f0;
+	outline-offset: 2px;
+}
+
+@keyframes card-edge-orbit {
+	0% {
+		offset-distance: 0%;
+	}
+	100% {
+		offset-distance: 100%;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.timer-card--active::before {
+		animation: none;
+	}
+}
+
+.library-add-button {
+	position: fixed;
+	left: 50%;
+	bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+	transform: translateX(-50%);
+	z-index: 20;
+	background: #0ea5e9;
+	color: #03253b;
+	border-radius: 999px;
+	box-shadow: 0 12px 26px rgba(2, 6, 23, 0.45);
+}
+
+.library-add-button mat-icon {
+	color: #03253b;
+}
+
+.library-add-button:focus-visible {
+	outline: 2px solid #e2e8f0;
+	outline-offset: 3px;
+}
+
+.confirm-overlay {
+	position: fixed;
+	inset: 0;
+	display: grid;
+	place-items: center;
+	background: rgba(2, 6, 23, 0.65);
+	backdrop-filter: blur(6px);
+	padding: 1rem;
+	z-index: 40;
+}
+
+.confirm-dialog {
+	width: min(420px, 100%);
+	border-radius: 0.9rem;
+	border: 1px solid rgba(148, 163, 184, 0.35);
+	background: rgba(15, 23, 42, 0.96);
+	box-shadow: 0 18px 40px rgba(2, 6, 23, 0.6);
+	padding: 1.2rem;
+}
+
+.confirm-dialog__title {
+	margin: 0;
+	font-size: 1.1rem;
+	color: #f8fafc;
+}
+
+.confirm-dialog__description {
+	margin: 0.7rem 0 0;
+	color: #cbd5e1;
+	line-height: 1.4;
+}
+
+.confirm-dialog__actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.6rem;
+	margin-top: 1rem;
+}
+
+.confirm-dialog__button {
+	border: 1px solid rgba(148, 163, 184, 0.45);
+	background: rgba(15, 23, 42, 0.6);
+	color: #e2e8f0;
+	border-radius: 0.65rem;
+	padding: 0.5rem 0.95rem;
+	cursor: pointer;
+}
+
+.confirm-dialog__button--delete {
+	border-color: rgba(248, 113, 113, 0.65);
+	color: #fecaca;
+	background: rgba(127, 29, 29, 0.35);
+}
+
+.confirm-dialog__button:focus-visible {
+	outline: 2px solid #38bdf8;
+	outline-offset: 2px;
+}

@@ -1,11 +1,20 @@
 @import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Audiowide&display=swap');
 
+:root {
+  color-scheme: dark;
+}
+
 html, body { height: 100%; }
 body { 
     margin: 0; 
-    background: rgb(2,0,36);
-    background: linear-gradient(90deg, rgba(2,0,36,1) 0%, rgba(85,10,97,1) 53%, rgba(13,20,124,1) 100%);
+    background-color: #070b12;
+    background-image:
+      radial-gradient(circle at 15% 20%, rgba(44, 74, 112, 0.25), transparent 45%),
+      radial-gradient(circle at 80% 0%, rgba(28, 44, 69, 0.35), transparent 42%),
+      linear-gradient(165deg, #0b111b 0%, #090f17 45%, #060a11 100%);
+    background-attachment: fixed;
+    color: #e5ebf5;
 }
 
 * {
