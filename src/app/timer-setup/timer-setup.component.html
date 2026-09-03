@@ -1,5 +1,5 @@
 <div class="flex justify-center">
-    <div class="shadow-lg rounded-xl m-4 p-6 w-full max-w-md bg-sky-50/50">
+    <div class="m-4 w-full max-w-md rounded-xl border border-slate-700/60 bg-slate-900/35 p-6 shadow-xl shadow-black/30 backdrop-blur-sm">
         <form [formGroup]="timerForm" (ngSubmit)="addTimer()">
 
             <mat-form-field class="w-full">
@@ -7,9 +7,9 @@
                 <input matInput formControlName="title">
             </mat-form-field>
 
-            <p class="p-4 text-center font-bold">Timer</p>
+            <p class="p-4 text-center font-bold text-slate-100">Timer</p>
 
-            <div class="flex w-full">
+            <div class="flex w-full gap-3">
                 <mat-form-field class="flex-1 min-w-0">
                     <mat-label>Minutes</mat-label>
                     <input matInput type="number" formControlName="timerMinutes" min="0">
@@ -21,9 +21,9 @@
                 </mat-form-field>
             </div>
 
-            <p class="p-4 text-center font-bold">Rest</p>
+            <p class="p-4 text-center font-bold text-slate-100">Rest</p>
 
-            <div class="flex w-full">
+            <div class="flex w-full gap-3">
             <mat-form-field class="flex-1 min-w-0">
                 <mat-label>Minutes</mat-label>
                 <input matInput type="number" formControlName="restMinutes" min="0">
@@ -35,7 +35,6 @@
             </mat-form-field>
         </div>
 
-            <br>
             <div class="flex justify-center m-4">
                 <mat-form-field>
                     <mat-label>Rounds</mat-label>

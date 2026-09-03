@@ -4,7 +4,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router } from '@angular/router';
 import { Timer } from '../models/timer';
-import { CrosshairButtonComponent } from '../shared/components/crosshair-button/crosshair-button.component';
+import { InfinityButtonComponent } from "../shared/components/infinity-button/infinity-button.component";
 import { TimerStore } from '../shared/state/timer-store.service';
 
 
@@ -12,7 +12,7 @@ import { TimerStore } from '../shared/state/timer-store.service';
     selector: 'app-timer-library',
     templateUrl: './timer-library.component.html',
     styleUrl: './timer-library.component.scss',
-    imports: [MatButtonModule, MatTooltipModule, MatIconModule, CrosshairButtonComponent],
+    imports: [MatButtonModule, MatTooltipModule, MatIconModule, InfinityButtonComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TimerLibraryComponent {
