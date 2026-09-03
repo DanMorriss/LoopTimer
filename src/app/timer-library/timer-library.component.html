@@ -1,4 +1,4 @@
-<div class="p-4 text-sky-50">
+<div class="library-screen p-4 text-sky-50" (click)="clearActiveTimerCard()">
     @let existingTimers = isExistingTimers();
     @if (!existingTimers) {
         <div class="flex justify-center items-center flex-col">
@@ -7,22 +7,103 @@
         </div>
         
     }
-    <ul class="flex flex-wrap justify-center">
+    <ul class="library-list">
         @for (timer of timerStore.timers(); track timer.id) {
-            <li class="flex-1 min-w-[300px] max-w-[400px] p-6 shadow-lg rounded m-4 bg-indigo-900/25">
-                <p class="text-center text-2xl" matTooltip="ID: {{timer.id}}">{{timer.title}}</p>
-                <p>Timer length: {{formatTime(timer.timerMinutes, timer.timerSeconds)}}</p>
-                <p>Rest: {{formatTime(timer.restMinutes, timer.restSeconds)}}</p>
-                <p>Repeats: {{timer.repeats}}</p>
-                <div class="flex justify-center gap-4">
-                    <button class="flex-1" mat-raised-button color="primary" (click)="startTimer(timer)">
-                        <mat-icon>play_circle</mat-icon>Start
-                    </button>
-                    <button class="flex-1" mat-raised-button color="warn" (click)="deleteTimer(timer.id)">
-                        <mat-icon class="m-3">delete</mat-icon>Delete
-                    </button>
+            <li
+                class="timer-card"
+                [class.timer-card--active]="activeTimerCardId() === timer.id"
+                [class.timer-card--menu-open]="openTimerMenuId() === timer.id"
+                (click)="$event.stopPropagation(); setActiveTimerCard(timer.id)">
+                <div class="timer-card__content" [class.timer-card__content--muted]="activeTimerCardId() === timer.id && openTimerMenuId() !== timer.id">
+                    @if (timer.title.trim()) {
+                        <p class="timer-card__title" matTooltip="ID: {{timer.id}}">{{timer.title}}</p>
+                    }
+
+                    <div class="timer-card__row">
+                        <div class="timer-card__spacer" aria-hidden="true"></div>
+
+                        <p class="timer-card__summary" [attr.aria-label]="'Timer ' + formatTime(timer.timerMinutes, timer.timerSeconds) + ', rest ' + formatTime(timer.restMinutes, timer.restSeconds) + ', repeated ' + timer.repeats + ' times'">
+                            {{formatTime(timer.timerMinutes, timer.timerSeconds)}} - {{formatTime(timer.restMinutes, timer.restSeconds)}} x {{timer.repeats}}
+                        </p>
+
+                        <div class="timer-card__spacer" aria-hidden="true"></div>
+                    </div>
                 </div>
+
+                <div class="timer-card__menu-wrap" (click)="$event.stopPropagation()">
+                    <button
+                        type="button"
+                        class="timer-card__action timer-card__action--menu"
+                        [attr.aria-label]="'Open options for ' + (timer.title.trim() || 'timer')"
+                        [attr.aria-expanded]="openTimerMenuId() === timer.id"
+                        (click)="toggleTimerMenu(timer.id)">
+                        <mat-icon class="timer-card__action-icon" aria-hidden="true">more_vert</mat-icon>
+                    </button>
+
+                    @if (openTimerMenuId() === timer.id) {
+                        <div class="timer-card__menu" role="menu" aria-label="Timer options">
+                            <button type="button" class="timer-card__menu-item" role="menuitem" (click)="navigateToEditTimer(timer.id)">
+                                <mat-icon class="timer-card__menu-icon" aria-hidden="true">edit</mat-icon>
+                                Edit
+                            </button>
+                            <button type="button" class="timer-card__menu-item timer-card__menu-item--danger" role="menuitem" (click)="requestDelete(timer)">
+                                <mat-icon class="timer-card__menu-icon" aria-hidden="true">delete</mat-icon>
+                                Delete
+                            </button>
+                        </div>
+                    }
+                </div>
+
+                @if (activeTimerCardId() === timer.id && openTimerMenuId() !== timer.id) {
+                    <button
+                        type="button"
+                        class="timer-card__overlay-play"
+                        [attr.aria-label]="'Start ' + (timer.title.trim() || 'timer')"
+                        (click)="$event.stopPropagation(); startTimer(timer)">
+                        <mat-icon class="timer-card__overlay-icon" aria-hidden="true">play_circle</mat-icon>
+                    </button>
+                }
             </li>
         }
     </ul>
+
+    <button
+        type="button"
+        mat-fab
+        extended
+        class="library-add-button"
+        aria-label="Add a new timer"
+        (click)="$event.stopPropagation(); navigateToCreateTimer()">
+        <mat-icon>add</mat-icon>
+        Add Timer
+    </button>
+
+    @if (timerPendingDelete(); as pendingTimer) {
+        <div class="confirm-overlay" role="presentation" (click)="cancelDelete()" (keydown.escape)="cancelDelete()">
+            <div
+                class="confirm-dialog"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="delete-dialog-title"
+                aria-describedby="delete-dialog-description"
+                (click)="$event.stopPropagation()">
+                <p id="delete-dialog-title" class="confirm-dialog__title">Delete timer?</p>
+                <p id="delete-dialog-description" class="confirm-dialog__description">
+                    @if (pendingTimer.title.trim()) {
+                        This will remove "{{ pendingTimer.title }}" from your timer library.
+                    } @else {
+                        This will remove this timer from your timer library.
+                    }
+                </p>
+                <div class="confirm-dialog__actions">
+                    <button type="button" class="confirm-dialog__button confirm-dialog__button--cancel" (click)="cancelDelete()">
+                        Cancel
+                    </button>
+                    <button type="button" class="confirm-dialog__button confirm-dialog__button--delete" (click)="confirmDelete()">
+                        Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
 </div>

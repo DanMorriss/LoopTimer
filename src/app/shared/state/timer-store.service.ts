@@ -37,6 +37,26 @@ export class TimerStore {
         this.saveTimers();
     }
 
+    findTimerById(timerId: number): Timer | null {
+        return this._timers().find(timer => timer.id === timerId) ?? null;
+    }
+
+    updateTimer(timerId: number, timerUpdate: Omit<Timer, 'id'>): Timer | null {
+        const existingTimer = this.findTimerById(timerId);
+        if (!existingTimer) {
+            return null;
+        }
+
+        const updatedTimer: Timer = {
+            ...timerUpdate,
+            id: timerId
+        };
+
+        this._timers.update(timers => timers.map(timer => timer.id === timerId ? updatedTimer : timer));
+        this.saveTimers();
+        return updatedTimer;
+    }
+
     setActiveTimer(timer: Timer) {
         this._activeTimer.set(timer);
     }

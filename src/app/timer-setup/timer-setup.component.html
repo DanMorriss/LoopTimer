@@ -66,7 +66,10 @@
                 <mat-error>Timer must have some time</mat-error>
             }
             <div class="flex justify-center m-4">
-                <button mat-raised-button color="primary" type="submit" [disabled]="!timerForm.valid"><mat-icon>play_circle</mat-icon> Start Timer</button>
+                <button mat-raised-button color="primary" type="submit" [disabled]="!timerForm.valid">
+                    <mat-icon>play_circle</mat-icon>
+                    {{ editingTimerId() ? 'Save & Start Timer' : 'Start Timer' }}
+                </button>
             </div>
         </form>
     </div>

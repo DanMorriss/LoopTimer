@@ -1,7 +1,8 @@
 import {
     ChangeDetectionStrategy,
     Component,
-    inject
+    inject,
+    signal
 } from '@angular/core';
 import {
     AbstractControl,
@@ -13,7 +14,7 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Timer } from '../models/timer';
 import { TimerStore } from '../shared/state/timer-store.service';
 
@@ -33,6 +34,8 @@ import { TimerStore } from '../shared/state/timer-store.service';
 export class TimerSetupComponent {
     timerStore = inject(TimerStore);
     router = inject(Router);
+    route = inject(ActivatedRoute);
+    protected editingTimerId = signal<number | null>(null);
     minuteOptions = Array.from({ length: 100 }, (_, index) => index);
     secondOptions = Array.from({ length: 60 }, (_, index) => index);
     repeatOptions = Array.from({ length: 30 }, (_, index) => index + 1);
@@ -58,6 +61,33 @@ export class TimerSetupComponent {
         return typeof value === 'number' ? value : Number(value ?? 0);
     }
 
+    constructor() {
+        const rawEditId = this.route.snapshot.queryParamMap.get('editId');
+        if (!rawEditId) {
+            return;
+        }
+
+        const editId = Number(rawEditId);
+        if (!Number.isInteger(editId) || editId <= 0) {
+            return;
+        }
+
+        const timerToEdit = this.timerStore.findTimerById(editId);
+        if (!timerToEdit) {
+            return;
+        }
+
+        this.editingTimerId.set(editId);
+        this.timerForm.setValue({
+            title: timerToEdit.title,
+            timerMinutes: timerToEdit.timerMinutes,
+            timerSeconds: timerToEdit.timerSeconds,
+            restMinutes: timerToEdit.restMinutes,
+            restSeconds: timerToEdit.restSeconds,
+            repeats: timerToEdit.repeats
+        });
+    }
+
     addTimer() {
         if (!this.timerForm.valid) {
             return;
@@ -77,8 +107,20 @@ export class TimerSetupComponent {
             isComplete: false
         };
 
-        const savedTimer = this.timerStore.addTimer(newTimer);
-        this.timerForm.reset({ repeats: 1 });
+        const editingId = this.editingTimerId();
+        const savedTimer = editingId
+            ? this.timerStore.updateTimer(editingId, newTimer) ?? this.timerStore.addTimer(newTimer)
+            : this.timerStore.addTimer(newTimer);
+
+        this.timerForm.reset({
+            title: '',
+            timerMinutes: 0,
+            timerSeconds: 0,
+            restMinutes: 0,
+            restSeconds: 0,
+            repeats: 1
+        });
+        this.editingTimerId.set(null);
         this.timerStore.setActiveTimer(savedTimer);
         this.router.navigate(['/timer']);
     }
