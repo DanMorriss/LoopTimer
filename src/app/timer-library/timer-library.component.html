@@ -15,9 +15,12 @@
                 [class.timer-card--menu-open]="openTimerMenuId() === timer.id"
                 (click)="$event.stopPropagation(); setActiveTimerCard(timer.id)">
                 <div class="timer-card__content" [class.timer-card__content--muted]="activeTimerCardId() === timer.id && openTimerMenuId() !== timer.id">
-                    @if (timer.title.trim()) {
-                        <p class="timer-card__title" matTooltip="ID: {{timer.id}}">{{timer.title}}</p>
-                    }
+                    <p
+                        class="timer-card__title"
+                        [class.timer-card__title--placeholder]="!timer.title.trim()"
+                        [matTooltip]="timer.title.trim() ? 'ID: ' + timer.id : ''">
+                        {{ timer.title.trim() || 'Untitled timer' }}
+                    </p>
 
                     <div class="timer-card__row">
                         <div class="timer-card__spacer" aria-hidden="true"></div>
