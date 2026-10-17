@@ -6,8 +6,8 @@ import { NavComponent } from './nav/nav.component';
     selector: 'app-root',
     templateUrl: './app.component.html',
     styleUrl: './app.component.scss',
-    imports: [RouterOutlet, NavComponent]
+    imports: [RouterOutlet, NavComponent],
 })
 export class AppComponent {
-  title = 'loop-timer';
+    title = 'loop-timer';
 }

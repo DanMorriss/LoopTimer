@@ -1,12 +1,14 @@
-<div class="timer-page flex justify-center items-center flex-col">
-
+<div class="timer-page flex flex-col items-center justify-center">
     @if (timer()) {
-        <p class="text-4xl text-sky-50 text-center">{{timer()?.title}}</p>
+        <p class="text-center text-4xl text-sky-50">{{ timer()?.title }}</p>
         <!-- Fixed-height slot, so the ring doesn't jump when this line changes -->
         <!-- Read out by screen readers when the phase changes; the countdown itself stays quiet -->
         <div class="sr-only" aria-live="polite" aria-atomic="true">{{ announcement() }}</div>
         <div class="timer-status text-sky-50">
             @if (repeatArray().length > 1) {
+                <!-- The trailing spaces inside these spans separate the label and markers.
+                     htmlWhitespaceSensitivity "ignore" would strip them, so Prettier leaves this alone. -->
+                <!-- prettier-ignore -->
                 <div class="text-2xl">
                     <span>remaining repeats: </span>
                     @for (i of repeatArray(); track i) {
@@ -20,14 +22,14 @@
         </div>
 
         <div
-        class="timer-ring"
-        [class.timer-ring--work]="isTimerActive()"
-        [class.timer-ring--rest]="isRestActive()"
-        role="progressbar"
-        aria-label="Progress through this phase"
-        aria-valuemin="0"
-        aria-valuemax="100"
-        [attr.aria-valuenow]="progressPercent()"
+            class="timer-ring"
+            [class.timer-ring--work]="isTimerActive()"
+            [class.timer-ring--rest]="isRestActive()"
+            role="progressbar"
+            aria-label="Progress through this phase"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            [attr.aria-valuenow]="progressPercent()"
         >
             @for (sweep of ringSweeps(); track sweep.key) {
                 <!-- Two rotating half-circles; transforms animate without repainting -->
@@ -36,39 +38,44 @@
                     [style.--half-duration]="sweep.halfDuration"
                     [style.--first-half-delay]="sweep.firstHalfDelay"
                     [style.--second-half-delay]="sweep.secondHalfDelay"
-                    aria-hidden="true">
-                    <div class="timer-ring__half timer-ring__half--right"><div class="timer-ring__fill"></div></div>
-                    <div class="timer-ring__half timer-ring__half--left"><div class="timer-ring__fill"></div></div>
+                    aria-hidden="true"
+                >
+                    <div class="timer-ring__half timer-ring__half--right">
+                        <div class="timer-ring__fill"></div>
+                    </div>
+                    <div class="timer-ring__half timer-ring__half--left">
+                        <div class="timer-ring__fill"></div>
+                    </div>
                 </div>
             }
             <div class="timer-inner">
-                <div class="timer-face text-4xl text-black text-center rounded-full flex justify-center items-center"
+                <div
+                    class="timer-face flex items-center justify-center rounded-full text-center text-4xl text-black"
                     [class]="{
                         'flash-fade': isTimerActive(),
                         'flash-fade-blue': isRestActive(),
                         'bg-sky-50/50': isComplete(),
                     }"
                 >
+                    @if (isComplete() === false) {
+                        <div>
+                            @if (isTimerActive() === true) {
+                                <p class="text-transparent">Timer</p>
+                                <p>{{ workTime() }}</p>
+                            }
 
-                @if (isComplete() === false) {
-                    <div>
-                        @if (isTimerActive() === true) {
-                            <p class="text-transparent">Timer</p>
-                            <p>{{workTime()}}</p>
-                        }
+                            @if (isRestActive() === true) {
+                                <p>Rest</p>
+                                <p>{{ restTime() }}</p>
+                            }
+                        </div>
+                    }
 
-                        @if (isRestActive() === true) {
-                            <p>Rest</p>
-                            <p>{{restTime()}}</p>
-                        }
-                    </div>
-                }
-
-                @if(isComplete() === true) {
-                    <div>
-                        <p>You're finished!</p>
-                    </div>
-                }
+                    @if (isComplete() === true) {
+                        <div>
+                            <p>You're finished!</p>
+                        </div>
+                    }
                 </div>
             </div>
         </div>
@@ -78,5 +85,4 @@
             <a routerLink="/library" class="no-timer__link">Choose one from the library</a>
         </div>
     }
-
 </div>

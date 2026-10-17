@@ -1,34 +1,33 @@
 .library-screen {
-	padding-bottom: 6.5rem;
+    padding-bottom: 6.5rem;
 }
 
 .library-list {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(280px, 420px));
-	justify-content: center;
-	gap: 1rem;
-	padding: 0;
-	margin: 1rem 0 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 420px));
+    justify-content: center;
+    gap: 1rem;
+    padding: 0;
+    margin: 1rem 0 0;
 }
 
 .library-add-button {
-	position: fixed;
-	left: 50%;
-	bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
-	transform: translateX(-50%);
-	z-index: 20;
-	background: #0ea5e9;
-	color: #03253b;
-	border-radius: 999px;
-	box-shadow: 0 12px 26px rgba(2, 6, 23, 0.45);
+    position: fixed;
+    left: 50%;
+    bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%);
+    z-index: 20;
+    background: #0ea5e9;
+    color: #03253b;
+    border-radius: 999px;
+    box-shadow: 0 12px 26px rgba(2, 6, 23, 0.45);
 }
 
 .library-add-button mat-icon {
-	color: #03253b;
+    color: #03253b;
 }
 
 .library-add-button:focus-visible {
-	outline: 2px solid #e2e8f0;
-	outline-offset: 3px;
+    outline: 2px solid #e2e8f0;
+    outline-offset: 3px;
 }
-

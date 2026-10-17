@@ -1,8 +1,4 @@
-<button
-    [type]="type()"
-    [class]="buttonClasses()"
-    [disabled]="disabled()"
-    (click)="onClick()">
+<button [type]="type()" [class]="buttonClasses()" [disabled]="disabled()" (click)="onClick()">
     <!-- Animated traveling dot -->
     <svg class="infinity-button__border-svg" viewBox="0 0 100 40" preserveAspectRatio="none">
         <defs>
@@ -12,7 +8,12 @@
             />
         </defs>
         <!-- With reduced motion, the dot rests at the start of the border instead of travelling round it -->
-        <circle r="2" class="infinity-button__traveling-dot" [attr.cx]="reducedMotion() ? 8 : null" [attr.cy]="reducedMotion() ? 2 : null">
+        <circle
+            r="2"
+            class="infinity-button__traveling-dot"
+            [attr.cx]="reducedMotion() ? 8 : null"
+            [attr.cy]="reducedMotion() ? 2 : null"
+        >
             @if (!reducedMotion()) {
                 <animateMotion dur="3s" repeatCount="indefinite">
                     <mpath href="#borderPath" />

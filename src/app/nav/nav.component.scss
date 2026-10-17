@@ -1,33 +1,33 @@
 .home-button {
-  background: rgba(139, 92, 246, 0.1);
-  border: 2px solid rgba(240, 249, 255, 0.2);
-  transition: all 0.3s ease;
-  color: rgba(240, 249, 255, 0.8);
-  
-  &:hover {
-    background: rgba(139, 92, 246, 0.2);
-    border-color: rgba(240, 249, 255, 0.4);
-    transform: scale(1.05);
-    color: rgba(240, 249, 255, 1);
-  }
-  
-  &:active {
-    transform: scale(0.95);
-  }
+    background: rgba(139, 92, 246, 0.1);
+    border: 2px solid rgba(240, 249, 255, 0.2);
+    transition: all 0.3s ease;
+    color: rgba(240, 249, 255, 0.8);
 
-  &:focus-visible {
-    outline: 2px solid #e0f2fe;
-    outline-offset: 3px;
-  }
+    &:hover {
+        background: rgba(139, 92, 246, 0.2);
+        border-color: rgba(240, 249, 255, 0.4);
+        transform: scale(1.05);
+        color: rgba(240, 249, 255, 1);
+    }
+
+    &:active {
+        transform: scale(0.95);
+    }
+
+    &:focus-visible {
+        outline: 2px solid #e0f2fe;
+        outline-offset: 3px;
+    }
 }
 
 .home-icon {
-  stroke-width: 2;
+    stroke-width: 2;
 }
 // body.mat-typography styles h1 with Material's Roboto heading font, which beats
 // the global font rule. Keep the site title in the app's font, as it was when it
 // was a <p> (with the 12px margin .mat-typography gives paragraphs).
 .site-title {
-  font-family: "Audiowide", sans-serif;
-  margin: 0 0 12px;
+    font-family: 'Audiowide', sans-serif;
+    margin: 0 0 12px;
 }

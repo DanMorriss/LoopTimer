@@ -4,18 +4,18 @@ import { injectPrefersReducedMotion } from '../../reduced-motion';
 const SIZE_CLASSES = {
     small: 'infinity-button--small',
     medium: 'infinity-button--medium',
-    large: 'infinity-button--large'
+    large: 'infinity-button--large',
 };
 
 const VARIANT_CLASSES = {
     primary: 'infinity-button--primary',
-    secondary: 'infinity-button--secondary'
+    secondary: 'infinity-button--secondary',
 };
 
 @Component({
     selector: 'app-infinity-button',
     templateUrl: './infinity-button.component.html',
-    styleUrl: './infinity-button.component.scss'
+    styleUrl: './infinity-button.component.scss',
 })
 export class InfinityButtonComponent {
     readonly text = input<string>('Button');

@@ -38,8 +38,12 @@ export class TimerCardComponent {
     protected readonly title = computed(() => this.timer().title.trim());
     /** Used in accessible names, e.g. "Start Sprints" or "Start timer". */
     protected readonly name = computed(() => this.title() || 'timer');
-    protected readonly workTime = computed(() => formatTime(this.timer().timerMinutes, this.timer().timerSeconds));
-    protected readonly restTime = computed(() => formatTime(this.timer().restMinutes, this.timer().restSeconds));
+    protected readonly workTime = computed(() =>
+        formatTime(this.timer().timerMinutes, this.timer().timerSeconds)
+    );
+    protected readonly restTime = computed(() =>
+        formatTime(this.timer().restMinutes, this.timer().restSeconds)
+    );
     protected readonly showPlay = computed(() => this.active() && !this.menuOpen());
 
     protected onCardClick(event: Event) {

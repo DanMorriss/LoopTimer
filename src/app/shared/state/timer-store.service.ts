@@ -1,5 +1,5 @@
-import { computed, Service, signal } from "@angular/core";
-import { Timer } from "../../models/timer";
+import { computed, Service, signal } from '@angular/core';
+import { Timer } from '../../models/timer';
 
 @Service()
 export class TimerStore {
@@ -30,7 +30,7 @@ export class TimerStore {
         // so drop anything that isn't a usable timer
         try {
             const parsed: unknown = JSON.parse(savedTimers);
-            return Array.isArray(parsed) ? parsed.filter(item => isValidTimer(item)) : [];
+            return Array.isArray(parsed) ? parsed.filter((item) => isValidTimer(item)) : [];
         } catch {
             return [];
         }
@@ -47,32 +47,34 @@ export class TimerStore {
         const savedStart = Number(sessionStorage.getItem('activeTimerStartedAt'));
         const now = Date.now();
         // Fall back to starting now if the saved time is missing or impossible
-        return Number.isFinite(savedStart) && savedStart > 0 && savedStart <= now ? savedStart : now;
+        return Number.isFinite(savedStart) && savedStart > 0 && savedStart <= now
+            ? savedStart
+            : now;
     }
 
     addTimer(timer: Omit<Timer, 'id'>): Timer {
         const newTimer: Timer = {
             ...timer,
-            id: this.generateNextId()
+            id: this.generateNextId(),
         };
-        this._timers.update(timers => [...timers, newTimer]);
+        this._timers.update((timers) => [...timers, newTimer]);
         this.saveTimers();
         return newTimer;
     }
 
     private generateNextId(): number {
         const timers = this._timers();
-        return timers.length > 0 ? Math.max(...timers.map(timers => timers.id)) + 1 : 1;
+        return timers.length > 0 ? Math.max(...timers.map((timers) => timers.id)) + 1 : 1;
     }
 
     deleteTimer(timerId: number) {
-        const updatedTimerList = this._timers().filter(timer => timer.id !== timerId);
+        const updatedTimerList = this._timers().filter((timer) => timer.id !== timerId);
         this._timers.set(updatedTimerList);
         this.saveTimers();
     }
 
     findTimerById(timerId: number): Timer | null {
-        return this._timers().find(timer => timer.id === timerId) ?? null;
+        return this._timers().find((timer) => timer.id === timerId) ?? null;
     }
 
     updateTimer(timerId: number, timerUpdate: Omit<Timer, 'id'>): Timer | null {
@@ -83,10 +85,12 @@ export class TimerStore {
 
         const updatedTimer: Timer = {
             ...timerUpdate,
-            id: timerId
+            id: timerId,
         };
 
-        this._timers.update(timers => timers.map(timer => timer.id === timerId ? updatedTimer : timer));
+        this._timers.update((timers) =>
+            timers.map((timer) => (timer.id === timerId ? updatedTimer : timer))
+        );
         this.saveTimers();
         return updatedTimer;
     }
@@ -115,12 +119,14 @@ function isValidTimer(value: unknown): value is Timer {
     }
 
     const timer = value as Record<string, unknown>;
-    return isWholeNumber(timer['id'], 1)
-        && typeof timer['title'] === 'string'
-        && isWholeNumber(timer['timerMinutes'], 0)
-        && isWholeNumber(timer['timerSeconds'], 0, 59)
-        && isWholeNumber(timer['restMinutes'], 0)
-        && isWholeNumber(timer['restSeconds'], 0, 59)
-        && isWholeNumber(timer['repeats'], 1)
-        && (timer['timerMinutes'] as number) + (timer['timerSeconds'] as number) > 0;
+    return (
+        isWholeNumber(timer['id'], 1) &&
+        typeof timer['title'] === 'string' &&
+        isWholeNumber(timer['timerMinutes'], 0) &&
+        isWholeNumber(timer['timerSeconds'], 0, 59) &&
+        isWholeNumber(timer['restMinutes'], 0) &&
+        isWholeNumber(timer['restSeconds'], 0, 59) &&
+        isWholeNumber(timer['repeats'], 1) &&
+        (timer['timerMinutes'] as number) + (timer['timerSeconds'] as number) > 0
+    );
 }

@@ -1,11 +1,14 @@
 <div class="library-screen p-4 text-sky-50" (click)="clearActiveTimerCard()">
     @let existingTimers = isExistingTimers();
     @if (!existingTimers) {
-        <div class="flex justify-center items-center flex-col">
+        <div class="flex flex-col items-center justify-center">
             <p>Nothing in the library yet, best go make a timer.</p>
-            <app-infinity-button (click)="navigateToCreateTimer()" text="Create a timer" class="mt-12"></app-infinity-button>
+            <app-infinity-button
+                (click)="navigateToCreateTimer()"
+                text="Create a timer"
+                class="mt-12"
+            ></app-infinity-button>
         </div>
-        
     }
     <ul class="library-list">
         @for (timer of timerStore.timers(); track timer.id) {
@@ -19,7 +22,8 @@
                 (menuToggled)="toggleTimerMenu(timer.id)"
                 (menuClosed)="closeTimerMenu(timer.id)"
                 (editRequested)="navigateToEditTimer(timer.id)"
-                (deleteRequested)="requestDelete(timer)"></li>
+                (deleteRequested)="requestDelete(timer)"
+            ></li>
         }
     </ul>
 
@@ -28,12 +32,17 @@
         mat-fab
         extended
         class="library-add-button"
-        (click)="$event.stopPropagation(); navigateToCreateTimer()">
+        (click)="$event.stopPropagation(); navigateToCreateTimer()"
+    >
         <mat-icon>add</mat-icon>
         Add Timer
     </button>
 
     @if (timerPendingDelete(); as pendingTimer) {
-        <app-delete-timer-dialog [timer]="pendingTimer" (cancelled)="cancelDelete()" (confirmed)="confirmDelete()" />
+        <app-delete-timer-dialog
+            [timer]="pendingTimer"
+            (cancelled)="cancelDelete()"
+            (confirmed)="confirmDelete()"
+        />
     }
 </div>
