@@ -4,7 +4,6 @@ Open work from the October 2026 review. Highest priority first. Tick items off (
 
 ## 1. Performance
 
-- [ ] **Global styles are 115 kB (10 kB compressed), and 101 kB of that is the prebuilt Material theme** (`magenta-violet.css`). The app only uses Material buttons, icons, a form-field error and a tooltip. A custom Sass theme that includes just those components would cut this down.
 - [ ] **`provideAnimationsAsync()` in `main.ts` looks unused.** Its 68 kB lazy chunk was never requested while using every page. Remove it, and the `@angular/animations` dependency, then recheck the tooltip, menu and dialog.
 - [ ] `timer-library.component.scss` is about 1.2 kB over its 4 kB component-style budget.
 - [ ] **Fonts are requested more than once.** Audiowide loads in both `index.html` and `styles.scss`, and `index.html` has the same preconnect twice. Remove the duplicates and check whether Roboto is used.
