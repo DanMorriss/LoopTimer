@@ -1,18 +1,21 @@
-<div class="flex justify-center items-center flex-col">
+<div class="timer-page flex justify-center items-center flex-col">
 
     @if (timer()) {
-        <p class="text-4xl text-sky-50">{{timer()?.title}}</p>
-        @if (repeatArray().length > 1) {
-            <div class="text-2xl text-sky-50">
-                <span>remaining repeats: </span>
-                @for (i of repeatArray(); track i) {
-                    <span class="rubik-spray-paint-regular">| </span>
-                }
-            </div>
-        }
-        @if (repeatArray().length === 1 && isTimerActive() === true) {
-            <p class="text-3xl text-sky-50">Last one!</p>
-        }
+        <p class="text-4xl text-sky-50 text-center">{{timer()?.title}}</p>
+        <!-- Fixed-height slot, so the ring doesn't jump when this line changes -->
+        <div class="timer-status text-sky-50">
+            @if (repeatArray().length > 1) {
+                <div class="text-2xl">
+                    <span>remaining repeats: </span>
+                    @for (i of repeatArray(); track i) {
+                        <span class="rubik-spray-paint-regular">| </span>
+                    }
+                </div>
+            }
+            @if (repeatArray().length === 1 && isTimerActive() === true) {
+                <p class="text-3xl">Last one!</p>
+            }
+        </div>
 
         <div
         class="timer-ring"
@@ -37,7 +40,7 @@
                 </div>
             }
             <div class="timer-inner">
-                <div class="text-4xl text-black text-center w-[340px] h-[340px] rounded-full flex justify-center items-center"
+                <div class="timer-face text-4xl text-black text-center rounded-full flex justify-center items-center"
                     [class]="{
                         'flash-fade': isTimerActive(),
                         'flash-fade-blue': isRestActive(),
