@@ -4,11 +4,6 @@ Open work from the October 2026 review. Highest priority first. Tick items off (
 
 ## 1. Match the Angular guidelines (`~/.claude/CLAUDE.md`)
 
-- [ ] Remove the explicit `ChangeDetectionStrategy.OnPush` (it's the default in v22). Move the components the v22 migration marked `Eager` to the default after checking they work.
-- [ ] In the `NavComponent` constructor, use `inject()` instead of constructor injection.
-- [ ] `infinity-button`: remove `standalone: true` and replace `@Output()` / `EventEmitter` with `output()`. Make `buttonClasses` a `computed()`.
-- [ ] `TimerStore`: use `@Service` instead of `@Injectable({ providedIn: 'root' })`.
-- [ ] Split each library card into a `TimerCard` component (title, summary, play button, options menu). The library template and styles are the largest in the app; `timer-library.component.scss` is 4.1 kB, which is why the component-style warning budget was raised from 4 kB to 5 kB.
 - [ ] Optional: move the setup form to Signal Forms.
 
 ## 2. Accessibility follow-ups

@@ -10,66 +10,16 @@
     <ul class="library-list">
         @for (timer of timerStore.timers(); track timer.id) {
             <li
-                class="timer-card"
-                [class.timer-card--active]="activeTimerCardId() === timer.id"
-                [class.timer-card--menu-open]="openTimerMenuId() === timer.id"
-                (click)="$event.stopPropagation(); setActiveTimerCard(timer.id)">
-                <div class="timer-card__content" [class.timer-card__content--muted]="activeTimerCardId() === timer.id && openTimerMenuId() !== timer.id">
-                    <p
-                        class="timer-card__title"
-                        [class.timer-card__title--placeholder]="!timer.title.trim()"
-                        [matTooltip]="timer.title.trim() ? 'ID: ' + timer.id : ''">
-                        {{ timer.title.trim() || 'Untitled timer' }}
-                    </p>
-
-                    <div class="timer-card__row">
-                        <div class="timer-card__spacer" aria-hidden="true"></div>
-
-                        <p class="timer-card__summary" [attr.aria-label]="'Timer ' + formatTime(timer.timerMinutes, timer.timerSeconds) + ', rest ' + formatTime(timer.restMinutes, timer.restSeconds) + ', repeated ' + timer.repeats + ' times'">
-                            {{formatTime(timer.timerMinutes, timer.timerSeconds)}} - {{formatTime(timer.restMinutes, timer.restSeconds)}} x {{timer.repeats}}
-                        </p>
-
-                        <div class="timer-card__spacer" aria-hidden="true"></div>
-                    </div>
-                </div>
-
-                <!-- Always in the tab order so keyboard users can start a timer; shown when the card is selected or the button has focus -->
-                <button
-                    type="button"
-                    class="timer-card__overlay-play"
-                    [class.timer-card__overlay-play--visible]="activeTimerCardId() === timer.id && openTimerMenuId() !== timer.id"
-                    [attr.aria-label]="'Start ' + (timer.title.trim() || 'timer')"
-                    (focus)="setActiveTimerCard(timer.id)"
-                    (click)="$event.stopPropagation(); startTimer(timer)">
-                    <mat-icon class="timer-card__overlay-icon" aria-hidden="true">play_circle</mat-icon>
-                </button>
-
-                <div class="timer-card__menu-wrap" (click)="$event.stopPropagation()" (keydown.escape)="closeTimerMenu(timer.id)">
-                    <button
-                        type="button"
-                        class="timer-card__action timer-card__action--menu"
-                        [attr.data-menu-for]="timer.id"
-                        [attr.aria-label]="'Open options for ' + (timer.title.trim() || 'timer')"
-                        [attr.aria-expanded]="openTimerMenuId() === timer.id"
-                        [attr.aria-controls]="'timer-options-' + timer.id"
-                        (click)="toggleTimerMenu(timer.id)">
-                        <mat-icon class="timer-card__action-icon" aria-hidden="true">more_vert</mat-icon>
-                    </button>
-
-                    @if (openTimerMenuId() === timer.id) {
-                        <div class="timer-card__menu" [id]="'timer-options-' + timer.id" role="group" [attr.aria-label]="'Options for ' + (timer.title.trim() || 'timer')">
-                            <button type="button" class="timer-card__menu-item timer-card__menu-item--edit" (click)="navigateToEditTimer(timer.id)">
-                                <mat-icon class="timer-card__menu-icon" aria-hidden="true">edit</mat-icon>
-                                Edit
-                            </button>
-                            <button type="button" class="timer-card__menu-item timer-card__menu-item--danger" (click)="requestDelete(timer)">
-                                <mat-icon class="timer-card__menu-icon" aria-hidden="true">delete</mat-icon>
-                                Delete
-                            </button>
-                        </div>
-                    }
-                </div>
-            </li>
+                appTimerCard
+                [timer]="timer"
+                [active]="activeTimerCardId() === timer.id"
+                [menuOpen]="openTimerMenuId() === timer.id"
+                (selected)="setActiveTimerCard(timer.id)"
+                (started)="startTimer(timer)"
+                (menuToggled)="toggleTimerMenu(timer.id)"
+                (menuClosed)="closeTimerMenu(timer.id)"
+                (editRequested)="navigateToEditTimer(timer.id)"
+                (deleteRequested)="requestDelete(timer)"></li>
         }
     </ul>
 
