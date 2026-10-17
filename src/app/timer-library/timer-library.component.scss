@@ -32,6 +32,8 @@
 	offset-distance: 0%;
 	animation: card-edge-orbit 2.6s linear infinite;
 	offset-rotate: auto;
+	// Own layer, so the glow is drawn once and just moved each frame instead of redrawn
+	will-change: transform;
 	pointer-events: none;
 	z-index: 3;
 	width: 36px;
