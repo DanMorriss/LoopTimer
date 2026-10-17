@@ -56,6 +56,13 @@ describe('TimerLibraryComponent', () => {
     fixture.detectChanges();
   }
 
+  /** Re-render and let after-render hooks (like focus moves) run. */
+  async function settle() {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+
   function text(): string {
     return (fixture.nativeElement as HTMLElement).textContent?.replace(/\s+/g, ' ') ?? '';
   }
@@ -105,14 +112,26 @@ describe('TimerLibraryComponent', () => {
     });
 
     describe('starting a timer', () => {
+      const playButton = (index: number) => card(index).querySelector<HTMLElement>('.timer-card__overlay-play')!;
+      const isShown = (button: HTMLElement) => button.classList.contains('timer-card__overlay-play--visible');
+
       it('shows a play button only on the selected card', () => {
-        expect(el('.timer-card__overlay-play')).toBeNull();
+        expect(all('.timer-card__overlay-play--visible')).toHaveSize(0);
 
         click(card(0));
 
         expect(card(0).classList).toContain('timer-card--active');
-        expect(card(0).querySelector('.timer-card__overlay-play')).not.toBeNull();
-        expect(card(1).querySelector('.timer-card__overlay-play')).toBeNull();
+        expect(isShown(playButton(0))).toBeTrue();
+        expect(isShown(playButton(1))).toBeFalse();
+      });
+
+      it('lets keyboard users reach the play button, selecting its card on focus', () => {
+        playButton(1).focus();
+        fixture.detectChanges();
+
+        expect(document.activeElement).toBe(playButton(1));
+        expect(card(1).classList).toContain('timer-card--active');
+        expect(isShown(playButton(1))).toBeTrue();
       });
 
       it('makes the timer active and goes to the timer page', () => {
@@ -129,7 +148,7 @@ describe('TimerLibraryComponent', () => {
         click(el('.library-screen'));
 
         expect(el('.timer-card--active')).toBeNull();
-        expect(el('.timer-card__overlay-play')).toBeNull();
+        expect(all('.timer-card__overlay-play--visible')).toHaveSize(0);
       });
     });
 
@@ -140,26 +159,38 @@ describe('TimerLibraryComponent', () => {
         expect(menuButton(0)?.getAttribute('aria-expanded')).toBe('false');
 
         click(menuButton(0));
-        expect(card(0).querySelector('[role="menu"]')).not.toBeNull();
+        expect(card(0).querySelector('.timer-card__menu')).not.toBeNull();
         expect(menuButton(0)?.getAttribute('aria-expanded')).toBe('true');
 
         click(menuButton(0));
-        expect(card(0).querySelector('[role="menu"]')).toBeNull();
+        expect(card(0).querySelector('.timer-card__menu')).toBeNull();
       });
 
       it('only has one menu open at a time', () => {
         click(menuButton(0));
         click(menuButton(1));
 
-        expect(all('[role="menu"]')).toHaveSize(1);
-        expect(card(1).querySelector('[role="menu"]')).not.toBeNull();
+        expect(all('.timer-card__menu')).toHaveSize(1);
+        expect(card(1).querySelector('.timer-card__menu')).not.toBeNull();
       });
 
       it('edits the timer by going to setup with its id', () => {
         click(menuButton(1));
-        click(card(1).querySelector('[role="menuitem"]'));
+        click(card(1).querySelector('.timer-card__menu-item--edit'));
 
         expect(navigate).toHaveBeenCalledWith(['/setup'], { queryParams: { editId: second.id } });
+      });
+
+      it('closes on Escape and puts focus back on its button', async () => {
+        click(menuButton(0));
+        const editButton = card(0).querySelector<HTMLElement>('.timer-card__menu-item--edit')!;
+        editButton.focus();
+
+        editButton.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        await settle();
+
+        expect(card(0).querySelector('.timer-card__menu')).toBeNull();
+        expect(document.activeElement).toBe(menuButton(0));
       });
     });
 
@@ -213,6 +244,46 @@ describe('TimerLibraryComponent', () => {
         click(el('.confirm-dialog__button--delete'));
 
         expect(text()).toContain('Nothing in the library yet');
+      });
+
+      describe('keyboard and focus', () => {
+        it('moves focus into the dialog, starting on Cancel', async () => {
+          requestDelete(0);
+          await settle();
+
+          expect(document.activeElement).toBe(el('.confirm-dialog__button--cancel'));
+        });
+
+        it('closes on Escape without deleting', async () => {
+          requestDelete(0);
+          await settle();
+
+          document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+          fixture.detectChanges();
+
+          expect(el('[role="dialog"]')).toBeNull();
+          expect(store.timers()).toHaveSize(2);
+        });
+
+        it('returns focus to the timer\'s options button when cancelled', async () => {
+          requestDelete(1);
+          await settle();
+
+          click(el('.confirm-dialog__button--cancel'));
+          await settle();
+
+          expect(document.activeElement).toBe(card(1).querySelector('.timer-card__action--menu'));
+        });
+
+        it('moves focus to "Add Timer" after deleting', async () => {
+          requestDelete(0);
+          await settle();
+
+          click(el('.confirm-dialog__button--delete'));
+          await settle();
+
+          expect(document.activeElement).toBe(el('.library-add-button'));
+        });
       });
     });
   });

@@ -34,12 +34,12 @@
         </svg>
         
         <!-- Interactive zones -->
-        <div class="interaction-zone left-zone" (click)="navigateToCreate()" title="Create Timer">
-            <div class="zone-label">Create</div>
-        </div>
-        <div class="interaction-zone right-zone" (click)="navigateToLibrary()" title="Timer Library">
-            <div class="zone-label">Library</div>
-        </div>
+        <a class="interaction-zone left-zone" routerLink="/setup" title="Create Timer">
+            <span class="zone-label">Create</span>
+        </a>
+        <a class="interaction-zone right-zone" routerLink="/library" title="Timer Library">
+            <span class="zone-label">Library</span>
+        </a>
     </div>
     
     <div class="title-text">

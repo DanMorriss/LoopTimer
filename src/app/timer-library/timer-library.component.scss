@@ -219,6 +219,14 @@
 	cursor: pointer;
 	box-shadow: 0 14px 28px rgba(2, 6, 23, 0.6);
 	z-index: 2;
+	opacity: 0;
+	pointer-events: none;
+}
+
+.timer-card__overlay-play--visible,
+.timer-card__overlay-play:focus-visible {
+	opacity: 1;
+	pointer-events: auto;
 }
 
 .timer-card__overlay-play:hover {
