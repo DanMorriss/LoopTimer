@@ -253,6 +253,58 @@ describe('TimerComponent', () => {
     localStorage.clear();
   }));
 
+  it('resumes where it was, not from the start, after a page refresh', fakeAsync(() => {
+    // Started 42s ago in a previous page load: 30s work done, 10s rest done, 2s into round 2
+    localStorage.setItem('timers', JSON.stringify([makeTimer({ id: 7, timerSeconds: 30, restSeconds: 10, repeats: 3 })]));
+    sessionStorage.setItem('activeTimerId', '7');
+    sessionStorage.setItem('activeTimerStartedAt', String(Date.now() - 42_000));
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({ imports: [TimerComponent], providers: [provideRouter([])] });
+
+    fixture = TestBed.createComponent(TimerComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    expect(component.isTimerActive()).toBeTrue();
+    expect(component.repeats()).toBe(2);
+    expect(text()).toContain('00:28');
+    fixture.destroy();
+    localStorage.clear();
+  }));
+
+  describe('when the browser delays or skips ticks (background tab, locked phone)', () => {
+    it('shows the right time as soon as the page is visible again', fakeAsync(() => {
+      start(makeTimer({ timerSeconds: 30, restSeconds: 10, repeats: 3 }));
+      advance(1000);
+      expect(text()).toContain('00:29');
+
+      // 45 seconds pass with no ticks at all, as when a tab is frozen in the background
+      const later = Date.now() + 45_000;
+      spyOn(Date, 'now').and.returnValue(later);
+      document.dispatchEvent(new Event('visibilitychange'));
+      fixture.detectChanges();
+
+      // 46s in: 30s work + 10s rest done, 6s into round 2
+      expect(component.isTimerActive()).toBeTrue();
+      expect(component.repeats()).toBe(2);
+      expect(text()).toContain('00:24');
+      fixture.destroy();
+    }));
+
+    it('still finishes on time if ticks arrive late', fakeAsync(() => {
+      start(makeTimer({ timerSeconds: 3, restSeconds: 2, repeats: 2 })); // 8s in total
+      const startedAt = Date.now();
+
+      // A single late tick, well after the whole workout should have ended
+      spyOn(Date, 'now').and.returnValue(startedAt + 20_000);
+      advance(250);
+
+      expect(component.isComplete()).toBeTrue();
+      expect(text()).toContain("You're finished!");
+      fixture.destroy();
+    }));
+  });
+
   it('stops its intervals when destroyed', fakeAsync(() => {
     start(makeTimer());
     advance(1000);

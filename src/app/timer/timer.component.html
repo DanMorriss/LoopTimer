@@ -2,15 +2,15 @@
 
     @if (timer()) {
         <p class="text-4xl text-sky-50">{{timer()?.title}}</p>
-        @if (repeatArray.length > 1) {
+        @if (repeatArray().length > 1) {
             <div class="text-2xl text-sky-50">
                 <span>remaining repeats: </span>
-                @for (i of repeatArray; track i) {
+                @for (i of repeatArray(); track i) {
                     <span class="rubik-spray-paint-regular">| </span>
                 }
             </div>
         }
-        @if (repeatArray.length === 1 && isTimerActive() === true) {
+        @if (repeatArray().length === 1 && isTimerActive() === true) {
             <p class="text-3xl text-sky-50">Last one!</p>
         }
 
