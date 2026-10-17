@@ -33,39 +33,42 @@
                     </div>
                 </div>
 
-                <div class="timer-card__menu-wrap" (click)="$event.stopPropagation()">
+                <!-- Always in the tab order so keyboard users can start a timer; shown when the card is selected or the button has focus -->
+                <button
+                    type="button"
+                    class="timer-card__overlay-play"
+                    [class.timer-card__overlay-play--visible]="activeTimerCardId() === timer.id && openTimerMenuId() !== timer.id"
+                    [attr.aria-label]="'Start ' + (timer.title.trim() || 'timer')"
+                    (focus)="setActiveTimerCard(timer.id)"
+                    (click)="$event.stopPropagation(); startTimer(timer)">
+                    <mat-icon class="timer-card__overlay-icon" aria-hidden="true">play_circle</mat-icon>
+                </button>
+
+                <div class="timer-card__menu-wrap" (click)="$event.stopPropagation()" (keydown.escape)="closeTimerMenu(timer.id)">
                     <button
                         type="button"
                         class="timer-card__action timer-card__action--menu"
+                        [attr.data-menu-for]="timer.id"
                         [attr.aria-label]="'Open options for ' + (timer.title.trim() || 'timer')"
                         [attr.aria-expanded]="openTimerMenuId() === timer.id"
+                        [attr.aria-controls]="'timer-options-' + timer.id"
                         (click)="toggleTimerMenu(timer.id)">
                         <mat-icon class="timer-card__action-icon" aria-hidden="true">more_vert</mat-icon>
                     </button>
 
                     @if (openTimerMenuId() === timer.id) {
-                        <div class="timer-card__menu" role="menu" aria-label="Timer options">
-                            <button type="button" class="timer-card__menu-item" role="menuitem" (click)="navigateToEditTimer(timer.id)">
+                        <div class="timer-card__menu" [id]="'timer-options-' + timer.id" role="group" [attr.aria-label]="'Options for ' + (timer.title.trim() || 'timer')">
+                            <button type="button" class="timer-card__menu-item timer-card__menu-item--edit" (click)="navigateToEditTimer(timer.id)">
                                 <mat-icon class="timer-card__menu-icon" aria-hidden="true">edit</mat-icon>
                                 Edit
                             </button>
-                            <button type="button" class="timer-card__menu-item timer-card__menu-item--danger" role="menuitem" (click)="requestDelete(timer)">
+                            <button type="button" class="timer-card__menu-item timer-card__menu-item--danger" (click)="requestDelete(timer)">
                                 <mat-icon class="timer-card__menu-icon" aria-hidden="true">delete</mat-icon>
                                 Delete
                             </button>
                         </div>
                     }
                 </div>
-
-                @if (activeTimerCardId() === timer.id && openTimerMenuId() !== timer.id) {
-                    <button
-                        type="button"
-                        class="timer-card__overlay-play"
-                        [attr.aria-label]="'Start ' + (timer.title.trim() || 'timer')"
-                        (click)="$event.stopPropagation(); startTimer(timer)">
-                        <mat-icon class="timer-card__overlay-icon" aria-hidden="true">play_circle</mat-icon>
-                    </button>
-                }
             </li>
         }
     </ul>
@@ -75,7 +78,6 @@
         mat-fab
         extended
         class="library-add-button"
-        aria-label="Add a new timer"
         (click)="$event.stopPropagation(); navigateToCreateTimer()">
         <mat-icon>add</mat-icon>
         Add Timer
@@ -85,6 +87,8 @@
         <div class="confirm-overlay" role="presentation" (click)="cancelDelete()" (keydown.escape)="cancelDelete()">
             <div
                 class="confirm-dialog"
+                cdkTrapFocus
+                [cdkTrapFocusAutoCapture]="true"
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="delete-dialog-title"

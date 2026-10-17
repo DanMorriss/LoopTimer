@@ -1,12 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router, provideRouter } from '@angular/router';
+import { provideRouter } from '@angular/router';
 
 import { HomeComponent } from './home.component';
 
 describe('HomeComponent', () => {
   let component: HomeComponent;
   let fixture: ComponentFixture<HomeComponent>;
-  let navigate: jasmine.Spy;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -15,7 +14,6 @@ describe('HomeComponent', () => {
     })
     .compileComponents();
 
-    navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
     fixture = TestBed.createComponent(HomeComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
@@ -25,15 +23,18 @@ describe('HomeComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('goes to setup from the "Create" side of the logo', () => {
-    fixture.nativeElement.querySelector('.left-zone').click();
+  // Real links, so they can be reached and followed with the keyboard
+  it('links to setup from the "Create" side of the logo', () => {
+    const link: HTMLAnchorElement = fixture.nativeElement.querySelector('a.left-zone');
 
-    expect(navigate).toHaveBeenCalledWith(['/setup']);
+    expect(link.textContent?.trim()).toBe('Create');
+    expect(link.getAttribute('href')).toBe('/setup');
   });
 
-  it('goes to the library from the "Library" side of the logo', () => {
-    fixture.nativeElement.querySelector('.right-zone').click();
+  it('links to the library from the "Library" side of the logo', () => {
+    const link: HTMLAnchorElement = fixture.nativeElement.querySelector('a.right-zone');
 
-    expect(navigate).toHaveBeenCalledWith(['/library']);
+    expect(link.textContent?.trim()).toBe('Library');
+    expect(link.getAttribute('href')).toBe('/library');
   });
 });

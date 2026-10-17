@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { CdkTrapFocus } from '@angular/cdk/a11y';
+import { afterNextRender, ChangeDetectionStrategy, Component, computed, ElementRef, inject, Injector, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -13,12 +14,14 @@ import { TimerStore } from '../shared/state/timer-store.service';
     selector: 'app-timer-library',
     templateUrl: './timer-library.component.html',
     styleUrl: './timer-library.component.scss',
-    imports: [MatButtonModule, MatTooltipModule, MatIconModule, InfinityButtonComponent],
+    imports: [CdkTrapFocus, MatButtonModule, MatTooltipModule, MatIconModule, InfinityButtonComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TimerLibraryComponent {
     timerStore = inject(TimerStore);
     router = inject(Router);
+    private host = inject<ElementRef<HTMLElement>>(ElementRef);
+    private injector = inject(Injector);
     protected timerPendingDelete = signal<Timer | null>(null);
     protected activeTimerCardId = signal<number | null>(null);
     protected openTimerMenuId = signal<number | null>(null);
@@ -32,7 +35,11 @@ export class TimerLibraryComponent {
     }
 
     cancelDelete() {
+        const timer = this.timerPendingDelete();
         this.timerPendingDelete.set(null);
+        if (timer) {
+            this.focusAfterRender(`[data-menu-for="${timer.id}"]`);
+        }
     }
 
     confirmDelete() {
@@ -45,6 +52,7 @@ export class TimerLibraryComponent {
         this.timerPendingDelete.set(null);
         this.activeTimerCardId.set(null);
         this.openTimerMenuId.set(null);
+        this.focusAfterRender('.library-add-button');
     }
 
     setActiveTimerCard(timerId: number) {
@@ -59,6 +67,22 @@ export class TimerLibraryComponent {
     toggleTimerMenu(timerId: number) {
         this.activeTimerCardId.set(timerId);
         this.openTimerMenuId.update(currentMenuId => currentMenuId === timerId ? null : timerId);
+    }
+
+    closeTimerMenu(timerId: number) {
+        if (this.openTimerMenuId() !== timerId) {
+            return;
+        }
+        this.openTimerMenuId.set(null);
+        this.focusAfterRender(`[data-menu-for="${timerId}"]`);
+    }
+
+    // The element that had focus is removed when a menu or dialog closes,
+    // so move focus somewhere sensible instead of losing it to the page
+    private focusAfterRender(selector: string) {
+        afterNextRender(() => {
+            this.host.nativeElement.querySelector<HTMLElement>(selector)?.focus();
+        }, { injector: this.injector });
     }
 
     startTimer(timer: Timer) {

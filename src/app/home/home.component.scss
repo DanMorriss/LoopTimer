@@ -72,6 +72,12 @@
   
   cursor: pointer;
   transform-origin: center;
+  text-decoration: none;
+
+  &:focus-visible {
+    outline: 2px solid #e0f2fe;
+    outline-offset: 4px;
+  }
   
   @media (max-width: 640px) {
     width: 100px;
@@ -142,7 +148,8 @@
   }
 }
 
-.interaction-zone:hover .zone-label {
+.interaction-zone:hover .zone-label,
+.interaction-zone:focus-visible .zone-label {
   opacity: 1;
   text-shadow: 0 0 15px rgba(139, 92, 246, 0.8);
 }
