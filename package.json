@@ -30,6 +30,7 @@
     "@angular/compiler-cli": "^22.2.3",
     "@types/jasmine": "~5.1.0",
     "autoprefixer": "^10.4.20",
+    "axe-core": "^4.10.3",
     "istanbul-lib-instrument": "^6.0.3",
     "jasmine-core": "~5.5.0",
     "karma": "~6.4.0",
