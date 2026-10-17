@@ -1,4 +1,3 @@
-import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { afterNextRender, ChangeDetectionStrategy, Component, computed, ElementRef, inject, Injector, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -7,6 +6,7 @@ import { Router } from '@angular/router';
 import { Timer } from '../models/timer';
 import { formatTime } from '../shared/format-time';
 import { InfinityButtonComponent } from "../shared/components/infinity-button/infinity-button.component";
+import { DeleteTimerDialogComponent } from './delete-timer-dialog/delete-timer-dialog.component';
 import { TimerStore } from '../shared/state/timer-store.service';
 
 
@@ -14,7 +14,7 @@ import { TimerStore } from '../shared/state/timer-store.service';
     selector: 'app-timer-library',
     templateUrl: './timer-library.component.html',
     styleUrl: './timer-library.component.scss',
-    imports: [CdkTrapFocus, MatButtonModule, MatTooltipModule, MatIconModule, InfinityButtonComponent],
+    imports: [DeleteTimerDialogComponent, MatButtonModule, MatTooltipModule, MatIconModule, InfinityButtonComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TimerLibraryComponent {

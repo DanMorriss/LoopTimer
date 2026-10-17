@@ -5,7 +5,6 @@ Open work from the October 2026 review. Highest priority first. Tick items off (
 ## 1. Performance
 
 - [ ] **`provideAnimationsAsync()` in `main.ts` looks unused.** Its 68 kB lazy chunk was never requested while using every page. Remove it, and the `@angular/animations` dependency, then recheck the tooltip, menu and dialog.
-- [ ] `timer-library.component.scss` is about 1.2 kB over its 4 kB component-style budget.
 - [ ] **Fonts are requested more than once.** Audiowide loads in both `index.html` and `styles.scss`, and `index.html` has the same preconnect twice. Remove the duplicates and check whether Roboto is used.
 
 ## 2. Match the Angular guidelines (`~/.claude/CLAUDE.md`)
@@ -14,6 +13,7 @@ Open work from the October 2026 review. Highest priority first. Tick items off (
 - [ ] In the `NavComponent` constructor, use `inject()` instead of constructor injection.
 - [ ] `infinity-button`: remove `standalone: true` and replace `@Output()` / `EventEmitter` with `output()`. Make `buttonClasses` a `computed()`.
 - [ ] `TimerStore`: use `@Service` instead of `@Injectable({ providedIn: 'root' })`.
+- [ ] Split each library card into a `TimerCard` component (title, summary, play button, options menu). The library template and styles are the largest in the app; `timer-library.component.scss` is 4.1 kB, which is why the component-style warning budget was raised from 4 kB to 5 kB.
 - [ ] Optional: move the setup form to Signal Forms.
 
 ## 3. Accessibility follow-ups

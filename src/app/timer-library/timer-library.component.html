@@ -84,33 +84,6 @@
     </button>
 
     @if (timerPendingDelete(); as pendingTimer) {
-        <div class="confirm-overlay" role="presentation" (click)="cancelDelete()" (keydown.escape)="cancelDelete()">
-            <div
-                class="confirm-dialog"
-                cdkTrapFocus
-                [cdkTrapFocusAutoCapture]="true"
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="delete-dialog-title"
-                aria-describedby="delete-dialog-description"
-                (click)="$event.stopPropagation()">
-                <p id="delete-dialog-title" class="confirm-dialog__title">Delete timer?</p>
-                <p id="delete-dialog-description" class="confirm-dialog__description">
-                    @if (pendingTimer.title.trim()) {
-                        This will remove "{{ pendingTimer.title }}" from your timer library.
-                    } @else {
-                        This will remove this timer from your timer library.
-                    }
-                </p>
-                <div class="confirm-dialog__actions">
-                    <button type="button" class="confirm-dialog__button confirm-dialog__button--cancel" (click)="cancelDelete()">
-                        Cancel
-                    </button>
-                    <button type="button" class="confirm-dialog__button confirm-dialog__button--delete" (click)="confirmDelete()">
-                        Delete
-                    </button>
-                </div>
-            </div>
-        </div>
+        <app-delete-timer-dialog [timer]="pendingTimer" (cancelled)="cancelDelete()" (confirmed)="confirmDelete()" />
     }
 </div>
