@@ -77,6 +77,28 @@ export class TimerComponent implements OnDestroy {
 
     progressPercent = computed(() => Math.round(this.progress() * 100));
 
+    /**
+     * What screen readers announce. It only changes when the phase changes, so the
+     * live region speaks at the start of each work, rest and the end, not every second.
+     */
+    announcement = computed(() => {
+        const state = this.state();
+        const timer = this.timer();
+        if (!state || !timer) {
+            return '';
+        }
+        switch (state.phase) {
+            case 'work':
+                return state.roundsLeft === 1 && timer.repeats > 1
+                    ? 'Work, last round'
+                    : `Work, round ${state.round + 1} of ${timer.repeats}`;
+            case 'rest':
+                return 'Rest';
+            case 'complete':
+                return 'Finished';
+        }
+    });
+
     syncClock() {
         this.now.set(Date.now());
     }

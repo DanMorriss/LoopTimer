@@ -305,6 +305,57 @@ describe('TimerComponent', () => {
     }));
   });
 
+  describe('screen reader announcements', () => {
+    const liveRegion = () => fixture.nativeElement.querySelector('[aria-live]') as HTMLElement;
+    const said = () => liveRegion().textContent?.trim();
+
+    it('uses a polite live region', fakeAsync(() => {
+      start(makeTimer());
+
+      expect(liveRegion().getAttribute('aria-live')).toBe('polite');
+      expect(liveRegion().getAttribute('aria-atomic')).toBe('true');
+      fixture.destroy();
+    }));
+
+    it('announces each phase as it starts, then the finish', fakeAsync(() => {
+      start(makeTimer({ timerSeconds: 3, restSeconds: 2, repeats: 3 }));
+      expect(said()).toBe('Work, round 1 of 3');
+
+      advance(3000);
+      expect(said()).toBe('Rest');
+
+      advance(2000);
+      expect(said()).toBe('Work, round 2 of 3');
+
+      advance(5000);
+      expect(said()).toBe('Work, last round');
+
+      advance(3000);
+      expect(said()).toBe('Finished');
+      fixture.destroy();
+    }));
+
+    it('does not change between seconds, so the countdown is not read out', fakeAsync(() => {
+      start(makeTimer({ timerSeconds: 5 }));
+      const textNode = liveRegion().firstChild;
+      const before = said();
+
+      advance(1000);
+      advance(1000);
+
+      expect(said()).toBe(before);
+      expect(liveRegion().firstChild).toBe(textNode);
+      fixture.destroy();
+    }));
+
+    it('says "round 1 of 1" rather than "last round" for a single-round timer', fakeAsync(() => {
+      start(makeTimer({ repeats: 1 }));
+
+      expect(said()).toBe('Work, round 1 of 1');
+      fixture.destroy();
+    }));
+  });
+
   describe('progress ring', () => {
     const ring = () => fixture.nativeElement.querySelector('.timer-ring') as HTMLElement;
     const sweeps = () => Array.from(fixture.nativeElement.querySelectorAll('.timer-ring__sweep')) as HTMLElement[];

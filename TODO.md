@@ -5,7 +5,6 @@ Open work from the October 2026 review. Highest priority first. Tick items off (
 ## 1. Accessibility follow-ups
 
 - [ ] Run axe automatically, in a test or in CI, so regressions get caught. Every page passed with 0 violations at the time of writing.
-- [ ] Consider announcing phase changes (Work / Rest / Finished) to screen readers with a polite `aria-live` region. Announce changes only, not every second.
 
 ## 2. Tooling
 
