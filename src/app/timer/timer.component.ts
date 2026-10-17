@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, OnDestroy, signal } from '@angular/core';
+import { Component, computed, inject, OnDestroy, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { formatTime } from '../shared/format-time';
 import { TimerStore } from '../shared/state/timer-store.service';
@@ -9,7 +9,6 @@ import { timerStateAt } from './timer-state';
     imports: [RouterLink],
     templateUrl: './timer.component.html',
     styleUrls: ['./timer.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
     host: {
         // Browsers pause or slow timers in background tabs, so catch up as soon as the page is visible again
         '(document:visibilitychange)': 'syncClock()',

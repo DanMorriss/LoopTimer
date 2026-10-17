@@ -1,16 +1,5 @@
-import {
-    ChangeDetectionStrategy,
-    Component,
-    inject,
-    signal
-} from '@angular/core';
-import {
-    AbstractControl,
-    FormBuilder,
-    ReactiveFormsModule,
-    ValidationErrors,
-    Validators
-} from '@angular/forms';
+import { Component, computed, inject, signal } from '@angular/core';
+import { form, FormField, FormRoot, validate } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -18,110 +7,129 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Timer } from '../models/timer';
 import { TimerStore } from '../shared/state/timer-store.service';
 
+/**
+ * The form's values. The numbers are strings because native <select> elements
+ * always report their value as a string; they're converted when the timer is saved.
+ */
+interface TimerSetupModel {
+    title: string;
+    timerMinutes: string;
+    timerSeconds: string;
+    restMinutes: string;
+    restSeconds: string;
+    repeats: string;
+}
+
+interface SelectOption {
+    value: string;
+    label: string;
+}
+
+function selectOptions(from: number, to: number, label: (n: number) => string): SelectOption[] {
+    return Array.from({ length: to - from + 1 }, (_, i) => ({ value: String(from + i), label: label(from + i) }));
+}
+
+const padded = (n: number) => n.toString().padStart(2, '0');
+
+const EMPTY_SETUP: TimerSetupModel = {
+    title: '',
+    timerMinutes: '0',
+    timerSeconds: '0',
+    restMinutes: '0',
+    restSeconds: '0',
+    repeats: '1'
+};
 
 @Component({
     selector: 'app-timer-setup',
     templateUrl: './timer-setup.component.html',
     styleUrl: './timer-setup.component.scss',
-    imports: [
-        ReactiveFormsModule, 
-        MatButtonModule, 
-        MatFormFieldModule, 
-        MatIconModule,
-    ],
-    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [FormRoot, FormField, MatButtonModule, MatFormFieldModule, MatIconModule],
 })
 export class TimerSetupComponent {
-    timerStore = inject(TimerStore);
-    router = inject(Router);
-    route = inject(ActivatedRoute);
-    protected editingTimerId = signal<number | null>(null);
-    minuteOptions = Array.from({ length: 100 }, (_, index) => index);
-    secondOptions = Array.from({ length: 60 }, (_, index) => index);
-    repeatOptions = Array.from({ length: 30 }, (_, index) => index + 1);
+    private readonly timerStore = inject(TimerStore);
+    private readonly router = inject(Router);
+    private readonly route = inject(ActivatedRoute);
 
-    timerForm = inject(FormBuilder).nonNullable.group({
-        title: [''],
-        timerMinutes: [0, Validators.min(0)],
-        timerSeconds: [0, Validators.min(0)],
-        restMinutes: [0, Validators.min(0)],
-        restSeconds: [0, Validators.min(0)],
-        repeats: [1, Validators.min(1)]
-    }, {
-        validators: [this.timerTimeValidator.bind(this)]
-    });
+    protected readonly editingTimerId = signal<number | null>(null);
+    // Each <option> also binds [selected] from the form value: [formField] sets the
+    // <select>'s value before the @for has created its options, which the browser ignores
+    protected readonly minuteOptions = selectOptions(0, 99, padded);
+    protected readonly secondOptions = selectOptions(0, 59, padded);
+    protected readonly repeatOptions = selectOptions(1, 30, String);
 
-    private timerTimeValidator(group: AbstractControl): ValidationErrors | null {
-        const minutes = this.toNumber(group.get('timerMinutes')?.value);
-        const seconds = this.toNumber(group.get('timerSeconds')?.value);
-        return (minutes + seconds) > 0 ? null : { noTime: true };
-    }
+    private readonly model = signal<TimerSetupModel>({ ...EMPTY_SETUP });
 
-    private toNumber(value: unknown): number {
-        return typeof value === 'number' ? value : Number(value ?? 0);
-    }
+    protected readonly timerForm = form(
+        this.model,
+        setup => {
+            // The dropdowns only offer valid values, so the one rule is that there's some work time
+            validate(setup, ({ value }) =>
+                Number(value().timerMinutes) + Number(value().timerSeconds) > 0
+                    ? undefined
+                    : { kind: 'noTime', message: 'Timer must have some time' }
+            );
+        },
+        {
+            submission: {
+                action: async () => {
+                    await this.saveAndStart();
+                    return undefined;
+                }
+            }
+        }
+    );
+
+    protected readonly noTimeError = computed(() =>
+        this.timerForm().errors().find(error => error.kind === 'noTime')
+    );
 
     constructor() {
-        const rawEditId = this.route.snapshot.queryParamMap.get('editId');
-        if (!rawEditId) {
-            return;
+        const timerToEdit = this.findTimerToEdit();
+        if (timerToEdit) {
+            this.editingTimerId.set(timerToEdit.id);
+            this.model.set({
+                title: timerToEdit.title,
+                timerMinutes: String(timerToEdit.timerMinutes),
+                timerSeconds: String(timerToEdit.timerSeconds),
+                restMinutes: String(timerToEdit.restMinutes),
+                restSeconds: String(timerToEdit.restSeconds),
+                repeats: String(timerToEdit.repeats)
+            });
         }
-
-        const editId = Number(rawEditId);
-        if (!Number.isInteger(editId) || editId <= 0) {
-            return;
-        }
-
-        const timerToEdit = this.timerStore.findTimerById(editId);
-        if (!timerToEdit) {
-            return;
-        }
-
-        this.editingTimerId.set(editId);
-        this.timerForm.setValue({
-            title: timerToEdit.title,
-            timerMinutes: timerToEdit.timerMinutes,
-            timerSeconds: timerToEdit.timerSeconds,
-            restMinutes: timerToEdit.restMinutes,
-            restSeconds: timerToEdit.restSeconds,
-            repeats: timerToEdit.repeats
-        });
     }
 
-    addTimer() {
-        if (!this.timerForm.valid) {
-            return;
+    private findTimerToEdit(): Timer | null {
+        const rawEditId = this.route.snapshot.queryParamMap.get('editId');
+        const editId = Number(rawEditId);
+        if (!rawEditId || !Number.isInteger(editId) || editId <= 0) {
+            return null;
         }
+        return this.timerStore.findTimerById(editId);
+    }
 
-        const formValue = this.timerForm.getRawValue();
-
-        const newTimer: Omit<Timer, 'id'> = {
-            title: formValue.title,
-            timerMinutes: this.toNumber(formValue.timerMinutes),
-            timerSeconds: this.toNumber(formValue.timerSeconds),
-            restMinutes: this.toNumber(formValue.restMinutes),
-            restSeconds: this.toNumber(formValue.restSeconds),
-            repeats: this.toNumber(formValue.repeats),
+    private async saveAndStart(): Promise<void> {
+        const value = this.model();
+        const timer: Omit<Timer, 'id'> = {
+            title: value.title,
+            timerMinutes: Number(value.timerMinutes),
+            timerSeconds: Number(value.timerSeconds),
+            restMinutes: Number(value.restMinutes),
+            restSeconds: Number(value.restSeconds),
+            repeats: Number(value.repeats),
             isTimerActive: false,
-            isRestActive: false, 
+            isRestActive: false,
             isComplete: false
         };
 
         const editingId = this.editingTimerId();
         const savedTimer = editingId
-            ? this.timerStore.updateTimer(editingId, newTimer) ?? this.timerStore.addTimer(newTimer)
-            : this.timerStore.addTimer(newTimer);
+            ? this.timerStore.updateTimer(editingId, timer) ?? this.timerStore.addTimer(timer)
+            : this.timerStore.addTimer(timer);
 
-        this.timerForm.reset({
-            title: '',
-            timerMinutes: 0,
-            timerSeconds: 0,
-            restMinutes: 0,
-            restSeconds: 0,
-            repeats: 1
-        });
+        this.model.set({ ...EMPTY_SETUP });
         this.editingTimerId.set(null);
         this.timerStore.setActiveTimer(savedTimer);
-        this.router.navigate(['/timer']);
+        await this.router.navigate(['/timer']);
     }
 }

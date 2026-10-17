@@ -1,11 +1,19 @@
-import { Component, EventEmitter, Output, input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
+
+const SIZE_CLASSES = {
+    small: 'infinity-button--small',
+    medium: 'infinity-button--medium',
+    large: 'infinity-button--large'
+};
+
+const VARIANT_CLASSES = {
+    primary: 'infinity-button--primary',
+    secondary: 'infinity-button--secondary'
+};
 
 @Component({
     selector: 'app-infinity-button',
-    standalone: true,
-    imports: [],
     templateUrl: './infinity-button.component.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './infinity-button.component.scss'
 })
 export class InfinityButtonComponent {
@@ -14,27 +22,16 @@ export class InfinityButtonComponent {
     readonly type = input<'button' | 'submit' | 'reset'>('button');
     readonly size = input<'small' | 'medium' | 'large'>('medium');
     readonly variant = input<'primary' | 'secondary'>('primary');
-    
-    @Output() buttonClick = new EventEmitter<void>();
+
+    readonly buttonClick = output<void>();
+
+    readonly buttonClasses = computed(() =>
+        `infinity-button ${SIZE_CLASSES[this.size()]} ${VARIANT_CLASSES[this.variant()]} ${this.disabled() ? 'infinity-button--disabled' : ''}`.trim()
+    );
 
     onClick() {
         if (!this.disabled()) {
-        this.buttonClick.emit();
+            this.buttonClick.emit();
         }
-    }
-
-    get buttonClasses(): string {
-        const sizeClasses = {
-        small: 'infinity-button--small',
-        medium: 'infinity-button--medium', 
-        large: 'infinity-button--large'
-        };
-        
-        const variantClasses = {
-        primary: 'infinity-button--primary',
-        secondary: 'infinity-button--secondary'
-        };
-
-        return `infinity-button ${sizeClasses[this.size()]} ${variantClasses[this.variant()]} ${this.disabled() ? 'infinity-button--disabled' : ''}`.trim();
     }
 }

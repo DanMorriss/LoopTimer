@@ -1,12 +1,11 @@
-import { afterNextRender, ChangeDetectionStrategy, Component, computed, ElementRef, inject, Injector, signal } from '@angular/core';
+import { afterNextRender, Component, computed, ElementRef, inject, Injector, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router } from '@angular/router';
 import { Timer } from '../models/timer';
-import { formatTime } from '../shared/format-time';
 import { InfinityButtonComponent } from "../shared/components/infinity-button/infinity-button.component";
 import { DeleteTimerDialogComponent } from './delete-timer-dialog/delete-timer-dialog.component';
+import { TimerCardComponent } from './timer-card/timer-card.component';
 import { TimerStore } from '../shared/state/timer-store.service';
 
 
@@ -14,8 +13,7 @@ import { TimerStore } from '../shared/state/timer-store.service';
     selector: 'app-timer-library',
     templateUrl: './timer-library.component.html',
     styleUrl: './timer-library.component.scss',
-    imports: [DeleteTimerDialogComponent, MatButtonModule, MatTooltipModule, MatIconModule, InfinityButtonComponent],
-    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [DeleteTimerDialogComponent, TimerCardComponent, MatButtonModule, MatIconModule, InfinityButtonComponent],
 })
 export class TimerLibraryComponent {
     timerStore = inject(TimerStore);
@@ -98,9 +96,5 @@ export class TimerLibraryComponent {
         this.openTimerMenuId.set(null);
         this.activeTimerCardId.set(null);
         this.router.navigate(['/setup'], { queryParams: { editId: timerId } });
-    }
-
-    formatTime(minutes: number, seconds: number): string {
-        return formatTime(minutes, seconds);
     }
 }

@@ -17,7 +17,6 @@ const savedTimer: Omit<Timer, 'id'> = {
 };
 
 describe('TimerSetupComponent', () => {
-  let component: TimerSetupComponent;
   let fixture: ComponentFixture<TimerSetupComponent>;
   let store: TimerStore;
   let navigate: jasmine.Spy;
@@ -39,20 +38,35 @@ describe('TimerSetupComponent', () => {
     navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
   }
 
-  function create() {
+  async function create() {
     fixture = TestBed.createComponent(TimerSetupComponent);
-    component = fixture.componentInstance;
     fixture.detectChanges();
+    await fixture.whenStable();
   }
 
   function el<T extends HTMLElement>(selector: string): T {
     return fixture.nativeElement.querySelector(selector);
   }
 
+  /** What the form currently shows, read from the page like a user would see it. */
+  function shown() {
+    const value = (id: string) => el<HTMLInputElement | HTMLSelectElement>(`#${id}`).value;
+    return {
+      title: value('title'),
+      timerMinutes: value('timerMinutes'),
+      timerSeconds: value('timerSeconds'),
+      restMinutes: value('restMinutes'),
+      restSeconds: value('restSeconds'),
+      repeats: value('repeats')
+    };
+  }
+
   /** Pick an option in a <select>, the way a user would. */
   function choose(id: string, value: string) {
     const select = el<HTMLSelectElement>(`#${id}`);
     select.value = value;
+    // Browsers fire both when an option is picked
+    select.dispatchEvent(new Event('input'));
     select.dispatchEvent(new Event('change'));
     fixture.detectChanges();
   }
@@ -68,8 +82,10 @@ describe('TimerSetupComponent', () => {
     return el<HTMLButtonElement>('button[type="submit"]');
   }
 
-  function submit() {
-    el<HTMLFormElement>('form').dispatchEvent(new Event('submit'));
+  /** Submit the form and wait for the save to finish. */
+  async function submit() {
+    el<HTMLFormElement>('form').dispatchEvent(new Event('submit', { cancelable: true }));
+    await fixture.whenStable();
     fixture.detectChanges();
   }
 
@@ -78,27 +94,27 @@ describe('TimerSetupComponent', () => {
   describe('creating a timer', () => {
     beforeEach(async () => {
       await setup();
-      create();
+      await create();
     });
 
     it('starts with an empty form', () => {
-      expect(component.timerForm.getRawValue()).toEqual({
+      expect(shown()).toEqual({
         title: '',
-        timerMinutes: 0,
-        timerSeconds: 0,
-        restMinutes: 0,
-        restSeconds: 0,
-        repeats: 1
+        timerMinutes: '0',
+        timerSeconds: '0',
+        restMinutes: '0',
+        restSeconds: '0',
+        repeats: '1'
       });
       expect(submitButton().textContent).toContain('Start Timer');
       expect(submitButton().textContent).not.toContain('Save');
     });
 
-    it('will not start a timer with no work time', () => {
+    it('will not start a timer with no work time', async () => {
       expect(submitButton().disabled).toBeTrue();
       expect(fixture.nativeElement.textContent).toContain('Timer must have some time');
 
-      submit();
+      await submit();
 
       expect(store.timers()).toEqual([]);
       expect(navigate).not.toHaveBeenCalled();
@@ -114,7 +130,17 @@ describe('TimerSetupComponent', () => {
       expect(submitButton().disabled).toBeFalse();
     });
 
-    it('saves the timer with numbers, makes it active, and goes to the timer', () => {
+    it('stops the browser reloading the page on submit', async () => {
+      choose('timerSeconds', '5');
+      const event = new Event('submit', { cancelable: true });
+
+      el<HTMLFormElement>('form').dispatchEvent(event);
+      await fixture.whenStable();
+
+      expect(event.defaultPrevented).toBeTrue();
+    });
+
+    it('saves the timer with numbers, makes it active, and goes to the timer', async () => {
       type('title', 'Sprints');
       choose('timerMinutes', '1');
       choose('timerSeconds', '30');
@@ -122,7 +148,7 @@ describe('TimerSetupComponent', () => {
       choose('restSeconds', '20');
       choose('repeats', '6');
 
-      submit();
+      await submit();
 
       const expected: Timer = {
         id: 1,
@@ -141,14 +167,14 @@ describe('TimerSetupComponent', () => {
       expect(navigate).toHaveBeenCalledWith(['/timer']);
     });
 
-    it('resets the form after saving', () => {
+    it('resets the form after saving', async () => {
       type('title', 'Sprints');
       choose('timerSeconds', '30');
 
-      submit();
+      await submit();
 
-      expect(component.timerForm.getRawValue().title).toBe('');
-      expect(component.timerForm.getRawValue().timerSeconds).toBe(0);
+      expect(shown().title).toBe('');
+      expect(shown().timerSeconds).toBe('0');
     });
   });
 
@@ -156,15 +182,15 @@ describe('TimerSetupComponent', () => {
     it('fills the form from the timer in ?editId', async () => {
       await setup({ editId: '1' });
       store.addTimer(savedTimer);
-      create();
+      await create();
 
-      expect(component.timerForm.getRawValue()).toEqual({
+      expect(shown()).toEqual({
         title: 'Saved timer',
-        timerMinutes: 2,
-        timerSeconds: 15,
-        restMinutes: 0,
-        restSeconds: 45,
-        repeats: 4
+        timerMinutes: '2',
+        timerSeconds: '15',
+        restMinutes: '0',
+        restSeconds: '45',
+        repeats: '4'
       });
       expect(submitButton().textContent).toContain('Save & Start Timer');
     });
@@ -172,11 +198,11 @@ describe('TimerSetupComponent', () => {
     it('updates the existing timer instead of adding a new one', async () => {
       await setup({ editId: '1' });
       store.addTimer(savedTimer);
-      create();
+      await create();
 
       type('title', 'Renamed');
       choose('repeats', '2');
-      submit();
+      await submit();
 
       expect(store.timers()).toHaveSize(1);
       expect(store.timers()[0]).toEqual(jasmine.objectContaining({ id: 1, title: 'Renamed', repeats: 2 }));
@@ -188,9 +214,9 @@ describe('TimerSetupComponent', () => {
       it(`ignores an invalid or unknown editId of "${editId}"`, async () => {
         await setup({ editId });
         store.addTimer(savedTimer);
-        create();
+        await create();
 
-        expect(component.timerForm.getRawValue().title).toBe('');
+        expect(shown().title).toBe('');
         expect(submitButton().textContent).not.toContain('Save');
       });
     }

@@ -1,7 +1,7 @@
-import { computed, Injectable, signal } from "@angular/core";
+import { computed, Service, signal } from "@angular/core";
 import { Timer } from "../../models/timer";
 
-@Injectable({ providedIn: 'root'})
+@Service()
 export class TimerStore {
     private _timers = signal<Timer[]>([]);
     private _activeTimer = signal<Timer | null>(null);
