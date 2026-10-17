@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { Timer } from '../models/timer';
@@ -19,7 +20,7 @@ const savedTimer: Omit<Timer, 'id'> = {
 describe('TimerSetupComponent', () => {
     let fixture: ComponentFixture<TimerSetupComponent>;
     let store: TimerStore;
-    let navigate: jasmine.Spy;
+    let navigate: Mock;
 
     async function setup(queryParams: Record<string, string> = {}) {
         localStorage.clear();
@@ -35,7 +36,7 @@ describe('TimerSetupComponent', () => {
         }).compileComponents();
 
         store = TestBed.inject(TimerStore);
-        navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+        navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     }
 
     async function create() {
@@ -111,7 +112,7 @@ describe('TimerSetupComponent', () => {
         });
 
         it('will not start a timer with no work time', async () => {
-            expect(submitButton().disabled).toBeTrue();
+            expect(submitButton().disabled).toBe(true);
             expect(fixture.nativeElement.textContent).toContain('Timer must have some time');
 
             await submit();
@@ -122,12 +123,12 @@ describe('TimerSetupComponent', () => {
 
         it('allows a timer with only seconds, or only minutes', () => {
             choose('timerSeconds', '5');
-            expect(submitButton().disabled).toBeFalse();
+            expect(submitButton().disabled).toBe(false);
             expect(fixture.nativeElement.textContent).not.toContain('Timer must have some time');
 
             choose('timerSeconds', '0');
             choose('timerMinutes', '1');
-            expect(submitButton().disabled).toBeFalse();
+            expect(submitButton().disabled).toBe(false);
         });
 
         it('stops the browser reloading the page on submit', async () => {
@@ -137,7 +138,7 @@ describe('TimerSetupComponent', () => {
             el<HTMLFormElement>('form').dispatchEvent(event);
             await fixture.whenStable();
 
-            expect(event.defaultPrevented).toBeTrue();
+            expect(event.defaultPrevented).toBe(true);
         });
 
         it('saves the timer with numbers, makes it active, and goes to the timer', async () => {
@@ -204,9 +205,9 @@ describe('TimerSetupComponent', () => {
             choose('repeats', '2');
             await submit();
 
-            expect(store.timers()).toHaveSize(1);
+            expect(store.timers()).toHaveLength(1);
             expect(store.timers()[0]).toEqual(
-                jasmine.objectContaining({ id: 1, title: 'Renamed', repeats: 2 })
+                expect.objectContaining({ id: 1, title: 'Renamed', repeats: 2 })
             );
             expect(store.activeTimer()?.id).toBe(1);
             expect(navigate).toHaveBeenCalledWith(['/timer']);

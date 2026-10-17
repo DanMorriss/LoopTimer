@@ -70,7 +70,7 @@ describe('Accessibility (axe)', () => {
 
     function click(selector: string) {
         const element = fixture.nativeElement.querySelector(selector) as HTMLElement | null;
-        expect(element).withContext(`expected to find ${selector}`).not.toBeNull();
+        expect(element, `expected to find ${selector}`).not.toBeNull();
         element!.click();
     }
 
@@ -88,7 +88,7 @@ describe('Accessibility (axe)', () => {
             (v) =>
                 `${v.id} (${v.impact}): ${v.help}\n    ${v.nodes.map((n) => n.target.join(' ')).join('\n    ')}`
         );
-        expect(report).withContext('axe violations').toEqual([]);
+        expect(report, 'axe violations').toEqual([]);
     }
 
     it('home', async () => {
@@ -160,6 +160,6 @@ describe('Accessibility (axe)', () => {
             await settle(4000);
             expect(fixture.nativeElement.textContent).toContain("You're finished!");
             await expectNoViolations();
-        }, 15_000);
+        }, 15000);
     });
 });
