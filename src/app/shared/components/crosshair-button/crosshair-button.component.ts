@@ -1,10 +1,9 @@
-import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Output, input } from '@angular/core';
 
 @Component({
   selector: 'app-crosshair-button',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './crosshair-button.component.html',
   styleUrl: './crosshair-button.component.scss'
 })

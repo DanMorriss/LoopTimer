@@ -1,10 +1,9 @@
-import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Output, input } from '@angular/core';
 
 @Component({
   selector: 'app-edge-button',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './edge-button.component.html',
   styleUrl: './edge-button.component.scss'
 })

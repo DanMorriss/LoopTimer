@@ -1,5 +1,5 @@
 
-import { importProvidersFrom } from '@angular/core';
+import { importProvidersFrom, provideZoneChangeDetection } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { bootstrapApplication } from '@angular/platform-browser';
@@ -10,6 +10,7 @@ import { routes } from './app/app.routes';
 
 bootstrapApplication(AppComponent, {
     providers: [
+        provideZoneChangeDetection(),
         provideRouter(routes),
         provideAnimationsAsync(),
         importProvidersFrom(FormsModule, MatButtonModule),

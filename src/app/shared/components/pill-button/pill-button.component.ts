@@ -1,10 +1,9 @@
-import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Output, input } from '@angular/core';
 
 @Component({
   selector: 'app-pill-button',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './pill-button.component.html',
   styleUrl: './pill-button.component.scss'
 })

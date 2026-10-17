@@ -1,10 +1,9 @@
-import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Output, input } from '@angular/core';
 
 @Component({
     selector: 'app-infinity-button',
     standalone: true,
-    imports: [CommonModule],
+    imports: [],
     templateUrl: './infinity-button.component.html',
     styleUrl: './infinity-button.component.scss'
 })

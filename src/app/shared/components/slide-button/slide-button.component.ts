@@ -1,10 +1,9 @@
-import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Output, input } from '@angular/core';
 
 @Component({
   selector: 'app-slide-button',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './slide-button.component.html',
   styleUrl: './slide-button.component.scss'
 })
