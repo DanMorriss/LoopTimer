@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { Timer } from '../models/timer';
 import { TimerStore } from '../shared/state/timer-store.service';
@@ -28,7 +27,6 @@ describe('TimerSetupComponent', () => {
     await TestBed.configureTestingModule({
       imports: [TimerSetupComponent],
       providers: [
-        provideNoopAnimations(),
         provideRouter([]),
         {
           provide: ActivatedRoute,
