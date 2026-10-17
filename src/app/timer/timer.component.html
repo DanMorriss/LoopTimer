@@ -1,61 +1,68 @@
 <div class="flex justify-center items-center flex-col">
 
-    <p class="text-4xl text-sky-50">{{timerStore.activeTimer()?.title}}</p>
-    @if (repeatArray.length > 1) {
-        <div class="text-2xl text-sky-50">
-            <span>remaining repeats: </span>
-            @for (i of repeatArray; track i) {
-                <span class="rubik-spray-paint-regular">| </span>
-            }
-        </div>
-    }
-    @if (repeatArray.length === 1 && isTimerActive() === true) {
-        <p class="text-3xl text-sky-50">Last one!</p>
-    }
+    @if (timer()) {
+        <p class="text-4xl text-sky-50">{{timer()?.title}}</p>
+        @if (repeatArray.length > 1) {
+            <div class="text-2xl text-sky-50">
+                <span>remaining repeats: </span>
+                @for (i of repeatArray; track i) {
+                    <span class="rubik-spray-paint-regular">| </span>
+                }
+            </div>
+        }
+        @if (repeatArray.length === 1 && isTimerActive() === true) {
+            <p class="text-3xl text-sky-50">Last one!</p>
+        }
 
-    <div
-    class="timer-ring"
-    [class.clockwise]="isTimerActive()"
-    [class.anticlockwise]="isRestActive()"
-    [style.--progress-color]="
-        isTimerActive() === true
-        ? 'oklch(81% 0.117 11.638)'
-        : isRestActive() === true
-        ? 'oklch(90.1% 0.058 230.902)'
-        : '#ddd'
-    "
-    [style.--progress-deg]="progress() * 360 + 'deg'"
-    >
-        <div class="timer-inner">
-            <div class="text-4xl text-black text-center w-[340px] h-[340px] rounded-full flex justify-center items-center"
-                [class]="{
-                    'flash-fade': isTimerActive(), 
-                    'flash-fade-blue': isRestActive(),
-                    'bg-sky-50/50': isComplete(),
-                }"
-            >
-        
-            @if (isComplete() === false) {
-                <div>
-                    @if (isTimerActive() === true) {
-                        <p class="text-transparent">Timer</p>
-                        <p>{{workTime()}}</p>
-                    }
-                        
+        <div
+        class="timer-ring"
+        [class.clockwise]="isTimerActive()"
+        [class.anticlockwise]="isRestActive()"
+        [style.--progress-color]="
+            isTimerActive() === true
+            ? 'oklch(81% 0.117 11.638)'
+            : isRestActive() === true
+            ? 'oklch(90.1% 0.058 230.902)'
+            : '#ddd'
+        "
+        [style.--progress-deg]="progress() * 360 + 'deg'"
+        >
+            <div class="timer-inner">
+                <div class="text-4xl text-black text-center w-[340px] h-[340px] rounded-full flex justify-center items-center"
+                    [class]="{
+                        'flash-fade': isTimerActive(),
+                        'flash-fade-blue': isRestActive(),
+                        'bg-sky-50/50': isComplete(),
+                    }"
+                >
+
+                @if (isComplete() === false) {
+                    <div>
+                        @if (isTimerActive() === true) {
+                            <p class="text-transparent">Timer</p>
+                            <p>{{workTime()}}</p>
+                        }
+
                         @if (isRestActive() === true) {
                             <p>Rest</p>
                             <p>{{restTime()}}</p>
                         }
                     </div>
                 }
-                
+
                 @if(isComplete() === true) {
                     <div>
                         <p>You're finished!</p>
                     </div>
                 }
+                </div>
             </div>
         </div>
-    </div>
-    
+    } @else {
+        <div class="no-timer flex flex-col items-center gap-6 p-8 text-center text-sky-50">
+            <p class="text-2xl">No timer selected.</p>
+            <a routerLink="/library" class="no-timer__link">Choose one from the library</a>
+        </div>
+    }
+
 </div>

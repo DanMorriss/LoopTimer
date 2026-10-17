@@ -70,3 +70,23 @@
   align-items: center;
   justify-content: center;
 }
+
+.no-timer__link {
+  padding: 0.75rem 1.5rem;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  border-radius: 0.75rem;
+  color: #e0f2fe;
+  text-decoration: none;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+
+  &:hover,
+  &:focus-visible {
+    border-color: #e0f2fe;
+    background-color: rgba(15, 23, 42, 0.6);
+  }
+
+  &:focus-visible {
+    outline: 2px solid #e0f2fe;
+    outline-offset: 3px;
+  }
+}

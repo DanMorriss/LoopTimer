@@ -11,6 +11,7 @@ export class TimerStore {
 
     constructor() {
         this._timers.set(this.loadTimers());
+        this._activeTimer.set(this.loadActiveTimer());
     }
 
     private loadTimers(): Timer[] {
@@ -19,13 +20,20 @@ export class TimerStore {
             return [];
         }
 
-        // Corrupted or unexpected data shouldn't stop the app from starting
+        // Corrupted or unexpected data shouldn't stop the app from starting,
+        // so drop anything that isn't a usable timer
         try {
             const parsed: unknown = JSON.parse(savedTimers);
-            return Array.isArray(parsed) ? parsed : [];
+            return Array.isArray(parsed) ? parsed.filter(item => isValidTimer(item)) : [];
         } catch {
             return [];
         }
+    }
+
+    // The active timer is remembered per tab, so refreshing the timer page brings it back
+    private loadActiveTimer(): Timer | null {
+        const savedId = Number(sessionStorage.getItem('activeTimerId'));
+        return savedId ? this.findTimerById(savedId) : null;
     }
 
     addTimer(timer: Omit<Timer, 'id'>): Timer {
@@ -71,9 +79,30 @@ export class TimerStore {
 
     setActiveTimer(timer: Timer) {
         this._activeTimer.set(timer);
+        sessionStorage.setItem('activeTimerId', String(timer.id));
     }
 
     private saveTimers() {
         localStorage.setItem('timers', JSON.stringify(this._timers()));
     }
+}
+
+function isWholeNumber(value: unknown, min: number, max = Number.MAX_SAFE_INTEGER): boolean {
+    return Number.isInteger(value) && (value as number) >= min && (value as number) <= max;
+}
+
+function isValidTimer(value: unknown): value is Timer {
+    if (typeof value !== 'object' || value === null) {
+        return false;
+    }
+
+    const timer = value as Record<string, unknown>;
+    return isWholeNumber(timer['id'], 1)
+        && typeof timer['title'] === 'string'
+        && isWholeNumber(timer['timerMinutes'], 0)
+        && isWholeNumber(timer['timerSeconds'], 0, 59)
+        && isWholeNumber(timer['restMinutes'], 0)
+        && isWholeNumber(timer['restSeconds'], 0, 59)
+        && isWholeNumber(timer['repeats'], 1)
+        && (timer['timerMinutes'] as number) + (timer['timerSeconds'] as number) > 0;
 }

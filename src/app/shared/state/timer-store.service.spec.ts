@@ -50,6 +50,53 @@ describe('TimerStore', () => {
 
       expect(createStore().timers()).toEqual([]);
     });
+
+    it('keeps valid saved timers and drops broken ones', () => {
+      const valid: Timer = { ...makeTimer(), id: 1 };
+      const broken = [
+        null,
+        'text',
+        { id: 2 },
+        { ...makeTimer(), id: 0 },
+        { ...makeTimer(), id: 3, title: 42 },
+        { ...makeTimer(), id: 4, repeats: 0 },
+        { ...makeTimer(), id: 5, timerSeconds: 60 },
+        { ...makeTimer(), id: 6, restSeconds: -1 },
+        { ...makeTimer(), id: 7, timerMinutes: 1.5 },
+        { ...makeTimer(), id: 8, timerMinutes: 0, timerSeconds: 0 }
+      ];
+      localStorage.setItem('timers', JSON.stringify([valid, ...broken]));
+
+      expect(createStore().timers()).toEqual([valid]);
+    });
+  });
+
+  describe('active timer across page loads', () => {
+    beforeEach(() => sessionStorage.clear());
+    afterEach(() => sessionStorage.clear());
+
+    it('remembers the active timer for this tab', () => {
+      const store = createStore();
+      const timer = store.addTimer(makeTimer());
+
+      store.setActiveTimer(timer);
+
+      expect(sessionStorage.getItem('activeTimerId')).toBe(String(timer.id));
+    });
+
+    it('restores the active timer when the app loads', () => {
+      const saved: Timer = { ...makeTimer({ title: 'Saved' }), id: 3 };
+      localStorage.setItem('timers', JSON.stringify([saved]));
+      sessionStorage.setItem('activeTimerId', '3');
+
+      expect(createStore().activeTimer()).toEqual(saved);
+    });
+
+    it('has no active timer when the remembered one no longer exists', () => {
+      sessionStorage.setItem('activeTimerId', '3');
+
+      expect(createStore().activeTimer()).toBeNull();
+    });
   });
 
   describe('addTimer', () => {
