@@ -4,7 +4,6 @@ Open work from the October 2026 review. Highest priority first. Tick items off (
 
 ## 1. Performance
 
-- [ ] **Library: the selected card's orbit animation** (`card-edge-orbit`) restyles every frame, on top of cards that use `backdrop-filter: blur`. Smaller cost.
 - [ ] **Initial bundle is 567 kB, over its 500 kB budget.** Find out what's in the initial chunk (Material/CDK are likely). `timer-library.component.scss` is also about 1.2 kB over its 4 kB budget.
 - [ ] **Fonts are requested more than once.** Audiowide loads in both `index.html` and `styles.scss`, and `index.html` has the same preconnect twice. Remove the duplicates and check whether Roboto is used.
 
