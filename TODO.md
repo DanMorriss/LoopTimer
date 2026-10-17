@@ -4,12 +4,13 @@ Open work from the October 2026 review. Highest priority first. Tick items off (
 
 ## 1. Performance
 
-- [ ] **Initial bundle is 567 kB, over its 500 kB budget.** Find out what's in the initial chunk (Material/CDK are likely). `timer-library.component.scss` is also about 1.2 kB over its 4 kB budget.
+- [ ] **Global styles are 115 kB (10 kB compressed), and 101 kB of that is the prebuilt Material theme** (`magenta-violet.css`). The app only uses Material buttons, icons, a form-field error and a tooltip. A custom Sass theme that includes just those components would cut this down.
+- [ ] **`provideAnimationsAsync()` in `main.ts` looks unused.** Its 68 kB lazy chunk was never requested while using every page. Remove it, and the `@angular/animations` dependency, then recheck the tooltip, menu and dialog.
+- [ ] `timer-library.component.scss` is about 1.2 kB over its 4 kB component-style budget.
 - [ ] **Fonts are requested more than once.** Audiowide loads in both `index.html` and `styles.scss`, and `index.html` has the same preconnect twice. Remove the duplicates and check whether Roboto is used.
 
 ## 2. Match the Angular guidelines (`~/.claude/CLAUDE.md`)
 
-- [ ] `AppComponent` imports `HomeComponent`, `TimerSetupComponent`, `RouterLink` and `RouterLinkActive` but doesn't use them (NG8113 build warnings). `importProvidersFrom(FormsModule, MatButtonModule)` in `main.ts` is probably not needed either.
 - [ ] Remove the explicit `ChangeDetectionStrategy.OnPush` (it's the default in v22). Move the components the v22 migration marked `Eager` to the default after checking they work.
 - [ ] In the `NavComponent` constructor, use `inject()` instead of constructor injection.
 - [ ] `infinity-button`: remove `standalone: true` and replace `@Output()` / `EventEmitter` with `output()`. Make `buttonClasses` a `computed()`.
