@@ -230,7 +230,7 @@ describe('TimerComponent', () => {
     expect(component.isTimerActive()).toBeTrue();
     expect(component.isRestActive()).toBeFalse();
     expect(text()).not.toContain('Rest');
-    expect(fixture.nativeElement.querySelector('.timer-ring').classList).not.toContain('anticlockwise');
+    expect(fixture.nativeElement.querySelector('.timer-ring').classList).not.toContain('timer-ring--rest');
     fixture.destroy();
   }));
 
@@ -301,6 +301,82 @@ describe('TimerComponent', () => {
 
       expect(component.isComplete()).toBeTrue();
       expect(text()).toContain("You're finished!");
+      fixture.destroy();
+    }));
+  });
+
+  describe('progress ring', () => {
+    const ring = () => fixture.nativeElement.querySelector('.timer-ring') as HTMLElement;
+    const sweeps = () => Array.from(fixture.nativeElement.querySelectorAll('.timer-ring__sweep')) as HTMLElement[];
+
+    it('keeps the same sweep animation for the whole phase', fakeAsync(() => {
+      start(makeTimer({ timerSeconds: 4, restSeconds: 2 }));
+      const first = sweeps()[0];
+
+      advance(3000);
+
+      expect(sweeps()).toHaveSize(1);
+      expect(sweeps()[0]).toBe(first);
+      fixture.destroy();
+    }));
+
+    it('starts a fresh sweep, mirrored for rest, when the phase changes', fakeAsync(() => {
+      start(makeTimer({ timerSeconds: 4, restSeconds: 2 }));
+      const workSweep = sweeps()[0];
+      expect(ring().classList).toContain('timer-ring--work');
+
+      advance(4000);
+
+      expect(sweeps()).toHaveSize(1);
+      expect(sweeps()[0]).not.toBe(workSweep);
+      expect(ring().classList).toContain('timer-ring--rest');
+      fixture.destroy();
+    }));
+
+    it('splits the phase between the two halves of the ring', fakeAsync(() => {
+      start(makeTimer({ timerSeconds: 10 }));
+      const style = sweeps()[0].style;
+
+      expect(style.getPropertyValue('--half-duration')).toBe('5000ms');
+      expect(style.getPropertyValue('--first-half-delay')).toBe('0ms');
+      expect(style.getPropertyValue('--second-half-delay')).toBe('5000ms');
+      fixture.destroy();
+    }));
+
+    it('starts part-way round when resuming after a refresh', fakeAsync(() => {
+      // 3.5s into a 10s work phase
+      localStorage.setItem('timers', JSON.stringify([makeTimer({ id: 7, timerSeconds: 10 })]));
+      sessionStorage.setItem('activeTimerId', '7');
+      sessionStorage.setItem('activeTimerStartedAt', String(Date.now() - 3500));
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({ imports: [TimerComponent], providers: [provideRouter([])] });
+      fixture = TestBed.createComponent(TimerComponent);
+      fixture.detectChanges();
+
+      const style = sweeps()[0].style;
+      expect(style.getPropertyValue('--first-half-delay')).toBe('-3500ms');
+      expect(style.getPropertyValue('--second-half-delay')).toBe('1500ms');
+      fixture.destroy();
+      localStorage.clear();
+    }));
+
+    it('has no sweep once finished', fakeAsync(() => {
+      start(makeTimer({ timerSeconds: 1, repeats: 1 }));
+
+      advance(1000);
+
+      expect(sweeps()).toHaveSize(0);
+      fixture.destroy();
+    }));
+
+    it('reports progress to screen readers', fakeAsync(() => {
+      start(makeTimer({ timerSeconds: 4 }));
+      expect(ring().getAttribute('role')).toBe('progressbar');
+      expect(ring().getAttribute('aria-valuenow')).toBe('0');
+
+      advance(1000);
+
+      expect(ring().getAttribute('aria-valuenow')).toBe('25');
       fixture.destroy();
     }));
   });

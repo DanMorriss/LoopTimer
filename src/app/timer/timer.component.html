@@ -16,17 +16,26 @@
 
         <div
         class="timer-ring"
-        [class.clockwise]="isTimerActive()"
-        [class.anticlockwise]="isRestActive()"
-        [style.--progress-color]="
-            isTimerActive() === true
-            ? 'oklch(81% 0.117 11.638)'
-            : isRestActive() === true
-            ? 'oklch(90.1% 0.058 230.902)'
-            : '#ddd'
-        "
-        [style.--progress-deg]="progress() * 360 + 'deg'"
+        [class.timer-ring--work]="isTimerActive()"
+        [class.timer-ring--rest]="isRestActive()"
+        role="progressbar"
+        aria-label="Progress through this phase"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        [attr.aria-valuenow]="progressPercent()"
         >
+            @for (sweep of ringSweeps(); track sweep.key) {
+                <!-- Two rotating half-circles; transforms animate without repainting -->
+                <div
+                    class="timer-ring__sweep"
+                    [style.--half-duration]="sweep.halfDuration"
+                    [style.--first-half-delay]="sweep.firstHalfDelay"
+                    [style.--second-half-delay]="sweep.secondHalfDelay"
+                    aria-hidden="true">
+                    <div class="timer-ring__half timer-ring__half--right"><div class="timer-ring__fill"></div></div>
+                    <div class="timer-ring__half timer-ring__half--left"><div class="timer-ring__fill"></div></div>
+                </div>
+            }
             <div class="timer-inner">
                 <div class="text-4xl text-black text-center w-[340px] h-[340px] rounded-full flex justify-center items-center"
                     [class]="{

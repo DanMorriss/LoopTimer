@@ -1,34 +1,59 @@
-/* Put this in your component SCSS (top of file) */
-@property --progress-deg {
-  syntax: '<angle>';
-  initial-value: 0deg;
-  inherits: false;
+// Everything that animates for the length of a workout only animates `transform`
+// or `opacity`, which the browser can run without repainting each frame.
+
+$work-color: oklch(81% 0.117 11.638);
+$rest-color: oklch(90.1% 0.058 230.902);
+$face-color: oklch(97.7% 0.013 236.62);
+$track-color: #e5e7eb;
+
+// Flashing face: fade a coloured layer in and out rather than animating background-color
+
+@keyframes flash {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
-@keyframes flashFade {
-    0% {
-      background-color: oklch(97.7% 0.013 236.62);
-    }
-    100% {
-      background-color: oklch(81% 0.117 11.638);
-    }
-}
-  
-.flash-fade {
-    animation: flashFade 1s ease-in-out infinite;
-}
-
-@keyframes flashFadeBlue {
-    0% {
-      background-color: oklch(97.7% 0.013 236.62);
-    }
-    100% {
-      background-color: oklch(90.1% 0.058 230.902);
-    }
-}
-  
+.flash-fade,
 .flash-fade-blue {
-    animation: flashFadeBlue 1s ease-in-out infinite;
+  position: relative;
+  isolation: isolate;
+  background-color: $face-color;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: var(--flash-color);
+    opacity: 0;
+    animation: flash 1s ease-in-out infinite;
+    will-change: opacity;
+  }
+}
+
+.flash-fade {
+  --flash-color: #{$work-color};
+}
+
+.flash-fade-blue {
+  --flash-color: #{$rest-color};
+}
+
+// Progress ring: two half-circles rotate into view, one after the other.
+// Work fills clockwise from 12 o'clock; rest is mirrored to fill anticlockwise.
+
+@keyframes half-sweep {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(180deg);
+  }
 }
 
 .timer-ring {
@@ -41,27 +66,82 @@
   align-items: center;
   justify-content: center;
 
-  transition: --progress-deg 950ms linear;
-
-  /* Clockwise gradient for timer (filling up) */
-  &.clockwise {
-    background: conic-gradient(
-      var(--progress-color, #00bcd4) var(--progress-deg, 0deg),
-      #e5e7eb 0deg
-    );
+  &--work,
+  &--rest {
+    background: $track-color;
   }
 
-  /* Anticlockwise gradient for rest (draining) */
-  &.anticlockwise {
-    background: conic-gradient(
-      from 0deg,
-      #e5e7eb calc(360deg - var(--progress-deg, 0deg)),
-      var(--progress-color, #00bcd4) 0deg
-    );
+  &--work {
+    --ring-color: #{$work-color};
+  }
+
+  &--rest {
+    --ring-color: #{$rest-color};
+  }
+}
+
+.timer-ring__sweep {
+  position: absolute;
+  inset: 0;
+
+  .timer-ring--rest & {
+    transform: scaleX(-1);
+  }
+}
+
+// Each half is a window onto one side of the ring...
+.timer-ring__half {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  overflow: hidden;
+
+  &--right {
+    left: 50%;
+  }
+
+  &--left {
+    left: 0;
+  }
+}
+
+// ...with a half-circle that starts outside the window and rotates into it around the centre
+.timer-ring__fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+  background: var(--ring-color);
+  animation: half-sweep var(--half-duration) linear both;
+  will-change: transform;
+
+  .timer-ring__half--right & {
+    left: -100%;
+    border-radius: 100% 0 0 100% / 50% 0 0 50%;
+    transform-origin: 100% 50%;
+    animation-delay: var(--first-half-delay);
+  }
+
+  .timer-ring__half--left & {
+    left: 100%;
+    border-radius: 0 100% 100% 0 / 0 50% 50% 0;
+    transform-origin: 0 50%;
+    animation-delay: var(--second-half-delay);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  // The flash is decoration, so hold it at a steady tint. The ring shows progress, so it keeps moving.
+  .flash-fade::before,
+  .flash-fade-blue::before {
+    animation: none;
+    opacity: 0.5;
   }
 }
 
 .timer-inner {
+  position: relative;
   width: 350px;
   height: 350px;
   border-radius: 50%;
