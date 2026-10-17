@@ -4,6 +4,8 @@
 
 LoopTimer is an interval timer for anything done in timed repetitions: workouts, study sessions, or other structured activities. You set a work time, a rest time and a number of rounds, save the timer to a library, and run it whenever you need it.
 
+**Try it:** https://loop-timer-eight.vercel.app
+
 Built with Angular 22 (standalone components, signals and Signal Forms), Angular Material and Tailwind CSS.
 
 ## What it does today
