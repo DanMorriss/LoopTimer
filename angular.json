@@ -40,6 +40,7 @@
             ],
             "styles": [
               "src/material-theme.scss",
+              "src/tailwind.css",
               "src/styles.scss"
             ],
             "scripts": []
@@ -100,6 +101,7 @@
             ],
             "styles": [
               "src/material-theme.scss",
+              "src/tailwind.css",
               "src/styles.scss"
             ],
             "scripts": []
