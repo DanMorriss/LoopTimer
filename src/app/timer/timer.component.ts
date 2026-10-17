@@ -1,8 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, OnDestroy, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, OnDestroy, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { Timer } from '../models/timer';
 import { formatTime } from '../shared/format-time';
 import { TimerStore } from '../shared/state/timer-store.service';
+import { timerStateAt } from './timer-state';
 
 @Component({
     selector: 'app-timer',
@@ -10,158 +10,54 @@ import { TimerStore } from '../shared/state/timer-store.service';
     templateUrl: './timer.component.html',
     styleUrls: ['./timer.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    host: {
+        // Browsers pause or slow timers in background tabs, so catch up as soon as the page is visible again
+        '(document:visibilitychange)': 'syncClock()',
+    },
 })
 export class TimerComponent implements OnDestroy {
-    timer = signal<Timer | null>(null);
     timerStore = inject(TimerStore);
+    timer = this.timerStore.activeTimer;
 
-    constructor() {
-        effect(() => {
-            const timer = this.timerStore.activeTimer();
+    // Everything below is worked out from the clock rather than counted tick by tick,
+    // so the timer stays correct even when ticks arrive late or not at all
+    private readonly now = signal(Date.now());
+    private readonly clockId = setInterval(() => this.syncClock(), 250);
 
-            // Only re-run when the active timer changes, not when the signals set below do
-            untracked(() => {
-                if (timer) {
-                    clearInterval(this.timerIntervalId);
-                    clearInterval(this.restIntervalId);
-
-                    this.timer.set(timer);
-                    this.initializeTimer();
-                    this.startTimer();
-                }
-            });
-        })
-    }
-
-    minutes = signal(0);
-    seconds = signal(0);
-    restMinutes = signal(0);
-    restSeconds = signal(0);
-    repeats = signal(0);
-
-    workTime = computed(() => formatTime(this.minutes(), this.seconds()));
-    restTime = computed(() => formatTime(this.restMinutes(), this.restSeconds()));
-
-    get repeatArray(): number[] {
-        return Array.from({ length: this.repeats() }, (_, i) => i);
-    }
-    
-    isTimerActive = signal(false);
-    isRestActive = signal(false);
-    isComplete = signal(false);
-
-    progress = computed(() => {
-        if (this.isComplete()) {
-            return 1;
-        }
-
-        if (this.isTimerActive()) {
-            const total = (this.timer()?.timerMinutes ?? 0) * 60 + (this.timer()?.timerSeconds ?? 0);
-            const remaining = (this.minutes() ?? 0) * 60 + (this.seconds() ?? 0);
-            return total > 0 ? 1 - remaining / total : 0;
-        }
-
-        if (this.isRestActive()) {
-            const total = (this.timer()?.restMinutes ?? 0) * 60 + (this.timer()?.restSeconds ?? 0);
-            const remaining = (this.restMinutes() ?? 0) * 60 + (this.restSeconds() ?? 0);
-            return total > 0 ? 1 - remaining / total : 0;
-        }
-
-        return 0;
+    private readonly state = computed(() => {
+        const timer = this.timer();
+        const startedAt = this.timerStore.activeTimerStartedAt();
+        return timer && startedAt !== null ? timerStateAt(timer, this.now() - startedAt) : null;
     });
 
-    private timerIntervalId: ReturnType<typeof setInterval> | undefined;
-    private restIntervalId: ReturnType<typeof setInterval> | undefined;
+    isTimerActive = computed(() => this.state()?.phase === 'work');
+    isRestActive = computed(() => this.state()?.phase === 'rest');
+    isComplete = computed(() => this.state()?.phase === 'complete');
+    repeats = computed(() => this.state()?.roundsLeft ?? 0);
 
-    initializeTimer() {
-        const timer = this.timer();
-        if (!timer) return;
+    private readonly remaining = computed(() => this.state()?.remainingSeconds ?? 0);
+    private readonly time = computed(() => formatTime(Math.floor(this.remaining() / 60), this.remaining() % 60));
+    workTime = computed(() => (this.isTimerActive() ? this.time() : ''));
+    restTime = computed(() => (this.isRestActive() ? this.time() : ''));
 
-        this.minutes.set(timer.timerMinutes);
-        this.seconds.set(timer.timerSeconds);
-        this.restMinutes.set(timer.restMinutes);
-        this.restSeconds.set(timer.restSeconds);
-        this.repeats.set(timer.repeats);
-        this.isComplete.set(false);
-        this.isTimerActive.set(false);
-        this.isRestActive.set(false);
-    }
+    repeatArray = computed(() => Array.from({ length: this.repeats() }, (_, i) => i));
 
-    resetTimer() {
-        const timer = this.timer();
-        if (!timer) {
-            return;
+    progress = computed(() => {
+        const state = this.state();
+        if (!state) {
+            return 0;
         }
-        this.minutes.set(timer.timerMinutes);
-        this.seconds.set(timer.timerSeconds);
-        this.restMinutes.set(timer.restMinutes);
-        this.restSeconds.set(timer.restSeconds);
-    }
-
-    startTimer () {
-        clearInterval(this.timerIntervalId);
-        this.isTimerActive.set(true);
-
-        this.timerIntervalId = setInterval(() => {
-            if (this.seconds() > 0) {
-                this.seconds.update(seconds => seconds - 1);
-            } else if (this.minutes() > 0) {
-                this.minutes.update(minutes => minutes - 1)
-                this.seconds.set(59);
-            }
-
-            // Move on as soon as time runs out, rather than on the following tick
-            if (this.minutes() === 0 && this.seconds() === 0) {
-                clearInterval(this.timerIntervalId)
-                this.isTimerActive.set(false);
-                this.startRest()
-            }
-        }, 1000)
-    }
-
-    startRest () {
-        clearInterval(this.restIntervalId);
-        if (this.repeats() === 1) {
-            this.repeats.update(repeats => repeats - 1);
-            this.isComplete.set(true);
-            return;
+        if (state.phase === 'complete') {
+            return 1;
         }
+        return 1 - state.remainingSeconds / state.phaseSeconds;
+    });
 
-        const totalRestTime = this.restMinutes() * 60 + this.restSeconds();
-        if (totalRestTime === 0) {
-            this.repeats.update(repeats => repeats - 1);
-            this.resetTimer();
-            this.startTimer();
-            return;
-        }
-
-        this.isRestActive.set(true);
-
-        this.restIntervalId = setInterval(() => {
-            if (this.restSeconds() > 0) {
-                this.restSeconds.update(restSeconds => restSeconds - 1);
-            } else if (this.restMinutes() > 0) {
-                this.restMinutes.update(restMinutes => restMinutes - 1)
-                this.restSeconds.set(59);
-            }
-
-            // Move on as soon as time runs out, rather than on the following tick
-            if (this.restMinutes() === 0 && this.restSeconds() === 0) {
-                clearInterval(this.restIntervalId)
-                this.isRestActive.set(false);
-
-                if (this.repeats() > 1) {
-                    this.repeats.update(repeats => repeats - 1);
-
-                    this.resetTimer()
-                    this.startTimer()
-                }
-            }
-        }, 1000)
+    syncClock() {
+        this.now.set(Date.now());
     }
 
     ngOnDestroy() {
-        clearInterval(this.timerIntervalId)
-        clearInterval(this.restIntervalId)
+        clearInterval(this.clockId);
     }
 }

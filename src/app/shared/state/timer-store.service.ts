@@ -5,13 +5,19 @@ import { Timer } from "../../models/timer";
 export class TimerStore {
     private _timers = signal<Timer[]>([]);
     private _activeTimer = signal<Timer | null>(null);
+    private _activeTimerStartedAt = signal<number | null>(null);
 
     readonly timers = computed(() => this._timers());
     readonly activeTimer = computed(() => this._activeTimer());
+    /** When the active timer was started, in ms since the epoch. */
+    readonly activeTimerStartedAt = computed(() => this._activeTimerStartedAt());
 
     constructor() {
         this._timers.set(this.loadTimers());
         this._activeTimer.set(this.loadActiveTimer());
+        if (this._activeTimer()) {
+            this._activeTimerStartedAt.set(this.loadActiveTimerStartedAt());
+        }
     }
 
     private loadTimers(): Timer[] {
@@ -30,10 +36,18 @@ export class TimerStore {
         }
     }
 
-    // The active timer is remembered per tab, so refreshing the timer page brings it back
+    // The active timer and its start time are remembered per tab, so refreshing
+    // the timer page carries on where it was
     private loadActiveTimer(): Timer | null {
         const savedId = Number(sessionStorage.getItem('activeTimerId'));
         return savedId ? this.findTimerById(savedId) : null;
+    }
+
+    private loadActiveTimerStartedAt(): number {
+        const savedStart = Number(sessionStorage.getItem('activeTimerStartedAt'));
+        const now = Date.now();
+        // Fall back to starting now if the saved time is missing or impossible
+        return Number.isFinite(savedStart) && savedStart > 0 && savedStart <= now ? savedStart : now;
     }
 
     addTimer(timer: Omit<Timer, 'id'>): Timer {
@@ -77,9 +91,13 @@ export class TimerStore {
         return updatedTimer;
     }
 
+    /** Makes `timer` the active timer and starts it from the beginning. */
     setActiveTimer(timer: Timer) {
+        const startedAt = Date.now();
         this._activeTimer.set(timer);
+        this._activeTimerStartedAt.set(startedAt);
         sessionStorage.setItem('activeTimerId', String(timer.id));
+        sessionStorage.setItem('activeTimerStartedAt', String(startedAt));
     }
 
     private saveTimers() {
