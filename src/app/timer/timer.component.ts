@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, OnDestroy, signal } from '@angular/core';
 import { Timer } from '../models/timer';
+import { formatTime } from '../shared/format-time';
 import { TimerStore } from '../shared/state/timer-store.service';
 
 @Component({
@@ -33,6 +34,9 @@ export class TimerComponent implements OnDestroy {
     restMinutes = signal(0);
     restSeconds = signal(0);
     repeats = signal(0);
+
+    workTime = computed(() => formatTime(this.minutes(), this.seconds()));
+    restTime = computed(() => formatTime(this.restMinutes(), this.restSeconds()));
 
     get repeatArray(): number[] {
         return Array.from({ length: this.repeats() }, (_, i) => i);
@@ -93,19 +97,19 @@ export class TimerComponent implements OnDestroy {
         this.isTimerActive.set(true);
 
         this.timerIntervalId = setInterval(() => {
-            if (this.minutes() === 0 && this.seconds() === 0) {
-                clearInterval(this.timerIntervalId)
-                this.isTimerActive.set(false);
-                this.startRest()
-                return
-            } 
-            
             if (this.seconds() > 0) {
                 this.seconds.update(seconds => seconds - 1);
             } else if (this.minutes() > 0) {
                 this.minutes.update(minutes => minutes - 1)
                 this.seconds.set(59);
-            } 
+            }
+
+            // Move on as soon as time runs out, rather than on the following tick
+            if (this.minutes() === 0 && this.seconds() === 0) {
+                clearInterval(this.timerIntervalId)
+                this.isTimerActive.set(false);
+                this.startRest()
+            }
         }, 1000)
     }
 
@@ -128,25 +132,25 @@ export class TimerComponent implements OnDestroy {
         this.isRestActive.set(true);
 
         this.restIntervalId = setInterval(() => {
+            if (this.restSeconds() > 0) {
+                this.restSeconds.update(restSeconds => restSeconds - 1);
+            } else if (this.restMinutes() > 0) {
+                this.restMinutes.update(restMinutes => restMinutes - 1)
+                this.restSeconds.set(59);
+            }
+
+            // Move on as soon as time runs out, rather than on the following tick
             if (this.restMinutes() === 0 && this.restSeconds() === 0) {
                 clearInterval(this.restIntervalId)
                 this.isRestActive.set(false);
-                
+
                 if (this.repeats() > 1) {
                     this.repeats.update(repeats => repeats - 1);
 
                     this.resetTimer()
                     this.startTimer()
                 }
-                return;
-            } 
-            
-            if (this.restSeconds() > 0) {
-                this.restSeconds.update(restSeconds => restSeconds - 1);
-            } else if (this.restMinutes() > 0) {
-                this.restMinutes.update(restMinutes => restMinutes - 1)
-                this.restSeconds.set(59);
-            } 
+            }
         }, 1000)
     }
 

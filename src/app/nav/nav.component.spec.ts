@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Router, provideRouter } from '@angular/router';
 
 import { NavComponent } from './nav.component';
 
@@ -8,7 +9,8 @@ describe('NavComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [NavComponent]
+      imports: [NavComponent],
+      providers: [provideRouter([])]
     })
     .compileComponents();
 
@@ -19,5 +21,13 @@ describe('NavComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('goes home from the home button', () => {
+    const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+
+    fixture.nativeElement.querySelector('.home-button').click();
+
+    expect(navigate).toHaveBeenCalledWith(['/home']);
   });
 });

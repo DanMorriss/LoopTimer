@@ -10,9 +10,21 @@ export class TimerStore {
     readonly activeTimer = computed(() => this._activeTimer());
 
     constructor() {
+        this._timers.set(this.loadTimers());
+    }
+
+    private loadTimers(): Timer[] {
         const savedTimers = localStorage.getItem('timers');
-        if (savedTimers) {
-            this._timers.set(JSON.parse(savedTimers));
+        if (!savedTimers) {
+            return [];
+        }
+
+        // Corrupted or unexpected data shouldn't stop the app from starting
+        try {
+            const parsed: unknown = JSON.parse(savedTimers);
+            return Array.isArray(parsed) ? parsed : [];
+        } catch {
+            return [];
         }
     }
 

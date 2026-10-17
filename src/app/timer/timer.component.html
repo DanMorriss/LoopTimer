@@ -39,12 +39,12 @@
                 <div>
                     @if (isTimerActive() === true) {
                         <p class="text-transparent">Timer</p>
-                        <p>{{minutes()}}:{{seconds()}}</p>
+                        <p>{{workTime()}}</p>
                     }
                         
                         @if (isRestActive() === true) {
                             <p>Rest</p>
-                            <p>{{restMinutes()}}:{{restSeconds()}}</p>
+                            <p>{{restTime()}}</p>
                         }
                     </div>
                 }
