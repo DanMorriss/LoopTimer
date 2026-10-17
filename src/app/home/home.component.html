@@ -20,12 +20,15 @@
                     <stop offset="100%" stop-color="#06b6d4" stop-opacity="0" />
                 </radialGradient>
             </defs>
-            <g>
-                <animateMotion
-                    dur="1.5s"
-                    repeatCount="indefinite"
-                    path="M 50 50 C 50 25, 75 25, 100 50 C 125 75, 150 75, 150 50 C 150 25, 125 25, 100 50 C 75 75, 50 75, 50 50 Z"
-                />
+            <!-- With reduced motion, the dot rests where the loops cross (clear of the labels) instead of travelling round them -->
+            <g [attr.transform]="reducedMotion() ? 'translate(100 50)' : null">
+                @if (!reducedMotion()) {
+                    <animateMotion
+                        dur="1.5s"
+                        repeatCount="indefinite"
+                        path="M 50 50 C 50 25, 75 25, 100 50 C 125 75, 150 75, 150 50 C 150 25, 125 25, 100 50 C 75 75, 50 75, 50 50 Z"
+                    />
+                }
                 <g class="light-dot">
                     <circle r="14" class="light-dot__halo" fill="url(#dotGlow)" />
                     <circle r="4" class="light-dot__core" />
@@ -43,6 +46,6 @@
     </div>
     
     <div class="title-text">
-        <p>Click the infinity symbol to navigate</p>
+        <p>Choose Create or Library to get started</p>
     </div>
 </div>

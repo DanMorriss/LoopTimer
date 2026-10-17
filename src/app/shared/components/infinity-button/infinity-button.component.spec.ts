@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { InfinityButtonComponent } from './infinity-button.component';
+import { fakeReducedMotion } from '../../testing/fake-reduced-motion';
 
 describe('InfinityButtonComponent', () => {
     let component: InfinityButtonComponent;
@@ -71,5 +72,25 @@ describe('InfinityButtonComponent', () => {
         
         const buttonElement = fixture.nativeElement.querySelector('button');
         expect(buttonElement.textContent.trim()).toContain('Fire');
+    });
+
+    describe('with reduced motion', () => {
+        it('rests the border dot at the start instead of moving it', () => {
+            fakeReducedMotion(true);
+            const still = TestBed.createComponent(InfinityButtonComponent);
+            still.detectChanges();
+
+            const dot: SVGCircleElement = still.nativeElement.querySelector('.infinity-button__traveling-dot');
+            expect(dot.querySelector('animateMotion')).toBeNull();
+            expect([dot.getAttribute('cx'), dot.getAttribute('cy')]).toEqual(['8', '2']);
+        });
+
+        it('moves the border dot normally', () => {
+            fakeReducedMotion(false);
+            const moving = TestBed.createComponent(InfinityButtonComponent);
+            moving.detectChanges();
+
+            expect(moving.nativeElement.querySelector('.infinity-button__traveling-dot animateMotion')).not.toBeNull();
+        });
     });
 });

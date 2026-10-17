@@ -57,10 +57,11 @@ $track-color: #e5e7eb;
 }
 
 .timer-ring {
-  position: absolute;
-  top: 20vh;
-  width: 380px;
-  height: 380px;
+  position: relative;
+  margin-top: 1rem;
+  // 380px, or the screen width minus the page gutters on narrow phones
+  width: min(380px, calc(100vw - 2rem));
+  aspect-ratio: 1;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -142,13 +143,38 @@ $track-color: #e5e7eb;
 
 .timer-inner {
   position: relative;
-  width: 350px;
-  height: 350px;
+  // Leaves a 15px ring showing at full size
+  width: calc(100% - 30px);
+  height: calc(100% - 30px);
   border-radius: 50%;
   background: white;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.timer-face {
+  width: calc(100% - 10px);
+  height: calc(100% - 10px);
+}
+
+.timer-page {
+  gap: 0.25rem;
+  padding: 0 1rem 2rem;
+}
+
+// Tall enough for the "remaining repeats" or "Last one!" line, which come and go
+.timer-status {
+  min-height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+
+  // body.mat-typography gives paragraphs a 12px bottom margin
+  > * {
+    margin: 0;
+  }
 }
 
 .no-timer__link {

@@ -2,15 +2,7 @@
 
 Open work from the October 2026 review. Highest priority first. Tick items off (or delete them) as they're done.
 
-## 1. Accessibility follow-ups
-
-- [ ] **Timer page layout:** the ring is positioned with `position: absolute; top: 20vh`, so it overlaps the "remaining repeats" line above it, and on short screens it can overlap the title. Lay the page out in normal flow (for example a flex column with a gap) so nothing overlaps at any height.
-- [ ] Run axe automatically, in a test or in CI, so regressions get caught. Every page passed with 0 violations at the time of writing.
-- [ ] Check the remaining looping animations under `prefers-reduced-motion` (for example the `infinity-button` travelling dot). The timer flash already holds still under reduced motion; the ring keeps moving because it shows progress.
-- [ ] The home page text says "Click the infinity symbol to navigate". Reword it so it doesn't assume a mouse.
-- [ ] Consider announcing phase changes (Work / Rest / Finished) to screen readers with a polite `aria-live` region. Announce changes only, not every second.
-
-## 2. Tooling
+## 1. Tooling
 
 - [ ] `.prettierrc.json` uses `prettier-plugin-tailwindcss`, which isn't installed, so Prettier fails. Install the plugin or remove it from the config.
 - [ ] Move from Node 25 to Node 24 LTS. Angular 22 doesn't officially support odd-numbered Node versions.
@@ -18,7 +10,7 @@ Open work from the October 2026 review. Highest priority first. Tick items off (
 - [ ] Fix the Sass `@import` deprecation warning from `@import "tailwindcss"` in `styles.scss`. Switching to `@use` won't work for Tailwind v4. Move the Tailwind import into a plain `.css` file listed in `angular.json` styles.
 - [ ] Install the GitHub CLI (`brew install gh`, then `gh auth login`) so PRs can be raised from the terminal.
 
-## 3. Documentation
+## 2. Documentation
 
 - [ ] **Bring `README.md` up to date.** It still describes the original plan rather than the app as built:
   - It says the project was generated with Angular CLI 19.1.4; the app is now on Angular 22.
