@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { provideAnimations } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
 import { AppComponent } from './app.component';
 
@@ -9,8 +8,7 @@ describe('AppComponent', () => {
     imports: [
         RouterModule.forRoot([]),
         AppComponent
-    ],
-    providers: [provideAnimations()],
+    ]
 }).compileComponents();
   });
 
