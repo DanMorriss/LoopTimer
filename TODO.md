@@ -4,12 +4,6 @@ Open work, highest priority first. Tick items off (or delete them) as they're do
 
 ## 1. Design and usability
 
-- [ ] **The rest colour is hard to see.** The pale rest blue, `oklch(90.1% 0.058 230.9)`, is 1.07:1 against the grey ring track (WCAG wants 3:1 for graphics like a progress ring), and its flash barely differs from the near-white face. Even the work pink is only 1.55:1.
-  - Options:
-    - A dark track (`slate-700 #334155`) fixes the ring for both phases: rest 7.8:1, work 5.4:1.
-    - A stronger rest colour, such as sky-400 `#38bdf8` (black text on it 9.8:1), also makes the rest flash visible and matches the library's sky accents.
-  - Recommended: both. Add a test that checks the ring colours against the track.
-  - Decision needed: the exact rest colour.
 - [ ] **iPhone-style wheel pickers on the setup page.** Replace the five `<select>`s (work and rest minutes and seconds, rounds). Swipe or scroll a list, and whichever number snaps to the middle is selected, with no tap needed.
   - Options:
     1. A small custom `WheelPicker` component (recommended):

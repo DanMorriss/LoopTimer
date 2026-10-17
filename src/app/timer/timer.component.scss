@@ -2,9 +2,9 @@
 // or `opacity`, which the browser can run without repainting each frame.
 
 $work-color: oklch(81% 0.117 11.638);
-$rest-color: oklch(90.1% 0.058 230.902);
+$rest-color: #38bdf8; // sky-400: 4.8:1 on the track, 9.8:1 for black text
 $face-color: oklch(97.7% 0.013 236.62);
-$track-color: #e5e7eb;
+$track-color: #334155; // slate-700: dark, so both phase colours stand out (3:1 minimum)
 
 // Flashing face: fade a coloured layer in and out rather than animating background-color
 

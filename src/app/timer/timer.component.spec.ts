@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Timer } from '../models/timer';
 import { TimerStore } from '../shared/state/timer-store.service';
+import { contrastRatio } from '../shared/testing/contrast';
 import { TimerComponent } from './timer.component';
 
 function makeTimer(overrides: Partial<Timer> = {}): Timer {
@@ -375,6 +376,46 @@ describe('TimerComponent', () => {
             expect(said()).toBe('Work, round 1 of 1');
             fixture.destroy();
         });
+    });
+
+    describe('colours', () => {
+        // Read the colours as the browser renders them, so a change to the styles can't
+        // quietly make a phase hard to see again
+        function colours() {
+            const el = fixture.nativeElement as HTMLElement;
+            const ring = el.querySelector('.timer-ring') as HTMLElement;
+            const fill = el.querySelector('.timer-ring__fill') as HTMLElement;
+            const face = el.querySelector('.timer-face') as HTMLElement;
+            return {
+                track: getComputedStyle(ring).backgroundColor,
+                fill: getComputedStyle(fill).backgroundColor,
+                flash: getComputedStyle(face, '::before').backgroundColor,
+                text: getComputedStyle(face).color,
+            };
+        }
+
+        for (const [phase, elapsedMs] of [
+            ['work', 0],
+            ['rest', 3000],
+        ] as const) {
+            it(`makes the ${phase} progress stand out from the track (at least 3:1)`, () => {
+                start(makeTimer({ timerSeconds: 3, restSeconds: 2 }));
+                advance(elapsedMs);
+                const { track, fill } = colours();
+
+                expect(contrastRatio(fill, track)).toBeGreaterThanOrEqual(3);
+                fixture.destroy();
+            });
+
+            it(`keeps the countdown readable on the ${phase} flash colour (at least 4.5:1)`, () => {
+                start(makeTimer({ timerSeconds: 3, restSeconds: 2 }));
+                advance(elapsedMs);
+                const { flash, text } = colours();
+
+                expect(contrastRatio(text, flash)).toBeGreaterThanOrEqual(4.5);
+                fixture.destroy();
+            });
+        }
     });
 
     describe('progress ring', () => {
