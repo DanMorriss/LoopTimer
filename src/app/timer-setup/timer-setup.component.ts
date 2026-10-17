@@ -1,5 +1,4 @@
 import {
-    ChangeDetectionStrategy,
     Component,
     inject,
     signal
@@ -29,7 +28,6 @@ import { TimerStore } from '../shared/state/timer-store.service';
         MatFormFieldModule, 
         MatIconModule,
     ],
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TimerSetupComponent {
     timerStore = inject(TimerStore);

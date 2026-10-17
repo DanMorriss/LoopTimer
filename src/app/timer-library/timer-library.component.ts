@@ -1,4 +1,4 @@
-import { afterNextRender, ChangeDetectionStrategy, Component, computed, ElementRef, inject, Injector, signal } from '@angular/core';
+import { afterNextRender, Component, computed, ElementRef, inject, Injector, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -15,7 +15,6 @@ import { TimerStore } from '../shared/state/timer-store.service';
     templateUrl: './timer-library.component.html',
     styleUrl: './timer-library.component.scss',
     imports: [DeleteTimerDialogComponent, MatButtonModule, MatTooltipModule, MatIconModule, InfinityButtonComponent],
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TimerLibraryComponent {
     timerStore = inject(TimerStore);

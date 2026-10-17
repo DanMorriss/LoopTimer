@@ -53,7 +53,7 @@ describe('InfinityButtonComponent', () => {
         fixture.detectChanges();
         
         const expectedClasses = 'infinity-button infinity-button--large infinity-button--secondary infinity-button--disabled';
-        expect(component.buttonClasses).toBe(expectedClasses);
+        expect(component.buttonClasses()).toBe(expectedClasses);
     });
 
     it('should update input values when changed', () => {
