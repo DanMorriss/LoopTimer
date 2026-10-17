@@ -207,6 +207,17 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  // Show the finished logo straight away instead of drawing it in
+  .infinity-path {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+
+  .light-dot {
+    animation: none;
+    opacity: 1;
+  }
+
   .light-dot__halo {
     animation: none;
   }

@@ -5,7 +5,6 @@ Open work from the October 2026 review. Highest priority first. Tick items off (
 ## 1. Accessibility follow-ups
 
 - [ ] Run axe automatically, in a test or in CI, so regressions get caught. Every page passed with 0 violations at the time of writing.
-- [ ] Check the remaining looping animations under `prefers-reduced-motion` (for example the `infinity-button` travelling dot). The timer flash already holds still under reduced motion; the ring keeps moving because it shows progress.
 - [ ] The home page text says "Click the infinity symbol to navigate". Reword it so it doesn't assume a mouse.
 - [ ] Consider announcing phase changes (Work / Rest / Finished) to screen readers with a polite `aria-live` region. Announce changes only, not every second.
 

@@ -1,4 +1,5 @@
 import { Component, computed, input, output } from '@angular/core';
+import { injectPrefersReducedMotion } from '../../reduced-motion';
 
 const SIZE_CLASSES = {
     small: 'infinity-button--small',
@@ -24,6 +25,8 @@ export class InfinityButtonComponent {
     readonly variant = input<'primary' | 'secondary'>('primary');
 
     readonly buttonClick = output<void>();
+
+    protected readonly reducedMotion = injectPrefersReducedMotion();
 
     readonly buttonClasses = computed(() =>
         `infinity-button ${SIZE_CLASSES[this.size()]} ${VARIANT_CLASSES[this.variant()]} ${this.disabled() ? 'infinity-button--disabled' : ''}`.trim()
