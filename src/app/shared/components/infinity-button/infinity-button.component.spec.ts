@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { InfinityButtonComponent } from './infinity-button.component';
 
-describe('CrosshairButtonComponent', () => {
+describe('InfinityButtonComponent', () => {
     let component: InfinityButtonComponent;
     let fixture: ComponentFixture<InfinityButtonComponent>;
 
