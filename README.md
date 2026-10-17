@@ -79,7 +79,7 @@ These come from the original plan and aren't built yet:
 - **Settings:** alarm order and sounds, light/dark theme, vibration on or off.
 - **History:** a log of completed workouts.
 
-Smaller technical follow-ups are tracked in [TODO.md](TODO.md).
+Work on these, plus design and technical follow-ups, is tracked in [TODO.md](TODO.md).
 
 ## User stories
 
