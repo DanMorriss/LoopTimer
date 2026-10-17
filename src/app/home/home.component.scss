@@ -15,15 +15,29 @@
   
 }
 
+// The glow filter lives on the path's own SVG, separate from the moving dot,
+// so the browser can cache it instead of re-running the blur every frame.
 .infinity-svg {
   width: 100%;
   height: 100%;
   filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.3));
   transition: filter 0.3s ease;
-  
-  &:hover {
-    filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.5));
-  }
+  will-change: filter;
+}
+
+.infinity-logo:hover .infinity-svg {
+  filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.5));
+}
+
+// No CSS filters on the dot: it moves every frame, so a filter here would
+// be re-run every frame and make the home screen lag.
+.dot-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
 }
 
 .infinity-path {
@@ -33,15 +47,16 @@
 }
 
 .light-dot {
-  fill: #06b6d4;
-  filter: 
-    drop-shadow(0 0 4px #06b6d4)
-    drop-shadow(0 0 8px #06b6d4)
-    drop-shadow(0 0 12px rgba(6, 182, 212, 0.8))
-    drop-shadow(0 0 20px rgba(6, 182, 212, 0.6))
-    drop-shadow(0 0 30px rgba(6, 182, 212, 0.4));
   opacity: 0;
-  animation: fade-in-dot 1s ease-in 2.5s forwards;
+  animation: fade-in-dot 1.3s ease-in 0.8s forwards;
+}
+
+.light-dot__core {
+  fill: #e0fbff;
+}
+
+.light-dot__halo {
+  animation: glow-pulse 1s ease-in-out infinite 3.5s;
 }
 
 .interaction-zone {
@@ -172,30 +187,20 @@
   }
 }
 
-// Additional glow effect for the light dot
-.light-dot {
-  animation: 
-    fade-in-dot 1.3s ease-in 0.8s forwards,
-    glow-pulse 1s ease-in-out infinite 3.5s;
+// Pulse the glow with opacity/scale instead of animating filters
+@keyframes glow-pulse {
+  0%, 100% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.5);
+  }
 }
 
-@keyframes glow-pulse {
-  0%, 100% { 
-    filter: 
-      drop-shadow(0 0 4px #06b6d4)
-      drop-shadow(0 0 8px #06b6d4)
-      drop-shadow(0 0 12px rgba(6, 182, 212, 0.8))
-      drop-shadow(0 0 20px rgba(6, 182, 212, 0.6))
-      drop-shadow(0 0 30px rgba(6, 182, 212, 0.4));
-  }
-  50% { 
-    filter: 
-      drop-shadow(0 0 6px #06b6d4)
-      drop-shadow(0 0 12px #06b6d4)
-      drop-shadow(0 0 18px rgba(6, 182, 212, 0.9))
-      drop-shadow(0 0 35px rgba(6, 182, 212, 0.8))
-      drop-shadow(0 0 50px rgba(6, 182, 212, 0.6))
-      drop-shadow(0 0 80px rgba(6, 182, 212, 0.4));
+@media (prefers-reduced-motion: reduce) {
+  .light-dot__halo {
+    animation: none;
   }
 }
-  

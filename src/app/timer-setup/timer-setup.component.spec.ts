@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { provideRouter } from '@angular/router';
 
 import { TimerSetupComponent } from './timer-setup.component';
 
@@ -10,7 +11,7 @@ describe('TimerSetupComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
     imports: [TimerSetupComponent],
-    providers: [provideNoopAnimations()]
+    providers: [provideNoopAnimations(), provideRouter([])]
 })
     .compileComponents();
 

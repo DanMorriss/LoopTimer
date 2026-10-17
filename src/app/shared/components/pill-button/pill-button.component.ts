@@ -1,11 +1,11 @@
-import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Output, input } from '@angular/core';
+import { Component, EventEmitter, Output, input, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
   selector: 'app-pill-button',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './pill-button.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './pill-button.component.scss'
 })
 export class PillButtonComponent {
