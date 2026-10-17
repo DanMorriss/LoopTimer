@@ -5,6 +5,11 @@
   "arrowParens": "always",
   "htmlWhitespaceSensitivity": "ignore",
   "trailingComma": "es5",
-  "plugins": ["prettier-plugin-tailwindcss"],
-  "tailwindFunctions": ["tw"]
+  "plugins": [
+    "prettier-plugin-tailwindcss"
+  ],
+  "tailwindFunctions": [
+    "tw"
+  ],
+  "tailwindStylesheet": "./src/tailwind.css"
 }
