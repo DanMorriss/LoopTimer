@@ -1,7 +1,4 @@
-
-import { importProvidersFrom, provideZoneChangeDetection } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
+import { provideZoneChangeDetection } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideRouter } from '@angular/router';
@@ -13,7 +10,6 @@ bootstrapApplication(AppComponent, {
         provideZoneChangeDetection(),
         provideRouter(routes),
         provideAnimationsAsync(),
-        importProvidersFrom(FormsModule, MatButtonModule),
-  ],
+    ],
 })
   .catch(err => console.error(err));
