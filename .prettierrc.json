@@ -3,7 +3,7 @@
   "tabWidth": 4,
   "printWidth": 100,
   "arrowParens": "always",
-  "htmlWhitespaceSensitivity": "ignore",
+  "htmlWhitespaceSensitivity": "css",
   "trailingComma": "es5",
   "plugins": [
     "prettier-plugin-tailwindcss"
