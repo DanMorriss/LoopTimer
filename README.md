@@ -1,5 +1,7 @@
 # LoopTimer
 
+[![CI](https://github.com/DanMorriss/LoopTimer/actions/workflows/ci.yml/badge.svg)](https://github.com/DanMorriss/LoopTimer/actions/workflows/ci.yml)
+
 LoopTimer is an interval timer for anything done in timed repetitions: workouts, study sessions, or other structured activities. You set a work time, a rest time and a number of rounds, save the timer to a library, and run it whenever you need it.
 
 Built with Angular 22 (standalone components, signals and Signal Forms), Angular Material and Tailwind CSS.
@@ -32,10 +34,12 @@ Other commands:
 |---|---|
 | `npm run build` | Production build into `dist/loop-timer` |
 | `npm test` | Unit tests with Karma, in watch mode |
-| `npx ng test --watch=false --browsers=ChromeHeadless` | Run the tests once in headless Chrome |
+| `npx ng test --watch=false --browsers=ChromeHeadless` | Run the tests once in headless Chrome (what CI runs) |
 | `npm run format:check` / `npm run format` | Check or apply Prettier formatting |
 
 ## Tests
+
+Every pull request runs the format check, these tests and the production build in GitHub Actions (`.github/workflows/ci.yml`).
 
 There are around 140 unit tests (Jasmine and Karma, running in Chrome). As well as the usual component and service tests, they include:
 
