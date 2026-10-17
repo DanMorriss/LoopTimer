@@ -1,10 +1,11 @@
-import { Component, EventEmitter, Output, input } from '@angular/core';
+import { Component, EventEmitter, Output, input, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
     selector: 'app-infinity-button',
     standalone: true,
     imports: [],
     templateUrl: './infinity-button.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './infinity-button.component.scss'
 })
 export class InfinityButtonComponent {

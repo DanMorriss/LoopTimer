@@ -1,10 +1,11 @@
-import { Component, EventEmitter, Output, input } from '@angular/core';
+import { Component, EventEmitter, Output, input, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
   selector: 'app-crosshair-button',
   standalone: true,
   imports: [],
   templateUrl: './crosshair-button.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './crosshair-button.component.scss'
 })
 export class CrosshairButtonComponent {
