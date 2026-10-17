@@ -4,10 +4,6 @@ Open work from the October 2026 review. Highest priority first. Tick items off (
 
 ## 1. Performance
 
-- [ ] **Timer page repaints every frame while running** (about 25 ms of work per second, measured):
-  - Ring: `transition: --progress-deg 950ms` on the conic gradient never stops. Step it once a second, or draw the ring as an SVG stroke.
-  - Flash: `flashFade` / `flashFadeBlue` animate `background-color`. Animate the `opacity` of a coloured overlay instead.
-  - Turn both off under `prefers-reduced-motion`.
 - [ ] **Library: the selected card's orbit animation** (`card-edge-orbit`) restyles every frame, on top of cards that use `backdrop-filter: blur`. Smaller cost.
 - [ ] **Initial bundle is 567 kB, over its 500 kB budget.** Find out what's in the initial chunk (Material/CDK are likely). `timer-library.component.scss` is also about 1.2 kB over its 4 kB budget.
 - [ ] **Fonts are requested more than once.** Audiowide loads in both `index.html` and `styles.scss`, and `index.html` has the same preconnect twice. Remove the duplicates and check whether Roboto is used.
@@ -23,8 +19,9 @@ Open work from the October 2026 review. Highest priority first. Tick items off (
 
 ## 3. Accessibility follow-ups
 
+- [ ] **Timer page layout:** the ring is positioned with `position: absolute; top: 20vh`, so it overlaps the "remaining repeats" line above it, and on short screens it can overlap the title. Lay the page out in normal flow (for example a flex column with a gap) so nothing overlaps at any height.
 - [ ] Run axe automatically, in a test or in CI, so regressions get caught. Every page passed with 0 violations at the time of writing.
-- [ ] Check the remaining looping animations under `prefers-reduced-motion` (for example the `infinity-button` travelling dot). The timer ring and flash are covered in Performance above.
+- [ ] Check the remaining looping animations under `prefers-reduced-motion` (for example the `infinity-button` travelling dot). The timer flash already holds still under reduced motion; the ring keeps moving because it shows progress.
 - [ ] The home page text says "Click the infinity symbol to navigate". Reword it so it doesn't assume a mouse.
 - [ ] Consider announcing phase changes (Work / Rest / Finished) to screen readers with a polite `aria-live` region. Announce changes only, not every second.
 

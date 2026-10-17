@@ -10,6 +10,10 @@ export interface TimerState {
     phaseSeconds: number;
     /** Rounds left, counting the one in progress (0 once complete). */
     roundsLeft: number;
+    /** Which round is in progress, starting at 0 (equal to repeats once complete). */
+    round: number;
+    /** Exact time spent in the current phase so far, in ms (0 once complete). */
+    phaseElapsedMs: number;
 }
 
 /**
@@ -23,20 +27,28 @@ export interface TimerState {
 export function timerStateAt(timer: Timer, elapsedMs: number): TimerState {
     const work = timer.timerMinutes * 60 + timer.timerSeconds;
     const rest = timer.restMinutes * 60 + timer.restSeconds;
-    const round = work + rest;
+    const roundSeconds = work + rest;
     const total = timer.repeats * work + (timer.repeats - 1) * rest;
-    const elapsed = Math.max(0, Math.floor(elapsedMs / 1000));
+    const elapsedMsClamped = Math.max(0, elapsedMs);
+    const elapsed = Math.floor(elapsedMsClamped / 1000);
 
     if (elapsed >= total) {
-        return { phase: 'complete', remainingSeconds: 0, phaseSeconds: 0, roundsLeft: 0 };
+        return { phase: 'complete', remainingSeconds: 0, phaseSeconds: 0, roundsLeft: 0, round: timer.repeats, phaseElapsedMs: 0 };
     }
 
-    const roundIndex = Math.floor(elapsed / round);
-    const intoRound = elapsed % round;
+    const roundIndex = Math.floor(elapsed / roundSeconds);
+    const intoRound = elapsed % roundSeconds;
     const roundsLeft = timer.repeats - roundIndex;
+    const roundStartMs = roundIndex * roundSeconds * 1000;
 
     if (intoRound < work) {
-        return { phase: 'work', remainingSeconds: work - intoRound, phaseSeconds: work, roundsLeft };
+        return {
+            phase: 'work', remainingSeconds: work - intoRound, phaseSeconds: work, roundsLeft,
+            round: roundIndex, phaseElapsedMs: elapsedMsClamped - roundStartMs
+        };
     }
-    return { phase: 'rest', remainingSeconds: round - intoRound, phaseSeconds: rest, roundsLeft };
+    return {
+        phase: 'rest', remainingSeconds: roundSeconds - intoRound, phaseSeconds: rest, roundsLeft,
+        round: roundIndex, phaseElapsedMs: elapsedMsClamped - roundStartMs - work * 1000
+    };
 }
