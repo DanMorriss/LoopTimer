@@ -1,11 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, OnDestroy, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, OnDestroy, signal, untracked } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { Timer } from '../models/timer';
 import { formatTime } from '../shared/format-time';
 import { TimerStore } from '../shared/state/timer-store.service';
 
 @Component({
     selector: 'app-timer',
-    imports: [],
+    imports: [RouterLink],
     templateUrl: './timer.component.html',
     styleUrls: ['./timer.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -17,15 +18,18 @@ export class TimerComponent implements OnDestroy {
     constructor() {
         effect(() => {
             const timer = this.timerStore.activeTimer();
-             
-            if (timer) {
-                clearInterval(this.timerIntervalId);
-                clearInterval(this.restIntervalId);
 
-                this.timer.set(timer);
-                this.initializeTimer();
-                this.startTimer();
-            }
+            // Only re-run when the active timer changes, not when the signals set below do
+            untracked(() => {
+                if (timer) {
+                    clearInterval(this.timerIntervalId);
+                    clearInterval(this.restIntervalId);
+
+                    this.timer.set(timer);
+                    this.initializeTimer();
+                    this.startTimer();
+                }
+            });
         })
     }
 
@@ -79,6 +83,8 @@ export class TimerComponent implements OnDestroy {
         this.restSeconds.set(timer.restSeconds);
         this.repeats.set(timer.repeats);
         this.isComplete.set(false);
+        this.isTimerActive.set(false);
+        this.isRestActive.set(false);
     }
 
     resetTimer() {

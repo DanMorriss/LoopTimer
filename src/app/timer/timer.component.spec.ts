@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { Timer } from '../models/timer';
 import { TimerStore } from '../shared/state/timer-store.service';
 import { TimerComponent } from './timer.component';
@@ -25,12 +26,16 @@ describe('TimerComponent', () => {
   let store: TimerStore;
 
   beforeEach(async () => {
+    sessionStorage.clear();
     await TestBed.configureTestingModule({
-      imports: [TimerComponent]
+      imports: [TimerComponent],
+      providers: [provideRouter([])]
     }).compileComponents();
 
     store = TestBed.inject(TimerStore);
   });
+
+  afterEach(() => sessionStorage.clear());
 
   function start(timer: Timer) {
     store.setActiveTimer(timer);
@@ -49,14 +54,17 @@ describe('TimerComponent', () => {
     return (fixture.nativeElement as HTMLElement).textContent?.replace(/\s+/g, ' ') ?? '';
   }
 
-  it('shows nothing and runs no countdown when there is no active timer', fakeAsync(() => {
+  it('points to the library and runs no countdown when there is no active timer', fakeAsync(() => {
     fixture = TestBed.createComponent(TimerComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
 
     expect(component.isTimerActive()).toBeFalse();
     expect(component.isRestActive()).toBeFalse();
-    expect(text()).not.toContain(':');
+    expect(text()).toContain('No timer selected');
+    expect(fixture.nativeElement.querySelector('.timer-ring')).toBeNull();
+    const link: HTMLAnchorElement = fixture.nativeElement.querySelector('a');
+    expect(link.getAttribute('href')).toBe('/library');
     fixture.destroy();
   }));
 
@@ -209,6 +217,40 @@ describe('TimerComponent', () => {
     advance(1000);
     expect(text()).toContain('00:19');
     fixture.destroy();
+  }));
+
+  it('shows only the work phase when a different timer is made active during rest', fakeAsync(() => {
+    start(makeTimer({ timerSeconds: 3, restSeconds: 5 }));
+    advance(3000);
+    expect(component.isRestActive()).toBeTrue();
+
+    store.setActiveTimer(makeTimer({ id: 2, title: 'Second', timerSeconds: 20 }));
+    fixture.detectChanges();
+
+    expect(component.isTimerActive()).toBeTrue();
+    expect(component.isRestActive()).toBeFalse();
+    expect(text()).not.toContain('Rest');
+    expect(fixture.nativeElement.querySelector('.timer-ring').classList).not.toContain('anticlockwise');
+    fixture.destroy();
+  }));
+
+  it('picks the active timer back up after a page refresh', fakeAsync(() => {
+    // Simulate a refresh: the timer was saved and made active in a previous page load
+    localStorage.setItem('timers', JSON.stringify([makeTimer({ id: 7, title: 'Saved', timerSeconds: 30 })]));
+    sessionStorage.setItem('activeTimerId', '7');
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({ imports: [TimerComponent], providers: [provideRouter([])] });
+
+    fixture = TestBed.createComponent(TimerComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    expect(text()).toContain('Saved');
+    expect(text()).toContain('00:30');
+    advance(1000);
+    expect(text()).toContain('00:29');
+    fixture.destroy();
+    localStorage.clear();
   }));
 
   it('stops its intervals when destroyed', fakeAsync(() => {
