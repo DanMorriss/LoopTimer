@@ -35,8 +35,12 @@ jobs:
       - name: Check formatting
         run: npm run format:check
 
+      # The tests run in a real browser (Vitest browser mode with Playwright)
+      - name: Install Chromium for the tests
+        run: npx playwright install --with-deps chromium
+
       - name: Unit and accessibility tests
-        run: npx ng test --watch=false --browsers=ChromeHeadless --no-progress
+        run: npx ng test --watch=false --no-progress
 
       - name: Production build
         run: npm run build

@@ -6,9 +6,6 @@
         <div class="sr-only" aria-live="polite" aria-atomic="true">{{ announcement() }}</div>
         <div class="timer-status text-sky-50">
             @if (repeatArray().length > 1) {
-                <!-- The trailing spaces inside these spans separate the label and markers.
-                     htmlWhitespaceSensitivity "ignore" would strip them, so Prettier leaves this alone. -->
-                <!-- prettier-ignore -->
                 <div class="text-2xl">
                     <span>remaining repeats: </span>
                     @for (i of repeatArray(); track i) {

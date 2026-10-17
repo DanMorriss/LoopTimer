@@ -21,7 +21,7 @@ describe('InfinityButtonComponent', () => {
     });
 
     it('should emit buttonClick when clicked', () => {
-        spyOn(component.buttonClick, 'emit');
+        vi.spyOn(component.buttonClick, 'emit').mockReturnValue(undefined);
 
         component.onClick();
 
@@ -29,7 +29,7 @@ describe('InfinityButtonComponent', () => {
     });
 
     it('should not emit buttonClick when disabled', () => {
-        spyOn(component.buttonClick, 'emit');
+        vi.spyOn(component.buttonClick, 'emit').mockReturnValue(undefined);
         fixture.componentRef.setInput('disabled', true);
         fixture.detectChanges();
 

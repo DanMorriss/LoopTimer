@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Timer } from '../../models/timer';
 import { DeleteTimerDialogComponent } from './delete-timer-dialog.component';
@@ -17,14 +18,14 @@ const timer: Timer = {
 
 describe('DeleteTimerDialogComponent', () => {
     let fixture: ComponentFixture<DeleteTimerDialogComponent>;
-    let cancelled: jasmine.Spy;
-    let confirmed: jasmine.Spy;
+    let cancelled: Mock;
+    let confirmed: Mock;
 
     function create(forTimer: Timer) {
         fixture = TestBed.createComponent(DeleteTimerDialogComponent);
         fixture.componentRef.setInput('timer', forTimer);
-        cancelled = jasmine.createSpy('cancelled');
-        confirmed = jasmine.createSpy('confirmed');
+        cancelled = vi.fn().mockName('cancelled');
+        confirmed = vi.fn().mockName('confirmed');
         fixture.componentInstance.cancelled.subscribe(cancelled);
         fixture.componentInstance.confirmed.subscribe(confirmed);
         fixture.detectChanges();

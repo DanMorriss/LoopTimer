@@ -8,7 +8,7 @@ export function fakeReducedMotion(initiallyReduced: boolean) {
         removeEventListener: (_: string, listener: (event: MediaQueryListEvent) => void) =>
             listeners.delete(listener),
     };
-    spyOn(window, 'matchMedia').and.callFake((media) => {
+    vi.spyOn(window, 'matchMedia').mockImplementation((media: string) => {
         expect(media).toBe('(prefers-reduced-motion: reduce)');
         return query as unknown as MediaQueryList;
     });

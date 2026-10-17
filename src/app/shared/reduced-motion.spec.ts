@@ -12,17 +12,17 @@ describe('injectPrefersReducedMotion', () => {
     it('reflects the current setting', () => {
         fakeReducedMotion(true);
 
-        expect(TestBed.createComponent(UsesReducedMotion).componentInstance.reduced()).toBeTrue();
+        expect(TestBed.createComponent(UsesReducedMotion).componentInstance.reduced()).toBe(true);
     });
 
     it('follows changes to the setting while the page is open', () => {
         const motion = fakeReducedMotion(false);
         const component = TestBed.createComponent(UsesReducedMotion).componentInstance;
-        expect(component.reduced()).toBeFalse();
+        expect(component.reduced()).toBe(false);
 
         motion.set(true);
 
-        expect(component.reduced()).toBeTrue();
+        expect(component.reduced()).toBe(true);
     });
 
     it('stops listening when its component is destroyed', () => {

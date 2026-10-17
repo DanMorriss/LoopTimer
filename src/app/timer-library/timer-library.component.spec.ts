@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { Timer } from '../models/timer';
@@ -22,7 +23,7 @@ function makeTimer(overrides: Partial<Omit<Timer, 'id'>> = {}): Omit<Timer, 'id'
 describe('TimerLibraryComponent', () => {
     let fixture: ComponentFixture<TimerLibraryComponent>;
     let store: TimerStore;
-    let navigate: jasmine.Spy;
+    let navigate: Mock;
 
     beforeEach(async () => {
         localStorage.clear();
@@ -32,7 +33,7 @@ describe('TimerLibraryComponent', () => {
         }).compileComponents();
 
         store = TestBed.inject(TimerStore);
-        navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+        navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     });
 
     afterEach(() => localStorage.clear());
@@ -51,7 +52,7 @@ describe('TimerLibraryComponent', () => {
     }
 
     function click(element: HTMLElement | null) {
-        expect(element).withContext('element to click').not.toBeNull();
+        expect(element, 'element to click').not.toBeNull();
         element!.click();
         fixture.detectChanges();
     }
@@ -72,7 +73,7 @@ describe('TimerLibraryComponent', () => {
 
         it('shows the empty message and no cards', () => {
             expect(text()).toContain('Nothing in the library yet');
-            expect(all('.timer-card')).toHaveSize(0);
+            expect(all('.timer-card')).toHaveLength(0);
         });
 
         it('goes to setup from the "Create a timer" button', () => {
@@ -103,7 +104,7 @@ describe('TimerLibraryComponent', () => {
         const card = (index: number) => all('.timer-card')[index];
 
         it('shows a card per timer with its title and padded times', () => {
-            expect(all('.timer-card')).toHaveSize(2);
+            expect(all('.timer-card')).toHaveLength(2);
             expect(text()).not.toContain('Nothing in the library yet');
             expect(card(0).textContent).toContain('Sprints');
             expect(card(0).textContent).toContain('01:05 - 00:20 x 4');
@@ -126,13 +127,13 @@ describe('TimerLibraryComponent', () => {
                 button.classList.contains('timer-card__overlay-play--visible');
 
             it('shows a play button only on the selected card', () => {
-                expect(all('.timer-card__overlay-play--visible')).toHaveSize(0);
+                expect(all('.timer-card__overlay-play--visible')).toHaveLength(0);
 
                 click(card(0));
 
                 expect(card(0).classList).toContain('timer-card--active');
-                expect(isShown(playButton(0))).toBeTrue();
-                expect(isShown(playButton(1))).toBeFalse();
+                expect(isShown(playButton(0))).toBe(true);
+                expect(isShown(playButton(1))).toBe(false);
             });
 
             it('lets keyboard users reach the play button, selecting its card on focus', () => {
@@ -141,7 +142,7 @@ describe('TimerLibraryComponent', () => {
 
                 expect(document.activeElement).toBe(playButton(1));
                 expect(card(1).classList).toContain('timer-card--active');
-                expect(isShown(playButton(1))).toBeTrue();
+                expect(isShown(playButton(1))).toBe(true);
             });
 
             it('makes the timer active and goes to the timer page', () => {
@@ -158,7 +159,7 @@ describe('TimerLibraryComponent', () => {
                 click(el('.library-screen'));
 
                 expect(el('.timer-card--active')).toBeNull();
-                expect(all('.timer-card__overlay-play--visible')).toHaveSize(0);
+                expect(all('.timer-card__overlay-play--visible')).toHaveLength(0);
             });
         });
 
@@ -181,7 +182,7 @@ describe('TimerLibraryComponent', () => {
                 click(menuButton(0));
                 click(menuButton(1));
 
-                expect(all('.timer-card__menu')).toHaveSize(1);
+                expect(all('.timer-card__menu')).toHaveLength(1);
                 expect(card(1).querySelector('.timer-card__menu')).not.toBeNull();
             });
 
@@ -222,7 +223,7 @@ describe('TimerLibraryComponent', () => {
 
                 expect(el('[role="dialog"]')).not.toBeNull();
                 expect(el('[role="dialog"]')?.textContent).toContain('"Sprints"');
-                expect(store.timers()).toHaveSize(2);
+                expect(store.timers()).toHaveLength(2);
             });
 
             it('keeps the timer when cancelled', () => {
@@ -231,7 +232,7 @@ describe('TimerLibraryComponent', () => {
                 click(el('.confirm-dialog__button--cancel'));
 
                 expect(el('[role="dialog"]')).toBeNull();
-                expect(store.timers()).toHaveSize(2);
+                expect(store.timers()).toHaveLength(2);
             });
 
             it('keeps the timer when clicking the backdrop', () => {
@@ -240,7 +241,7 @@ describe('TimerLibraryComponent', () => {
                 click(el('.confirm-overlay'));
 
                 expect(el('[role="dialog"]')).toBeNull();
-                expect(store.timers()).toHaveSize(2);
+                expect(store.timers()).toHaveLength(2);
             });
 
             it('removes the timer when confirmed', () => {
@@ -250,7 +251,7 @@ describe('TimerLibraryComponent', () => {
 
                 expect(el('[role="dialog"]')).toBeNull();
                 expect(store.timers()).toEqual([second]);
-                expect(all('.timer-card')).toHaveSize(1);
+                expect(all('.timer-card')).toHaveLength(1);
                 expect(JSON.parse(localStorage.getItem('timers')!)).toEqual([second]);
             });
 
@@ -281,7 +282,7 @@ describe('TimerLibraryComponent', () => {
                     fixture.detectChanges();
 
                     expect(el('[role="dialog"]')).toBeNull();
-                    expect(store.timers()).toHaveSize(2);
+                    expect(store.timers()).toHaveLength(2);
                 });
 
                 it("returns focus to the timer's options button when cancelled", async () => {

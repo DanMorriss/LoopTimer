@@ -27,6 +27,7 @@ You'll need **Node 24** (see `.nvmrc`) and npm.
 ```bash
 nvm use        # switches to Node 24, if you use nvm
 npm ci         # install dependencies
+npx playwright install chromium   # one-off: the browser the tests run in
 npm start      # dev server at http://localhost:4200, reloads as you edit
 ```
 
@@ -35,15 +36,15 @@ Other commands:
 | Command | What it does |
 |---|---|
 | `npm run build` | Production build into `dist/loop-timer` |
-| `npm test` | Unit tests with Karma, in watch mode |
-| `npx ng test --watch=false --browsers=ChromeHeadless` | Run the tests once in headless Chrome (what CI runs) |
+| `npm test` | Unit tests with Vitest in headless Chromium, re-running as you edit |
+| `npx ng test --watch=false` | Run the tests once (what CI runs) |
 | `npm run format:check` / `npm run format` | Check or apply Prettier formatting |
 
 ## Tests
 
 Every pull request runs the format check, these tests and the production build in GitHub Actions (`.github/workflows/ci.yml`).
 
-There are around 140 unit tests (Jasmine and Karma, running in Chrome). As well as the usual component and service tests, they include:
+There are around 140 unit tests, run with [Vitest](https://vitest.dev) in browser mode: a real headless Chromium via Playwright, so layout and colour contrast are checked as a browser renders them. Timer tests use Vitest's fake clock (`vi.useFakeTimers()`). As well as the usual component and service tests, they include:
 
 - **Timer logic** (`src/app/timer/timer-state.ts`): phase changes on exact seconds, no rest after the last round, zero rest skipped, and catching up after delayed ticks.
 - **Accessibility** (`src/app/a11y.spec.ts`): renders the whole app and runs [axe-core](https://github.com/dequelabs/axe-core) over every page and state, including the delete dialog and the timer mid-workout. Any WCAG 2.1 A/AA or best-practice violation fails the test.
@@ -78,7 +79,7 @@ These come from the original plan and aren't built yet:
 - **Settings:** alarm order and sounds, light/dark theme, vibration on or off.
 - **History:** a log of completed workouts.
 
-Smaller technical follow-ups are tracked in [TODO.md](TODO.md).
+Work on these, plus design and technical follow-ups, is tracked in [TODO.md](TODO.md).
 
 ## User stories
 

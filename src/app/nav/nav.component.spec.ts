@@ -23,7 +23,7 @@ describe('NavComponent', () => {
     });
 
     it('goes home from the home button', () => {
-        const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+        const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
 
         fixture.nativeElement.querySelector('.home-button').click();
 

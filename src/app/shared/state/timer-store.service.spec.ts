@@ -100,8 +100,8 @@ describe('TimerStore', () => {
         });
 
         it('records and remembers when the active timer was started', () => {
-            const now = 1_700_000_000_000;
-            spyOn(Date, 'now').and.returnValue(now);
+            const now = 1700000000000;
+            vi.spyOn(Date, 'now').mockReturnValue(now);
             const store = createStore();
             const timer = store.addTimer(makeTimer());
 
@@ -112,12 +112,12 @@ describe('TimerStore', () => {
         });
 
         it('restarts the clock when a timer is started again', () => {
-            const dateNow = spyOn(Date, 'now').and.returnValue(1000);
+            const dateNow = vi.spyOn(Date, 'now').mockReturnValue(1000);
             const store = createStore();
             const timer = store.addTimer(makeTimer());
             store.setActiveTimer(timer);
 
-            dateNow.and.returnValue(5000);
+            dateNow.mockReturnValue(5000);
             store.setActiveTimer(timer);
 
             expect(store.activeTimerStartedAt()).toBe(5000);
@@ -126,28 +126,28 @@ describe('TimerStore', () => {
         it('restores the start time when the app loads', () => {
             localStorage.setItem('timers', JSON.stringify([{ ...makeTimer(), id: 3 }]));
             sessionStorage.setItem('activeTimerId', '3');
-            sessionStorage.setItem('activeTimerStartedAt', String(Date.now() - 42_000));
+            sessionStorage.setItem('activeTimerStartedAt', String(Date.now() - 42000));
 
             const startedAt = createStore().activeTimerStartedAt()!;
 
-            expect(Date.now() - startedAt).toBeGreaterThanOrEqual(42_000);
-            expect(Date.now() - startedAt).toBeLessThan(43_000);
+            expect(Date.now() - startedAt).toBeGreaterThanOrEqual(42000);
+            expect(Date.now() - startedAt).toBeLessThan(43000);
         });
 
         for (const [label, saved] of [
             ['missing', null],
             ['not a number', 'soon'],
-            ['in the future', String(2_000_000_060_000)],
+            ['in the future', String(2000000060000)],
         ] as const) {
             it(`starts the restored timer now when the saved start time is ${label}`, () => {
-                spyOn(Date, 'now').and.returnValue(2_000_000_000_000);
+                vi.spyOn(Date, 'now').mockReturnValue(2000000000000);
                 localStorage.setItem('timers', JSON.stringify([{ ...makeTimer(), id: 3 }]));
                 sessionStorage.setItem('activeTimerId', '3');
                 if (saved !== null) {
                     sessionStorage.setItem('activeTimerStartedAt', saved);
                 }
 
-                expect(createStore().activeTimerStartedAt()).toBe(2_000_000_000_000);
+                expect(createStore().activeTimerStartedAt()).toBe(2000000000000);
             });
         }
     });
