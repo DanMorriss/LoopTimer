@@ -8,7 +8,12 @@ import { Timer } from '../../models/timer';
     imports: [CdkTrapFocus],
     styleUrl: './delete-timer-dialog.component.scss',
     template: `
-        <div class="confirm-overlay" role="presentation" (click)="cancelled.emit()" (keydown.escape)="cancelled.emit()">
+        <div
+            class="confirm-overlay"
+            role="presentation"
+            (click)="cancelled.emit()"
+            (keydown.escape)="cancelled.emit()"
+        >
             <div
                 class="confirm-dialog"
                 cdkTrapFocus
@@ -17,7 +22,8 @@ import { Timer } from '../../models/timer';
                 aria-modal="true"
                 aria-labelledby="delete-dialog-title"
                 aria-describedby="delete-dialog-description"
-                (click)="$event.stopPropagation()">
+                (click)="$event.stopPropagation()"
+            >
                 <p id="delete-dialog-title" class="confirm-dialog__title">Delete timer?</p>
                 <p id="delete-dialog-description" class="confirm-dialog__description">
                     @if (timer().title.trim()) {
@@ -27,10 +33,18 @@ import { Timer } from '../../models/timer';
                     }
                 </p>
                 <div class="confirm-dialog__actions">
-                    <button type="button" class="confirm-dialog__button confirm-dialog__button--cancel" (click)="cancelled.emit()">
+                    <button
+                        type="button"
+                        class="confirm-dialog__button confirm-dialog__button--cancel"
+                        (click)="cancelled.emit()"
+                    >
                         Cancel
                     </button>
-                    <button type="button" class="confirm-dialog__button confirm-dialog__button--delete" (click)="confirmed.emit()">
+                    <button
+                        type="button"
+                        class="confirm-dialog__button confirm-dialog__button--delete"
+                        (click)="confirmed.emit()"
+                    >
                         Delete
                     </button>
                 </div>

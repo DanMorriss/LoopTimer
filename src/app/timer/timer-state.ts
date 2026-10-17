@@ -33,7 +33,14 @@ export function timerStateAt(timer: Timer, elapsedMs: number): TimerState {
     const elapsed = Math.floor(elapsedMsClamped / 1000);
 
     if (elapsed >= total) {
-        return { phase: 'complete', remainingSeconds: 0, phaseSeconds: 0, roundsLeft: 0, round: timer.repeats, phaseElapsedMs: 0 };
+        return {
+            phase: 'complete',
+            remainingSeconds: 0,
+            phaseSeconds: 0,
+            roundsLeft: 0,
+            round: timer.repeats,
+            phaseElapsedMs: 0,
+        };
     }
 
     const roundIndex = Math.floor(elapsed / roundSeconds);
@@ -43,12 +50,20 @@ export function timerStateAt(timer: Timer, elapsedMs: number): TimerState {
 
     if (intoRound < work) {
         return {
-            phase: 'work', remainingSeconds: work - intoRound, phaseSeconds: work, roundsLeft,
-            round: roundIndex, phaseElapsedMs: elapsedMsClamped - roundStartMs
+            phase: 'work',
+            remainingSeconds: work - intoRound,
+            phaseSeconds: work,
+            roundsLeft,
+            round: roundIndex,
+            phaseElapsedMs: elapsedMsClamped - roundStartMs,
         };
     }
     return {
-        phase: 'rest', remainingSeconds: roundSeconds - intoRound, phaseSeconds: rest, roundsLeft,
-        round: roundIndex, phaseElapsedMs: elapsedMsClamped - roundStartMs - work * 1000
+        phase: 'rest',
+        remainingSeconds: roundSeconds - intoRound,
+        phaseSeconds: rest,
+        roundsLeft,
+        round: roundIndex,
+        phaseElapsedMs: elapsedMsClamped - roundStartMs - work * 1000,
     };
 }

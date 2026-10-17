@@ -9,190 +9,192 @@ $track-color: #e5e7eb;
 // Flashing face: fade a coloured layer in and out rather than animating background-color
 
 @keyframes flash {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 
 .flash-fade,
 .flash-fade-blue {
-  position: relative;
-  isolation: isolate;
-  background-color: $face-color;
+    position: relative;
+    isolation: isolate;
+    background-color: $face-color;
 
-  &::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    border-radius: inherit;
-    background: var(--flash-color);
-    opacity: 0;
-    animation: flash 1s ease-in-out infinite;
-    will-change: opacity;
-  }
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        border-radius: inherit;
+        background: var(--flash-color);
+        opacity: 0;
+        animation: flash 1s ease-in-out infinite;
+        will-change: opacity;
+    }
 }
 
 .flash-fade {
-  --flash-color: #{$work-color};
+    --flash-color: #{$work-color};
 }
 
 .flash-fade-blue {
-  --flash-color: #{$rest-color};
+    --flash-color: #{$rest-color};
 }
 
 // Progress ring: two half-circles rotate into view, one after the other.
 // Work fills clockwise from 12 o'clock; rest is mirrored to fill anticlockwise.
 
 @keyframes half-sweep {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(180deg);
-  }
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(180deg);
+    }
 }
 
 .timer-ring {
-  position: relative;
-  margin-top: 1rem;
-  // 380px, or the screen width minus the page gutters on narrow phones
-  width: min(380px, calc(100vw - 2rem));
-  aspect-ratio: 1;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+    position: relative;
+    margin-top: 1rem;
+    // 380px, or the screen width minus the page gutters on narrow phones
+    width: min(380px, calc(100vw - 2rem));
+    aspect-ratio: 1;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-  &--work,
-  &--rest {
-    background: $track-color;
-  }
+    &--work,
+    &--rest {
+        background: $track-color;
+    }
 
-  &--work {
-    --ring-color: #{$work-color};
-  }
+    &--work {
+        --ring-color: #{$work-color};
+    }
 
-  &--rest {
-    --ring-color: #{$rest-color};
-  }
+    &--rest {
+        --ring-color: #{$rest-color};
+    }
 }
 
 .timer-ring__sweep {
-  position: absolute;
-  inset: 0;
+    position: absolute;
+    inset: 0;
 
-  .timer-ring--rest & {
-    transform: scaleX(-1);
-  }
+    .timer-ring--rest & {
+        transform: scaleX(-1);
+    }
 }
 
 // Each half is a window onto one side of the ring...
 .timer-ring__half {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 50%;
-  overflow: hidden;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 50%;
+    overflow: hidden;
 
-  &--right {
-    left: 50%;
-  }
+    &--right {
+        left: 50%;
+    }
 
-  &--left {
-    left: 0;
-  }
+    &--left {
+        left: 0;
+    }
 }
 
 // ...with a half-circle that starts outside the window and rotates into it around the centre
 .timer-ring__fill {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 100%;
-  background: var(--ring-color);
-  animation: half-sweep var(--half-duration) linear both;
-  will-change: transform;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+    background: var(--ring-color);
+    animation: half-sweep var(--half-duration) linear both;
+    will-change: transform;
 
-  .timer-ring__half--right & {
-    left: -100%;
-    border-radius: 100% 0 0 100% / 50% 0 0 50%;
-    transform-origin: 100% 50%;
-    animation-delay: var(--first-half-delay);
-  }
+    .timer-ring__half--right & {
+        left: -100%;
+        border-radius: 100% 0 0 100% / 50% 0 0 50%;
+        transform-origin: 100% 50%;
+        animation-delay: var(--first-half-delay);
+    }
 
-  .timer-ring__half--left & {
-    left: 100%;
-    border-radius: 0 100% 100% 0 / 0 50% 50% 0;
-    transform-origin: 0 50%;
-    animation-delay: var(--second-half-delay);
-  }
+    .timer-ring__half--left & {
+        left: 100%;
+        border-radius: 0 100% 100% 0 / 0 50% 50% 0;
+        transform-origin: 0 50%;
+        animation-delay: var(--second-half-delay);
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  // The flash is decoration, so hold it at a steady tint. The ring shows progress, so it keeps moving.
-  .flash-fade::before,
-  .flash-fade-blue::before {
-    animation: none;
-    opacity: 0.5;
-  }
+    // The flash is decoration, so hold it at a steady tint. The ring shows progress, so it keeps moving.
+    .flash-fade::before,
+    .flash-fade-blue::before {
+        animation: none;
+        opacity: 0.5;
+    }
 }
 
 .timer-inner {
-  position: relative;
-  // Leaves a 15px ring showing at full size
-  width: calc(100% - 30px);
-  height: calc(100% - 30px);
-  border-radius: 50%;
-  background: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+    position: relative;
+    // Leaves a 15px ring showing at full size
+    width: calc(100% - 30px);
+    height: calc(100% - 30px);
+    border-radius: 50%;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .timer-face {
-  width: calc(100% - 10px);
-  height: calc(100% - 10px);
+    width: calc(100% - 10px);
+    height: calc(100% - 10px);
 }
 
 .timer-page {
-  gap: 0.25rem;
-  padding: 0 1rem 2rem;
+    gap: 0.25rem;
+    padding: 0 1rem 2rem;
 }
 
 // Tall enough for the "remaining repeats" or "Last one!" line, which come and go
 .timer-status {
-  min-height: 2.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
+    min-height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
 
-  // body.mat-typography gives paragraphs a 12px bottom margin
-  > * {
-    margin: 0;
-  }
+    // body.mat-typography gives paragraphs a 12px bottom margin
+    > * {
+        margin: 0;
+    }
 }
 
 .no-timer__link {
-  padding: 0.75rem 1.5rem;
-  border: 1px solid rgba(148, 163, 184, 0.5);
-  border-radius: 0.75rem;
-  color: #e0f2fe;
-  text-decoration: none;
-  transition: border-color 0.2s ease, background-color 0.2s ease;
+    padding: 0.75rem 1.5rem;
+    border: 1px solid rgba(148, 163, 184, 0.5);
+    border-radius: 0.75rem;
+    color: #e0f2fe;
+    text-decoration: none;
+    transition:
+        border-color 0.2s ease,
+        background-color 0.2s ease;
 
-  &:hover,
-  &:focus-visible {
-    border-color: #e0f2fe;
-    background-color: rgba(15, 23, 42, 0.6);
-  }
+    &:hover,
+    &:focus-visible {
+        border-color: #e0f2fe;
+        background-color: rgba(15, 23, 42, 0.6);
+    }
 
-  &:focus-visible {
-    outline: 2px solid #e0f2fe;
-    outline-offset: 3px;
-  }
+    &:focus-visible {
+        outline: 2px solid #e0f2fe;
+        outline-offset: 3px;
+    }
 }

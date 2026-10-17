@@ -8,9 +8,8 @@ describe('InfinityButtonComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-        imports: [InfinityButtonComponent]
-        })
-        .compileComponents();
+            imports: [InfinityButtonComponent],
+        }).compileComponents();
 
         fixture = TestBed.createComponent(InfinityButtonComponent);
         component = fixture.componentInstance;
@@ -23,9 +22,9 @@ describe('InfinityButtonComponent', () => {
 
     it('should emit buttonClick when clicked', () => {
         spyOn(component.buttonClick, 'emit');
-        
+
         component.onClick();
-        
+
         expect(component.buttonClick.emit).toHaveBeenCalled();
     });
 
@@ -33,9 +32,9 @@ describe('InfinityButtonComponent', () => {
         spyOn(component.buttonClick, 'emit');
         fixture.componentRef.setInput('disabled', true);
         fixture.detectChanges();
-        
+
         component.onClick();
-        
+
         expect(component.buttonClick.emit).not.toHaveBeenCalled();
     });
 
@@ -52,8 +51,9 @@ describe('InfinityButtonComponent', () => {
         fixture.componentRef.setInput('variant', 'secondary');
         fixture.componentRef.setInput('disabled', true);
         fixture.detectChanges();
-        
-        const expectedClasses = 'infinity-button infinity-button--large infinity-button--secondary infinity-button--disabled';
+
+        const expectedClasses =
+            'infinity-button infinity-button--large infinity-button--secondary infinity-button--disabled';
         expect(component.buttonClasses()).toBe(expectedClasses);
     });
 
@@ -61,7 +61,7 @@ describe('InfinityButtonComponent', () => {
         fixture.componentRef.setInput('text', 'Target Acquired');
         fixture.componentRef.setInput('disabled', true);
         fixture.detectChanges();
-        
+
         expect(component.text()).toBe('Target Acquired');
         expect(component.disabled()).toBe(true);
     });
@@ -69,7 +69,7 @@ describe('InfinityButtonComponent', () => {
     it('should render text correctly', () => {
         fixture.componentRef.setInput('text', 'Fire');
         fixture.detectChanges();
-        
+
         const buttonElement = fixture.nativeElement.querySelector('button');
         expect(buttonElement.textContent.trim()).toContain('Fire');
     });
@@ -80,7 +80,9 @@ describe('InfinityButtonComponent', () => {
             const still = TestBed.createComponent(InfinityButtonComponent);
             still.detectChanges();
 
-            const dot: SVGCircleElement = still.nativeElement.querySelector('.infinity-button__traveling-dot');
+            const dot: SVGCircleElement = still.nativeElement.querySelector(
+                '.infinity-button__traveling-dot'
+            );
             expect(dot.querySelector('animateMotion')).toBeNull();
             expect([dot.getAttribute('cx'), dot.getAttribute('cy')]).toEqual(['8', '2']);
         });
@@ -90,7 +92,9 @@ describe('InfinityButtonComponent', () => {
             const moving = TestBed.createComponent(InfinityButtonComponent);
             moving.detectChanges();
 
-            expect(moving.nativeElement.querySelector('.infinity-button__traveling-dot animateMotion')).not.toBeNull();
+            expect(
+                moving.nativeElement.querySelector('.infinity-button__traveling-dot animateMotion')
+            ).not.toBeNull();
         });
     });
 });

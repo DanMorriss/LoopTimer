@@ -26,7 +26,10 @@ interface SelectOption {
 }
 
 function selectOptions(from: number, to: number, label: (n: number) => string): SelectOption[] {
-    return Array.from({ length: to - from + 1 }, (_, i) => ({ value: String(from + i), label: label(from + i) }));
+    return Array.from({ length: to - from + 1 }, (_, i) => ({
+        value: String(from + i),
+        label: label(from + i),
+    }));
 }
 
 const padded = (n: number) => n.toString().padStart(2, '0');
@@ -37,7 +40,7 @@ const EMPTY_SETUP: TimerSetupModel = {
     timerSeconds: '0',
     restMinutes: '0',
     restSeconds: '0',
-    repeats: '1'
+    repeats: '1',
 };
 
 @Component({
@@ -62,7 +65,7 @@ export class TimerSetupComponent {
 
     protected readonly timerForm = form(
         this.model,
-        setup => {
+        (setup) => {
             // The dropdowns only offer valid values, so the one rule is that there's some work time
             validate(setup, ({ value }) =>
                 Number(value().timerMinutes) + Number(value().timerSeconds) > 0
@@ -75,13 +78,15 @@ export class TimerSetupComponent {
                 action: async () => {
                     await this.saveAndStart();
                     return undefined;
-                }
-            }
+                },
+            },
         }
     );
 
     protected readonly noTimeError = computed(() =>
-        this.timerForm().errors().find(error => error.kind === 'noTime')
+        this.timerForm()
+            .errors()
+            .find((error) => error.kind === 'noTime')
     );
 
     constructor() {
@@ -94,7 +99,7 @@ export class TimerSetupComponent {
                 timerSeconds: String(timerToEdit.timerSeconds),
                 restMinutes: String(timerToEdit.restMinutes),
                 restSeconds: String(timerToEdit.restSeconds),
-                repeats: String(timerToEdit.repeats)
+                repeats: String(timerToEdit.repeats),
             });
         }
     }
@@ -119,12 +124,12 @@ export class TimerSetupComponent {
             repeats: Number(value.repeats),
             isTimerActive: false,
             isRestActive: false,
-            isComplete: false
+            isComplete: false,
         };
 
         const editingId = this.editingTimerId();
         const savedTimer = editingId
-            ? this.timerStore.updateTimer(editingId, timer) ?? this.timerStore.addTimer(timer)
+            ? (this.timerStore.updateTimer(editingId, timer) ?? this.timerStore.addTimer(timer))
             : this.timerStore.addTimer(timer);
 
         this.model.set({ ...EMPTY_SETUP });

@@ -2,14 +2,26 @@
     <p
         class="timer-card__title"
         [class.timer-card__title--placeholder]="!title()"
-        [matTooltip]="title() ? 'ID: ' + timer().id : ''">
+        [matTooltip]="title() ? 'ID: ' + timer().id : ''"
+    >
         {{ title() || 'Untitled timer' }}
     </p>
 
     <div class="timer-card__row">
         <div class="timer-card__spacer" aria-hidden="true"></div>
 
-        <p class="timer-card__summary" [attr.aria-label]="'Timer ' + workTime() + ', rest ' + restTime() + ', repeated ' + timer().repeats + ' times'">
+        <p
+            class="timer-card__summary"
+            [attr.aria-label]="
+                'Timer ' +
+                workTime() +
+                ', rest ' +
+                restTime() +
+                ', repeated ' +
+                timer().repeats +
+                ' times'
+            "
+        >
             {{ workTime() }} - {{ restTime() }} x {{ timer().repeats }}
         </p>
 
@@ -24,11 +36,16 @@
     [class.timer-card__overlay-play--visible]="showPlay()"
     [attr.aria-label]="'Start ' + name()"
     (focus)="selected.emit()"
-    (click)="$event.stopPropagation(); started.emit()">
+    (click)="$event.stopPropagation(); started.emit()"
+>
     <mat-icon class="timer-card__overlay-icon" aria-hidden="true">play_circle</mat-icon>
 </button>
 
-<div class="timer-card__menu-wrap" (click)="$event.stopPropagation()" (keydown.escape)="menuClosed.emit()">
+<div
+    class="timer-card__menu-wrap"
+    (click)="$event.stopPropagation()"
+    (keydown.escape)="menuClosed.emit()"
+>
     <button
         type="button"
         class="timer-card__action timer-card__action--menu"
@@ -36,17 +53,31 @@
         [attr.aria-label]="'Open options for ' + name()"
         [attr.aria-expanded]="menuOpen()"
         [attr.aria-controls]="'timer-options-' + timer().id"
-        (click)="menuToggled.emit()">
+        (click)="menuToggled.emit()"
+    >
         <mat-icon class="timer-card__action-icon" aria-hidden="true">more_vert</mat-icon>
     </button>
 
     @if (menuOpen()) {
-        <div class="timer-card__menu" [id]="'timer-options-' + timer().id" role="group" [attr.aria-label]="'Options for ' + name()">
-            <button type="button" class="timer-card__menu-item timer-card__menu-item--edit" (click)="editRequested.emit()">
+        <div
+            class="timer-card__menu"
+            [id]="'timer-options-' + timer().id"
+            role="group"
+            [attr.aria-label]="'Options for ' + name()"
+        >
+            <button
+                type="button"
+                class="timer-card__menu-item timer-card__menu-item--edit"
+                (click)="editRequested.emit()"
+            >
                 <mat-icon class="timer-card__menu-icon" aria-hidden="true">edit</mat-icon>
                 Edit
             </button>
-            <button type="button" class="timer-card__menu-item timer-card__menu-item--danger" (click)="deleteRequested.emit()">
+            <button
+                type="button"
+                class="timer-card__menu-item timer-card__menu-item--danger"
+                (click)="deleteRequested.emit()"
+            >
                 <mat-icon class="timer-card__menu-icon" aria-hidden="true">delete</mat-icon>
                 Delete
             </button>

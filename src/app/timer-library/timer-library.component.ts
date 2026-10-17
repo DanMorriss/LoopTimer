@@ -1,19 +1,32 @@
-import { afterNextRender, Component, computed, ElementRef, inject, Injector, signal } from '@angular/core';
+import {
+    afterNextRender,
+    Component,
+    computed,
+    ElementRef,
+    inject,
+    Injector,
+    signal,
+} from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
 import { Timer } from '../models/timer';
-import { InfinityButtonComponent } from "../shared/components/infinity-button/infinity-button.component";
+import { InfinityButtonComponent } from '../shared/components/infinity-button/infinity-button.component';
 import { DeleteTimerDialogComponent } from './delete-timer-dialog/delete-timer-dialog.component';
 import { TimerCardComponent } from './timer-card/timer-card.component';
 import { TimerStore } from '../shared/state/timer-store.service';
-
 
 @Component({
     selector: 'app-timer-library',
     templateUrl: './timer-library.component.html',
     styleUrl: './timer-library.component.scss',
-    imports: [DeleteTimerDialogComponent, TimerCardComponent, MatButtonModule, MatIconModule, InfinityButtonComponent],
+    imports: [
+        DeleteTimerDialogComponent,
+        TimerCardComponent,
+        MatButtonModule,
+        MatIconModule,
+        InfinityButtonComponent,
+    ],
 })
 export class TimerLibraryComponent {
     timerStore = inject(TimerStore);
@@ -64,7 +77,9 @@ export class TimerLibraryComponent {
 
     toggleTimerMenu(timerId: number) {
         this.activeTimerCardId.set(timerId);
-        this.openTimerMenuId.update(currentMenuId => currentMenuId === timerId ? null : timerId);
+        this.openTimerMenuId.update((currentMenuId) =>
+            currentMenuId === timerId ? null : timerId
+        );
     }
 
     closeTimerMenu(timerId: number) {
@@ -78,9 +93,12 @@ export class TimerLibraryComponent {
     // The element that had focus is removed when a menu or dialog closes,
     // so move focus somewhere sensible instead of losing it to the page
     private focusAfterRender(selector: string) {
-        afterNextRender(() => {
-            this.host.nativeElement.querySelector<HTMLElement>(selector)?.focus();
-        }, { injector: this.injector });
+        afterNextRender(
+            () => {
+                this.host.nativeElement.querySelector<HTMLElement>(selector)?.focus();
+            },
+            { injector: this.injector }
+        );
     }
 
     startTimer(timer: Timer) {

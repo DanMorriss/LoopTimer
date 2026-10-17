@@ -4,30 +4,29 @@ import { Router, provideRouter } from '@angular/router';
 import { NavComponent } from './nav.component';
 
 describe('NavComponent', () => {
-  let component: NavComponent;
-  let fixture: ComponentFixture<NavComponent>;
+    let component: NavComponent;
+    let fixture: ComponentFixture<NavComponent>;
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [NavComponent],
-      providers: [provideRouter([])]
-    })
-    .compileComponents();
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [NavComponent],
+            providers: [provideRouter([])],
+        }).compileComponents();
 
-    fixture = TestBed.createComponent(NavComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-  });
+        fixture = TestBed.createComponent(NavComponent);
+        component = fixture.componentInstance;
+        fixture.detectChanges();
+    });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
-  });
+    it('should create', () => {
+        expect(component).toBeTruthy();
+    });
 
-  it('goes home from the home button', () => {
-    const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    it('goes home from the home button', () => {
+        const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
 
-    fixture.nativeElement.querySelector('.home-button').click();
+        fixture.nativeElement.querySelector('.home-button').click();
 
-    expect(navigate).toHaveBeenCalledWith(['/home']);
-  });
+        expect(navigate).toHaveBeenCalledWith(['/home']);
+    });
 });

@@ -35,7 +35,9 @@ export class TimerComponent implements OnDestroy {
     repeats = computed(() => this.state()?.roundsLeft ?? 0);
 
     private readonly remaining = computed(() => this.state()?.remainingSeconds ?? 0);
-    private readonly time = computed(() => formatTime(Math.floor(this.remaining() / 60), this.remaining() % 60));
+    private readonly time = computed(() =>
+        formatTime(Math.floor(this.remaining() / 60), this.remaining() % 60)
+    );
     workTime = computed(() => (this.isTimerActive() ? this.time() : ''));
     restTime = computed(() => (this.isRestActive() ? this.time() : ''));
 
@@ -44,20 +46,23 @@ export class TimerComponent implements OnDestroy {
     // The ring sweep is a CSS animation that runs for the whole phase, so the browser can
     // animate it without repainting. This only changes when a new phase starts, which
     // recreates the ring element and restarts the animation from the right point.
-    private readonly ringSweep = computed(() => {
-        const state = this.state();
-        if (!state || state.phase === 'complete') {
-            return null;
-        }
-        const halfMs = (state.phaseSeconds * 1000) / 2;
-        return {
-            key: `${this.timerStore.activeTimerStartedAt()}-${state.round}-${state.phase}`,
-            halfDuration: `${halfMs}ms`,
-            // Negative delays start part-way through, e.g. when resuming after a refresh
-            firstHalfDelay: `${-state.phaseElapsedMs}ms`,
-            secondHalfDelay: `${halfMs - state.phaseElapsedMs}ms`,
-        };
-    }, { equal: (a, b) => a?.key === b?.key });
+    private readonly ringSweep = computed(
+        () => {
+            const state = this.state();
+            if (!state || state.phase === 'complete') {
+                return null;
+            }
+            const halfMs = (state.phaseSeconds * 1000) / 2;
+            return {
+                key: `${this.timerStore.activeTimerStartedAt()}-${state.round}-${state.phase}`,
+                halfDuration: `${halfMs}ms`,
+                // Negative delays start part-way through, e.g. when resuming after a refresh
+                firstHalfDelay: `${-state.phaseElapsedMs}ms`,
+                secondHalfDelay: `${halfMs - state.phaseElapsedMs}ms`,
+            };
+        },
+        { equal: (a, b) => a?.key === b?.key }
+    );
 
     ringSweeps = computed(() => {
         const sweep = this.ringSweep();
