@@ -1,49 +1,95 @@
 @use 'sass:math';
 
-// Three rows show; the middle one is selected.
+// Closed, one row shows: the selected number. Open, five show, with it in the middle.
 $row-height: 2.5rem;
-$visible-rows: 3;
-// Rows above (and below) the middle one
-$rows-around: math.div($visible-rows - 1, 2);
+$open-rows: 5;
+// Rows above (and below) the middle one when open
+$rows-around: math.div($open-rows - 1, 2);
 
+// The host is the closed wheel and keeps its size; the open wheel spreads over the page
+// around it, so nothing moves and the selected number stays under the finger
 :host {
     position: relative;
     display: block;
-    // The border sits outside the five rows, so the middle row lines up with the band exactly
+    // The border sits outside the row, so the number lines up with the band exactly
     box-sizing: content-box;
-    height: $row-height * $visible-rows;
+    height: $row-height;
     border: 1px solid var(--border);
     border-radius: 0.75rem;
     background: var(--control);
     color: var(--text);
     user-select: none;
 
-    // The band marking the selected row
+    // The open wheel's panel, kept apart from the numbers so their fade doesn't fade it too
+    &::before {
+        content: '';
+        position: absolute;
+        z-index: 9;
+        inset-inline: -1px;
+        top: -1px;
+        height: calc(#{$row-height} + 2px);
+        border: 1px solid var(--border-strong);
+        border-radius: 0.75rem;
+        background: var(--raised);
+        box-shadow: 0 12px 28px var(--shadow);
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    // The band marking the selected row, shown while open
     &::after {
         content: '';
         position: absolute;
+        z-index: 11;
         inset-inline: 0.4rem;
-        top: $row-height * $rows-around;
+        top: 0;
         height: $row-height;
         border-block: 1px solid var(--accent-line);
         border-radius: 0.4rem;
         background: var(--accent-soft);
+        opacity: 0;
         pointer-events: none;
+    }
+
+    // Only the panel and band fade: the wheel itself opens at once, as changing its size
+    // while it glides to a new number stops the glide part way
+    &::before,
+    &::after {
+        transition: opacity 0.15s ease-out;
+
+        @media (prefers-reduced-motion: reduce) {
+            transition: none;
+        }
+    }
+}
+
+:host(.wheel-picker--open) {
+    &::before {
+        top: calc(#{-$row-height * $rows-around} - 1px);
+        height: calc(#{$row-height * $open-rows} + 2px);
+        opacity: 1;
+    }
+
+    &::after {
+        opacity: 1;
     }
 }
 
 .wheel-picker__viewport {
-    height: 100%;
+    position: absolute;
+    inset-inline: 0;
+    // Room above and below the numbers stays equal to how far the wheel reaches past the
+    // row, so the selected number stays in the middle as it opens and closes
+    top: 0;
+    height: $row-height;
+    box-sizing: border-box;
+    padding-block: 0;
     overflow-y: scroll;
     overscroll-behavior: contain;
     scroll-snap-type: y mandatory;
-    // Room above the first number and below the last, so every number can reach the middle
-    padding-block: $row-height * $rows-around;
-    border-radius: inherit;
-    cursor: grab;
+    border-radius: 0.75rem;
+    cursor: pointer;
     scrollbar-width: none;
-    // Fade the numbers out towards the top and bottom, like a drum turning away
-    mask-image: linear-gradient(transparent, #000 25%, #000 75%, transparent);
     perspective: 26rem;
 
     &::-webkit-scrollbar {
@@ -53,6 +99,16 @@ $rows-around: math.div($visible-rows - 1, 2);
     &:focus-visible {
         outline: 2px solid var(--accent);
         outline-offset: 2px;
+    }
+
+    :host(.wheel-picker--open) & {
+        z-index: 10;
+        top: -$row-height * $rows-around;
+        height: $row-height * $open-rows;
+        padding-block: $row-height * $rows-around;
+        cursor: grab;
+        // Fade the numbers out towards the top and bottom, like a drum turning away
+        mask-image: linear-gradient(transparent, #000 25%, #000 75%, transparent);
     }
 }
 
@@ -72,7 +128,6 @@ $rows-around: math.div($visible-rows - 1, 2);
     font-variant-numeric: tabular-nums;
     opacity: 0.45;
     transition: opacity 0.15s ease;
-    cursor: pointer;
 }
 
 .wheel-picker__item--selected {

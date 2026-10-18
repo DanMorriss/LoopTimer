@@ -16,6 +16,10 @@
     (pointermove)="onPointerMove($event)"
     (pointerup)="onPointerUp($event)"
     (pointercancel)="onPointerUp($event)"
+    (touchend)="release()"
+    (touchcancel)="release()"
+    (focusout)="onFocusOut()"
+    (wheel)="onWheel()"
 >
     @for (option of options(); track option.value; let i = $index) {
         <div
