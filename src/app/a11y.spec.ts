@@ -4,6 +4,7 @@ import axe from 'axe-core';
 import { AppComponent } from './app.component';
 import { routes } from './app.routes';
 import { makeTimer, rest, work } from './shared/testing/make-timer';
+import { HistoryStore } from './shared/state/history-store.service';
 import { TimerStore } from './shared/state/timer-store.service';
 
 /**
@@ -146,6 +147,38 @@ for (const theme of ['dark', 'light'] as const) {
                 click('.timer-card__action--menu');
                 await settle();
                 click('.timer-card__menu-item--danger');
+                await settle();
+                await expectNoViolations();
+            });
+        });
+
+        describe('history', () => {
+            it('with no workouts yet', async () => {
+                await open('/history');
+                await expectNoViolations();
+            });
+
+            it('with workouts, and after deleting one', async () => {
+                const now = Date.now();
+                for (const [i, outcome] of (
+                    ['finished', 'stopped', 'finished'] as const
+                ).entries()) {
+                    TestBed.inject(HistoryStore).record({
+                        id: 'run-' + i,
+                        timerId: 1,
+                        title: i === 1 ? '' : 'Sprints',
+                        startedAt: now - i * 86_400_000,
+                        endedAt: now - i * 86_400_000 + 60_000,
+                        activeSeconds: 60,
+                        roundsCompleted: 2,
+                        totalRounds: outcome === 'stopped' ? 0 : 2,
+                        outcome,
+                    });
+                }
+                await open('/history');
+                await expectNoViolations();
+
+                click('.entry__delete');
                 await settle();
                 await expectNoViolations();
             });

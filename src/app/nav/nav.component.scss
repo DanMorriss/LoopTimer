@@ -31,3 +31,7 @@
     font-family: 'Audiowide', sans-serif;
     margin: 0 0 12px;
 }
+
+.nav {
+    grid-template-columns: 1fr auto 1fr;
+}

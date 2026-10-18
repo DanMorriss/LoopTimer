@@ -7,6 +7,7 @@ export class TimerStore {
     private _activeTimer = signal<Timer | null>(null);
     private _activeTimerStartedAt = signal<number | null>(null);
     private _activeTimerPausedAt = signal<number | null>(null);
+    private _activeRunStartedAt = signal<number | null>(null);
 
     readonly timers = computed(() => this._timers());
     readonly activeTimer = computed(() => this._activeTimer());
@@ -15,6 +16,11 @@ export class TimerStore {
     /** When the active timer was paused, in ms since the epoch, or null while it runs. */
     readonly activeTimerPausedAt = computed(() => this._activeTimerPausedAt());
     readonly isPaused = computed(() => this._activeTimerPausedAt() !== null);
+    /**
+     * When the current run really began, in ms since the epoch. Unlike `activeTimerStartedAt`
+     * it doesn't move on resume, so it identifies the run and dates it in the history.
+     */
+    readonly activeRunStartedAt = computed(() => this._activeRunStartedAt());
 
     constructor() {
         this._timers.set(this.loadTimers());
@@ -23,6 +29,13 @@ export class TimerStore {
             const startedAt = this.loadActiveTimerStartedAt();
             this._activeTimerStartedAt.set(startedAt);
             this._activeTimerPausedAt.set(this.loadActiveTimerPausedAt(startedAt));
+            // Runs from before this was saved fall back to the (possibly resumed) start time
+            const runStart = Number(sessionStorage.getItem('activeRunStartedAt'));
+            this._activeRunStartedAt.set(
+                Number.isFinite(runStart) && runStart > 0 && runStart <= startedAt
+                    ? runStart
+                    : startedAt
+            );
         }
     }
 
@@ -118,6 +131,8 @@ export class TimerStore {
         sessionStorage.setItem('activeTimerId', String(timer.id));
         sessionStorage.setItem('activeTimerStartedAt', String(startedAt));
         this._activeTimerPausedAt.set(null);
+        this._activeRunStartedAt.set(startedAt);
+        sessionStorage.setItem('activeRunStartedAt', String(startedAt));
         sessionStorage.removeItem('activeTimerPausedAt');
     }
 
@@ -153,9 +168,11 @@ export class TimerStore {
         this._activeTimer.set(null);
         this._activeTimerStartedAt.set(null);
         this._activeTimerPausedAt.set(null);
+        this._activeRunStartedAt.set(null);
         sessionStorage.removeItem('activeTimerId');
         sessionStorage.removeItem('activeTimerStartedAt');
         sessionStorage.removeItem('activeTimerPausedAt');
+        sessionStorage.removeItem('activeRunStartedAt');
     }
 
     private saveTimers() {

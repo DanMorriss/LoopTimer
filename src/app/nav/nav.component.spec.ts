@@ -30,6 +30,13 @@ describe('NavComponent', () => {
         expect(navigate).toHaveBeenCalledWith(['/home']);
     });
 
+    it('links to the history from the clock button', () => {
+        const link: HTMLAnchorElement =
+            fixture.nativeElement.querySelector('a[aria-label="History"]');
+
+        expect(link.getAttribute('href')).toBe('/history');
+    });
+
     it('links to settings from the gear button', () => {
         const link: HTMLAnchorElement = fixture.nativeElement.querySelector(
             'a[aria-label="Settings"]'
