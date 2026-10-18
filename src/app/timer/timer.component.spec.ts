@@ -2,7 +2,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { Timer } from '../models/timer';
 import { TimerStore } from '../shared/state/timer-store.service';
+import { AlarmService } from '../shared/alarms/alarm.service';
 import { contrastRatio } from '../shared/testing/contrast';
+import { FakeAudioContext, provideFakeAudioContext } from '../shared/testing/fake-audio-context';
 import { TimerComponent } from './timer.component';
 
 function makeTimer(overrides: Partial<Timer> = {}): Timer {
@@ -32,12 +34,14 @@ describe('TimerComponent', () => {
     let component: TimerComponent;
     let fixture: ComponentFixture<TimerComponent>;
     let store: TimerStore;
+    let audio: FakeAudioContext;
 
     beforeEach(async () => {
         sessionStorage.clear();
+        audio = new FakeAudioContext();
         await TestBed.configureTestingModule({
             imports: [TimerComponent],
-            providers: [provideRouter([])],
+            providers: [provideRouter([]), provideFakeAudioContext(audio)],
         }).compileComponents();
 
         store = TestBed.inject(TimerStore);
@@ -254,7 +258,7 @@ describe('TimerComponent', () => {
         TestBed.resetTestingModule();
         TestBed.configureTestingModule({
             imports: [TimerComponent],
-            providers: [provideRouter([])],
+            providers: [provideRouter([]), provideFakeAudioContext(audio)],
         });
 
         fixture = TestBed.createComponent(TimerComponent);
@@ -280,7 +284,7 @@ describe('TimerComponent', () => {
         TestBed.resetTestingModule();
         TestBed.configureTestingModule({
             imports: [TimerComponent],
-            providers: [provideRouter([])],
+            providers: [provideRouter([]), provideFakeAudioContext(audio)],
         });
 
         fixture = TestBed.createComponent(TimerComponent);
@@ -470,7 +474,7 @@ describe('TimerComponent', () => {
             TestBed.resetTestingModule();
             TestBed.configureTestingModule({
                 imports: [TimerComponent],
-                providers: [provideRouter([])],
+                providers: [provideRouter([]), provideFakeAudioContext(audio)],
             });
             fixture = TestBed.createComponent(TimerComponent);
             fixture.detectChanges();
@@ -610,7 +614,7 @@ describe('TimerComponent', () => {
             TestBed.resetTestingModule();
             TestBed.configureTestingModule({
                 imports: [TimerComponent],
-                providers: [provideRouter([])],
+                providers: [provideRouter([]), provideFakeAudioContext(audio)],
             });
             fixture = TestBed.createComponent(TimerComponent);
             component = fixture.componentInstance;
@@ -640,6 +644,129 @@ describe('TimerComponent', () => {
             advance(1000);
 
             expect(buttons()).toHaveLength(0);
+            fixture.destroy();
+        });
+    });
+
+    describe('alarms', () => {
+        // 3s work, 2s rest, 2 rounds: work at 0s, rest at 3s, work at 5s, finish at 8s
+        const timer = () => makeTimer({ timerSeconds: 3, restSeconds: 2, repeats: 2 });
+        const WORK_AT = (s: number) => [`880@${s}`, `880@${s + 0.25}`];
+        const REST_AT = (s: number) => [`440@${s}`];
+        const FINISH_AT = (s: number) => [`523.25@${s}`, `659.25@${s + 0.2}`, `783.99@${s + 0.4}`];
+        const prompt = () =>
+            fixture.nativeElement.querySelector('.sound-prompt') as HTMLButtonElement | null;
+
+        function unlockSound() {
+            TestBed.inject(AlarmService).unlock();
+            fixture.detectChanges();
+        }
+
+        it('asks for a tap when the browser is blocking sound, and hides once it is on', () => {
+            start(timer());
+            expect(prompt()?.textContent?.trim()).toBe('Tap to turn on sound');
+
+            prompt()!.click();
+            fixture.detectChanges();
+
+            expect(prompt()).toBeNull();
+            fixture.destroy();
+        });
+
+        it('hands the whole workout to the audio clock once sound is on', () => {
+            start(timer());
+
+            unlockSound();
+
+            expect(audio.scheduledNotes()).toEqual([
+                ...WORK_AT(0),
+                ...REST_AT(3),
+                ...WORK_AT(5),
+                ...FINISH_AT(8),
+            ]);
+            fixture.destroy();
+        });
+
+        it('silences the alarms while paused, and reschedules the rest on resume', () => {
+            start(timer());
+            unlockSound();
+            advance(1500);
+            const button = (label: string) =>
+                Array.from(fixture.nativeElement.querySelectorAll('.timer-controls button')).find(
+                    (b) => (b as HTMLElement).textContent?.trim() === label
+                ) as HTMLElement;
+
+            button('Pause').click();
+            fixture.detectChanges();
+            expect(audio.scheduledNotes()).toEqual([]);
+
+            advance(10000);
+            button('Resume').click();
+            fixture.detectChanges();
+
+            // 1.5s in, so everything is 1.5s sooner than at the start
+            expect(audio.scheduledNotes()).toEqual([
+                ...REST_AT(1.5),
+                ...WORK_AT(3.5),
+                ...FINISH_AT(6.5),
+            ]);
+            fixture.destroy();
+        });
+
+        it('skips the alarms already past after a page refresh', () => {
+            localStorage.setItem('timers', JSON.stringify([{ ...timer(), id: 7 }]));
+            sessionStorage.setItem('activeTimerId', '7');
+            sessionStorage.setItem('activeTimerStartedAt', String(Date.now() - 4500));
+            TestBed.resetTestingModule();
+            TestBed.configureTestingModule({
+                imports: [TimerComponent],
+                providers: [provideRouter([]), provideFakeAudioContext(audio)],
+            });
+            fixture = TestBed.createComponent(TimerComponent);
+            fixture.detectChanges();
+
+            unlockSound();
+
+            expect(audio.scheduledNotes()).toEqual([...WORK_AT(0.5), ...FINISH_AT(3.5)]);
+            fixture.destroy();
+            localStorage.clear();
+        });
+
+        it('silences the alarms when the page closes, e.g. on Stop', () => {
+            start(timer());
+            unlockSound();
+
+            fixture.destroy();
+
+            expect(audio.scheduledNotes()).toEqual([]);
+        });
+
+        it('vibrates as each phase starts, once each', () => {
+            const vibrate = vi.spyOn(TestBed.inject(AlarmService), 'vibrate');
+            start(timer());
+            expect(vibrate.mock.calls).toEqual([['work']]);
+
+            advance(3000);
+            advance(1000);
+            expect(vibrate.mock.calls).toEqual([['work'], ['rest']]);
+
+            advance(1000);
+            advance(3000);
+            expect(vibrate.mock.calls).toEqual([['work'], ['rest'], ['work'], ['finish']]);
+            fixture.destroy();
+        });
+
+        it('does not vibrate for phases missed while the tab was in the background', () => {
+            const vibrate = vi.spyOn(TestBed.inject(AlarmService), 'vibrate');
+            start(timer());
+            vibrate.mockClear();
+
+            // One late tick, 4.5s in: the rest started 1.5s ago
+            vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 4500);
+            document.dispatchEvent(new Event('visibilitychange'));
+            fixture.detectChanges();
+
+            expect(vibrate).not.toHaveBeenCalled();
             fixture.destroy();
         });
     });
