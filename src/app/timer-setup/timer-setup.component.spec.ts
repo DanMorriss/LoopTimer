@@ -2,7 +2,14 @@ import type { Mock } from 'vitest';
 import { CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
+import {
+    ActivatedRoute,
+    ParamMap,
+    Router,
+    convertToParamMap,
+    provideRouter,
+} from '@angular/router';
+import { BehaviorSubject } from 'rxjs';
 import { Timer, UNTIL_STOPPED } from '../models/timer';
 import { TimerStore } from '../shared/state/timer-store.service';
 import { rest, work } from '../shared/testing/make-timer';
@@ -18,16 +25,18 @@ describe('TimerSetupComponent', () => {
     let fixture: ComponentFixture<TimerSetupComponent>;
     let store: TimerStore;
     let navigate: Mock;
+    let queryParamMap: BehaviorSubject<ParamMap>;
 
     async function setup(queryParams: Record<string, string> = {}) {
         localStorage.clear();
+        queryParamMap = new BehaviorSubject(convertToParamMap(queryParams));
         await TestBed.configureTestingModule({
             imports: [TimerSetupComponent],
             providers: [
                 provideRouter([]),
                 {
                     provide: ActivatedRoute,
-                    useValue: { snapshot: { queryParamMap: convertToParamMap(queryParams) } },
+                    useValue: { queryParamMap },
                 },
             ],
         }).compileComponents();
@@ -619,6 +628,40 @@ describe('TimerSetupComponent', () => {
             });
             expect(store.activeTimer()?.id).toBe(1);
             expect(navigate).toHaveBeenCalledWith(['/timer']);
+        });
+
+        it('empties the form for a new timer when the editId goes, as Create from the menu does', async () => {
+            await setup({ editId: '1' });
+            store.addTimer(savedTimer);
+            await create();
+
+            queryParamMap.next(convertToParamMap({}));
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(shown()).toEqual({
+                title: '',
+                steps: [
+                    { kind: 'Work', name: '', time: '0:0' },
+                    { kind: 'Rest', name: '', time: '0:0' },
+                ],
+                repeats: '1',
+            });
+            expect(collapsed()).toEqual([false, false]);
+            expect(submitButton().textContent).not.toContain('Save');
+        });
+
+        it('switches to another timer when the editId changes', async () => {
+            await setup({ editId: '1' });
+            store.addTimer(savedTimer);
+            store.addTimer({ ...savedTimer, title: 'Other timer' });
+            await create();
+
+            queryParamMap.next(convertToParamMap({ editId: '2' }));
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(shown().title).toBe('Other timer');
         });
 
         for (const editId of ['abc', '0', '-1', '1.5', '99']) {

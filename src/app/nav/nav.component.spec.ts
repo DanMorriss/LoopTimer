@@ -88,6 +88,17 @@ describe('NavComponent', () => {
         expect(menu()).toBeNull();
     });
 
+    it('closes after following the link to the page you are on', async () => {
+        await TestBed.inject(Router).navigateByUrl('/library');
+        await openMenu();
+
+        links()[2].click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(menu()).toBeNull();
+    });
+
     it('closes on Escape and gives focus back to the menu button', async () => {
         await openMenu();
         links()[0].focus();
