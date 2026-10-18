@@ -23,6 +23,8 @@ export class InfinityButtonComponent {
     readonly type = input<'button' | 'submit' | 'reset'>('button');
     readonly size = input<'small' | 'medium' | 'large'>('medium');
     readonly variant = input<'primary' | 'secondary'>('primary');
+    /** Keyboard shortcut for this button, e.g. 'Space', announced by screen readers. */
+    readonly keyShortcuts = input<string | null>(null);
 
     readonly buttonClick = output<void>();
 

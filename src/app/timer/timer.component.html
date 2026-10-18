@@ -87,6 +87,7 @@
             <div class="timer-controls">
                 <app-infinity-button
                     [text]="isPaused() ? 'Resume' : 'Pause'"
+                    keyShortcuts="Space"
                     (buttonClick)="togglePause()"
                 ></app-infinity-button>
                 <app-infinity-button

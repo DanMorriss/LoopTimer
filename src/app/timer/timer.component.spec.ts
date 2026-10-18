@@ -646,6 +646,86 @@ describe('TimerComponent', () => {
             expect(buttons()).toHaveLength(0);
             fixture.destroy();
         });
+
+        describe('with the space bar', () => {
+            /** Presses Space on `target`; returns whether the browser's default (scrolling, clicking) was stopped. */
+            function pressSpace(target: Element = document.body, init: KeyboardEventInit = {}) {
+                const event = new KeyboardEvent('keydown', {
+                    key: ' ',
+                    code: 'Space',
+                    bubbles: true,
+                    cancelable: true,
+                    ...init,
+                });
+                target.dispatchEvent(event);
+                fixture.detectChanges();
+                return event.defaultPrevented;
+            }
+
+            it('pauses, then resumes, and stops the page scrolling', () => {
+                start(makeTimer({ timerSeconds: 10 }));
+
+                expect(pressSpace()).toBe(true);
+                expect(component.isPaused()).toBe(true);
+
+                pressSpace();
+                expect(component.isPaused()).toBe(false);
+                fixture.destroy();
+            });
+
+            it('says so to screen readers on the Pause button', () => {
+                start(makeTimer());
+
+                expect(button('Pause')!.getAttribute('aria-keyshortcuts')).toBe('Space');
+                fixture.destroy();
+            });
+
+            it('leaves Space alone on a focused button, which Space presses anyway', () => {
+                start(makeTimer());
+
+                expect(pressSpace(button('Stop')!)).toBe(false);
+                expect(component.isPaused()).toBe(false);
+                fixture.destroy();
+            });
+
+            it('ignores a held-down Space, so it does not flicker between pause and resume', () => {
+                start(makeTimer());
+                pressSpace();
+
+                pressSpace(document.body, { repeat: true });
+
+                expect(component.isPaused()).toBe(true);
+                fixture.destroy();
+            });
+
+            it('ignores Space with Shift, Ctrl, Alt or Cmd held', () => {
+                start(makeTimer());
+
+                pressSpace(document.body, { shiftKey: true });
+                pressSpace(document.body, { ctrlKey: true });
+
+                expect(component.isPaused()).toBe(false);
+                fixture.destroy();
+            });
+
+            it('does nothing once finished', () => {
+                start(makeTimer({ timerSeconds: 1, repeats: 1 }));
+                advance(1000);
+
+                expect(pressSpace()).toBe(false);
+                expect(component.isPaused()).toBe(false);
+                fixture.destroy();
+            });
+
+            it('does nothing when no timer is selected', () => {
+                fixture = TestBed.createComponent(TimerComponent);
+                component = fixture.componentInstance;
+                fixture.detectChanges();
+
+                expect(pressSpace()).toBe(false);
+                fixture.destroy();
+            });
+        });
     });
 
     describe('alarms', () => {
