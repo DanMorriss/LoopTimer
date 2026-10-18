@@ -17,6 +17,9 @@ const SPACE_HANDLED_BY = 'button, a, input, textarea, select, [contenteditable],
 // How many rounds of alarms to book at a time
 const ALARM_WINDOW = 100;
 
+// Above this many rounds, the dots under "round 2 of 20" would wrap on a phone, so only the line shows
+const MAX_ROUND_DOTS = 15;
+
 // How late a vibration can be and still be worth doing, e.g. not after a background tab wakes up
 const VIBRATE_LATE_LIMIT_MS = 1000;
 
@@ -132,6 +135,7 @@ export class TimerComponent implements OnDestroy {
     isTimerActive = computed(() => this.state()?.phase === 'work');
     isRestActive = computed(() => this.state()?.phase === 'rest');
     isComplete = computed(() => this.state()?.phase === 'complete');
+    /** Rounds left, including the one in progress. */
     repeats = computed(() => this.state()?.roundsLeft ?? 0);
     untilStopped = computed(() => {
         const timer = this.timer();
@@ -177,10 +181,23 @@ export class TimerComponent implements OnDestroy {
     workTime = computed(() => (this.isTimerActive() ? this.time() : ''));
     restTime = computed(() => (this.isRestActive() ? this.time() : ''));
 
-    // One marker per round left; a timer that runs until stopped shows its round number instead
-    repeatArray = computed(() =>
-        this.untilStopped() ? [] : Array.from({ length: this.repeats() }, (_, i) => i)
-    );
+    /** How many rounds the timer runs for (0 when it runs until stopped). */
+    totalRounds = computed(() => (this.untilStopped() ? 0 : (this.timer()?.repeats ?? 0)));
+
+    /** One dot per round, for timers short enough for a row of them to fit on a phone. */
+    roundDots = computed((): ('done' | 'current' | 'left')[] => {
+        const total = this.totalRounds();
+        if (total > MAX_ROUND_DOTS) {
+            return [];
+        }
+        const current = this.roundNumber() - 1;
+        return Array.from({ length: total }, (_, i) => {
+            if (i === current) {
+                return 'current';
+            }
+            return i < current ? 'done' : 'left';
+        });
+    });
 
     // The ring sweep is a CSS animation that runs for the whole step, so the browser can
     // animate it without repainting. This only changes when a new step starts, which

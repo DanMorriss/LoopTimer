@@ -128,6 +128,16 @@ describe('WheelPickerComponent', () => {
             expect(valueInMiddle()).toBe(3);
         });
 
+        it('draws ∞ at the size of the numbers beside it', async () => {
+            await create();
+            host.options.set([...OPTIONS, { value: -1, label: '∞', spokenLabel: 'until stopped' }]);
+            await settle();
+
+            const symbol = item(-1).querySelector('.symbol-infinity');
+            expect(symbol?.textContent).toBe('∞');
+            expect(item(5).querySelector('.symbol-infinity')).toBeNull();
+        });
+
         it('starts with the current value in the middle', async () => {
             await create();
 

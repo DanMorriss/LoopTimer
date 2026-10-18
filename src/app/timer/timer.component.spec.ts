@@ -188,22 +188,73 @@ describe('TimerComponent', () => {
         });
     });
 
-    describe('repeats display', () => {
-        it('shows one marker per remaining round', async () => {
-            start(makeTimer({ repeats: 3 }));
+    describe('rounds display', () => {
+        const dots = () =>
+            Array.from(
+                fixture.nativeElement.querySelectorAll('.round-dot') as NodeListOf<Element>
+            ).map((dot) => dot.className.match(/round-dot--(\w+)/)![1]);
+        /** The visible round line; the screen reader announcement has its own copy. */
+        const status = () =>
+            (
+                fixture.nativeElement.querySelector('.timer-status') as HTMLElement
+            ).textContent!.trim();
 
-            const markers = fixture.nativeElement.querySelectorAll('.rubik-spray-paint-regular');
-            expect(markers).toHaveLength(3);
-            fixture.destroy();
-        });
-
-        it('says "Last one!" during the final work phase', async () => {
-            start(makeTimer({ timerSeconds: 3, restSeconds: 0, repeats: 2 }));
-            expect(text()).not.toContain('Last one!');
+        it('says which round it is on, with a dot per round', async () => {
+            start(makeTimer({ timerSeconds: 3, restSeconds: 0, repeats: 4 }));
+            expect(text()).toContain('round 1 of 4');
+            expect(dots()).toEqual(['current', 'left', 'left', 'left']);
 
             advance(3000);
 
-            expect(text()).toContain('Last one!');
+            expect(text()).toContain('round 2 of 4');
+            expect(dots()).toEqual(['done', 'current', 'left', 'left']);
+            fixture.destroy();
+        });
+
+        it('hides the dots from screen readers, which hear the round in the announcements', () => {
+            start(makeTimer({ repeats: 3 }));
+
+            const row = fixture.nativeElement.querySelector('.round-dots') as HTMLElement;
+            expect(row.getAttribute('aria-hidden')).toBe('true');
+            fixture.destroy();
+        });
+
+        it('says "Last one!" instead of the count in the final round', async () => {
+            start(makeTimer({ timerSeconds: 3, restSeconds: 2, repeats: 2 }));
+            expect(status()).not.toContain('Last one!');
+
+            advance(5000);
+
+            expect(status()).toContain('Last one!');
+            expect(status()).not.toContain('round 2 of 2');
+            expect(dots()).toEqual(['done', 'current']);
+            fixture.destroy();
+        });
+
+        it('shows no rounds for a single-round timer', () => {
+            start(makeTimer({ repeats: 1 }));
+
+            expect(status()).toBe('');
+            expect(dots()).toEqual([]);
+            fixture.destroy();
+        });
+
+        it('leaves out the dots when there are too many rounds to fit in a row', () => {
+            start(makeTimer({ repeats: 16 }));
+
+            expect(text()).toContain('round 1 of 16');
+            expect(dots()).toEqual([]);
+            fixture.destroy();
+        });
+
+        it('clears the rounds once the workout is finished', () => {
+            start(makeTimer({ timerSeconds: 3, restSeconds: 0, repeats: 2 }));
+
+            advance(6000);
+
+            expect(component.isComplete()).toBe(true);
+            expect(text()).not.toContain('Last one!');
+            expect(dots()).toEqual([]);
             fixture.destroy();
         });
     });
@@ -687,6 +738,10 @@ describe('TimerComponent', () => {
                 start(makeTimer());
 
                 expect(button('Pause')!.getAttribute('aria-keyshortcuts')).toBe('Space');
+                // Shown to sighted keyboard users too; screen readers already have the above
+                const key = fixture.nativeElement.querySelector('kbd') as HTMLElement;
+                expect(key.textContent).toBe('Space');
+                expect(key.getAttribute('aria-hidden')).toBe('true');
                 fixture.destroy();
             });
 
@@ -949,9 +1004,7 @@ describe('TimerComponent', () => {
             advance(5000 * 6);
 
             expect(text()).toContain('round 7 of ∞');
-            expect(
-                fixture.nativeElement.querySelectorAll('.rubik-spray-paint-regular')
-            ).toHaveLength(0);
+            expect(fixture.nativeElement.querySelectorAll('.round-dot')).toHaveLength(0);
             expect(text()).not.toContain('Last one!');
             fixture.destroy();
         });

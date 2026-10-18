@@ -29,7 +29,11 @@
             aria-hidden="true"
             (click)="onItemClick(i)"
         >
-            {{ option.label }}
+            @if (option.label === '∞') {
+                <span class="symbol-infinity">∞</span>
+            } @else {
+                {{ option.label }}
+            }
         </div>
     }
 </div>

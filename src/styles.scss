@@ -156,8 +156,18 @@ body::before {
     font-style: normal;
 }
 
-.rubik-spray-paint-regular {
-    font-family: 'Rubik Spray Paint', system-ui;
-    font-weight: 400;
-    font-style: normal;
+// Changing the theme in settings fades the page between the old colours and the new, with a
+// view transition (SettingsComponent.chooseTheme); a touch slower than the browser's 0.25s
+::view-transition-group(*),
+::view-transition-old(*),
+::view-transition-new(*) {
+    animation-duration: 0.4s;
+}
+
+// Audiowide has no ∞, so it falls back to a system font where it's drawn small beside the
+// app's numbers. This scales it up to match, wherever ∞ stands in for a number.
+.symbol-infinity {
+    font-size: 1.4em;
+    line-height: 1;
+    vertical-align: -0.05em;
 }

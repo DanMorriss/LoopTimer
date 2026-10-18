@@ -72,13 +72,38 @@
 }
 
 .theme-picker__options {
+    --gap: 0.2rem;
+    position: relative;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     border: 1px solid var(--border);
     border-radius: 999px;
     background: var(--control);
-    padding: 0.2rem;
-    gap: 0.2rem;
+    padding: var(--gap);
+    gap: var(--gap);
+}
+
+// One option wide, moved along by --chosen (0, 1 or 2) option widths plus the gaps between
+.theme-picker__thumb {
+    position: absolute;
+    top: var(--gap);
+    bottom: var(--gap);
+    left: var(--gap);
+    width: calc((100% - 4 * var(--gap)) / 3);
+    border: 1px solid var(--glow);
+    border-radius: 999px;
+    // The lighter tint, so the label keeps 4.5:1 in the light theme
+    background: var(--accent-soft);
+    transform: translateX(calc(var(--chosen) * (100% + var(--gap))));
+    transition: transform 0.25s ease;
+    pointer-events: none;
+    // Its own layer in the theme fade, which moves it from the old option to the new
+    view-transition-name: theme-thumb;
+
+    // During the fade, jump straight to the new option so the fade can do the sliding
+    :host-context(.theme-switching) & {
+        transition: none;
+    }
 }
 
 .theme-picker__option {
@@ -96,6 +121,7 @@
 }
 
 .theme-picker__label {
+    position: relative;
     flex: 1;
     padding: 0.5rem 0.4rem;
     border: 1px solid transparent;
@@ -104,14 +130,9 @@
     font-size: 0.85rem;
     text-align: center;
     pointer-events: none;
-    transition:
-        background-color 0.2s ease,
-        color 0.2s ease;
+    transition: color 0.2s ease;
 
-    .theme-picker__input:checked + & {
-        border-color: var(--glow);
-        // The lighter tint, so the label keeps 4.5:1 in the light theme
-        background: var(--accent-soft);
+    .theme-picker__option--chosen & {
         color: var(--glow-text);
     }
 
@@ -122,6 +143,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+    .theme-picker__thumb,
     .theme-picker__label {
         transition: none;
     }

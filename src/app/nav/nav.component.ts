@@ -1,8 +1,9 @@
-import { Component, ElementRef, inject, signal, viewChild } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, computed, ElementRef, inject, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { MatIconModule } from '@angular/material/icon';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { filter } from 'rxjs';
+import { filter, map } from 'rxjs';
+import { TimerStore } from '../shared/state/timer-store.service';
 
 /** The pages the menu links to, in the order they're listed. */
 const PAGES = [
@@ -31,12 +32,26 @@ export class NavComponent {
     private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
     private readonly menuButton = viewChild.required<ElementRef<HTMLButtonElement>>('menuButton');
 
+    private readonly router = inject(Router);
+    private readonly activeTimer = inject(TimerStore).activeTimer;
+    private readonly url = toSignal(
+        this.router.events.pipe(
+            filter((event) => event instanceof NavigationEnd),
+            map((event) => event.urlAfterRedirects)
+        ),
+        { initialValue: this.router.url }
+    );
+
     protected readonly pages = PAGES;
     protected readonly open = signal(false);
+    /** On the timer page, the running timer's title (if it has one); otherwise empty. */
+    protected readonly timerTitle = computed(() =>
+        this.url().startsWith('/timer') ? (this.activeTimer()?.title.trim() ?? '') : ''
+    );
 
     constructor() {
-        inject(Router)
-            .events.pipe(
+        this.router.events
+            .pipe(
                 filter((event) => event instanceof NavigationEnd),
                 takeUntilDestroyed()
             )
