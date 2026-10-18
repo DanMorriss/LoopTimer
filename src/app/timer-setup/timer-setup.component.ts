@@ -19,7 +19,8 @@ import {
     CdkDropList,
     moveItemInArray,
 } from '@angular/cdk/drag-drop';
-import { ActivatedRoute, Router } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { hasWork, Step, StepKind, Timer, UNTIL_STOPPED } from '../models/timer';
 import { InfinitySwitchComponent } from '../shared/components/infinity-switch/infinity-switch.component';
 import { ConfirmDialogComponent } from '../shared/components/confirm-dialog/confirm-dialog.component';
@@ -161,9 +162,18 @@ export class TimerSetupComponent {
             }
         });
 
-        const timerToEdit = this.findTimerToEdit();
+        // Not just the snapshot: the page stays open when only the query changes, e.g. Create
+        // from the menu while editing, which goes from ?editId=1 to a new timer
+        this.route.queryParamMap
+            .pipe(takeUntilDestroyed())
+            .subscribe((params) => this.load(this.findTimerToEdit(params)));
+    }
+
+    /** Fills the form from a saved timer, or empties it for a new one. */
+    private load(timerToEdit: Timer | null) {
+        this.editingTimerId.set(timerToEdit?.id ?? null);
+        this.stepPendingDelete.set(null);
         if (timerToEdit) {
-            this.editingTimerId.set(timerToEdit.id);
             this.model.set({
                 title: timerToEdit.title,
                 steps: timerToEdit.steps.map((step) => this.stepModel(step)),
@@ -171,6 +181,9 @@ export class TimerSetupComponent {
             });
             // A saved timer opens as a list of summaries, so the whole workout fits on screen
             this.expandedKeys.set(new Set());
+        } else {
+            this.model.set(this.emptySetup());
+            this.expandedKeys.set(this.allKeys());
         }
     }
 
@@ -337,8 +350,8 @@ export class TimerSetupComponent {
         };
     }
 
-    private findTimerToEdit(): Timer | null {
-        const rawEditId = this.route.snapshot.queryParamMap.get('editId');
+    private findTimerToEdit(params: ParamMap): Timer | null {
+        const rawEditId = params.get('editId');
         const editId = Number(rawEditId);
         if (!rawEditId || !Number.isInteger(editId) || editId <= 0) {
             return null;
@@ -355,9 +368,7 @@ export class TimerSetupComponent {
             ? (this.timerStore.updateTimer(editingId, timer) ?? this.timerStore.addTimer(timer))
             : this.timerStore.addTimer(timer);
 
-        this.model.set(this.emptySetup());
-        this.expandedKeys.set(this.allKeys());
-        this.editingTimerId.set(null);
+        this.load(null);
         this.timerStore.setActiveTimer(savedTimer);
         await this.router.navigate(['/timer']);
     }

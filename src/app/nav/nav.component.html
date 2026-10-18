@@ -38,6 +38,7 @@
                                 [routerLink]="page.path"
                                 routerLinkActive="nav__link--current"
                                 ariaCurrentWhenActive="page"
+                                (click)="open.set(false)"
                             >
                                 <mat-icon class="nav__link-icon" aria-hidden="true">{{
                                     page.icon
