@@ -3,9 +3,9 @@
     position: relative;
     z-index: 0;
     border-radius: 0.9rem;
-    border: 1px solid rgba(148, 163, 184, 0.35);
-    background: rgba(15, 23, 42, 0.42);
-    box-shadow: 0 10px 30px rgba(2, 6, 23, 0.45);
+    border: 1px solid var(--border);
+    background: var(--card);
+    box-shadow: 0 10px 30px var(--shadow);
     padding: 0.9rem 0.8rem;
     backdrop-filter: blur(8px);
     cursor: pointer;
@@ -55,7 +55,7 @@
     margin: 0 0 0.5rem;
     text-align: center;
     font-size: 1rem;
-    color: #e2e8f0;
+    color: var(--text);
     letter-spacing: 0.02em;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -81,7 +81,7 @@
 .timer-card__summary {
     margin: 0;
     text-align: center;
-    color: #dbe7f8;
+    color: var(--text);
     font-size: 1.03rem;
     letter-spacing: 0.03em;
 }
@@ -99,8 +99,8 @@
 .timer-card__action {
     width: 44px;
     height: 44px;
-    border: 1px solid rgba(148, 163, 184, 0.35);
-    background: rgba(15, 23, 42, 0.65);
+    border: 1px solid var(--border);
+    background: var(--control);
     transition:
         transform 0.15s ease,
         border-color 0.15s ease,
@@ -109,8 +109,8 @@
 
 .timer-card__action:hover {
     transform: translateY(-1px);
-    border-color: rgba(148, 163, 184, 0.6);
-    background: rgba(30, 41, 59, 0.78);
+    border-color: var(--border-strong);
+    background: var(--control-hover);
 }
 
 .timer-card__action:active {
@@ -122,15 +122,15 @@
     height: 24px;
     font-size: 24px;
     line-height: 24px;
-    color: #dbe7f8;
+    color: var(--text);
 }
 
 .timer-card__action--menu .timer-card__action-icon {
-    color: #cbd5e1;
+    color: var(--text);
 }
 
 .timer-card__action:focus-visible {
-    outline: 2px solid #38bdf8;
+    outline: 2px solid var(--accent);
     outline-offset: 2px;
 }
 
@@ -147,10 +147,10 @@
     top: calc(100% + 0.2rem);
     right: 0;
     min-width: 130px;
-    border: 1px solid rgba(148, 163, 184, 0.4);
+    border: 1px solid var(--border);
     border-radius: 0.65rem;
-    background: rgba(15, 23, 42, 0.97);
-    box-shadow: 0 10px 24px rgba(2, 6, 23, 0.55);
+    background: var(--raised);
+    box-shadow: 0 10px 24px var(--shadow);
     overflow: hidden;
     z-index: 9;
 }
@@ -159,9 +159,9 @@
     width: 100%;
     padding: 0.55rem 0.7rem;
     border: 0;
-    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    border-bottom: 1px solid var(--border-soft);
     background: transparent;
-    color: #e2e8f0;
+    color: var(--text);
     display: flex;
     align-items: center;
     gap: 0.45rem;
@@ -174,16 +174,16 @@
 }
 
 .timer-card__menu-item:hover {
-    background: rgba(30, 41, 59, 0.72);
+    background: var(--control-hover);
 }
 
 .timer-card__menu-item:focus-visible {
-    outline: 2px solid #38bdf8;
+    outline: 2px solid var(--accent);
     outline-offset: -2px;
 }
 
 .timer-card__menu-item--danger {
-    color: #fecaca;
+    color: var(--text-danger);
 }
 
 .timer-card__menu-icon {
@@ -200,9 +200,9 @@
     transform: translate(-50%, -50%);
     width: 78px;
     height: 78px;
-    border: 1px solid rgba(56, 189, 248, 0.55);
-    background: rgba(15, 23, 42, 0.88);
-    box-shadow: 0 14px 28px rgba(2, 6, 23, 0.6);
+    border: 1px solid var(--accent-line);
+    background: var(--raised);
+    box-shadow: 0 14px 28px var(--shadow);
     z-index: 2;
     opacity: 0;
     pointer-events: none;
@@ -214,8 +214,8 @@
 }
 
 .timer-card__overlay-play:hover {
-    background: rgba(15, 23, 42, 0.98);
-    border-color: rgba(56, 189, 248, 0.8);
+    background: var(--raised);
+    border-color: var(--accent-line);
 }
 
 .timer-card__overlay-icon {
@@ -223,13 +223,13 @@
     height: 42px;
     font-size: 42px;
     line-height: 42px;
-    color: #38bdf8;
+    color: var(--accent);
 }
 
 .timer-card__overlay-play:focus-visible {
     opacity: 1;
     pointer-events: auto;
-    outline: 2px solid #e2e8f0;
+    outline: 2px solid var(--text);
     outline-offset: 2px;
 }
 

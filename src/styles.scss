@@ -1,5 +1,102 @@
+// Colour tokens. Every colour in the app comes from here, so the theme setting can swap
+// them all: dark is the default, and [data-theme='light'] on <html> switches to light
+// (set by ThemeService, and by a script in index.html before the app loads).
 :root {
     color-scheme: dark;
+
+    // Page
+    --page-bg: #070b12;
+    --page-glow-1: rgba(44, 74, 112, 0.25);
+    --page-glow-2: rgba(28, 44, 69, 0.35);
+    --page-from: #0b111b;
+    --page-via: #090f17;
+    --page-to: #060a11;
+
+    // Text
+    --text: #e5ebf5;
+    --text-strong: #f0f9ff;
+    --text-muted: #bfccdd;
+    --text-danger: #fecaca;
+
+    // Surfaces, from the page up
+    --panel: rgba(15, 23, 42, 0.35);
+    --panel-border: rgba(51, 65, 85, 0.6);
+    --card: rgba(15, 23, 42, 0.42);
+    --control: rgba(15, 23, 42, 0.75);
+    --control-hover: rgba(30, 41, 59, 0.78);
+    --raised: rgba(15, 23, 42, 0.97);
+    --overlay: rgba(2, 6, 23, 0.65);
+    --shadow: rgba(2, 6, 23, 0.45);
+
+    // Lines
+    --border: rgba(148, 163, 184, 0.45);
+    --border-strong: rgba(148, 163, 184, 0.6);
+    --border-soft: rgba(148, 163, 184, 0.2);
+
+    // Accents
+    --accent: #38bdf8;
+    --accent-soft: rgba(56, 189, 248, 0.08);
+    --accent-line: rgba(56, 189, 248, 0.6);
+    --focus: #e0f2fe;
+    --glow: #22d3ee;
+    --glow-soft: rgba(34, 211, 238, 0.25);
+    --glow-text: #a5f3fc;
+    --glow-dot: #ecfeff;
+    --control-off: #94a3b8;
+    --danger: rgba(248, 113, 113, 0.65);
+    --danger-soft: rgba(127, 29, 29, 0.35);
+    --button-primary: #1e9bff;
+    --button-secondary: #8b5cf6;
+    --violet-glow: rgba(139, 92, 246, 0.3);
+    --violet-tint: rgba(139, 92, 246, 0.1);
+    --logo-line: rgba(240, 249, 255, 0.3);
+}
+
+// Light: the same roles, chosen for at least 4.5:1 text and 3:1 controls on a pale page
+:root[data-theme='light'] {
+    color-scheme: light;
+
+    --page-bg: #eef3f9;
+    --page-glow-1: rgba(125, 211, 252, 0.25);
+    --page-glow-2: rgba(196, 181, 253, 0.2);
+    --page-from: #f8fbff;
+    --page-via: #eef3f9;
+    --page-to: #e3eaf3;
+
+    --text: #1e293b;
+    --text-strong: #0f172a;
+    --text-muted: #475569;
+    --text-danger: #b91c1c;
+
+    --panel: rgba(255, 255, 255, 0.6);
+    --panel-border: rgba(148, 163, 184, 0.5);
+    --card: rgba(255, 255, 255, 0.75);
+    --control: rgba(255, 255, 255, 0.9);
+    --control-hover: rgba(226, 232, 240, 0.9);
+    --raised: #ffffff;
+    --overlay: rgba(15, 23, 42, 0.35);
+    --shadow: rgba(15, 23, 42, 0.12);
+
+    --border: rgba(71, 85, 105, 0.55);
+    --border-strong: rgba(51, 65, 85, 0.75);
+    --border-soft: rgba(100, 116, 139, 0.25);
+
+    --accent: #0369a1;
+    --accent-soft: rgba(3, 105, 161, 0.08);
+    --accent-line: rgba(3, 105, 161, 0.55);
+    --focus: #0369a1;
+    --glow: #0891b2;
+    --glow-soft: rgba(8, 145, 178, 0.2);
+    --glow-text: #0e7490;
+    --glow-dot: #155e75;
+    --control-off: #64748b;
+    --danger: rgba(220, 38, 38, 0.6);
+    --danger-soft: rgba(254, 226, 226, 0.8);
+    --button-primary: #0369a1;
+    --button-secondary: #6d28d9;
+    --violet-glow: rgba(109, 40, 217, 0.25);
+    --violet-tint: rgba(109, 40, 217, 0.08);
+    --logo-line: rgba(15, 23, 42, 0.3);
 }
 
 html,
@@ -8,13 +105,13 @@ body {
 }
 body {
     margin: 0;
-    background-color: #070b12;
+    background-color: var(--page-bg);
     background-image:
-        radial-gradient(circle at 15% 20%, rgba(44, 74, 112, 0.25), transparent 45%),
-        radial-gradient(circle at 80% 0%, rgba(28, 44, 69, 0.35), transparent 42%),
-        linear-gradient(165deg, #0b111b 0%, #090f17 45%, #060a11 100%);
+        radial-gradient(circle at 15% 20%, var(--page-glow-1), transparent 45%),
+        radial-gradient(circle at 80% 0%, var(--page-glow-2), transparent 42%),
+        linear-gradient(165deg, var(--page-from) 0%, var(--page-via) 45%, var(--page-to) 100%);
     background-attachment: fixed;
-    color: #e5ebf5;
+    color: var(--text);
 }
 
 * {

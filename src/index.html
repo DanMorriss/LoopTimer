@@ -6,6 +6,19 @@
         <base href="/" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" type="image/x-icon" href="favicon.ico" />
+        <script>
+            // Apply the saved theme before anything draws, so a light theme doesn't flash dark
+            // first. ThemeService takes over once the app has loaded.
+            try {
+                var theme = JSON.parse(localStorage.getItem('settings') || '{}').theme;
+                if (theme === 'system') {
+                    theme = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+                }
+                document.documentElement.dataset.theme = theme === 'light' ? 'light' : 'dark';
+            } catch (e) {
+                // Unreadable settings: stay on the default dark theme
+            }
+        </script>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <!-- Audiowide: app font. Rubik Spray Paint: timer repeat markers. Roboto 400/500: Material tooltip and FAB. -->

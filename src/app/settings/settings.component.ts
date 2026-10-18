@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { AlarmService } from '../shared/alarms/alarm.service';
 import { ToggleSwitchComponent } from '../shared/components/toggle-switch/toggle-switch.component';
-import { SettingsStore } from '../shared/state/settings-store.service';
+import { SettingsStore, Theme } from '../shared/state/settings-store.service';
 import { AlarmKind } from '../timer/alarm-schedule';
 
 interface AlarmPreview {
@@ -19,6 +19,12 @@ interface AlarmPreview {
 export class SettingsComponent {
     protected readonly settings = inject(SettingsStore);
     protected readonly alarms = inject(AlarmService);
+
+    protected readonly themes: { value: Theme; label: string }[] = [
+        { value: 'dark', label: 'Dark' },
+        { value: 'light', label: 'Light' },
+        { value: 'system', label: 'Match system' },
+    ];
 
     protected readonly previews: AlarmPreview[] = [
         { kind: 'work', name: 'Work', description: 'Two short high beeps' },

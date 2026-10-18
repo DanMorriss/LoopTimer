@@ -1,8 +1,31 @@
 <div class="flex justify-center">
     <div
-        class="m-4 w-full max-w-md rounded-xl border border-slate-700/60 bg-slate-900/35 p-6 shadow-xl shadow-black/30 backdrop-blur-sm"
+        class="m-4 w-full max-w-md rounded-xl border border-(--panel-border) bg-(--panel) p-6 shadow-xl shadow-(color:--shadow) backdrop-blur-sm"
     >
         <h2 class="settings__title">Settings</h2>
+
+        <section class="settings__section" aria-labelledby="appearance-heading">
+            <h3 class="settings__heading" id="appearance-heading">Appearance</h3>
+
+            <fieldset class="theme-picker">
+                <legend class="setting__name">Theme</legend>
+                <div class="theme-picker__options">
+                    @for (option of themes; track option.value) {
+                        <label class="theme-picker__option">
+                            <input
+                                type="radio"
+                                name="theme"
+                                class="theme-picker__input"
+                                [value]="option.value"
+                                [checked]="settings.theme() === option.value"
+                                (change)="settings.update({ theme: option.value })"
+                            />
+                            <span class="theme-picker__label">{{ option.label }}</span>
+                        </label>
+                    }
+                </div>
+            </fieldset>
+        </section>
 
         <section class="settings__section" aria-labelledby="alarms-heading">
             <h3 class="settings__heading" id="alarms-heading">Alarms</h3>
