@@ -178,7 +178,8 @@ function isValidTimer(value: unknown): value is Timer {
         isWholeNumber(timer['timerSeconds'], 0, 59) &&
         isWholeNumber(timer['restMinutes'], 0) &&
         isWholeNumber(timer['restSeconds'], 0, 59) &&
-        isWholeNumber(timer['repeats'], 1) &&
+        // 0 is UNTIL_STOPPED
+        isWholeNumber(timer['repeats'], 0) &&
         (timer['timerMinutes'] as number) + (timer['timerSeconds'] as number) > 0
     );
 }

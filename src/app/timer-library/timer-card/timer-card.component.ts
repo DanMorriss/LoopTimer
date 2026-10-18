@@ -1,7 +1,7 @@
 import { Component, computed, input, output } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { Timer } from '../../models/timer';
+import { runsUntilStopped, Timer } from '../../models/timer';
 import { formatTime } from '../../shared/format-time';
 
 /**
@@ -43,6 +43,14 @@ export class TimerCardComponent {
     );
     protected readonly restTime = computed(() =>
         formatTime(this.timer().restMinutes, this.timer().restSeconds)
+    );
+    protected readonly rounds = computed(() =>
+        runsUntilStopped(this.timer()) ? '∞' : String(this.timer().repeats)
+    );
+    protected readonly spokenRounds = computed(() =>
+        runsUntilStopped(this.timer())
+            ? 'repeated until stopped'
+            : `repeated ${this.timer().repeats} times`
     );
     protected readonly showPlay = computed(() => this.active() && !this.menuOpen());
 

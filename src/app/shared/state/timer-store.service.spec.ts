@@ -59,7 +59,7 @@ describe('TimerStore', () => {
                 { id: 2 },
                 { ...makeTimer(), id: 0 },
                 { ...makeTimer(), id: 3, title: 42 },
-                { ...makeTimer(), id: 4, repeats: 0 },
+                { ...makeTimer(), id: 4, repeats: -1 },
                 { ...makeTimer(), id: 5, timerSeconds: 60 },
                 { ...makeTimer(), id: 6, restSeconds: -1 },
                 { ...makeTimer(), id: 7, timerMinutes: 1.5 },
@@ -68,6 +68,13 @@ describe('TimerStore', () => {
             localStorage.setItem('timers', JSON.stringify([valid, ...broken]));
 
             expect(createStore().timers()).toEqual([valid]);
+        });
+
+        it('keeps a timer that runs until stopped (repeats 0)', () => {
+            const untilStopped: Timer = { ...makeTimer(), id: 1, repeats: 0 };
+            localStorage.setItem('timers', JSON.stringify([untilStopped]));
+
+            expect(createStore().timers()).toEqual([untilStopped]);
         });
     });
 

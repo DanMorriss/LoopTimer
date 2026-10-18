@@ -10,7 +10,7 @@ Built with Angular 22 (standalone components, signals and Signal Forms), Angular
 
 ## What it does today
 
-- **Create a timer** with a work time (up to 99:59), an optional rest time, and 1–30 rounds, picked on iPhone-style wheels: swipe, scroll or drag a wheel, click a number, or type one, and the one in the middle is selected. Give it a title, or leave it untitled.
+- **Create a timer** with a work time (up to 99:59), an optional rest time, and 1–30 rounds or ∞ (until stopped), picked on iPhone-style wheels: swipe, scroll or drag a wheel, click a number, or type one, and the one in the middle is selected. Give it a title, or leave it untitled. For ∞, scroll the rounds wheel past 30, or flip the ∞ switch beside it: the dot races round the loop and the wheel spins to ∞. Turning the switch off spins back to the rounds you had.
 - **Run it.** A ring fills as each phase goes by. Work fills clockwise in pink, rest fills anticlockwise in blue, and the face flashes in the phase colour. The page shows the rounds left and "Last one!" for the final round. There's no rest after the last round.
 - **Hear each phase start.** Two short high beeps for work, a long low tone for rest, and three rising notes at the finish, with matching vibrations on phones that support them (not iPhones). The beeps are scheduled ahead on the audio clock, so they stay on time in a background tab. Browsers only allow sound after a tap, so after a refresh the timer page shows a "Tap to turn on sound" button.
 - **Pause, resume or stop** while it runs, or press Space to pause and resume. Pausing freezes the countdown and the ring where they are; stopping ends the workout and goes back to the library.
@@ -76,7 +76,6 @@ src/app/
 These come from the original plan and aren't built yet:
 
 - **Multiple intervals per timer**, e.g. 30 seconds then 45 seconds, rather than a single work/rest pair.
-- **Run until stopped:** repeat with no fixed number of rounds.
 - **Alarm sounds:** proper sound files in place of the generated beeps, and alarms on a locked phone.
 - **Settings:** alarm order and sounds, sound on or off, light/dark theme, vibration on or off.
 - **History:** a log of completed workouts.

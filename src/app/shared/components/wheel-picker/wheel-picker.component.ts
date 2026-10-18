@@ -13,6 +13,8 @@ import { injectPrefersReducedMotion } from '../../reduced-motion';
 export interface WheelPickerOption {
     value: number;
     label: string;
+    /** What screen readers say for this option, if not the label, e.g. "until stopped" for "∞". */
+    spokenLabel?: string;
 }
 
 /** How far a mouse has to move (px) before a press counts as a drag rather than a click. */
@@ -49,12 +51,16 @@ export class WheelPickerComponent implements FormValueControl<number> {
             this.options().findIndex((option) => option.value === this.value())
         )
     );
-    protected readonly valueText = computed(() => this.options()[this.selectedIndex()]?.label);
-    protected readonly lowest = computed(() => this.options()[0]?.value);
-    protected readonly highest = computed(() => this.options().at(-1)?.value);
+    protected readonly valueText = computed(() => {
+        const option = this.options()[this.selectedIndex()];
+        return option?.spokenLabel ?? option?.label;
+    });
+    // Lowest and highest values, not first and last: an option like ∞ can sit at the end with a low value
+    protected readonly lowest = computed(() => Math.min(...this.options().map((o) => o.value)));
+    protected readonly highest = computed(() => Math.max(...this.options().map((o) => o.value)));
 
-    /** How the next scroll to the selected value should move: jump, or glide for user actions. */
-    private nextScroll: ScrollBehavior = 'instant';
+    /** The first scroll to the value jumps there; after that the wheel glides. */
+    private shown = false;
     private drag: {
         pointerId: number;
         startY: number;
@@ -66,12 +72,14 @@ export class WheelPickerComponent implements FormValueControl<number> {
     private typed = { text: '', at: 0 };
 
     constructor() {
-        // Keep the wheel showing the value, whether it changed here or from the form
+        // Keep the wheel showing the value, whether it changed here or from outside (the form,
+        // or a switch that sets it). It jumps on first show, and glides after that.
         afterRenderEffect(() => {
             const index = this.selectedIndex();
             const viewport = this.viewport().nativeElement;
-            const behavior = this.nextScroll;
-            this.nextScroll = 'instant';
+            const behavior: ScrollBehavior =
+                this.shown && !this.reducedMotion() ? 'smooth' : 'instant';
+            this.shown = true;
             if (this.indexAtScroll() !== index) {
                 viewport.scrollTo({ top: index * this.rowHeight(), behavior });
             }
@@ -212,7 +220,6 @@ export class WheelPickerComponent implements FormValueControl<number> {
         }
         const behavior: ScrollBehavior = this.reducedMotion() ? 'instant' : 'smooth';
         if (option.value !== this.value()) {
-            this.nextScroll = behavior;
             this.value.set(option.value);
         } else {
             // Same value, but the wheel may sit between rows (e.g. after a drag): snap back

@@ -13,12 +13,12 @@ const OPTIONS: WheelPickerOption[] = Array.from({ length: 21 }, (_, i) => ({
     imports: [WheelPickerComponent],
     template: `
         <span id="picker-label">Seconds</span>
-        <app-wheel-picker [(value)]="value" [options]="options" labelledBy="picker-label" />
+        <app-wheel-picker [(value)]="value" [options]="options()" labelledBy="picker-label" />
     `,
 })
 class HostComponent {
     value = signal(3);
-    options = OPTIONS;
+    options = signal(OPTIONS);
 }
 
 describe('WheelPickerComponent', () => {
@@ -71,6 +71,21 @@ describe('WheelPickerComponent', () => {
             expect(spin.tabIndex).toBe(0);
         });
 
+        it("says an option's spoken label, and reports the true range when the order differs", async () => {
+            await create();
+            // 1-20, then ∞ (stored as 0) at the end
+            host.options.set([
+                ...OPTIONS.slice(1),
+                { value: 0, label: '∞', spokenLabel: 'until stopped' },
+            ]);
+            host.value.set(0);
+            await settle();
+
+            expect(viewport().getAttribute('aria-valuetext')).toBe('until stopped');
+            expect(viewport().getAttribute('aria-valuemin')).toBe('0');
+            expect(viewport().getAttribute('aria-valuemax')).toBe('20');
+        });
+
         it('hides the individual numbers, which are only visual', async () => {
             await create();
 
@@ -93,11 +108,12 @@ describe('WheelPickerComponent', () => {
             expect(item(3).classList).toContain('wheel-picker__item--selected');
         });
 
-        it('turns to a value set from outside, such as a form loading a saved timer', async () => {
+        it('glides to a value set from outside, such as the ∞ switch', async () => {
             await create();
 
             host.value.set(12);
             await settle();
+            await scrolled();
 
             expect(valueInMiddle()).toBe(12);
         });

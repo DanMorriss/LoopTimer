@@ -224,3 +224,9 @@ $track-color: #334155; // slate-700: dark, so both phase colours stand out (3:1 
     font: inherit;
     cursor: pointer;
 }
+
+.timer-status__infinity {
+    font-size: 1.4em;
+    line-height: 1;
+    vertical-align: -0.05em;
+}

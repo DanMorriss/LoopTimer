@@ -27,13 +27,18 @@ class FakeOscillator {
 const fakeParam = { setValueAtTime() {}, linearRampToValueAtTime() {} };
 
 /**
- * Stands in for the browser's AudioContext: nothing plays, and the clock stays at 0.
+ * Stands in for the browser's AudioContext: nothing plays, and its clock follows Date.now()
+ * (so the test's fake clock), starting at 0.
  * It starts suspended, as browsers do before the user interacts with the page.
  */
 export class FakeAudioContext {
     state: AudioContextState = 'suspended';
-    currentTime = 0;
+    private readonly createdAt = Date.now();
     readonly destination = {};
+
+    get currentTime() {
+        return (Date.now() - this.createdAt) / 1000;
+    }
     /** Set to false to act like a browser that still won't allow sound. */
     allowResume = true;
     readonly oscillators: FakeOscillator[] = [];
@@ -66,10 +71,10 @@ export class FakeAudioContext {
         return oscillator;
     }
 
-    /** Notes still due to play, as "frequency@start" with the start in seconds. */
+    /** Notes still to play or playing, as "frequency@start" with the start in seconds. */
     scheduledNotes(): string[] {
         return this.oscillators
-            .filter((o) => !o.cancelled)
+            .filter((o) => !o.cancelled && o.stopAt! > this.currentTime)
             .map((o) => `${o.frequency.value}@${Math.round(o.startAt! * 1000) / 1000}`);
     }
 

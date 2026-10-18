@@ -7,6 +7,14 @@ export const AUDIO_CONTEXT_FACTORY = new InjectionToken<() => AudioContext | nul
     { factory: () => () => (typeof AudioContext === 'undefined' ? null : new AudioContext()) }
 );
 
+/** A note on the audio clock, in seconds. */
+interface ScheduledNote {
+    oscillator: OscillatorNode;
+    /** When the alarm this note belongs to starts. */
+    alarmStart: number;
+    end: number;
+}
+
 interface Note {
     frequency: number;
     /** Seconds after the alarm starts. */
@@ -58,7 +66,9 @@ export class AlarmService {
     private context: AudioContext | null = null;
     /** Everything scheduled goes through this, so it can all be silenced at once. */
     private output: GainNode | null = null;
-    private scheduled: OscillatorNode[] = [];
+    private scheduled: ScheduledNote[] = [];
+    /** The alarms from the last `schedule()` call. */
+    private lastEvents: AlarmEvent[] = [];
 
     private readonly _unlocked = signal(false);
     /** Whether the browser is allowing sound yet. */
@@ -101,23 +111,33 @@ export class AlarmService {
     }
 
     /**
-     * Replaces whatever was scheduled with these alarms. Alarms already past are skipped.
+     * Replaces whatever was scheduled with these alarms. Alarms already past are skipped,
+     * and so is any alarm the last call already played; one that has begun plays out.
+     * So it's safe to call again at any time, e.g. to add the next rounds of a long workout.
      * Does nothing until sound is unlocked, so schedule again once it is.
      */
     schedule(events: AlarmEvent[]) {
-        this.cancel();
         const context = this.context;
         if (context?.state !== 'running') {
+            this.cancel();
             return;
         }
+        // Let an alarm that has begun play out in full; drop the ones still to come
+        this.stopNotes((note) => note.alarmStart > context.currentTime);
 
-        this.output = context.createGain();
-        this.output.connect(context.destination);
         const now = Date.now();
+        const key = (event: AlarmEvent) => `${event.kind}@${event.at}`;
+        const alreadyPlayed = new Set(this.lastEvents.filter((e) => e.at <= now).map(key));
+        this.lastEvents = events;
+
+        if (!this.output) {
+            this.output = context.createGain();
+            this.output.connect(context.destination);
+        }
 
         for (const event of events) {
             const delayMs = event.at - now;
-            if (delayMs < -LATE_LIMIT_MS) {
+            if (delayMs < -LATE_LIMIT_MS || alreadyPlayed.has(key(event))) {
                 continue;
             }
             const start = context.currentTime + Math.max(0, delayMs) / 1000;
@@ -127,12 +147,10 @@ export class AlarmService {
         }
     }
 
-    /** Silences everything scheduled, e.g. on pause or stop. */
+    /** Silences everything scheduled, even a beep that's sounding, e.g. on stop. */
     cancel() {
-        for (const oscillator of this.scheduled) {
-            oscillator.stop();
-        }
-        this.scheduled = [];
+        this.stopNotes(() => true);
+        this.lastEvents = [];
         this.output?.disconnect();
         this.output = null;
     }
@@ -149,7 +167,24 @@ export class AlarmService {
         }
     }
 
-    private playNote(context: AudioContext, output: AudioNode, note: Note, alarmStart: number) {
+    /** Stops the notes that match, and forgets them along with any that have finished. */
+    private stopNotes(matches: (note: ScheduledNote) => boolean) {
+        const now = this.context?.currentTime ?? 0;
+        this.scheduled = this.scheduled.filter((note) => {
+            if (matches(note)) {
+                note.oscillator.stop();
+                return false;
+            }
+            return note.end > now;
+        });
+    }
+
+    private playNote(
+        context: AudioContext,
+        output: AudioNode,
+        note: Note,
+        alarmStart: number
+    ): ScheduledNote {
         const start = alarmStart + note.offset;
         const end = start + note.length;
 
@@ -167,6 +202,6 @@ export class AlarmService {
         oscillator.connect(envelope);
         oscillator.start(start);
         oscillator.stop(end);
-        return oscillator;
+        return { oscillator, alarmStart, end };
     }
 }

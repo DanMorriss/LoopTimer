@@ -1,4 +1,4 @@
-import { Timer } from '../models/timer';
+import { Timer, UNTIL_STOPPED } from '../models/timer';
 import { timerStateAt } from './timer-state';
 
 function makeTimer(overrides: Partial<Timer> = {}): Timer {
@@ -123,5 +123,39 @@ describe('timerStateAt', () => {
 
     it('treats a start time in the future as not started yet', () => {
         expect(timerStateAt(timer, -5000).remainingSeconds).toBe(30);
+    });
+
+    describe('until stopped', () => {
+        const forever = makeTimer({ repeats: UNTIL_STOPPED }); // 30s work, 10s rest, round after round
+
+        it('never finishes', () => {
+            const aDayIn = 24 * 60 * 60 * 1000;
+
+            expect(timerStateAt(forever, aDayIn).phase).not.toBe('complete');
+        });
+
+        it('keeps counting rounds, with no end in sight', () => {
+            // 1000 rounds of 40s, then 5s into the next work phase
+            const state = timerStateAt(forever, 1000 * 40_000 + 5000);
+
+            expect(state.phase).toBe('work');
+            expect(state.round).toBe(1000);
+            expect(state.roundsLeft).toBe(Infinity);
+            expect(state.remainingSeconds).toBe(25);
+        });
+
+        it('rests after every round', () => {
+            expect(timerStateAt(forever, 999 * 40_000 + 30_000).phase).toBe('rest');
+        });
+
+        it('still works with no rest', () => {
+            const state = timerStateAt(
+                makeTimer({ repeats: UNTIL_STOPPED, restSeconds: 0 }),
+                95_000
+            );
+
+            expect(state.round).toBe(3);
+            expect(state.remainingSeconds).toBe(25);
+        });
     });
 });

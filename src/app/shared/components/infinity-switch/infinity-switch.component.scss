@@ -1,0 +1,123 @@
+$off-color: #94a3b8; // slate-400: 3:1 or more against the box, as a control's state must be
+$on-color: #22d3ee; // cyan-400, the dot colour on the home page
+// The loop the dot follows: the same path as the SVG, in the loop box's own pixels
+$loop-path: path(
+    'M 30 30 C 30 15, 45 15, 60 30 C 75 45, 90 45, 90 30 C 90 15, 75 15, 60 30 C 45 45, 30 45, 30 30 Z'
+);
+
+:host {
+    display: block;
+}
+
+// Styled like the wheel picker beside it, and the same height
+.infinity-switch {
+    box-sizing: content-box;
+    display: flex;
+    width: 100%;
+    height: 7.5rem;
+    padding: 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    border: 1px solid rgba(148, 163, 184, 0.45);
+    border-radius: 0.75rem;
+    background: rgba(15, 23, 42, 0.75);
+    color: #bfccdd;
+    font: inherit;
+    cursor: pointer;
+    transition:
+        border-color 0.3s ease,
+        box-shadow 0.3s ease;
+
+    &:focus-visible {
+        outline: 2px solid #38bdf8;
+        outline-offset: 2px;
+    }
+
+    &--on {
+        border-color: rgba(34, 211, 238, 0.7);
+        box-shadow: 0 0 18px rgba(34, 211, 238, 0.25);
+        color: #a5f3fc;
+    }
+}
+
+.infinity-switch__loop {
+    position: relative;
+    width: 120px;
+    height: 60px;
+}
+
+.infinity-switch__track {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+
+    path {
+        fill: none;
+        stroke: $off-color;
+        stroke-width: 4;
+        stroke-linecap: round;
+        transition:
+            stroke 0.3s ease,
+            filter 0.3s ease;
+
+        .infinity-switch--on & {
+            stroke: $on-color;
+            filter: drop-shadow(0 0 4px rgba(34, 211, 238, 0.8));
+        }
+    }
+}
+
+@keyframes race {
+    from {
+        offset-distance: 0%;
+    }
+    to {
+        offset-distance: 100%;
+    }
+}
+
+// Rests on the loop's left end when off, and races round it when on
+.infinity-switch__dot {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: $off-color;
+    offset-path: $loop-path;
+    offset-distance: 0%;
+    offset-rotate: 0deg;
+    transition: background-color 0.3s ease;
+
+    .infinity-switch--on & {
+        background: #ecfeff;
+        box-shadow:
+            0 0 6px 2px $on-color,
+            0 0 14px 4px rgba(34, 211, 238, 0.5);
+        animation: race 1.6s linear infinite;
+    }
+}
+
+.infinity-switch__state {
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .infinity-switch,
+    .infinity-switch__track path,
+    .infinity-switch__dot {
+        transition: none;
+    }
+
+    // Halfway round the path is the loop's right end
+    .infinity-switch--on .infinity-switch__dot {
+        animation: none;
+        offset-distance: 50%;
+    }
+}

@@ -56,14 +56,26 @@
                 </div>
             </div>
 
-            <div class="m-4 flex justify-center">
-                <div class="picker-field picker-field--single">
+            <p class="p-4 text-center font-bold text-slate-100">Repeat</p>
+
+            <!-- The switch and the ∞ at the end of the wheel are two ways to set the same thing -->
+            <div class="picker-row mb-4">
+                <div class="picker-field">
                     <span class="picker-field__label" id="repeats-label">Rounds</span>
                     <app-wheel-picker
                         id="repeats"
                         [formField]="timerForm.repeats"
                         [options]="repeatOptions"
                         labelledBy="repeats-label"
+                    />
+                </div>
+
+                <div class="picker-field">
+                    <span class="picker-field__label" id="untilStopped-label">Until stopped</span>
+                    <app-infinity-switch
+                        [checked]="untilStopped()"
+                        (checkedChange)="setUntilStopped($event)"
+                        labelledBy="untilStopped-label"
                     />
                 </div>
             </div>

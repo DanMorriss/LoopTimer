@@ -1,6 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Timer } from '../../models/timer';
+import { Timer, UNTIL_STOPPED } from '../../models/timer';
 import { TimerCardComponent } from './timer-card.component';
 
 const sprints: Timer = {
@@ -68,6 +68,15 @@ describe('TimerCardComponent', () => {
         expect(el('.timer-card__summary').textContent).toContain('01:05 - 00:20 x 4');
         expect(el('.timer-card__summary').getAttribute('aria-label')).toBe(
             'Timer 01:05, rest 00:20, repeated 4 times'
+        );
+    });
+
+    it('shows ∞ for a timer that runs until stopped', () => {
+        set({ timer: { ...sprints, repeats: UNTIL_STOPPED } });
+
+        expect(el('.timer-card__summary').textContent).toContain('01:05 - 00:20 x ∞');
+        expect(el('.timer-card__summary').getAttribute('aria-label')).toBe(
+            'Timer 01:05, rest 00:20, repeated until stopped'
         );
     });
 
