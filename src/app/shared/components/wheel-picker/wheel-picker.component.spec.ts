@@ -216,7 +216,7 @@ describe('WheelPickerComponent', () => {
             expect(valueInMiddle()).toBe(3);
         });
 
-        it('stays open while pressed, then closes a second after it is let go', async () => {
+        it('stays open while pressed, then (not turned) closes a second after it is let go', async () => {
             await create();
 
             pointer('pointerdown');
@@ -237,24 +237,43 @@ describe('WheelPickerComponent', () => {
             // Native scrolling cancels the pointer, though the finger is still down
             pointer('pointerdown', 'touch');
             pointer('pointercancel', 'touch');
+            viewport().dispatchEvent(new Event('scroll'));
             await wait(1200);
             expect(isOpen()).toBe(true);
 
+            // It was turned, so it closes soon after the finger lifts
             viewport().dispatchEvent(new TouchEvent('touchend', { bubbles: true }));
-            await wait(1200);
-            await settle();
+            await wait(350);
+            fixture.detectChanges();
             expect(isOpen()).toBe(false);
         });
 
-        it('waits a second from the last turn before closing', async () => {
+        it('waits a second for a first turn after opening', async () => {
             await create();
             await openByPress();
 
             await wait(700);
-            viewport().dispatchEvent(new Event('scroll'));
-            await wait(700);
-
             expect(isOpen()).toBe(true);
+            await wait(500);
+            fixture.detectChanges();
+            expect(isOpen()).toBe(false);
+        });
+
+        it('closes a fifth of a second after it stops turning, not while it turns', async () => {
+            await create();
+            await openByPress();
+
+            // A flick keeps scrolling on its own for a while; each frame counts as turning
+            for (let i = 0; i < 4; i++) {
+                viewport().dispatchEvent(new Event('scroll'));
+                await wait(120);
+            }
+            fixture.detectChanges();
+            expect(isOpen()).toBe(true);
+
+            await wait(200);
+            fixture.detectChanges();
+            expect(isOpen()).toBe(false);
         });
 
         it('stays open for the click that opened it, and closes on a number clicked after', async () => {

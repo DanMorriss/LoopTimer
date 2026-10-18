@@ -27,14 +27,17 @@ const DRAG_THRESHOLD = 4;
 /** Digits typed within this many ms of each other build one number, e.g. "4" then "5" is 45. */
 const TYPING_PAUSE = 1000;
 
-/** An open wheel closes once its value has been left alone for this many ms. */
-const CLOSE_AFTER = 1000;
+/** An open wheel that has been turned closes this many ms after it stops. */
+const CLOSE_AFTER_TURN = 200;
+/** One opened but not turned yet waits longer, so a tap can open it and a second tap pick. */
+const CLOSE_AFTER_OPEN = 1000;
 
 /**
  * An iPhone-style wheel picker. Closed, it shows just the selected number; pressing it
  * opens the wheel over the page around that number, so a finger can press and drag in one
  * go. Scroll, swipe or drag the list and the number that settles in the middle is selected;
- * clicking a number selects it and closes the wheel, as does a second of no change. For
+ * clicking a number selects it and closes the wheel. It also closes on its own once it's
+ * stopped turning (or after a second, if opened and not turned). For
  * keyboard and screen reader users it's a spin button (Up/Down, Page Up/Down, Home/End),
  * and typing a number jumps to it.
  *
@@ -76,6 +79,8 @@ export class WheelPickerComponent implements FormValueControl<number> {
     private pressed = false;
     /** The current press opened the wheel, so its click mustn't close it straight away. */
     private openedByPress = false;
+    /** It has turned since it opened, so it can close sooner. */
+    private turned = false;
 
     /** The first scroll to the value jumps there; after that the wheel glides. */
     private shown = false;
@@ -134,6 +139,9 @@ export class WheelPickerComponent implements FormValueControl<number> {
 
     protected onScroll() {
         // Still turning, so not idle yet
+        if (this.open()) {
+            this.turned = true;
+        }
         this.scheduleClose();
         // Browsers without the scrollend event: settle once scrolling has paused
         if (!('onscrollend' in window)) {
@@ -270,6 +278,9 @@ export class WheelPickerComponent implements FormValueControl<number> {
     }
 
     private openWheel() {
+        if (!this.open()) {
+            this.turned = false;
+        }
         this.open.set(true);
         this.scheduleClose();
     }
@@ -283,7 +294,8 @@ export class WheelPickerComponent implements FormValueControl<number> {
     private scheduleClose() {
         clearTimeout(this.closeTimer);
         if (this.open() && !this.pressed) {
-            this.closeTimer = setTimeout(() => this.close(), CLOSE_AFTER);
+            const delay = this.turned ? CLOSE_AFTER_TURN : CLOSE_AFTER_OPEN;
+            this.closeTimer = setTimeout(() => this.close(), delay);
         }
     }
 
