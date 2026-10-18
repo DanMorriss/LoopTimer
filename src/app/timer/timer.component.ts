@@ -7,6 +7,9 @@ import { TimerStore } from '../shared/state/timer-store.service';
 import { alarmEvents } from './alarm-schedule';
 import { timerStateAt } from './timer-state';
 
+// Space on one of these already does something, e.g. presses the focused button
+const SPACE_HANDLED_BY = 'button, a, input, textarea, select, [contenteditable], [role="button"]';
+
 // How late a vibration can be and still be worth doing, e.g. not after a background tab wakes up
 const VIBRATE_LATE_LIMIT_MS = 1000;
 
@@ -18,6 +21,7 @@ const VIBRATE_LATE_LIMIT_MS = 1000;
     host: {
         // Browsers pause or slow timers in background tabs, so catch up as soon as the page is visible again
         '(document:visibilitychange)': 'syncClock()',
+        '(document:keydown.space)': 'onSpace($event)',
     },
 })
 export class TimerComponent implements OnDestroy {
@@ -162,6 +166,22 @@ export class TimerComponent implements OnDestroy {
             this.timerStore.pause();
         }
         this.syncClock();
+    }
+
+    /** Space pauses and resumes, like most media players. */
+    onSpace(event: Event) {
+        const target = event.target as Element | null;
+        if (
+            !this.timer() ||
+            this.isComplete() ||
+            (event as KeyboardEvent).repeat ||
+            target?.closest?.(SPACE_HANDLED_BY)
+        ) {
+            return;
+        }
+        // Otherwise Space would also scroll the page
+        event.preventDefault();
+        this.togglePause();
     }
 
     async stop() {

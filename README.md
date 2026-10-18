@@ -13,11 +13,11 @@ Built with Angular 22 (standalone components, signals and Signal Forms), Angular
 - **Create a timer** with a work time (up to 99:59), an optional rest time, and 1–30 rounds, picked on iPhone-style wheels: swipe, scroll or drag a wheel, click a number, or type one, and the one in the middle is selected. Give it a title, or leave it untitled.
 - **Run it.** A ring fills as each phase goes by. Work fills clockwise in pink, rest fills anticlockwise in blue, and the face flashes in the phase colour. The page shows the rounds left and "Last one!" for the final round. There's no rest after the last round.
 - **Hear each phase start.** Two short high beeps for work, a long low tone for rest, and three rising notes at the finish, with matching vibrations on phones that support them (not iPhones). The beeps are scheduled ahead on the audio clock, so they stay on time in a background tab. Browsers only allow sound after a tap, so after a refresh the timer page shows a "Tap to turn on sound" button.
-- **Pause, resume or stop** while it runs. Pausing freezes the countdown and the ring where they are; stopping ends the workout and goes back to the library.
+- **Pause, resume or stop** while it runs, or press Space to pause and resume. Pausing freezes the countdown and the ring where they are; stopping ends the workout and goes back to the library.
 - **Keep accurate time.** The countdown is worked out from the clock, not by counting ticks. It stays correct if the tab is in the background or the phone is locked, and catches up as soon as you come back. Refreshing the page carries on where you were, paused or not.
 - **Save and reuse timers** in the library: start, edit or delete any of them. Timers are saved in the browser (`localStorage`), so they stay on that device.
 - **Accessible:**
-  - Everything works with a keyboard.
+  - Everything works with a keyboard, and Space pauses and resumes the timer.
   - Screen readers hear "Work, round 1 of 3", "Rest" and "Finished" as each phase starts, and "Paused" when paused.
   - Looping animations stop when the system's reduced-motion setting is on.
   - Every page passes automated axe checks (WCAG 2.1 AA).
