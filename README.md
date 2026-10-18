@@ -10,7 +10,7 @@ Built with Angular 22 (standalone components, signals and Signal Forms), Angular
 
 ## What it does today
 
-- **Create a timer** with a work time (up to 99:59), an optional rest time, and 1–30 rounds. Give it a title, or leave it untitled.
+- **Create a timer** with a work time (up to 99:59), an optional rest time, and 1–30 rounds, picked on iPhone-style wheels: swipe, scroll or drag a wheel, or click a number, and the one in the middle is selected. Give it a title, or leave it untitled.
 - **Run it.** A ring fills as each phase goes by. Work fills clockwise in pink, rest fills anticlockwise in blue, and the face flashes in the phase colour. The page shows the rounds left and "Last one!" for the final round. There's no rest after the last round.
 - **Keep accurate time.** The countdown is worked out from the clock, not by counting ticks. It stays correct if the tab is in the background or the phone is locked, and catches up as soon as you come back. Refreshing the page carries on where you were.
 - **Save and reuse timers** in the library: start, edit or delete any of them. Timers are saved in the browser (`localStorage`), so they stay on that device.
@@ -64,6 +64,7 @@ src/app/
   shared/
     state/timer-store.service.ts   Saved timers and the active timer
     components/infinity-button/    Animated button used on the empty library
+    components/wheel-picker/       iPhone-style number wheel (a Signal Forms control)
     reduced-motion.ts              Follows the system reduced-motion setting
   a11y.spec.ts       axe checks across the whole app
 ```

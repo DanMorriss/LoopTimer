@@ -2,23 +2,7 @@
 
 Open work, highest priority first. Tick items off (or delete them) as they're done. The README's Roadmap is the public summary of the features below.
 
-## 1. Design and usability
-
-- [ ] **iPhone-style wheel pickers on the setup page.** Replace the five `<select>`s (work and rest minutes and seconds, rounds). Swipe or scroll a list, and whichever number snaps to the middle is selected, with no tap needed.
-  - Options:
-    1. A small custom `WheelPicker` component (recommended):
-       - CSS `scroll-snap` gives native momentum on touch, trackpad and mouse wheel.
-       - Selection updates when scrolling settles (`scrollend`, with a fallback).
-       - It plugs into Signal Forms as a custom control, so the form values go back to plain numbers and the `<select>` workarounds go away.
-       - Keyboard and screen readers use the ARIA spinbutton pattern (Up/Down, Page Up/Down, Home/End).
-    2. Ionic's `ion-picker`: heavy, and brings Ionic's styling and runtime.
-    3. Keep `<select>`: on iPhone it already opens a wheel, but only after a tap, and not on desktop or Android.
-  - Decisions needed:
-    - A flat list with a highlighted middle band, or the curved 3D look.
-    - How many rows show: 3 or 5.
-    - Whether clicking or dragging with a mouse should also work on desktop.
-
-## 2. Features
+## 1. Features
 
 From the original plan (see the README's Roadmap and user stories):
 

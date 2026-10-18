@@ -51,9 +51,11 @@ describe('TimerSetupComponent', () => {
 
     /** What the form currently shows, read from the page like a user would see it. */
     function shown() {
-        const value = (id: string) => el<HTMLInputElement | HTMLSelectElement>(`#${id}`).value;
+        // A wheel picker announces its value through its spin button
+        const value = (id: string) =>
+            el(`#${id} [role="spinbutton"]`).getAttribute('aria-valuenow');
         return {
-            title: value('title'),
+            title: el<HTMLInputElement>('#title').value,
             timerMinutes: value('timerMinutes'),
             timerSeconds: value('timerSeconds'),
             restMinutes: value('restMinutes'),
@@ -62,13 +64,9 @@ describe('TimerSetupComponent', () => {
         };
     }
 
-    /** Pick an option in a <select>, the way a user would. */
+    /** Pick a number in a wheel picker by clicking it, the way a user would. */
     function choose(id: string, value: string) {
-        const select = el<HTMLSelectElement>(`#${id}`);
-        select.value = value;
-        // Browsers fire both when an option is picked
-        select.dispatchEvent(new Event('input'));
-        select.dispatchEvent(new Event('change'));
+        el(`#${id} [data-value="${value}"]`).click();
         fixture.detectChanges();
     }
 

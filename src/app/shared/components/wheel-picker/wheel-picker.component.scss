@@ -1,0 +1,102 @@
+// Five rows show; the middle one is selected.
+$row-height: 2.5rem;
+$visible-rows: 5;
+
+:host {
+    position: relative;
+    display: block;
+    // The border sits outside the five rows, so the middle row lines up with the band exactly
+    box-sizing: content-box;
+    height: $row-height * $visible-rows;
+    border: 1px solid rgba(148, 163, 184, 0.45);
+    border-radius: 0.75rem;
+    background: rgba(15, 23, 42, 0.75);
+    color: #e6edf6;
+    user-select: none;
+
+    // The band marking the selected row
+    &::after {
+        content: '';
+        position: absolute;
+        inset-inline: 0.4rem;
+        top: $row-height * 2;
+        height: $row-height;
+        border-block: 1px solid rgba(56, 189, 248, 0.6);
+        border-radius: 0.4rem;
+        background: rgba(56, 189, 248, 0.08);
+        pointer-events: none;
+    }
+}
+
+.wheel-picker__viewport {
+    height: 100%;
+    overflow-y: scroll;
+    overscroll-behavior: contain;
+    scroll-snap-type: y mandatory;
+    // Room above the first number and below the last, so every number can reach the middle
+    padding-block: $row-height * 2;
+    border-radius: inherit;
+    cursor: grab;
+    scrollbar-width: none;
+    // Fade the numbers out towards the top and bottom, like a drum turning away
+    mask-image: linear-gradient(transparent, #000 30%, #000 70%, transparent);
+    perspective: 26rem;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+
+    &:focus-visible {
+        outline: 2px solid #38bdf8;
+        outline-offset: 2px;
+    }
+}
+
+// While dragging with a mouse, follow the pointer exactly; it snaps when released
+.wheel-picker__viewport--dragging {
+    scroll-snap-type: none;
+    cursor: grabbing;
+}
+
+.wheel-picker__item {
+    height: $row-height;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    scroll-snap-align: center;
+    font-size: 1.15rem;
+    font-variant-numeric: tabular-nums;
+    opacity: 0.45;
+    transition: opacity 0.15s ease;
+    cursor: pointer;
+}
+
+.wheel-picker__item--selected {
+    opacity: 1;
+    color: #fff;
+}
+
+// The curved drum: each number tilts away as it moves from the middle, driven by its
+// position in the scroller, so it's as smooth as the scrolling itself
+@supports (animation-timeline: view()) {
+    .wheel-picker__item {
+        opacity: 1;
+        animation: wheel-picker-drum linear both;
+        animation-timeline: view();
+    }
+
+    @keyframes wheel-picker-drum {
+        from {
+            transform: rotateX(-60deg) scale(0.85);
+            opacity: 0.25;
+        }
+        50% {
+            transform: rotateX(0deg) scale(1);
+            opacity: 1;
+        }
+        to {
+            transform: rotateX(60deg) scale(0.85);
+            opacity: 0.25;
+        }
+    }
+}
