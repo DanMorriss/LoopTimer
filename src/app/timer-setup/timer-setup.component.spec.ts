@@ -60,9 +60,22 @@ describe('TimerSetupComponent', () => {
         return {
             title: el<HTMLInputElement>('#title').value,
             steps: steps().map((step) => {
+                const kind = el('.step__badge', step).textContent!.trim();
+                // A collapsed step shows its name and time in one line, e.g. "Squats 02:15"
+                if (isCollapsed(step)) {
+                    const [minutes, seconds] = el('.step__summary-time', step)
+                        .textContent!.trim()
+                        .split(':')
+                        .map(Number);
+                    return {
+                        kind,
+                        name: el('.step__summary-name', step).textContent!.trim(),
+                        time: `${minutes}:${seconds}`,
+                    };
+                }
                 const [minutes, seconds] = Array.from(step.querySelectorAll('app-wheel-picker'));
                 return {
-                    kind: el('.step__badge', step).textContent!.trim(),
+                    kind,
                     name: el<HTMLInputElement>('input', step).value,
                     time: `${value(minutes)}:${value(seconds)}`,
                 };
@@ -70,6 +83,11 @@ describe('TimerSetupComponent', () => {
             repeats: value(el('#repeats')),
         };
     }
+
+    const toggle = (step: number) => el<HTMLButtonElement>('.step__toggle', steps()[step]);
+    const isCollapsed = (step: HTMLElement) =>
+        el('.step__toggle', step).getAttribute('aria-expanded') === 'false';
+    const collapsed = () => steps().map(isCollapsed);
 
     /** Pick a number in a step's wheel by clicking it, the way a user would. */
     function chooseTime(step: number, wheel: 'minutes' | 'seconds', value: string) {
@@ -242,6 +260,7 @@ describe('TimerSetupComponent', () => {
             await press('Add work');
             typeName(2, 'Plank');
             chooseTime(2, 'seconds', '45');
+            await press('Step 2, rest, 00:00');
             chooseTime(1, 'seconds', '15');
 
             await submit();
@@ -303,12 +322,22 @@ describe('TimerSetupComponent', () => {
         it('deletes a step, focusing the step that takes its place', async () => {
             await press('Add work');
             typeName(2, 'Plank');
+            await press('Step 2, rest, 00:00');
 
             await press('Delete Step 2, rest');
 
             expect(shown().steps.map((s) => s.name || s.kind)).toEqual(['Work', 'Plank']);
             expect(document.activeElement).toBe(button('Delete Step 2, Plank'));
             expect(said()).toBe('Deleted step 2');
+        });
+
+        it('focuses the open button of a collapsed step that takes a deleted one’s place', async () => {
+            await press('Collapse all');
+            await press('Step 1, work, 00:00');
+
+            await press('Delete Step 1, work');
+
+            expect(document.activeElement).toBe(button('Step 1, rest, 00:00'));
         });
 
         it('always keeps at least one step', async () => {
@@ -329,6 +358,83 @@ describe('TimerSetupComponent', () => {
             expect(fixture.nativeElement.textContent).toContain(
                 `That's the most steps a timer can have (${MAX_STEPS})`
             );
+        });
+
+        describe('collapsing', () => {
+            it('opens both steps of a new timer, as they need filling in', () => {
+                expect(collapsed()).toEqual([false, false]);
+                expect(button('Collapse all')).toBeDefined();
+            });
+
+            it('opens only the step just added, closing the others', async () => {
+                await press('Add work');
+
+                expect(collapsed()).toEqual([true, true, false]);
+            });
+
+            it('shows a collapsed step in one line: its name and time', async () => {
+                typeName(0, 'Squats');
+                chooseTime(0, 'minutes', '2');
+                chooseTime(0, 'seconds', '15');
+
+                await press('Step 1, Squats, 02:15');
+
+                expect(steps()[0].querySelector('app-wheel-picker')).toBeNull();
+                expect(el('.step__summary', steps()[0]).textContent).toContain('Squats');
+                expect(el('.step__summary', steps()[0]).textContent).toContain('02:15');
+                expect(shown().steps[0]).toEqual({ kind: 'Work', name: 'Squats', time: '2:15' });
+            });
+
+            it('opens and closes a step with its button, which says whether it is open', async () => {
+                const body = () =>
+                    document.getElementById(toggle(0).getAttribute('aria-controls')!);
+                expect(toggle(0).getAttribute('aria-expanded')).toBe('true');
+                expect(body()?.querySelector('app-wheel-picker')).not.toBeNull();
+
+                toggle(0).focus();
+                await press('Step 1, work, 00:00');
+
+                expect(toggle(0).getAttribute('aria-expanded')).toBe('false');
+                // Nothing to point at while closed
+                expect(toggle(0).hasAttribute('aria-controls')).toBe(false);
+                expect(document.activeElement).toBe(toggle(0));
+
+                await press('Step 1, work, 00:00');
+
+                expect(toggle(0).getAttribute('aria-expanded')).toBe('true');
+                expect(document.activeElement).toBe(toggle(0));
+            });
+
+            it('collapses and expands every step at once', async () => {
+                await press('Add work');
+
+                await press('Collapse all');
+                expect(collapsed()).toEqual([true, true, true]);
+
+                await press('Expand all');
+                expect(collapsed()).toEqual([false, false, false]);
+            });
+
+            it('keeps a step open or closed as it moves', async () => {
+                await press('Step 2, rest, 00:00');
+
+                await press('Move Step 1, work down');
+
+                expect(shown().steps.map((s) => s.kind)).toEqual(['Rest', 'Work']);
+                expect(collapsed()).toEqual([true, false]);
+            });
+
+            it('keeps a collapsed step to one line: its drag handle stays, its buttons wait until it is opened', async () => {
+                await press('Collapse all');
+
+                expect(el('.step__handle', steps()[0])).not.toBeNull();
+                expect(el('.step__actions', steps()[0])).toBeNull();
+
+                await press('Step 1, work, 00:00');
+
+                expect(button('Move Step 1, work down').disabled).toBe(false);
+                expect(button('Delete Step 1, work').disabled).toBe(false);
+            });
         });
 
         it('names each wheel for screen readers by its step, e.g. "Step 2, rest" and "Seconds"', () => {
@@ -426,6 +532,15 @@ describe('TimerSetupComponent', () => {
                 repeats: '4',
             });
             expect(submitButton().textContent).toContain('Save & Start Timer');
+        });
+
+        it('opens with every step collapsed, so the whole workout is in view', async () => {
+            await setup({ editId: '1' });
+            store.addTimer(savedTimer);
+            await create();
+
+            expect(collapsed()).toEqual([true, true]);
+            expect(button('Expand all')).toBeDefined();
         });
 
         it('updates the existing timer instead of adding a new one', async () => {

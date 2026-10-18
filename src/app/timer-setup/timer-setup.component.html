@@ -12,6 +12,18 @@
             <p class="setup-hint">
                 Each round runs these in order. Steps left at 00:00 are skipped.
             </p>
+            <div class="steps-toolbar">
+                <button
+                    type="button"
+                    class="steps-toggle-all"
+                    (click)="setAllExpanded(!anyExpanded())"
+                >
+                    <mat-icon aria-hidden="true">{{
+                        anyExpanded() ? 'unfold_less' : 'unfold_more'
+                    }}</mat-icon>
+                    {{ anyExpanded() ? 'Collapse all' : 'Expand all' }}
+                </button>
+            </div>
 
             <!-- Says what happened after a step is added, moved or deleted -->
             <div class="sr-only" aria-live="polite">{{ stepAnnouncement() }}</div>
@@ -29,7 +41,14 @@
                 @for (step of timerForm.steps; track $index; let i = $index) {
                     @let key = step().value().key;
                     @let kind = step().value().kind;
-                    <li class="step" [class.step--rest]="kind === 'rest'" cdkDrag>
+                    @let time = timeText(step().value());
+                    @let expanded = isExpanded(key);
+                    <li
+                        class="step"
+                        [class.step--rest]="kind === 'rest'"
+                        [class.step--collapsed]="!expanded"
+                        cdkDrag
+                    >
                         <!-- What follows the pointer: a compact card, as the wheels don't copy well -->
                         <div
                             class="step-preview"
@@ -38,11 +57,7 @@
                         >
                             <span class="step__badge">{{ kindName(kind) }}</span>
                             <span>{{ step().value().name.trim() }}</span>
-                            <span class="step-preview__time">
-                                {{ step().value().minutes.toString().padStart(2, '0') }}:{{
-                                    step().value().seconds.toString().padStart(2, '0')
-                                }}
-                            </span>
+                            <span class="step-preview__time">{{ time }}</span>
                         </div>
                         <!-- Where it will land -->
                         <div class="step-placeholder" *cdkDragPlaceholder></div>
@@ -62,88 +77,127 @@
                                 <span aria-hidden="true">{{ i + 1 }}</span>
                                 <span class="sr-only">{{ stepTitle(i) }}</span>
                             </span>
-                            <div class="step__actions">
-                                <button
-                                    type="button"
-                                    class="step__action"
-                                    [id]="'step-' + key + '-up'"
-                                    [attr.aria-label]="'Move ' + stepTitle(i) + ' up'"
-                                    [disabled]="i === 0"
-                                    (click)="moveStep(i, -1)"
+                            <!-- Opens and closes the step; closed, it shows the step in one line -->
+                            <button
+                                type="button"
+                                class="step__toggle"
+                                [id]="'step-' + key + '-toggle'"
+                                [attr.aria-label]="stepTitle(i) + ', ' + time"
+                                [attr.aria-expanded]="expanded"
+                                [attr.aria-controls]="expanded ? 'step-' + key + '-body' : null"
+                                (click)="toggleStep(key)"
+                            >
+                                @if (!expanded) {
+                                    <span class="step__summary">
+                                        <span class="step__summary-name">{{
+                                            step().value().name.trim()
+                                        }}</span>
+                                        <span class="step__summary-time">{{ time }}</span>
+                                    </span>
+                                }
+                                <mat-icon class="step__chevron" aria-hidden="true"
+                                    >expand_more</mat-icon
                                 >
-                                    <mat-icon aria-hidden="true">arrow_upward</mat-icon>
-                                </button>
-                                <button
-                                    type="button"
-                                    class="step__action"
-                                    [id]="'step-' + key + '-down'"
-                                    [attr.aria-label]="'Move ' + stepTitle(i) + ' down'"
-                                    [disabled]="i === stepCount() - 1"
-                                    (click)="moveStep(i, 1)"
-                                >
-                                    <mat-icon aria-hidden="true">arrow_downward</mat-icon>
-                                </button>
-                                <button
-                                    type="button"
-                                    class="step__action step__action--delete"
-                                    [id]="'step-' + key + '-delete'"
-                                    [attr.aria-label]="'Delete ' + stepTitle(i)"
-                                    [disabled]="stepCount() === 1"
-                                    (click)="deleteStep(i)"
-                                >
-                                    <mat-icon aria-hidden="true">close</mat-icon>
-                                </button>
-                            </div>
+                            </button>
+                            <!-- Only on an open step, so a closed one fits on one line on a phone -->
+                            @if (expanded) {
+                                <div class="step__actions">
+                                    <button
+                                        type="button"
+                                        class="step__action"
+                                        [id]="'step-' + key + '-up'"
+                                        [attr.aria-label]="'Move ' + stepTitle(i) + ' up'"
+                                        [disabled]="i === 0"
+                                        (click)="moveStep(i, -1)"
+                                    >
+                                        <mat-icon aria-hidden="true">arrow_upward</mat-icon>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="step__action"
+                                        [id]="'step-' + key + '-down'"
+                                        [attr.aria-label]="'Move ' + stepTitle(i) + ' down'"
+                                        [disabled]="i === stepCount() - 1"
+                                        (click)="moveStep(i, 1)"
+                                    >
+                                        <mat-icon aria-hidden="true">arrow_downward</mat-icon>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="step__action step__action--delete"
+                                        [id]="'step-' + key + '-delete'"
+                                        [attr.aria-label]="'Delete ' + stepTitle(i)"
+                                        [disabled]="stepCount() === 1"
+                                        (click)="deleteStep(i)"
+                                    >
+                                        <mat-icon aria-hidden="true">close</mat-icon>
+                                    </button>
+                                </div>
+                            }
                         </div>
 
-                        <label class="picker-field" [for]="'step-' + key + '-name'">
-                            <span class="picker-field__label">Name (optional)</span>
-                            <input
-                                class="picker-field__input"
-                                [id]="'step-' + key + '-name'"
-                                [formField]="step.name"
-                                [placeholder]="
-                                    kind === 'work' ? 'e.g. Squats' : 'e.g. Catch your breath'
-                                "
-                                [attr.aria-describedby]="'step-' + key + '-title'"
-                            />
-                        </label>
+                        @if (expanded) {
+                            <div class="step__body" [id]="'step-' + key + '-body'">
+                                <label class="picker-field" [for]="'step-' + key + '-name'">
+                                    <span class="picker-field__label">Name (optional)</span>
+                                    <input
+                                        class="picker-field__input"
+                                        [id]="'step-' + key + '-name'"
+                                        [formField]="step.name"
+                                        [placeholder]="
+                                            kind === 'work'
+                                                ? 'e.g. Squats'
+                                                : 'e.g. Catch your breath'
+                                        "
+                                        [attr.aria-describedby]="'step-' + key + '-title'"
+                                    />
+                                </label>
 
-                        <div class="picker-row">
-                            <div class="picker-field">
-                                <span
-                                    class="picker-field__label"
-                                    [id]="'step-' + key + '-minutes-label'"
-                                >
-                                    Minutes
-                                </span>
-                                <app-wheel-picker
-                                    [id]="'step-' + key + '-minutes'"
-                                    [formField]="step.minutes"
-                                    [options]="minuteOptions"
-                                    [labelledBy]="
-                                        'step-' + key + '-title step-' + key + '-minutes-label'
-                                    "
-                                />
-                            </div>
+                                <div class="picker-row">
+                                    <div class="picker-field">
+                                        <span
+                                            class="picker-field__label"
+                                            [id]="'step-' + key + '-minutes-label'"
+                                        >
+                                            Minutes
+                                        </span>
+                                        <app-wheel-picker
+                                            [id]="'step-' + key + '-minutes'"
+                                            [formField]="step.minutes"
+                                            [options]="minuteOptions"
+                                            [labelledBy]="
+                                                'step-' +
+                                                key +
+                                                '-title step-' +
+                                                key +
+                                                '-minutes-label'
+                                            "
+                                        />
+                                    </div>
 
-                            <div class="picker-field">
-                                <span
-                                    class="picker-field__label"
-                                    [id]="'step-' + key + '-seconds-label'"
-                                >
-                                    Seconds
-                                </span>
-                                <app-wheel-picker
-                                    [id]="'step-' + key + '-seconds'"
-                                    [formField]="step.seconds"
-                                    [options]="secondOptions"
-                                    [labelledBy]="
-                                        'step-' + key + '-title step-' + key + '-seconds-label'
-                                    "
-                                />
+                                    <div class="picker-field">
+                                        <span
+                                            class="picker-field__label"
+                                            [id]="'step-' + key + '-seconds-label'"
+                                        >
+                                            Seconds
+                                        </span>
+                                        <app-wheel-picker
+                                            [id]="'step-' + key + '-seconds'"
+                                            [formField]="step.seconds"
+                                            [options]="secondOptions"
+                                            [labelledBy]="
+                                                'step-' +
+                                                key +
+                                                '-title step-' +
+                                                key +
+                                                '-seconds-label'
+                                            "
+                                        />
+                                    </div>
+                                </div>
                             </div>
-                        </div>
+                        }
                     </li>
                 }
             </ol>
