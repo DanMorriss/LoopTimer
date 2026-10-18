@@ -66,6 +66,16 @@ describe('InfinityButtonComponent', () => {
         expect(component.disabled()).toBe(true);
     });
 
+    it('tells screen readers about its keyboard shortcut, when it has one', () => {
+        const button = () => fixture.nativeElement.querySelector('button') as HTMLButtonElement;
+        expect(button().hasAttribute('aria-keyshortcuts')).toBe(false);
+
+        fixture.componentRef.setInput('keyShortcuts', 'Space');
+        fixture.detectChanges();
+
+        expect(button().getAttribute('aria-keyshortcuts')).toBe('Space');
+    });
+
     it('should render text correctly', () => {
         fixture.componentRef.setInput('text', 'Fire');
         fixture.detectChanges();

@@ -1,9 +1,17 @@
-import { Component, computed, inject, OnDestroy, signal } from '@angular/core';
+import { Component, computed, effect, inject, OnDestroy, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import { AlarmService } from '../shared/alarms/alarm.service';
 import { InfinityButtonComponent } from '../shared/components/infinity-button/infinity-button.component';
 import { formatTime } from '../shared/format-time';
 import { TimerStore } from '../shared/state/timer-store.service';
+import { alarmEvents } from './alarm-schedule';
 import { timerStateAt } from './timer-state';
+
+// Space on one of these already does something, e.g. presses the focused button
+const SPACE_HANDLED_BY = 'button, a, input, textarea, select, [contenteditable], [role="button"]';
+
+// How late a vibration can be and still be worth doing, e.g. not after a background tab wakes up
+const VIBRATE_LATE_LIMIT_MS = 1000;
 
 @Component({
     selector: 'app-timer',
@@ -13,6 +21,7 @@ import { timerStateAt } from './timer-state';
     host: {
         // Browsers pause or slow timers in background tabs, so catch up as soon as the page is visible again
         '(document:visibilitychange)': 'syncClock()',
+        '(document:keydown.space)': 'onSpace($event)',
     },
 })
 export class TimerComponent implements OnDestroy {
@@ -33,6 +42,44 @@ export class TimerComponent implements OnDestroy {
         const at = this.timerStore.activeTimerPausedAt() ?? this.now();
         return timer && startedAt !== null ? timerStateAt(timer, at - startedAt) : null;
     });
+
+    protected readonly alarms = inject(AlarmService);
+    /** Sound is possible but the browser is waiting for a tap before it will play any. */
+    soundLocked = computed(() => this.alarms.supported && !this.alarms.unlocked());
+
+    // Changes when the timer starts, pauses or resumes, but not every tick
+    private readonly alarmEvents = computed(() => {
+        const timer = this.timer();
+        const startedAt = this.timerStore.activeTimerStartedAt();
+        return timer && startedAt !== null && !this.isPaused() ? alarmEvents(timer, startedAt) : [];
+    });
+    private lastAlarmCheck = Date.now() - VIBRATE_LATE_LIMIT_MS;
+
+    constructor() {
+        // Hand the whole workout's alarms to the audio clock up front, and again whenever
+        // the timer pauses, resumes, or sound is unlocked
+        effect(() => {
+            const events = this.alarmEvents();
+            if (this.alarms.unlocked()) {
+                this.alarms.schedule(events);
+            }
+        });
+
+        // Vibrate as each alarm comes due
+        effect(() => {
+            const now = this.now();
+            const due = this.alarmEvents().filter(
+                (event) =>
+                    event.at > this.lastAlarmCheck &&
+                    event.at <= now &&
+                    event.at > now - VIBRATE_LATE_LIMIT_MS
+            );
+            this.lastAlarmCheck = now;
+            if (due.length > 0) {
+                this.alarms.vibrate(due[due.length - 1].kind);
+            }
+        });
+    }
 
     isTimerActive = computed(() => this.state()?.phase === 'work');
     isRestActive = computed(() => this.state()?.phase === 'rest');
@@ -121,6 +168,22 @@ export class TimerComponent implements OnDestroy {
         this.syncClock();
     }
 
+    /** Space pauses and resumes, like most media players. */
+    onSpace(event: Event) {
+        const target = event.target as Element | null;
+        if (
+            !this.timer() ||
+            this.isComplete() ||
+            (event as KeyboardEvent).repeat ||
+            target?.closest?.(SPACE_HANDLED_BY)
+        ) {
+            return;
+        }
+        // Otherwise Space would also scroll the page
+        event.preventDefault();
+        this.togglePause();
+    }
+
     async stop() {
         this.timerStore.stop();
         await this.router.navigate(['/library']);
@@ -132,5 +195,6 @@ export class TimerComponent implements OnDestroy {
 
     ngOnDestroy() {
         clearInterval(this.clockId);
+        this.alarms.cancel();
     }
 }

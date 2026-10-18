@@ -177,7 +177,8 @@ $track-color: #334155; // slate-700: dark, so both phase colours stand out (3:1 
     }
 }
 
-.no-timer__link {
+.no-timer__link,
+.sound-prompt {
     padding: 0.75rem 1.5rem;
     border: 1px solid rgba(148, 163, 184, 0.5);
     border-radius: 0.75rem;
@@ -215,4 +216,11 @@ $track-color: #334155; // slate-700: dark, so both phase colours stand out (3:1 
     justify-content: center;
     gap: 1rem;
     margin-top: 1.5rem;
+}
+
+.sound-prompt {
+    margin-top: 1rem;
+    background: transparent;
+    font: inherit;
+    cursor: pointer;
 }

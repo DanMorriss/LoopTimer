@@ -1,4 +1,10 @@
-<button [type]="type()" [class]="buttonClasses()" [disabled]="disabled()" (click)="onClick()">
+<button
+    [type]="type()"
+    [class]="buttonClasses()"
+    [disabled]="disabled()"
+    [attr.aria-keyshortcuts]="keyShortcuts()"
+    (click)="onClick()"
+>
     <!-- Animated traveling dot -->
     <svg class="infinity-button__border-svg" viewBox="0 0 100 40" preserveAspectRatio="none">
         <defs>

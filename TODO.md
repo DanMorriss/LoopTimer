@@ -6,8 +6,9 @@ Open work, highest priority first. Tick items off (or delete them) as they're do
 
 From the original plan (see the README's Roadmap and user stories):
 
-- [ ] **Alarms between phases:** a sound, plus vibration where supported, when work or rest starts and when the workout ends, with a different sound for each interval (user story 3). This needs a user gesture to unlock audio. Background tabs and locked phones limit what can play (user story 4).
+- [ ] **Alarm sound files:** swap the beeps generated in code (`AlarmService`) for proper sounds. Waiting on Dan to supply the files.
+- [ ] **Alarms on a locked phone or another page:** iPhones suspend web audio when locked, and the alarms only play while the timer page is open. Notifications from a service worker may be the way round both (user story 4).
 - [ ] **Run until stopped:** an option to repeat with no fixed number of rounds (user story 2). Stopping it uses the Stop button on the timer page.
 - [ ] **Multiple intervals per timer**, e.g. 30 s then 45 s then rest. This changes the `Timer` model and `timerStateAt()`, and needs a migration for saved timers.
-- [ ] **Settings:** alarm order and sounds, light/dark theme, vibration on or off.
+- [ ] **Settings:** alarm order and sounds, sound on or off, light/dark theme, vibration on or off.
 - [ ] **History:** a log of completed workouts (start time, rounds, total duration), with delete.
