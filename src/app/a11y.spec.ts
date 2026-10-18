@@ -90,6 +90,13 @@ for (const theme of ['dark', 'light'] as const) {
             await expectNoViolations();
         });
 
+        it('with the menu open', async () => {
+            await open('/library');
+            click('button[aria-label="Menu"]');
+            await settle(300); // past the menu's fade-in, which axe would see as low contrast
+            await expectNoViolations();
+        });
+
         describe('setup', () => {
             it('new timer (with the "must have some time" error)', async () => {
                 await open('/setup');
