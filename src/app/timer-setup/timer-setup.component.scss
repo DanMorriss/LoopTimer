@@ -75,10 +75,12 @@
     }
 }
 
+// On the narrowest phones the buttons drop onto a second line rather than spill out
 .step__header {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 0.6rem;
+    gap: 0.4rem;
 }
 
 .step__badge {
@@ -98,7 +100,7 @@
 
 .step__actions {
     display: flex;
-    gap: 0.35rem;
+    gap: 0.25rem;
     margin-left: auto;
 }
 
@@ -177,15 +179,25 @@
 
 // Drag and drop (Angular CDK)
 
+// Drawn like the step's other buttons, so it reads as something to grab, but squarer
+// and a different shape from the round ones, as it's dragged rather than pressed
 .step__handle {
     display: inline-grid;
+    flex-shrink: 0;
     place-items: center;
-    width: 32px;
+    width: 44px;
     height: 44px;
-    margin-left: -0.35rem;
-    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: 0.6rem;
+    background: var(--control);
+    color: var(--text);
     cursor: grab;
     touch-action: none;
+
+    &:hover {
+        border-color: var(--border-strong);
+        background: var(--control-hover);
+    }
 
     .cdk-drop-list-dragging & {
         cursor: grabbing;
