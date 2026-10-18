@@ -74,8 +74,11 @@
     }
 }
 
-// On the narrowest phones the buttons drop onto a second line rather than spill out
+// The open/close chevron is always the rightmost thing in the header. Where everything fits
+// on one line the move and delete buttons sit before it; where it doesn't, they drop onto a
+// line of their own underneath, rather than push the chevron into the middle.
 .step__header {
+    container-type: inline-size;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -142,6 +145,7 @@
 // Fills the space between the step number and its buttons, so it's an easy target
 .step__toggle {
     display: flex;
+    order: 1;
     flex: 1 1 44px;
     align-items: center;
     gap: 0.4rem;
@@ -239,10 +243,25 @@
     }
 }
 
+// On a line of their own unless the header is wide enough (see .step__header)
 .step__actions {
     display: flex;
+    order: 2;
+    flex-basis: 100%;
+    justify-content: flex-end;
     gap: 0.25rem;
-    margin-left: auto;
+}
+
+// Wide enough for one line: buttons first, chevron last. (After the rules above, so it wins.)
+@container (min-width: 21rem) {
+    .step__toggle {
+        order: 2;
+    }
+
+    .step__actions {
+        order: 1;
+        flex-basis: auto;
+    }
 }
 
 // 44px targets, so they're easy to hit on a phone
