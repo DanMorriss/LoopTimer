@@ -847,6 +847,69 @@ describe('TimerComponent', () => {
             fixture.destroy();
         });
 
+        describe('when the page is left without Stop', () => {
+            it('logs the run as stopped on leaving for another page', () => {
+                start(makeTimer({ timerSeconds: 3, restSeconds: 2, repeats: 5 }));
+                advance(6000); // round 2 has begun
+
+                fixture.destroy();
+
+                expect(entries()).toEqual([
+                    expect.objectContaining({
+                        activeSeconds: 6,
+                        roundsCompleted: 1,
+                        totalRounds: 5,
+                        outcome: 'stopped',
+                    }),
+                ]);
+            });
+
+            it('logs it on closing the tab or refreshing, which leave the page as it is', () => {
+                start(makeTimer({ timerSeconds: 3, restSeconds: 2, repeats: 5 }));
+                advance(6000);
+
+                window.dispatchEvent(new Event('pagehide'));
+
+                expect(entries()).toEqual([expect.objectContaining({ outcome: 'stopped' })]);
+                fixture.destroy();
+            });
+
+            it('updates that entry, rather than adding another, if the run is picked up and finished', () => {
+                start(makeTimer({ timerSeconds: 3, restSeconds: 2, repeats: 2 }));
+                advance(4000);
+                fixture.destroy();
+                expect(entries()).toEqual([expect.objectContaining({ outcome: 'stopped' })]);
+
+                // Back on the timer page, which carries on from the clock
+                fixture = TestBed.createComponent(TimerComponent);
+                fixture.detectChanges();
+                advance(4000);
+
+                expect(entries()).toEqual([
+                    expect.objectContaining({ outcome: 'finished', roundsCompleted: 2 }),
+                ]);
+                fixture.destroy();
+            });
+
+            it('keeps a finished run finished when its screen is left', () => {
+                start(makeTimer({ timerSeconds: 1, repeats: 1 }));
+                advance(1000);
+
+                fixture.destroy();
+
+                expect(entries()).toEqual([expect.objectContaining({ outcome: 'finished' })]);
+            });
+
+            it('leaves no trace if the first step was not done', () => {
+                start(makeTimer({ timerSeconds: 3 }));
+                advance(2000);
+
+                fixture.destroy();
+
+                expect(entries()).toEqual([]);
+            });
+        });
+
         it('dates the finish when it happened, even if the page only notices later', () => {
             const startedAt = Date.now();
             start(makeTimer({ timerSeconds: 3, restSeconds: 2, repeats: 2 }));

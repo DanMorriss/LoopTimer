@@ -19,5 +19,4 @@ Nothing open.
 ## 3. Known issues
 
 - [ ] **The home page is too wide on the smallest phones:** the ∞ logo is 360px wide, so at 320px (iPhone SE 1st gen) the page scrolls sideways. It should scale down with the screen.
-- [ ] **Runs left without Stop aren't in the history:** starting a different timer, or leaving the timer page mid-workout, drops the run. It could be logged as stopped when the next timer starts, or when the timer page closes.
 - [ ] **A beep can repeat on resume:** pausing within a second of a step starting, then resuming, plays that step's beep again (the alarms allow up to a second's lateness, for the first beep after Start).
