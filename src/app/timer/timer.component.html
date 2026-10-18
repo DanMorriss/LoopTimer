@@ -115,7 +115,7 @@
 
             <!-- After a refresh the browser blocks sound until the page is tapped again -->
             @if (soundLocked()) {
-                <button type="button" class="sound-prompt" (click)="alarms.unlock()">
+                <button type="button" class="btn-pill sound-prompt" (click)="alarms.unlock()">
                     Tap to turn on sound
                 </button>
             }
@@ -123,7 +123,7 @@
     } @else {
         <div class="no-timer flex flex-col items-center gap-6 p-8 text-center text-(--text-strong)">
             <p class="text-2xl">No timer selected.</p>
-            <a routerLink="/library" class="no-timer__link">Choose one from the library</a>
+            <a routerLink="/library" class="btn-pill no-timer__link">Choose one from the library</a>
         </div>
     }
 </div>

@@ -23,7 +23,7 @@ export class SettingsComponent {
     protected readonly themes: { value: Theme; label: string }[] = [
         { value: 'dark', label: 'Dark' },
         { value: 'light', label: 'Light' },
-        { value: 'system', label: 'Match system' },
+        { value: 'system', label: 'System' },
     ];
 
     protected readonly previews: AlarmPreview[] = [

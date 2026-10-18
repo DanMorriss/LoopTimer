@@ -11,16 +11,11 @@ Open work, highest priority first. Tick items off (or delete them) as they're do
 
 ## 2. Design
 
-- [ ] **Buttons, toggle switches and theme selection:** give them one consistent look, in both themes. Details to agree with Dan; starting points:
-    - Buttons come in four styles: Material's raised button (setup's Start Timer), the animated `InfinityButtonComponent` (Pause, Stop, Create a timer), outlined pills (settings' Play buttons, the timer page's library link and sound prompt), and the library's Add Timer button.
-    - Two switch designs: `ToggleSwitchComponent` (settings) and `InfinitySwitchComponent` (setup's until stopped).
-    - The theme picker in settings: "Match system" wraps onto two lines on a phone.
-    - The Pause/Resume button changes width with its label, nudging Stop along.
 - [ ] **The ∞ on the rounds wheel** renders small in the app's font.
 - [ ] **Show that Space pauses:** it's announced to screen readers (`aria-keyshortcuts`), but there's no visible hint for keyboard users.
 
 ## 3. Known issues
 
+- [ ] **The home page is too wide on the smallest phones:** the ∞ logo is 360px wide, so at 320px (iPhone SE 1st gen) the page scrolls sideways. It should scale down with the screen.
 - [ ] **Runs left without Stop aren't in the history:** starting a different timer, or leaving the timer page mid-workout, drops the run. It could be logged as stopped when the next timer starts, or when the timer page closes.
-- [ ] **Setup's stylesheet is over budget:** `timer-setup.component.scss` is 5.5 kB, past the 4 kB warning in `angular.json` (the build fails at 8 kB). Most of it is button styles; moving them into shared styles as part of the buttons work above should bring it back under.
 - [ ] **A beep can repeat on resume:** pausing within a second of a step starting, then resuming, plays that step's beep again (the alarms allow up to a second's lateness, for the first beep after Start).

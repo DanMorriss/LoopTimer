@@ -12,7 +12,7 @@
                     <button
                         type="button"
                         id="history-undo"
-                        class="history__button"
+                        class="btn-pill history__button"
                         (click)="undo()"
                     >
                         Undo
@@ -24,7 +24,7 @@
         @if (groups().length === 0) {
             <div class="history__empty">
                 <p>No workouts yet. Finished and stopped workouts show up here.</p>
-                <a routerLink="/library" class="history__button">Go to the library</a>
+                <a routerLink="/library" class="btn-pill history__button">Go to the library</a>
             </div>
         } @else {
             <p class="history__summary">
@@ -50,7 +50,7 @@
                                 </div>
                                 <button
                                     type="button"
-                                    class="entry__delete"
+                                    class="btn-icon btn-icon--danger entry__delete"
                                     [id]="'delete-' + entry.id"
                                     [attr.aria-label]="
                                         'Delete ' +

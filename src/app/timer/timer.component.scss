@@ -178,29 +178,6 @@ $track-color: #334155; // slate-700: dark, so both phase colours stand out (3:1 
     }
 }
 
-.no-timer__link,
-.sound-prompt {
-    padding: 0.75rem 1.5rem;
-    border: 1px solid var(--border);
-    border-radius: 0.75rem;
-    color: var(--focus);
-    text-decoration: none;
-    transition:
-        border-color 0.2s ease,
-        background-color 0.2s ease;
-
-    &:hover,
-    &:focus-visible {
-        border-color: var(--focus);
-        background-color: var(--control);
-    }
-
-    &:focus-visible {
-        outline: 2px solid var(--focus);
-        outline-offset: 3px;
-    }
-}
-
 // Paused: freeze the ring and the flash where they are, and carry on from there on resume
 .timer-ring--paused .timer-ring__fill,
 .timer-face--paused::before {
@@ -211,19 +188,17 @@ $track-color: #334155; // slate-700: dark, so both phase colours stand out (3:1 
     font-size: 1.5rem;
 }
 
+// Two equal columns, so Stop stays put when Pause becomes the longer Resume
 .timer-controls {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1rem;
-    margin-top: 1.5rem;
+    width: min(100%, 24rem);
+    margin: 1.5rem auto 0;
 }
 
 .sound-prompt {
     margin-top: 1rem;
-    background: transparent;
-    font: inherit;
-    cursor: pointer;
 }
 
 .timer-status__infinity {

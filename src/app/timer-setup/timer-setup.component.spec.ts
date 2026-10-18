@@ -162,7 +162,7 @@ describe('TimerSetupComponent', () => {
                 ],
                 repeats: '1',
             });
-            expect(submitButton().textContent).toContain('Start Timer');
+            expect(submitButton().textContent).toContain('Start timer');
             expect(submitButton().textContent).not.toContain('Save');
         });
 
@@ -589,7 +589,7 @@ describe('TimerSetupComponent', () => {
                 ],
                 repeats: '4',
             });
-            expect(submitButton().textContent).toContain('Save & Start Timer');
+            expect(submitButton().textContent).toContain('Save & start timer');
         });
 
         it('opens with every step collapsed, so the whole workout is in view', async () => {

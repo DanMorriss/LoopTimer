@@ -41,10 +41,10 @@ describe('SettingsComponent', () => {
         const labels = () => radios().map((r) => r.closest('label')!.textContent!.trim());
         const checked = () => radios().find((r) => r.checked)?.value;
 
-        it('offers Dark, Light and Match system as radio buttons in a labelled group', () => {
+        it('offers Dark, Light and System as radio buttons in a labelled group', () => {
             create();
 
-            expect(labels()).toEqual(['Dark', 'Light', 'Match system']);
+            expect(labels()).toEqual(['Dark', 'Light', 'System']);
             const group = fixture.nativeElement.querySelector('fieldset') as HTMLFieldSetElement;
             expect(group.querySelector('legend')!.textContent).toBe('Theme');
         });

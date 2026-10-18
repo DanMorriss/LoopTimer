@@ -69,6 +69,22 @@ for (const theme of ['dark', 'light'] as const) {
             expect(contrastRatio(token('--text-danger'), background)).toBeGreaterThanOrEqual(4.5);
         });
 
+        it('keeps the main button label readable across its whole gradient', () => {
+            for (const stop of ['--cta-top', '--cta-bottom']) {
+                expect(contrastRatio(token('--cta-ink'), token(stop))).toBeGreaterThanOrEqual(4.5);
+            }
+        });
+
+        it('makes the main button stand out on the page (at least 3:1 at one end)', () => {
+            const page = flatten(['--page-bg']);
+            const best = Math.max(
+                contrastRatio(token('--cta-top'), page),
+                contrastRatio(token('--cta-bottom'), page)
+            );
+
+            expect(best).toBeGreaterThanOrEqual(3);
+        });
+
         it('keeps the switch dot visible on the lit-up loop', () => {
             expect(contrastRatio(token('--glow-dot'), token('--glow'))).toBeGreaterThanOrEqual(1.5);
         });

@@ -69,9 +69,14 @@ describe('TimerLibraryComponent', () => {
         });
 
         it('goes to setup from the "Create a timer" button', () => {
-            click(el('app-infinity-button button'));
+            click(el('.library-create-button'));
 
             expect(navigate).toHaveBeenCalledWith(['/setup']);
+        });
+
+        it('shows only "Create a timer", not "Add timer" as well, so there is one main button', () => {
+            expect(all('.btn-main')).toHaveLength(1);
+            expect(el('.library-add-button')).toBeNull();
         });
     });
 
@@ -308,6 +313,17 @@ describe('TimerLibraryComponent', () => {
                     await settle();
 
                     expect(document.activeElement).toBe(el('.library-add-button'));
+                });
+
+                it('moves focus to "Create a timer" after deleting the last timer', async () => {
+                    for (let i = 0; i < 2; i++) {
+                        requestDelete(0);
+                        await settle();
+                        click(el('.confirm-dialog__button--delete'));
+                        await settle();
+                    }
+
+                    expect(document.activeElement).toBe(el('.library-create-button'));
                 });
             });
         });

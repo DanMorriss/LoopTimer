@@ -7,11 +7,9 @@ import {
     Injector,
     signal,
 } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
 import { Timer } from '../models/timer';
-import { InfinityButtonComponent } from '../shared/components/infinity-button/infinity-button.component';
 import { ConfirmDialogComponent } from '../shared/components/confirm-dialog/confirm-dialog.component';
 import { TimerCardComponent } from './timer-card/timer-card.component';
 import { TimerStore } from '../shared/state/timer-store.service';
@@ -20,13 +18,7 @@ import { TimerStore } from '../shared/state/timer-store.service';
     selector: 'app-timer-library',
     templateUrl: './timer-library.component.html',
     styleUrl: './timer-library.component.scss',
-    imports: [
-        ConfirmDialogComponent,
-        TimerCardComponent,
-        MatButtonModule,
-        MatIconModule,
-        InfinityButtonComponent,
-    ],
+    imports: [ConfirmDialogComponent, TimerCardComponent, MatIconModule],
 })
 export class TimerLibraryComponent {
     timerStore = inject(TimerStore);
@@ -63,7 +55,10 @@ export class TimerLibraryComponent {
         this.timerPendingDelete.set(null);
         this.activeTimerCardId.set(null);
         this.openTimerMenuId.set(null);
-        this.focusAfterRender('.library-add-button');
+        // "Add timer" goes once the library is empty, and "Create a timer" takes its place
+        this.focusAfterRender(
+            this.timerStore.timers().length ? '.library-add-button' : '.library-create-button'
+        );
     }
 
     setActiveTimerCard(timerId: number) {

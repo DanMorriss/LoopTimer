@@ -1,5 +1,12 @@
+// Fills the width it is given, so a row of them (Pause and Stop) can share it evenly
+:host {
+    display: block;
+}
+
 .infinity-button {
     position: relative;
+    width: 100%;
+    white-space: nowrap;
     text-decoration: none;
     border: 2px solid;
     background: transparent;
@@ -65,9 +72,10 @@
     }
 
     &--medium {
-        padding: 20px 35px;
+        // Narrower sides and spacing on small phones, so two fit side by side
+        padding: 20px clamp(12px, 4vw, 35px);
         font-size: 20px;
-        letter-spacing: 4px;
+        letter-spacing: clamp(2px, 0.9vw, 4px);
     }
 
     &--large {

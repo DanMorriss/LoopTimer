@@ -11,23 +11,11 @@
     margin: 1rem 0 0;
 }
 
+// The main button, floating at the bottom of the screen above the list
 .library-add-button {
     position: fixed;
     left: 50%;
     bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
-    transform: translateX(-50%);
+    translate: -50% 0;
     z-index: 20;
-    background: #0ea5e9;
-    color: #03253b;
-    border-radius: 999px;
-    box-shadow: 0 12px 26px var(--shadow);
-}
-
-.library-add-button mat-icon {
-    color: #03253b;
-}
-
-.library-add-button:focus-visible {
-    outline: 2px solid var(--text);
-    outline-offset: 3px;
 }
