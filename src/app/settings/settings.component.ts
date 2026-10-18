@@ -26,6 +26,8 @@ export class SettingsComponent {
     private readonly appRef = inject(ApplicationRef);
     private readonly document = inject(DOCUMENT);
     private readonly reducedMotion = injectPrefersReducedMotion();
+    /** The theme fade in progress, if any. */
+    private transition: ViewTransition | null = null;
 
     protected readonly themes: { value: Theme; label: string }[] = [
         { value: 'dark', label: 'Dark' },
@@ -60,6 +62,15 @@ export class SettingsComponent {
             // Render now, so the new colours and the highlight's new place are what fades in
             this.appRef.tick();
         });
-        transition.finished.finally(() => root.classList.remove(SWITCHING_CLASS));
+        this.transition = transition;
+        // Choosing again mid-fade skips this one (the setting is still saved), which rejects `ready`
+        transition.ready.catch(() => undefined);
+        transition.finished.finally(() => {
+            // Leave the class for a fade that has taken over from this one
+            if (this.transition === transition) {
+                root.classList.remove(SWITCHING_CLASS);
+                this.transition = null;
+            }
+        });
     }
 }

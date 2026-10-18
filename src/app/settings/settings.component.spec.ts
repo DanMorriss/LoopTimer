@@ -87,6 +87,17 @@ describe('SettingsComponent', () => {
             expect(chosen.textContent.trim()).toBe('System');
         });
 
+        it('copes with a second choice made mid-fade, keeping the last one', async () => {
+            create();
+
+            radios()[1].click();
+            radios()[2].click();
+            await vi.waitFor(() => expect(settings.theme()).toBe('system'));
+            await vi.waitFor(() =>
+                expect(document.documentElement.classList).not.toContain('theme-switching')
+            );
+        });
+
         it('changes the theme at once, with no fade, when reduced motion is on', () => {
             fakeReducedMotion(true);
             const startViewTransition = vi.spyOn(document, 'startViewTransition');
