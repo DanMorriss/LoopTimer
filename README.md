@@ -84,10 +84,11 @@ src/app/
 
 ## Roadmap
 
-These come from the original plan and aren't built yet:
+Not built yet:
 
 - **Alarm sounds:** proper sound files in place of the generated beeps, and alarms on a locked phone.
 - **Alarm order setting:** choosing the sound for each step.
+- **Rep steps:** a step counted in reps rather than time, e.g. "20 push-ups", ended with a tap.
 
 Work on these, plus design and technical follow-ups, is tracked in [TODO.md](TODO.md).
 
