@@ -9,8 +9,14 @@ Open work, highest priority first. Tick items off (or delete them) as they're do
 - [ ] **Alarm order setting:** pick which sound plays for each step, with a preview. Needs the sound files first.
 - [ ] **Rep steps:** a step that's a number of reps rather than a time, e.g. "20 push-ups". There's no countdown: the timer shows the reps and waits for a "Done" tap (or Space) before moving on. This adds a third kind of step to the `Step` model, and `timerStateAt()` can no longer work purely from elapsed time: each rep step's finish time has to be recorded, much as pausing is now. Also affects the alarms (none can be booked past a rep step), "Next:", the library summary and history's total duration.
 
+- [ ] **History page: an options menu with notes.** Each entry's delete button moves into a ⋮ menu, like the timer cards in the library, alongside a new "Add note" option. A note is a short line of free text saved with the entry (e.g. "felt strong", "knee sore") and shown under it, with edit and remove from the same menu. This adds an optional `note` to `HistoryEntry`; old entries load without one. Delete keeps its undo.
+- [ ] **"View history" when a workout finishes:** the finished timer screen gets a call to action to see the run in the history, perhaps as its main button. Worth deciding with the item above, so a note can be added straight after a workout.
+
 ## 2. Design
 
+- [ ] **Hamburger menu:** the header's settings, history and home buttons, and links to the other pages (Create, Library), move into one menu button. This frees up the header, and gives the library a way in from every page.
+- [ ] **Timer page on a phone:** show the timer's own title at the top in place of the LoopTimer logo, to free up space for the ring and controls. Needs to fit with the hamburger menu above.
+- [ ] **Remaining repeats:** the "remaining repeats: | | |" tally (Rubik Spray Paint bars) looks rough beside the new buttons. Find a clearer way to show how many rounds are left, e.g. dots or a "Round 2 of 5" line, and how it changes on the last one ("Last one!").
 - [ ] **The ∞ on the rounds wheel** renders small in the app's font.
 - [ ] **Show that Space pauses:** it's announced to screen readers (`aria-keyshortcuts`), but there's no visible hint for keyboard users.
 
