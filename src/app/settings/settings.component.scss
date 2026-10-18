@@ -54,39 +54,9 @@
     color: var(--text-muted);
 }
 
-.play-button {
-    display: inline-flex;
-    flex-shrink: 0;
-    align-items: center;
-    gap: 0.35rem;
-    padding: 0.45rem 0.9rem 0.45rem 0.6rem;
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    background: transparent;
-    color: var(--focus);
-    font: inherit;
-    font-size: 0.85rem;
-    cursor: pointer;
-    transition:
-        border-color 0.2s ease,
-        background-color 0.2s ease;
-
-    svg {
-        width: 1.1rem;
-        height: 1.1rem;
-        fill: currentColor;
-    }
-
-    &:hover,
-    &:focus-visible {
-        border-color: var(--focus);
-        background-color: var(--control);
-    }
-
-    &:focus-visible {
-        outline: 2px solid var(--focus);
-        outline-offset: 3px;
-    }
+// A shared .btn-pill; its play icon is an SVG, filled with the label colour
+.play-button svg {
+    fill: currentColor;
 }
 
 // Theme: native radio buttons, drawn as one segmented control
@@ -140,7 +110,8 @@
 
     .theme-picker__input:checked + & {
         border-color: var(--glow);
-        background: var(--glow-soft);
+        // The lighter tint, so the label keeps 4.5:1 in the light theme
+        background: var(--accent-soft);
         color: var(--glow-text);
     }
 

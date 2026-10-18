@@ -3,7 +3,7 @@ import { SettingsStore } from '../state/settings-store.service';
 
 /**
  * Applies the theme setting by putting data-theme="dark" or "light" on <html>, which
- * switches the colour tokens in styles.scss. "Match system" follows the device, and
+ * switches the colour tokens in styles.scss. "System" follows the device, and
  * changes along with it.
  *
  * index.html does the same before the app loads, so the page doesn't flash dark first.

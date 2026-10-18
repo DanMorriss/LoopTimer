@@ -33,14 +33,14 @@ import { Component, input, output } from '@angular/core';
                 <div class="confirm-dialog__actions">
                     <button
                         type="button"
-                        class="confirm-dialog__button confirm-dialog__button--cancel"
+                        class="btn-pill confirm-dialog__button confirm-dialog__button--cancel"
                         (click)="cancelled.emit()"
                     >
                         Cancel
                     </button>
                     <button
                         type="button"
-                        class="confirm-dialog__button confirm-dialog__button--delete"
+                        class="btn-pill btn-pill--danger confirm-dialog__button confirm-dialog__button--delete"
                         (click)="confirmed.emit()"
                     >
                         {{ confirmLabel() }}

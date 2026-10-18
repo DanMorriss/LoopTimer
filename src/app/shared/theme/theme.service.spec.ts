@@ -59,7 +59,7 @@ describe('ThemeService', () => {
         expect(applied()).toBe('dark');
     });
 
-    it('follows the device for "Match system", including when the device changes', () => {
+    it('follows the device for "System", including when the device changes', () => {
         prefersLight = true;
         start();
 
@@ -71,7 +71,7 @@ describe('ThemeService', () => {
         expect(applied()).toBe('dark');
     });
 
-    it('ignores the device unless "Match system" is chosen', () => {
+    it('ignores the device unless "System" is chosen', () => {
         prefersLight = true;
         start();
 

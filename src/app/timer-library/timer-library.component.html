@@ -3,11 +3,14 @@
     @if (!existingTimers) {
         <div class="flex flex-col items-center justify-center">
             <p>Nothing in the library yet, best go make a timer.</p>
-            <app-infinity-button
+            <button
+                type="button"
+                class="btn-main library-create-button mt-12"
                 (click)="navigateToCreateTimer()"
-                text="Create a timer"
-                class="mt-12"
-            ></app-infinity-button>
+            >
+                <mat-icon aria-hidden="true">add</mat-icon>
+                Create a timer
+            </button>
         </div>
     }
     <ul class="library-list">
@@ -27,16 +30,17 @@
         }
     </ul>
 
-    <button
-        type="button"
-        mat-fab
-        extended
-        class="library-add-button"
-        (click)="$event.stopPropagation(); navigateToCreateTimer()"
-    >
-        <mat-icon>add</mat-icon>
-        Add Timer
-    </button>
+    <!-- One main button per screen: an empty library has "Create a timer" instead -->
+    @if (existingTimers) {
+        <button
+            type="button"
+            class="btn-main library-add-button"
+            (click)="$event.stopPropagation(); navigateToCreateTimer()"
+        >
+            <mat-icon aria-hidden="true">add</mat-icon>
+            Add timer
+        </button>
+    }
 
     @if (timerPendingDelete(); as pendingTimer) {
         <app-confirm-dialog

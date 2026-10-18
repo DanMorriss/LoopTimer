@@ -80,6 +80,9 @@ src/app/
     components/confirm-dialog/     "Delete …?" dialog (library timers, setup steps)
     reduced-motion.ts              Follows the system reduced-motion setting
   a11y.spec.ts       axe checks across the whole app
+src/styles/
+  _buttons.scss      The shared buttons: .btn-main, .btn-pill, .btn-icon, .btn-add
+  _forms.scss        Labelled form fields (.picker-field, .picker-row)
 ```
 
 ## Roadmap

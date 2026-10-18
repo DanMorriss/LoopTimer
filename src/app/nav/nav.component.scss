@@ -1,26 +1,3 @@
-.nav-button {
-    background: var(--violet-tint);
-    border: 2px solid var(--border);
-    transition: all 0.3s ease;
-    color: var(--text);
-
-    &:hover {
-        background: rgba(139, 92, 246, 0.2);
-        border-color: var(--border-strong);
-        transform: scale(1.05);
-        color: var(--text-strong);
-    }
-
-    &:active {
-        transform: scale(0.95);
-    }
-
-    &:focus-visible {
-        outline: 2px solid var(--focus);
-        outline-offset: 3px;
-    }
-}
-
 .nav-icon {
     stroke-width: 2;
 }

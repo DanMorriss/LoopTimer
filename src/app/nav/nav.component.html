@@ -1,13 +1,8 @@
 <!-- Three columns with equal sides, so the title stays centred between the buttons -->
 <div class="nav grid w-full items-center gap-2 p-4">
-    <a
-        routerLink="/settings"
-        class="nav-button flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
-        title="Settings"
-        aria-label="Settings"
-    >
+    <a routerLink="/settings" class="btn-icon" title="Settings" aria-label="Settings">
         <svg
-            class="nav-icon h-7 w-7"
+            class="nav-icon h-6 w-6"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -24,14 +19,9 @@
     </a>
     <h1 class="site-title pt-2 text-center text-2xl text-(--text-strong)">LoopTimer</h1>
     <div class="flex justify-end gap-2">
-        <a
-            routerLink="/history"
-            class="nav-button flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
-            title="History"
-            aria-label="History"
-        >
+        <a routerLink="/history" class="btn-icon" title="History" aria-label="History">
             <svg
-                class="nav-icon h-7 w-7"
+                class="nav-icon h-6 w-6"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -47,13 +37,13 @@
         </a>
         <button
             type="button"
-            class="nav-button flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center rounded-xl"
+            class="btn-icon"
             (click)="navigateToHome()"
             title="Go to Home"
             aria-label="Go to Home"
         >
             <svg
-                class="nav-icon h-8 w-8"
+                class="nav-icon h-6 w-6"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"

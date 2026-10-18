@@ -1,37 +1,3 @@
-.picker-row {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.75rem;
-}
-
-.picker-field {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-}
-
-.picker-field__label {
-    font-size: 0.9rem;
-    color: var(--text-muted);
-}
-
-.picker-field__input {
-    width: 100%;
-    border: 1px solid var(--border);
-    border-radius: 0.75rem;
-    background: var(--control);
-    color: var(--text);
-    padding: 0.7rem 0.9rem;
-    line-height: 1.2;
-    font-size: 1rem;
-}
-
-.picker-field__input:focus {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-    border-color: var(--accent);
-}
-
 // body.mat-typography gives headings Material's Roboto and margins; keep the app's font
 .setup-heading {
     margin: 1.5rem 0 0.25rem;
@@ -218,31 +184,6 @@
     margin-bottom: 0.5rem;
 }
 
-.steps-toggle-all {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-    min-height: 44px;
-    padding: 0 0.9rem;
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    background: transparent;
-    color: var(--text);
-    font: inherit;
-    font-size: 0.9rem;
-    cursor: pointer;
-
-    &:hover {
-        border-color: var(--border-strong);
-        background: var(--control);
-    }
-
-    &:focus-visible {
-        outline: 2px solid var(--accent);
-        outline-offset: 2px;
-    }
-}
-
 // On a line of their own unless the header is wide enough (see .step__header)
 .step__actions {
     display: flex;
@@ -264,77 +205,11 @@
     }
 }
 
-// 44px targets, so they're easy to hit on a phone
-.step__action {
-    display: inline-grid;
-    place-items: center;
-    width: 44px;
-    height: 44px;
-    padding: 0;
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    background: var(--control);
-    color: var(--text);
-    cursor: pointer;
-
-    &:hover:not(:disabled) {
-        border-color: var(--border-strong);
-        background: var(--control-hover);
-    }
-
-    &:focus-visible {
-        outline: 2px solid var(--accent);
-        outline-offset: 2px;
-    }
-
-    &:disabled {
-        cursor: not-allowed;
-        opacity: 0.4;
-    }
-
-    &--delete {
-        color: var(--text-danger);
-    }
-}
-
 .add-steps {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0.75rem;
     margin: 0.75rem 0;
-}
-
-.add-step {
-    --step-color: var(--work);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.3rem;
-    min-height: 44px;
-    border: 1px dashed var(--step-color);
-    border-radius: 0.75rem;
-    background: transparent;
-    color: var(--step-color);
-    font: inherit;
-    cursor: pointer;
-
-    &--rest {
-        --step-color: var(--rest);
-    }
-
-    &:hover:not(:disabled) {
-        background: var(--control);
-    }
-
-    &:focus-visible {
-        outline: 2px solid var(--accent);
-        outline-offset: 2px;
-    }
-
-    &:disabled {
-        cursor: not-allowed;
-        opacity: 0.4;
-    }
 }
 
 // Drag and drop (Angular CDK)

@@ -15,7 +15,7 @@
             <div class="steps-toolbar">
                 <button
                     type="button"
-                    class="steps-toggle-all"
+                    class="btn-pill steps-toggle-all"
                     (click)="setAllExpanded(!anyExpanded())"
                 >
                     <mat-icon aria-hidden="true">{{
@@ -104,7 +104,7 @@
                                 <div class="step__actions">
                                     <button
                                         type="button"
-                                        class="step__action"
+                                        class="btn-icon step__action"
                                         [id]="'step-' + key + '-up'"
                                         [attr.aria-label]="'Move ' + stepTitle(i) + ' up'"
                                         [disabled]="i === 0"
@@ -114,7 +114,7 @@
                                     </button>
                                     <button
                                         type="button"
-                                        class="step__action"
+                                        class="btn-icon step__action"
                                         [id]="'step-' + key + '-down'"
                                         [attr.aria-label]="'Move ' + stepTitle(i) + ' down'"
                                         [disabled]="i === stepCount() - 1"
@@ -124,7 +124,7 @@
                                     </button>
                                     <button
                                         type="button"
-                                        class="step__action step__action--delete"
+                                        class="btn-icon btn-icon--danger step__action step__action--delete"
                                         [id]="'step-' + key + '-delete'"
                                         [attr.aria-label]="'Delete ' + stepTitle(i)"
                                         [disabled]="stepCount() === 1"
@@ -213,7 +213,7 @@
             <div class="add-steps">
                 <button
                     type="button"
-                    class="add-step"
+                    class="btn-add add-step"
                     [disabled]="stepCount() >= maxSteps"
                     (click)="addStep('work')"
                 >
@@ -222,7 +222,7 @@
                 </button>
                 <button
                     type="button"
-                    class="add-step add-step--rest"
+                    class="btn-add btn-add--rest add-step add-step--rest"
                     [disabled]="stepCount() >= maxSteps"
                     (click)="addStep('rest')"
                 >
@@ -262,14 +262,9 @@
                 <mat-error>{{ error.message }}</mat-error>
             }
             <div class="m-4 flex justify-center">
-                <button
-                    mat-raised-button
-                    color="primary"
-                    type="submit"
-                    [disabled]="timerForm().invalid()"
-                >
-                    <mat-icon>play_circle</mat-icon>
-                    {{ editingTimerId() ? 'Save & Start Timer' : 'Start Timer' }}
+                <button class="btn-main" type="submit" [disabled]="timerForm().invalid()">
+                    <mat-icon aria-hidden="true">play_arrow</mat-icon>
+                    {{ editingTimerId() ? 'Save & start timer' : 'Start timer' }}
                 </button>
             </div>
         </form>

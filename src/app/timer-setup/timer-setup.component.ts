@@ -8,7 +8,6 @@ import {
     signal,
 } from '@angular/core';
 import { applyEach, form, FormField, FormRoot, maxLength, validate } from '@angular/forms/signals';
-import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import {
@@ -80,7 +79,6 @@ const kindName = (kind: StepKind) => (kind === 'work' ? 'Work' : 'Rest');
         WheelPickerComponent,
         InfinitySwitchComponent,
         ConfirmDialogComponent,
-        MatButtonModule,
         MatFormFieldModule,
         MatIconModule,
     ],
