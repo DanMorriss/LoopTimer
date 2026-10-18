@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { Timer, UNTIL_STOPPED } from '../models/timer';
+import { SettingsStore } from '../shared/state/settings-store.service';
 import { TimerStore } from '../shared/state/timer-store.service';
 import { AlarmService } from '../shared/alarms/alarm.service';
 import { contrastRatio } from '../shared/testing/contrast';
@@ -818,6 +819,44 @@ describe('TimerComponent', () => {
 
             expect(prompt()).toBeNull();
             fixture.destroy();
+        });
+
+        describe('with sound turned off in settings', () => {
+            beforeEach(() => localStorage.clear());
+            afterEach(() => localStorage.clear());
+
+            it('does not ask for a tap to turn on sound', () => {
+                TestBed.inject(SettingsStore).update({ sound: false });
+                start(timer());
+
+                expect(prompt()).toBeNull();
+                fixture.destroy();
+            });
+
+            it('silences the alarms already booked', () => {
+                start(timer());
+                unlockSound();
+                advance(1000);
+
+                TestBed.inject(SettingsStore).update({ sound: false });
+                fixture.detectChanges();
+
+                expect(audio.scheduledNotes()).toEqual([]);
+                fixture.destroy();
+            });
+
+            it('books them again when sound is turned back on', () => {
+                const settings = TestBed.inject(SettingsStore);
+                settings.update({ sound: false });
+                start(timer());
+                unlockSound();
+
+                settings.update({ sound: true });
+                fixture.detectChanges();
+
+                expect(audio.scheduledNotes()).toContain('440@3');
+                fixture.destroy();
+            });
         });
 
         it('hands the whole workout to the audio clock once sound is on', () => {

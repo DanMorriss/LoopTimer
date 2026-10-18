@@ -15,6 +15,7 @@ Built with Angular 22 (standalone components, signals and Signal Forms), Angular
 - **Hear each phase start.** Two short high beeps for work, a long low tone for rest, and three rising notes at the finish, with matching vibrations on phones that support them (not iPhones). The beeps are scheduled ahead on the audio clock, so they stay on time in a background tab. Browsers only allow sound after a tap, so after a refresh the timer page shows a "Tap to turn on sound" button.
 - **Pause, resume or stop** while it runs, or press Space to pause and resume. Pausing freezes the countdown and the ring where they are; stopping ends the workout and goes back to the library.
 - **Keep accurate time.** The countdown is worked out from the clock, not by counting ticks. It stays correct if the tab is in the background or the phone is locked, and catches up as soon as you come back. Refreshing the page carries on where you were, paused or not.
+- **Settings** (the gear, top left): turn sound or vibration off, and play each alarm sound to hear what it is. Saved in the browser, like timers.
 - **Save and reuse timers** in the library: start, edit or delete any of them. Timers are saved in the browser (`localStorage`), so they stay on that device.
 - **Accessible:**
   - Everything works with a keyboard, and Space pauses and resumes the timer.
@@ -56,17 +57,23 @@ There are around 140 unit tests, run with [Vitest](https://vitest.dev) in browse
 ```
 src/app/
   home/              Landing page with the infinity logo (Create / Library)
-  nav/               Header: site title and home button
+  nav/               Header: settings button, site title and home button
+  settings/          Sound and vibration switches, and alarm previews
   timer-setup/       Create or edit a timer (Signal Forms)
   timer-library/     Saved timers
     timer-card/        One timer in the list: start, edit, delete
     delete-timer-dialog/
   timer/             The running timer: ring, countdown, announcements
     timer-state.ts     Works out phase, time left and round from elapsed time
+    alarm-schedule.ts  When each alarm is due
   shared/
     state/timer-store.service.ts   Saved timers and the active timer
+    state/settings-store.service.ts Saved settings
+    alarms/alarm.service.ts        Plays alarms on the audio clock, and vibrates
     components/infinity-button/    Animated button used on the empty library
     components/wheel-picker/       iPhone-style number wheel (a Signal Forms control)
+    components/infinity-switch/    The ∞ (until stopped) switch in setup
+    components/toggle-switch/      On/off switch used in settings
     reduced-motion.ts              Follows the system reduced-motion setting
   a11y.spec.ts       axe checks across the whole app
 ```
@@ -77,7 +84,7 @@ These come from the original plan and aren't built yet:
 
 - **Multiple intervals per timer**, e.g. 30 seconds then 45 seconds, rather than a single work/rest pair.
 - **Alarm sounds:** proper sound files in place of the generated beeps, and alarms on a locked phone.
-- **Settings:** alarm order and sounds, sound on or off, light/dark theme, vibration on or off.
+- **More settings:** a light theme, and choosing the alarm order once timers have several intervals.
 - **History:** a log of completed workouts.
 
 Work on these, plus design and technical follow-ups, is tracked in [TODO.md](TODO.md).

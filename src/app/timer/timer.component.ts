@@ -4,6 +4,7 @@ import { runsUntilStopped } from '../models/timer';
 import { AlarmService } from '../shared/alarms/alarm.service';
 import { InfinityButtonComponent } from '../shared/components/infinity-button/infinity-button.component';
 import { formatTime } from '../shared/format-time';
+import { SettingsStore } from '../shared/state/settings-store.service';
 import { TimerStore } from '../shared/state/timer-store.service';
 import { alarmEvents } from './alarm-schedule';
 import { timerStateAt } from './timer-state';
@@ -48,8 +49,11 @@ export class TimerComponent implements OnDestroy {
     });
 
     protected readonly alarms = inject(AlarmService);
-    /** Sound is possible but the browser is waiting for a tap before it will play any. */
-    soundLocked = computed(() => this.alarms.supported && !this.alarms.unlocked());
+    private readonly settings = inject(SettingsStore);
+    /** Sound is on, but the browser is waiting for a tap before it will play any. */
+    soundLocked = computed(
+        () => this.alarms.supported && this.settings.sound() && !this.alarms.unlocked()
+    );
 
     // Alarms are booked ALARM_WINDOW rounds at a time, starting from a multiple of half that,
     // so a timer that runs until stopped is topped up halfway through each batch.
@@ -71,10 +75,11 @@ export class TimerComponent implements OnDestroy {
 
     constructor() {
         // Hand the whole workout's alarms to the audio clock up front, and again whenever
-        // the timer pauses, resumes, or sound is unlocked
+        // the timer pauses, resumes, or sound is unlocked or turned on or off
         effect(() => {
             const events = this.alarmEvents();
-            if (this.alarms.unlocked()) {
+            // Reading sound() here reschedules (or silences) when it's changed in settings
+            if (this.alarms.unlocked() || !this.settings.sound()) {
                 this.alarms.schedule(events);
             }
         });

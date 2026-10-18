@@ -1,0 +1,70 @@
+<div class="flex justify-center">
+    <div
+        class="m-4 w-full max-w-md rounded-xl border border-slate-700/60 bg-slate-900/35 p-6 shadow-xl shadow-black/30 backdrop-blur-sm"
+    >
+        <h2 class="settings__title">Settings</h2>
+
+        <section class="settings__section" aria-labelledby="alarms-heading">
+            <h3 class="settings__heading" id="alarms-heading">Alarms</h3>
+
+            <div class="setting">
+                <div class="setting__text">
+                    <span class="setting__name" id="sound-label">Sound</span>
+                    <span class="setting__hint" id="sound-hint">Beeps as each phase starts</span>
+                </div>
+                <app-toggle-switch
+                    [checked]="settings.sound()"
+                    (checkedChange)="settings.update({ sound: $event })"
+                    labelledBy="sound-label"
+                    describedBy="sound-hint"
+                />
+            </div>
+
+            <div class="setting">
+                <div class="setting__text">
+                    <span class="setting__name" id="vibration-label">Vibration</span>
+                    <span class="setting__hint" id="vibration-hint">
+                        {{
+                            alarms.canVibrate
+                                ? 'Buzzes as each phase starts'
+                                : "This device can't vibrate"
+                        }}
+                    </span>
+                </div>
+                <app-toggle-switch
+                    [checked]="settings.vibration() && alarms.canVibrate"
+                    (checkedChange)="settings.update({ vibration: $event })"
+                    [disabled]="!alarms.canVibrate"
+                    labelledBy="vibration-label"
+                    describedBy="vibration-hint"
+                />
+            </div>
+        </section>
+
+        <section class="settings__section" aria-labelledby="sounds-heading">
+            <h3 class="settings__heading" id="sounds-heading">Alarm sounds</h3>
+
+            <ul class="settings__list">
+                @for (preview of previews; track preview.kind) {
+                    <li class="setting">
+                        <div class="setting__text">
+                            <span class="setting__name">{{ preview.name }}</span>
+                            <span class="setting__hint">{{ preview.description }}</span>
+                        </div>
+                        <button
+                            type="button"
+                            class="play-button"
+                            [attr.aria-label]="'Play the ' + preview.name.toLowerCase() + ' alarm'"
+                            (click)="alarms.preview(preview.kind)"
+                        >
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M8 5v14l11-7z" />
+                            </svg>
+                            Play
+                        </button>
+                    </li>
+                }
+            </ul>
+        </section>
+    </div>
+</div>
