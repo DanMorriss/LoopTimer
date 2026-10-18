@@ -149,6 +149,20 @@ describe('Accessibility (axe)', () => {
         });
     });
 
+    describe('settings', () => {
+        it('as first opened', async () => {
+            await open('/settings');
+            await expectNoViolations();
+        });
+
+        it('with sound turned off', async () => {
+            await open('/settings');
+            click('[role="switch"][aria-labelledby="sound-label"]');
+            await settle();
+            await expectNoViolations();
+        });
+    });
+
     describe('timer', () => {
         it('with no timer selected', async () => {
             await open('/timer');

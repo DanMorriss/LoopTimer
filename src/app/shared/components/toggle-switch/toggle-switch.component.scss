@@ -1,0 +1,81 @@
+$off-color: #94a3b8; // slate-400, 3:1 or more on the dark card
+$on-color: #22d3ee; // cyan-400, as on the ∞ switch
+
+:host {
+    display: inline-block;
+}
+
+.toggle-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.25rem;
+    border: none;
+    border-radius: 999px;
+    background: none;
+    color: #bfccdd;
+    font: inherit;
+    cursor: pointer;
+
+    &:focus-visible {
+        outline: 2px solid #38bdf8;
+        outline-offset: 2px;
+    }
+
+    &:disabled {
+        cursor: not-allowed;
+        opacity: 0.55;
+    }
+
+    &--on {
+        color: #a5f3fc;
+    }
+}
+
+.toggle-switch__track {
+    position: relative;
+    width: 3.25rem;
+    height: 1.75rem;
+    border: 2px solid $off-color;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.75);
+
+    .toggle-switch--on & {
+        border-color: $on-color;
+        background: rgba(34, 211, 238, 0.15);
+        box-shadow: 0 0 12px rgba(34, 211, 238, 0.3);
+    }
+}
+
+.toggle-switch__knob {
+    position: absolute;
+    top: 50%;
+    left: 0.25rem;
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 50%;
+    background: $off-color;
+    transform: translateY(-50%);
+    transition: transform 0.2s ease;
+
+    .toggle-switch--on & {
+        background: #ecfeff;
+        box-shadow: 0 0 6px 1px $on-color;
+        transform: translate(1.4rem, -50%);
+    }
+}
+
+// Fixed width, so the switch doesn't shift between On and Off
+.toggle-switch__state {
+    min-width: 2.5em;
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    text-align: left;
+    text-transform: uppercase;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .toggle-switch__knob {
+        transition: none;
+    }
+}

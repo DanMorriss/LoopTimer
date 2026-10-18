@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { SettingsStore } from '../state/settings-store.service';
 import { FakeAudioContext, provideFakeAudioContext } from '../testing/fake-audio-context';
 import { AlarmService, AUDIO_CONTEXT_FACTORY } from './alarm.service';
 
@@ -10,11 +11,15 @@ describe('AlarmService', () => {
 
     beforeEach(() => {
         vi.useFakeTimers({ now: 1_000_000 });
+        localStorage.clear();
         context = new FakeAudioContext();
         TestBed.configureTestingModule({ providers: [provideFakeAudioContext(context)] });
         alarms = TestBed.inject(AlarmService);
     });
-    afterEach(() => vi.useRealTimers());
+    afterEach(() => {
+        vi.useRealTimers();
+        localStorage.clear();
+    });
 
     describe('unlocking sound', () => {
         it('starts locked', () => {
@@ -160,6 +165,62 @@ describe('AlarmService', () => {
             alarms.vibrate('work');
 
             expect(vibrate).not.toHaveBeenCalled();
+        });
+
+        it('stays still when vibration is turned off in settings', () => {
+            interacted(true);
+            const vibrate = vi.spyOn(navigator, 'vibrate').mockReturnValue(true);
+            TestBed.inject(SettingsStore).update({ vibration: false });
+
+            alarms.vibrate('work');
+
+            expect(vibrate).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('settings', () => {
+        it('plays nothing, and silences what was booked, when sound is turned off', () => {
+            alarms.unlock();
+            alarms.schedule([{ kind: 'rest', at: Date.now() + 5000 }]);
+
+            TestBed.inject(SettingsStore).update({ sound: false });
+            alarms.schedule([{ kind: 'rest', at: Date.now() + 5000 }]);
+
+            expect(context.scheduledNotes()).toEqual([]);
+        });
+    });
+
+    describe('preview', () => {
+        it('plays an alarm straight away, unlocking sound if needed', async () => {
+            await alarms.preview('rest');
+
+            expect(alarms.unlocked()).toBe(true);
+            expect(context.scheduledNotes()).toEqual(['440@0']);
+        });
+
+        it('plays even with sound turned off, as it was asked for', async () => {
+            TestBed.inject(SettingsStore).update({ sound: false });
+
+            await alarms.preview('work');
+
+            expect(context.scheduledNotes()).toEqual(WORK);
+        });
+
+        it('leaves booked alarms alone', async () => {
+            alarms.unlock();
+            alarms.schedule([{ kind: 'rest', at: Date.now() + 5000 }]);
+
+            await alarms.preview('work');
+
+            expect(context.scheduledNotes()).toEqual(['440@5', ...WORK]);
+        });
+
+        it('plays nothing if the browser still will not allow sound', async () => {
+            context.allowResume = false;
+
+            await alarms.preview('work');
+
+            expect(context.scheduledNotes()).toEqual([]);
         });
     });
 });

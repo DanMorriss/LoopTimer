@@ -25,8 +25,16 @@ describe('NavComponent', () => {
     it('goes home from the home button', () => {
         const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
 
-        fixture.nativeElement.querySelector('.home-button').click();
+        fixture.nativeElement.querySelector('button[aria-label="Go to Home"]').click();
 
         expect(navigate).toHaveBeenCalledWith(['/home']);
+    });
+
+    it('links to settings from the gear button', () => {
+        const link: HTMLAnchorElement = fixture.nativeElement.querySelector(
+            'a[aria-label="Settings"]'
+        );
+
+        expect(link.getAttribute('href')).toBe('/settings');
     });
 });

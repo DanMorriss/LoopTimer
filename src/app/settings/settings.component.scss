@@ -1,0 +1,90 @@
+// body.mat-typography gives headings Material's Roboto and margins; keep the app's font
+.settings__title,
+.settings__heading {
+    font-family: 'Audiowide', sans-serif;
+    margin: 0;
+    color: #f1f5f9;
+}
+
+.settings__title {
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    text-align: center;
+}
+
+.settings__heading {
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+.settings__section + .settings__section {
+    margin-top: 1.75rem;
+}
+
+.settings__list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.setting {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 0;
+
+    & + & {
+        border-top: 1px solid rgba(148, 163, 184, 0.2);
+    }
+}
+
+.setting__text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.setting__name {
+    color: #e6edf6;
+}
+
+.setting__hint {
+    font-size: 0.85rem;
+    color: #bfccdd;
+}
+
+.play-button {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.45rem 0.9rem 0.45rem 0.6rem;
+    border: 1px solid rgba(148, 163, 184, 0.5);
+    border-radius: 999px;
+    background: transparent;
+    color: #e0f2fe;
+    font: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition:
+        border-color 0.2s ease,
+        background-color 0.2s ease;
+
+    svg {
+        width: 1.1rem;
+        height: 1.1rem;
+        fill: currentColor;
+    }
+
+    &:hover,
+    &:focus-visible {
+        border-color: #e0f2fe;
+        background-color: rgba(15, 23, 42, 0.6);
+    }
+
+    &:focus-visible {
+        outline: 2px solid #e0f2fe;
+        outline-offset: 3px;
+    }
+}

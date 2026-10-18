@@ -17,6 +17,11 @@ export const routes: Routes = [
             import('./timer-library/timer-library.component').then((m) => m.TimerLibraryComponent),
     },
     {
+        path: 'settings',
+        loadComponent: () =>
+            import('./settings/settings.component').then((m) => m.SettingsComponent),
+    },
+    {
         path: 'timer',
         loadComponent: () => import('./timer/timer.component').then((m) => m.TimerComponent),
     },

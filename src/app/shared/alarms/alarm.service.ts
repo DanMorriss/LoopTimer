@@ -1,5 +1,6 @@
 import { DestroyRef, inject, InjectionToken, Service, signal } from '@angular/core';
 import { AlarmEvent, AlarmKind } from '../../timer/alarm-schedule';
+import { SettingsStore } from '../state/settings-store.service';
 
 /** Makes the audio context, or returns null where the browser has no Web Audio. */
 export const AUDIO_CONTEXT_FACTORY = new InjectionToken<() => AudioContext | null>(
@@ -63,6 +64,7 @@ const UNLOCK_EVENTS = ['pointerdown', 'keydown', 'touchend', 'click'] as const;
 @Service()
 export class AlarmService {
     private readonly createContext = inject(AUDIO_CONTEXT_FACTORY);
+    private readonly settings = inject(SettingsStore);
     private context: AudioContext | null = null;
     /** Everything scheduled goes through this, so it can all be silenced at once. */
     private output: GainNode | null = null;
@@ -74,6 +76,7 @@ export class AlarmService {
     /** Whether the browser is allowing sound yet. */
     readonly unlocked = this._unlocked.asReadonly();
     readonly supported = typeof AudioContext !== 'undefined';
+    readonly canVibrate = 'vibrate' in navigator;
 
     constructor() {
         // Any interaction anywhere in the app unlocks sound, e.g. pressing Start in the
@@ -114,11 +117,12 @@ export class AlarmService {
      * Replaces whatever was scheduled with these alarms. Alarms already past are skipped,
      * and so is any alarm the last call already played; one that has begun plays out.
      * So it's safe to call again at any time, e.g. to add the next rounds of a long workout.
-     * Does nothing until sound is unlocked, so schedule again once it is.
+     * Does nothing until sound is unlocked, so schedule again once it is, or while sound is
+     * turned off in settings.
      */
     schedule(events: AlarmEvent[]) {
         const context = this.context;
-        if (context?.state !== 'running') {
+        if (context?.state !== 'running' || !this.settings.sound()) {
             this.cancel();
             return;
         }
@@ -156,13 +160,31 @@ export class AlarmService {
     }
 
     /**
+     * Plays one alarm straight away, e.g. to try it out in settings. Plays even with sound
+     * turned off, as it's always asked for. Must be called from a click, tap or key press.
+     */
+    async preview(kind: AlarmKind) {
+        this.unlock();
+        const context = this.context;
+        if (!context) {
+            return;
+        }
+        await context.resume().catch(() => undefined);
+        if (context.state === 'running') {
+            for (const note of SOUNDS[kind]) {
+                this.playNote(context, context.destination, note, context.currentTime);
+            }
+        }
+    }
+
+    /**
      * Vibrates the phone, where supported (not iPhones). Vibration can't be scheduled ahead
      * like sound, so call this as each alarm comes due.
      */
     vibrate(kind: AlarmKind) {
         // Like sound, vibration needs an interaction first; Chrome logs an error otherwise
         const interacted = navigator.userActivation?.hasBeenActive ?? true;
-        if ('vibrate' in navigator && interacted) {
+        if (this.canVibrate && interacted && this.settings.vibration()) {
             navigator.vibrate(VIBRATIONS[kind]);
         }
     }
