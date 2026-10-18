@@ -23,6 +23,7 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { hasWork, Step, StepKind, Timer, UNTIL_STOPPED } from '../models/timer';
 import { InfinitySwitchComponent } from '../shared/components/infinity-switch/infinity-switch.component';
+import { ConfirmDialogComponent } from '../shared/components/confirm-dialog/confirm-dialog.component';
 import {
     WheelPickerComponent,
     WheelPickerOption,
@@ -78,6 +79,7 @@ const kindName = (kind: StepKind) => (kind === 'work' ? 'Work' : 'Rest');
         FormField,
         WheelPickerComponent,
         InfinitySwitchComponent,
+        ConfirmDialogComponent,
         MatButtonModule,
         MatFormFieldModule,
         MatIconModule,
@@ -138,6 +140,12 @@ export class TimerSetupComponent {
 
     /** Read out by screen readers after a step is added, moved or deleted. */
     protected readonly stepAnnouncement = signal('');
+
+    /** A step with something in it, waiting for the user to confirm deleting it. */
+    protected readonly stepPendingDelete = signal<{
+        index: number;
+        description: string;
+    } | null>(null);
 
     protected readonly noTimeError = computed(() =>
         this.timerForm()
@@ -249,12 +257,42 @@ export class TimerSetupComponent {
         return moved;
     }
 
+    /** The X button: deletes an empty step straight away, and asks first about anything else. */
     protected deleteStep(index: number) {
-        const steps = this.model().steps;
-        if (steps.length <= 1) {
+        const step = this.model().steps[index];
+        if (this.stepCount() <= 1) {
             return;
         }
-        const deleted = steps[index];
+        const isEmpty = !step.name.trim() && step.minutes === 0 && step.seconds === 0;
+        if (isEmpty) {
+            this.removeStep(index);
+        } else {
+            const time = step.minutes || step.seconds ? `, set to ${this.timeText(step)}` : '';
+            this.stepPendingDelete.set({
+                index,
+                description: `This will remove ${this.stepTitle(index)}${time}.`,
+            });
+        }
+    }
+
+    protected confirmDeleteStep() {
+        const pending = this.stepPendingDelete();
+        this.stepPendingDelete.set(null);
+        if (pending) {
+            this.removeStep(pending.index);
+        }
+    }
+
+    protected cancelDeleteStep() {
+        const pending = this.stepPendingDelete();
+        this.stepPendingDelete.set(null);
+        if (pending) {
+            this.focusAfterRender(`step-${this.model().steps[pending.index].key}-delete`);
+        }
+    }
+
+    private removeStep(index: number) {
+        const deleted = this.model().steps[index];
         this.updateSteps((all) => all.filter((step) => step.key !== deleted.key));
         this.stepAnnouncement.set(`Deleted step ${index + 1}`);
         // Focus the step that took its place, or the one before if it was last: its delete

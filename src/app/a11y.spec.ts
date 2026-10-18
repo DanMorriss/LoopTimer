@@ -117,6 +117,16 @@ for (const theme of ['dark', 'light'] as const) {
                 await open('/setup?editId=1');
                 await expectNoViolations();
             });
+
+            it('asking before deleting a step', async () => {
+                store.addTimer(sprints);
+                await open('/setup?editId=1');
+                click('.step__toggle');
+                await settle();
+                click('.step__action--delete');
+                await settle();
+                await expectNoViolations();
+            });
         });
 
         describe('library', () => {

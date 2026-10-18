@@ -137,63 +137,71 @@
                         </div>
 
                         @if (expanded) {
-                            <div class="step__body" [id]="'step-' + key + '-body'">
-                                <label class="picker-field" [for]="'step-' + key + '-name'">
-                                    <span class="picker-field__label">Name (optional)</span>
-                                    <input
-                                        class="picker-field__input"
-                                        [id]="'step-' + key + '-name'"
-                                        [formField]="step.name"
-                                        [placeholder]="
-                                            kind === 'work'
-                                                ? 'e.g. Squats'
-                                                : 'e.g. Catch your breath'
-                                        "
-                                        [attr.aria-describedby]="'step-' + key + '-title'"
-                                    />
-                                </label>
-
-                                <div class="picker-row">
-                                    <div class="picker-field">
-                                        <span
-                                            class="picker-field__label"
-                                            [id]="'step-' + key + '-minutes-label'"
-                                        >
-                                            Minutes
-                                        </span>
-                                        <app-wheel-picker
-                                            [id]="'step-' + key + '-minutes'"
-                                            [formField]="step.minutes"
-                                            [options]="minuteOptions"
-                                            [labelledBy]="
-                                                'step-' +
-                                                key +
-                                                '-title step-' +
-                                                key +
-                                                '-minutes-label'
+                            <!-- Slides open and shut; the inner div is what gets clipped meanwhile -->
+                            <div
+                                class="step__body"
+                                [id]="'step-' + key + '-body'"
+                                animate.enter="step__body--opening"
+                                animate.leave="step__body--closing"
+                            >
+                                <div class="step__body-inner">
+                                    <label class="picker-field" [for]="'step-' + key + '-name'">
+                                        <span class="picker-field__label">Name (optional)</span>
+                                        <input
+                                            class="picker-field__input"
+                                            [id]="'step-' + key + '-name'"
+                                            [formField]="step.name"
+                                            [placeholder]="
+                                                kind === 'work'
+                                                    ? 'e.g. Squats'
+                                                    : 'e.g. Catch your breath'
                                             "
+                                            [attr.aria-describedby]="'step-' + key + '-title'"
                                         />
-                                    </div>
+                                    </label>
 
-                                    <div class="picker-field">
-                                        <span
-                                            class="picker-field__label"
-                                            [id]="'step-' + key + '-seconds-label'"
-                                        >
-                                            Seconds
-                                        </span>
-                                        <app-wheel-picker
-                                            [id]="'step-' + key + '-seconds'"
-                                            [formField]="step.seconds"
-                                            [options]="secondOptions"
-                                            [labelledBy]="
-                                                'step-' +
-                                                key +
-                                                '-title step-' +
-                                                key +
-                                                '-seconds-label'
-                                            "
-                                        />
+                                    <div class="picker-row">
+                                        <div class="picker-field">
+                                            <span
+                                                class="picker-field__label"
+                                                [id]="'step-' + key + '-minutes-label'"
+                                            >
+                                                Minutes
+                                            </span>
+                                            <app-wheel-picker
+                                                [id]="'step-' + key + '-minutes'"
+                                                [formField]="step.minutes"
+                                                [options]="minuteOptions"
+                                                [labelledBy]="
+                                                    'step-' +
+                                                    key +
+                                                    '-title step-' +
+                                                    key +
+                                                    '-minutes-label'
+                                                "
+                                            />
+                                        </div>
+
+                                        <div class="picker-field">
+                                            <span
+                                                class="picker-field__label"
+                                                [id]="'step-' + key + '-seconds-label'"
+                                            >
+                                                Seconds
+                                            </span>
+                                            <app-wheel-picker
+                                                [id]="'step-' + key + '-seconds'"
+                                                [formField]="step.seconds"
+                                                [options]="secondOptions"
+                                                [labelledBy]="
+                                                    'step-' +
+                                                    key +
+                                                    '-title step-' +
+                                                    key +
+                                                    '-seconds-label'
+                                                "
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -267,3 +275,13 @@
         </form>
     </div>
 </div>
+
+@if (stepPendingDelete(); as pending) {
+    <app-confirm-dialog
+        title="Delete step?"
+        (cancelled)="cancelDeleteStep()"
+        (confirmed)="confirmDeleteStep()"
+    >
+        {{ pending.description }}
+    </app-confirm-dialog>
+}

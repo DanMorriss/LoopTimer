@@ -12,7 +12,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
 import { Timer } from '../models/timer';
 import { InfinityButtonComponent } from '../shared/components/infinity-button/infinity-button.component';
-import { DeleteTimerDialogComponent } from './delete-timer-dialog/delete-timer-dialog.component';
+import { ConfirmDialogComponent } from '../shared/components/confirm-dialog/confirm-dialog.component';
 import { TimerCardComponent } from './timer-card/timer-card.component';
 import { TimerStore } from '../shared/state/timer-store.service';
 
@@ -21,7 +21,7 @@ import { TimerStore } from '../shared/state/timer-store.service';
     templateUrl: './timer-library.component.html',
     styleUrl: './timer-library.component.scss',
     imports: [
-        DeleteTimerDialogComponent,
+        ConfirmDialogComponent,
         TimerCardComponent,
         MatButtonModule,
         MatIconModule,
