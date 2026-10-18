@@ -102,6 +102,8 @@ export class TimerSetupComponent {
 
     private nextKey = 1;
     private readonly model = signal<TimerSetupModel>(this.emptySetup());
+    /** Keys of the steps showing their name box and wheels; the rest show a one-line summary. */
+    private readonly expandedKeys = signal<ReadonlySet<number>>(this.allKeys());
 
     protected readonly timerForm = form(
         this.model,
@@ -126,6 +128,10 @@ export class TimerSetupComponent {
     );
 
     protected readonly stepCount = computed(() => this.model().steps.length);
+    protected readonly anyExpanded = computed(() => {
+        const expanded = this.expandedKeys();
+        return this.model().steps.some((step) => expanded.has(step.key));
+    });
     protected readonly untilStopped = computed(() => this.model().repeats === UNTIL_STOPPED);
     // The last number of rounds picked, so turning the switch off goes back to it
     private lastRounds = 1;
@@ -157,6 +163,8 @@ export class TimerSetupComponent {
                 steps: timerToEdit.steps.map((step) => this.stepModel(step)),
                 repeats: timerToEdit.repeats,
             });
+            // A saved timer opens as a list of summaries, so the whole workout fits on screen
+            this.expandedKeys.set(new Set());
         }
     }
 
@@ -171,12 +179,38 @@ export class TimerSetupComponent {
         return `Step ${index + 1}, ${step.name.trim() || kindName(step.kind).toLowerCase()}`;
     }
 
+    /** A step's time as the wheels show it, e.g. "02:15". */
+    protected timeText(step: StepModel): string {
+        return `${padded(step.minutes)}:${padded(step.seconds)}`;
+    }
+
+    protected isExpanded(key: number): boolean {
+        return this.expandedKeys().has(key);
+    }
+
+    /** Opens or closes one step. Its button stays in place, so focus stays on it. */
+    protected toggleStep(key: number) {
+        this.expandedKeys.update((keys) => {
+            const next = new Set(keys);
+            if (!next.delete(key)) {
+                next.add(key);
+            }
+            return next;
+        });
+    }
+
+    protected setAllExpanded(expanded: boolean) {
+        this.expandedKeys.set(expanded ? this.allKeys() : new Set());
+    }
+
     protected addStep(kind: StepKind) {
         if (this.stepCount() >= MAX_STEPS) {
             return;
         }
         const step = this.stepModel({ kind, seconds: 0, name: '' });
         this.updateSteps((steps) => [...steps, step]);
+        // Only the new step is opened, keeping the rest of the list short
+        this.expandedKeys.set(new Set([step.key]));
         this.stepAnnouncement.set(`Added a ${kind} step, step ${this.stepCount()}`);
         this.focusAfterRender(`step-${step.key}-name`);
     }
@@ -223,10 +257,13 @@ export class TimerSetupComponent {
         const deleted = steps[index];
         this.updateSteps((all) => all.filter((step) => step.key !== deleted.key));
         this.stepAnnouncement.set(`Deleted step ${index + 1}`);
-        // Focus the step that took its place, or the one before if it was last
+        // Focus the step that took its place, or the one before if it was last: its delete
+        // button, or its open button if it's collapsed (and so has no delete button)
         const remaining = this.model().steps;
         const next = remaining[Math.min(index, remaining.length - 1)];
-        this.focusAfterRender(`step-${next.key}-delete`);
+        this.focusAfterRender(
+            `step-${next.key}-${this.isExpanded(next.key) ? 'delete' : 'toggle'}`
+        );
     }
 
     private updateSteps(change: (steps: StepModel[]) => StepModel[]) {
@@ -235,6 +272,10 @@ export class TimerSetupComponent {
 
     private focusAfterRender(id: string) {
         afterNextRender(() => document.getElementById(id)?.focus(), { injector: this.injector });
+    }
+
+    private allKeys(): Set<number> {
+        return new Set(this.model().steps.map((step) => step.key));
     }
 
     private stepModel(step: Step): StepModel {
@@ -247,7 +288,8 @@ export class TimerSetupComponent {
         };
     }
 
-    // A new timer starts with a work step and a rest step, as timers always have
+    // A new timer starts with a work step and a rest step, as timers always have, both open
+    // as they need filling in
     private emptySetup(): TimerSetupModel {
         return {
             title: '',
@@ -278,6 +320,7 @@ export class TimerSetupComponent {
             : this.timerStore.addTimer(timer);
 
         this.model.set(this.emptySetup());
+        this.expandedKeys.set(this.allKeys());
         this.editingTimerId.set(null);
         this.timerStore.setActiveTimer(savedTimer);
         await this.router.navigate(['/timer']);

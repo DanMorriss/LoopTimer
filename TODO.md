@@ -16,11 +16,11 @@ Open work, highest priority first. Tick items off (or delete them) as they're do
     - Two switch designs: `ToggleSwitchComponent` (settings) and `InfinitySwitchComponent` (setup's until stopped).
     - The theme picker in settings: "Match system" wraps onto two lines on a phone.
     - The Pause/Resume button changes width with its label, nudging Stop along.
-- [ ] **Long step lists in setup:** each step has two wheels, so a timer with many steps makes a long page. Perhaps collapse steps to a one-line summary ("Squats · 00:30") until tapped.
 - [ ] **The ∞ on the rounds wheel** renders small in the app's font.
 - [ ] **Show that Space pauses:** it's announced to screen readers (`aria-keyshortcuts`), but there's no visible hint for keyboard users.
 
 ## 3. Known issues
 
 - [ ] **Runs left without Stop aren't in the history:** starting a different timer, or leaving the timer page mid-workout, drops the run. It could be logged as stopped when the next timer starts, or when the timer page closes.
+- [ ] **Setup's stylesheet is over budget:** `timer-setup.component.scss` is 5.1 kB, past the 4 kB warning in `angular.json` (the build fails at 8 kB). Most of it is button styles; moving them into shared styles as part of the buttons work above should bring it back under.
 - [ ] **A beep can repeat on resume:** pausing within a second of a step starting, then resuming, plays that step's beep again (the alarms allow up to a second's lateness, for the first beep after Start).
