@@ -56,6 +56,32 @@ describe('WheelPickerComponent', () => {
         viewport().dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
     }
 
+    const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    const isOpen = () =>
+        fixture.nativeElement
+            .querySelector('app-wheel-picker')
+            .classList.contains('wheel-picker--open');
+
+    /** A pointer pressing (or letting go of) the wheel. */
+    function pointer(type: 'pointerdown' | 'pointerup' | 'pointercancel', pointerType = 'mouse') {
+        viewport().dispatchEvent(
+            new PointerEvent(type, { pointerType, pointerId: 1, button: 0, bubbles: true })
+        );
+        fixture.detectChanges();
+    }
+
+    /**
+     * Press and let go, as the start of a tap or click. Not followed by settle(): whenStable
+     * waits for every timer, so it would sit out the second until the wheel closes again.
+     */
+    async function openByPress() {
+        pointer('pointerdown');
+        pointer('pointerup');
+        await wait(50);
+        fixture.detectChanges();
+    }
+
     afterEach(() => fixture?.destroy());
 
     describe('for screen readers', () => {
@@ -94,10 +120,11 @@ describe('WheelPickerComponent', () => {
     });
 
     describe('showing the value', () => {
-        it('shows three rows, with the selected one in the middle', async () => {
+        it('shows only the selected number while closed', async () => {
             await create();
 
-            expect(viewport().clientHeight).toBe(3 * rowHeight());
+            expect(isOpen()).toBe(false);
+            expect(viewport().clientHeight).toBe(rowHeight());
             expect(valueInMiddle()).toBe(3);
         });
 
@@ -142,6 +169,7 @@ describe('WheelPickerComponent', () => {
 
         it('turns with a mouse drag and snaps to a whole row', async () => {
             await create();
+            await openByPress();
 
             // Drag the bottom visible number (4) up to the top row (2): two rows
             await userEvent.dragAndDrop(item(4), item(2));
@@ -172,6 +200,117 @@ describe('WheelPickerComponent', () => {
 
             expect(viewport().scrollTop).toBe(before);
             expect(host.value()).toBe(3);
+        });
+    });
+
+    describe('opening and closing', () => {
+        it('opens on press, with two numbers either side and the selected one kept in place', async () => {
+            await create();
+
+            pointer('pointerdown', 'touch');
+            await wait(250);
+            await settle();
+
+            expect(isOpen()).toBe(true);
+            expect(viewport().clientHeight).toBe(5 * rowHeight());
+            expect(valueInMiddle()).toBe(3);
+        });
+
+        it('stays open while pressed, then closes a second after it is let go', async () => {
+            await create();
+
+            pointer('pointerdown');
+            await wait(1200);
+            expect(isOpen()).toBe(true);
+
+            pointer('pointerup');
+            await wait(500);
+            expect(isOpen()).toBe(true);
+            await wait(700);
+            await settle();
+            expect(isOpen()).toBe(false);
+        });
+
+        it('stays open while a finger scrolls it, until the finger lifts', async () => {
+            await create();
+
+            // Native scrolling cancels the pointer, though the finger is still down
+            pointer('pointerdown', 'touch');
+            pointer('pointercancel', 'touch');
+            await wait(1200);
+            expect(isOpen()).toBe(true);
+
+            viewport().dispatchEvent(new TouchEvent('touchend', { bubbles: true }));
+            await wait(1200);
+            await settle();
+            expect(isOpen()).toBe(false);
+        });
+
+        it('waits a second from the last turn before closing', async () => {
+            await create();
+            await openByPress();
+
+            await wait(700);
+            viewport().dispatchEvent(new Event('scroll'));
+            await wait(700);
+
+            expect(isOpen()).toBe(true);
+        });
+
+        it('stays open for the click that opened it, and closes on a number clicked after', async () => {
+            await create();
+
+            pointer('pointerdown');
+            pointer('pointerup');
+            item(3).click();
+            fixture.detectChanges();
+            expect(isOpen()).toBe(true);
+
+            item(5).click();
+            fixture.detectChanges();
+            expect(isOpen()).toBe(false);
+            expect(host.value()).toBe(5);
+        });
+
+        it('opens while the keyboard turns it, and closes on Escape', async () => {
+            await create();
+
+            press('ArrowDown');
+            fixture.detectChanges();
+            expect(isOpen()).toBe(true);
+
+            press('Escape');
+            fixture.detectChanges();
+            expect(isOpen()).toBe(false);
+            expect(host.value()).toBe(4);
+        });
+
+        it('opens when turned with a mouse wheel or trackpad', async () => {
+            await create();
+
+            viewport().dispatchEvent(new WheelEvent('wheel', { deltaY: 40, bubbles: true }));
+            fixture.detectChanges();
+
+            expect(isOpen()).toBe(true);
+        });
+
+        it('closes when focus moves elsewhere', async () => {
+            await create();
+            await openByPress();
+
+            viewport().dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+            fixture.detectChanges();
+
+            expect(isOpen()).toBe(false);
+        });
+
+        it('does not open when its value is set from outside', async () => {
+            await create();
+
+            host.value.set(9);
+            await settle();
+
+            expect(isOpen()).toBe(false);
         });
     });
 

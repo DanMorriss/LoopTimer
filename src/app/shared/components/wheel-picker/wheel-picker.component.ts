@@ -8,6 +8,7 @@ import {
     inject,
     input,
     model,
+    signal,
     viewChild,
 } from '@angular/core';
 import { FormValueControl } from '@angular/forms/signals';
@@ -26,11 +27,16 @@ const DRAG_THRESHOLD = 4;
 /** Digits typed within this many ms of each other build one number, e.g. "4" then "5" is 45. */
 const TYPING_PAUSE = 1000;
 
+/** An open wheel closes once its value has been left alone for this many ms. */
+const CLOSE_AFTER = 1000;
+
 /**
- * An iPhone-style wheel picker. Scroll, swipe or drag the list and the number that settles
- * in the middle is selected; clicking a number selects it too. For keyboard and screen
- * reader users it's a spin button (Up/Down, Page Up/Down, Home/End), and typing a number
- * jumps to it.
+ * An iPhone-style wheel picker. Closed, it shows just the selected number; pressing it
+ * opens the wheel over the page around that number, so a finger can press and drag in one
+ * go. Scroll, swipe or drag the list and the number that settles in the middle is selected;
+ * clicking a number selects it and closes the wheel, as does a second of no change. For
+ * keyboard and screen reader users it's a spin button (Up/Down, Page Up/Down, Home/End),
+ * and typing a number jumps to it.
  *
  * Works with Signal Forms: bind it with `[formField]`.
  */
@@ -38,6 +44,7 @@ const TYPING_PAUSE = 1000;
     selector: 'app-wheel-picker',
     templateUrl: './wheel-picker.component.html',
     styleUrl: './wheel-picker.component.scss',
+    host: { '[class.wheel-picker--open]': 'open()' },
 })
 export class WheelPickerComponent implements FormValueControl<number> {
     readonly value = model(0);
@@ -61,6 +68,14 @@ export class WheelPickerComponent implements FormValueControl<number> {
     // Lowest and highest values, not first and last: an option like ∞ can sit at the end with a low value
     protected readonly lowest = computed(() => Math.min(...this.options().map((o) => o.value)));
     protected readonly highest = computed(() => Math.max(...this.options().map((o) => o.value)));
+
+    /** Open shows the numbers around the selected one; closed shows only that one. */
+    protected readonly open = signal(false);
+    private closeTimer: ReturnType<typeof setTimeout> | undefined;
+    /** A finger, pen or mouse button is down on the wheel; it never closes meanwhile. */
+    private pressed = false;
+    /** The current press opened the wheel, so its click mustn't close it straight away. */
+    private openedByPress = false;
 
     /** The first scroll to the value jumps there; after that the wheel glides. */
     private shown = false;
@@ -97,6 +112,7 @@ export class WheelPickerComponent implements FormValueControl<number> {
             observer.observe(this.viewport().nativeElement);
             destroyRef.onDestroy(() => observer.disconnect());
         });
+        destroyRef.onDestroy(() => clearTimeout(this.closeTimer));
     }
 
     focus(options?: FocusOptions) {
@@ -106,7 +122,8 @@ export class WheelPickerComponent implements FormValueControl<number> {
     /** Jumps the wheel back to the selected value, if it's showing and has drifted off it. */
     private realign() {
         const viewport = this.viewport().nativeElement;
-        if (viewport.clientHeight === 0 || this.drag?.dragging) {
+        // Not while pressed: opening resizes the wheel, and a finger may already be turning it
+        if (viewport.clientHeight === 0 || this.pressed) {
             return;
         }
         const top = this.selectedIndex() * this.rowHeight();
@@ -116,6 +133,8 @@ export class WheelPickerComponent implements FormValueControl<number> {
     }
 
     protected onScroll() {
+        // Still turning, so not idle yet
+        this.scheduleClose();
         // Browsers without the scrollend event: settle once scrolling has paused
         if (!('onscrollend' in window)) {
             clearTimeout(this.settleTimer);
@@ -145,11 +164,23 @@ export class WheelPickerComponent implements FormValueControl<number> {
 
     protected onItemClick(index: number) {
         this.selectIndex(index);
+        if (this.openedByPress) {
+            // The press that opened the wheel: leave it open to pick from
+            this.openedByPress = false;
+        } else {
+            this.close();
+        }
     }
 
     protected onKeydown(event: KeyboardEvent) {
+        if (event.key === 'Escape' && this.open()) {
+            event.preventDefault();
+            this.close();
+            return;
+        }
         if (/^[0-9]$/.test(event.key) && !event.ctrlKey && !event.metaKey && !event.altKey) {
             event.preventDefault();
+            this.openWheel();
             this.typeDigit(event.key);
             return;
         }
@@ -168,12 +199,32 @@ export class WheelPickerComponent implements FormValueControl<number> {
             return;
         }
         event.preventDefault();
+        // Open, so keyboard users see the numbers either side too
+        this.openWheel();
         this.selectIndex(Math.min(last, Math.max(0, target)));
     }
 
-    // Mouse dragging. Touch and pens already scroll natively, so only the mouse needs this.
+    /** Focus has moved elsewhere. */
+    protected onFocusOut() {
+        this.close();
+    }
+
+    /** A mouse wheel or trackpad turning it: open, so the numbers either side show too. */
+    protected onWheel() {
+        this.openWheel();
+    }
+
     protected onPointerDown(event: PointerEvent) {
-        if (event.pointerType !== 'mouse' || event.button !== 0) {
+        if (event.pointerType === 'mouse' && event.button !== 0) {
+            return;
+        }
+        // Opens on press rather than on click, so a finger can carry straight on and turn it
+        this.pressed = true;
+        this.openedByPress = !this.open();
+        this.openWheel();
+
+        // Mouse dragging. Touch and pens already scroll natively, so only the mouse needs this.
+        if (event.pointerType !== 'mouse') {
             return;
         }
         this.drag = {
@@ -202,7 +253,41 @@ export class WheelPickerComponent implements FormValueControl<number> {
         }
     }
 
+    /**
+     * The press has ended. A finger that starts scrolling the wheel cancels its pointer
+     * straight away, though it's still down, so for touch that waits for touchend instead.
+     */
     protected onPointerUp(event: PointerEvent) {
+        if (event.type === 'pointerup' || event.pointerType === 'mouse') {
+            this.release();
+        }
+        this.endMouseDrag(event);
+    }
+
+    protected release() {
+        this.pressed = false;
+        this.scheduleClose();
+    }
+
+    private openWheel() {
+        this.open.set(true);
+        this.scheduleClose();
+    }
+
+    private close() {
+        clearTimeout(this.closeTimer);
+        this.open.set(false);
+    }
+
+    /** (Re)starts the countdown to closing, unless the wheel is closed or being pressed. */
+    private scheduleClose() {
+        clearTimeout(this.closeTimer);
+        if (this.open() && !this.pressed) {
+            this.closeTimer = setTimeout(() => this.close(), CLOSE_AFTER);
+        }
+    }
+
+    private endMouseDrag(event: PointerEvent) {
         const drag = this.drag;
         if (!drag || event.pointerId !== drag.pointerId) {
             return;
