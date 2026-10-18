@@ -3,6 +3,7 @@
     role="switch"
     class="infinity-switch"
     [class.infinity-switch--on]="checked()"
+    [class.infinity-switch--racing]="racing()"
     [attr.aria-checked]="checked()"
     [attr.aria-labelledby]="labelledBy()"
     (click)="toggle()"
@@ -13,7 +14,7 @@
                 d="M 30 30 C 30 15, 45 15, 60 30 C 75 45, 90 45, 90 30 C 90 15, 75 15, 60 30 C 45 45, 30 45, 30 30 Z"
             />
         </svg>
-        <span class="infinity-switch__dot"></span>
+        <span class="infinity-switch__dot" (animationiteration)="onLap()"></span>
     </span>
     <span class="infinity-switch__state" aria-hidden="true">{{ checked() ? 'On' : 'Off' }}</span>
 </button>

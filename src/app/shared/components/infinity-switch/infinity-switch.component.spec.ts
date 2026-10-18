@@ -1,6 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { contrastRatio } from '../../testing/contrast';
+import { fakeReducedMotion } from '../../testing/fake-reduced-motion';
 import { InfinitySwitchComponent } from './infinity-switch.component';
 
 @Component({
@@ -68,12 +69,74 @@ describe('InfinitySwitchComponent', () => {
         expect(button().textContent).toContain('On');
     });
 
-    it('rests the dot at the start of the loop when off, and sends it round when on', () => {
-        expect(getComputedStyle(dot()).animationName).toBe('none');
+    describe('the dot', () => {
+        const racing = () => getComputedStyle(dot()).animationName !== 'none';
+        const loopColour = () =>
+            getComputedStyle(fixture.nativeElement.querySelector('.infinity-switch__track path'))
+                .stroke;
+        /** The dot gets back to the left end of the loop. */
+        function lapEnds() {
+            dot().dispatchEvent(new AnimationEvent('animationiteration'));
+            fixture.detectChanges();
+        }
 
-        click();
+        it('rests at the start of the loop when off, and races round when on', () => {
+            expect(racing()).toBe(false);
 
-        expect(getComputedStyle(dot()).animationName).not.toBe('none');
+            click();
+
+            expect(racing()).toBe(true);
+        });
+
+        it('greys out at once when turned off, but finishes its lap before stopping', () => {
+            click();
+            const offColour = 'rgb(148, 163, 184)';
+            expect(loopColour()).not.toBe(offColour);
+
+            click();
+            expect(loopColour()).toBe(offColour);
+            expect(racing()).toBe(true);
+
+            lapEnds();
+            expect(racing()).toBe(false);
+        });
+
+        it('keeps racing if turned back on before the lap ends', () => {
+            click();
+            click();
+
+            click();
+            lapEnds();
+
+            expect(racing()).toBe(true);
+        });
+
+        it('starts racing if the switch starts on, e.g. editing a timer that runs until stopped', () => {
+            fixture.destroy();
+            fixture = TestBed.createComponent(HostComponent);
+            fixture.componentInstance.on.set(true);
+            fixture.detectChanges();
+
+            expect(racing()).toBe(true);
+        });
+    });
+
+    describe('with reduced motion', () => {
+        beforeEach(() => {
+            fakeReducedMotion(true);
+            fixture.destroy();
+            fixture = TestBed.createComponent(HostComponent);
+            host = fixture.componentInstance;
+            fixture.detectChanges();
+        });
+
+        it('stops the dot at once when turned off, as there is no lap to finish', () => {
+            click();
+
+            click();
+
+            expect(button().classList).not.toContain('infinity-switch--racing');
+        });
     });
 
     it('makes the loop stand out from its box, on or off (at least 3:1)', () => {

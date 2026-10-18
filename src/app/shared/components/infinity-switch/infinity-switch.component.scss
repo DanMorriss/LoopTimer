@@ -26,9 +26,6 @@ $loop-path: path(
     color: #bfccdd;
     font: inherit;
     cursor: pointer;
-    transition:
-        border-color 0.3s ease,
-        box-shadow 0.3s ease;
 
     &:focus-visible {
         outline: 2px solid #38bdf8;
@@ -39,6 +36,10 @@ $loop-path: path(
         border-color: rgba(34, 211, 238, 0.7);
         box-shadow: 0 0 18px rgba(34, 211, 238, 0.25);
         color: #a5f3fc;
+        // Turning on fades in; turning off has no transition, so it greys at once
+        transition:
+            border-color 0.3s ease,
+            box-shadow 0.3s ease;
     }
 }
 
@@ -59,13 +60,13 @@ $loop-path: path(
         stroke: $off-color;
         stroke-width: 4;
         stroke-linecap: round;
-        transition:
-            stroke 0.3s ease,
-            filter 0.3s ease;
 
         .infinity-switch--on & {
             stroke: $on-color;
             filter: drop-shadow(0 0 4px rgba(34, 211, 238, 0.8));
+            transition:
+                stroke 0.3s ease,
+                filter 0.3s ease;
         }
     }
 }
@@ -79,7 +80,8 @@ $loop-path: path(
     }
 }
 
-// Rests on the loop's left end when off, and races round it when on
+// Rests on the loop's left end when off, and races round it when on. Turned off, it greys
+// at once but keeps racing (--racing) until it's back at the left end, where the lap ends.
 .infinity-switch__dot {
     position: absolute;
     top: 0;
@@ -91,13 +93,16 @@ $loop-path: path(
     offset-path: $loop-path;
     offset-distance: 0%;
     offset-rotate: 0deg;
-    transition: background-color 0.3s ease;
 
     .infinity-switch--on & {
         background: #ecfeff;
         box-shadow:
             0 0 6px 2px $on-color,
             0 0 14px 4px rgba(34, 211, 238, 0.5);
+        transition: background-color 0.3s ease;
+    }
+
+    .infinity-switch--racing & {
         animation: race 1.6s linear infinite;
     }
 }
@@ -109,15 +114,18 @@ $loop-path: path(
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .infinity-switch,
-    .infinity-switch__track path,
-    .infinity-switch__dot {
+    .infinity-switch--on,
+    .infinity-switch--on .infinity-switch__track path,
+    .infinity-switch--on .infinity-switch__dot {
         transition: none;
+    }
+
+    .infinity-switch--racing .infinity-switch__dot {
+        animation: none;
     }
 
     // Halfway round the path is the loop's right end
     .infinity-switch--on .infinity-switch__dot {
-        animation: none;
         offset-distance: 50%;
     }
 }
