@@ -5,6 +5,7 @@ $work-color: oklch(81% 0.117 11.638);
 $rest-color: #38bdf8; // sky-400: 4.8:1 on the track, 9.8:1 for black text
 $face-color: oklch(97.7% 0.013 236.62);
 $track-color: #334155; // slate-700: dark, so both phase colours stand out (3:1 minimum)
+// The ring keeps these colours in both themes: its dark track is what makes work and rest stand out
 
 // Flashing face: fade a coloured layer in and out rather than animating background-color
 
@@ -180,9 +181,9 @@ $track-color: #334155; // slate-700: dark, so both phase colours stand out (3:1 
 .no-timer__link,
 .sound-prompt {
     padding: 0.75rem 1.5rem;
-    border: 1px solid rgba(148, 163, 184, 0.5);
+    border: 1px solid var(--border);
     border-radius: 0.75rem;
-    color: #e0f2fe;
+    color: var(--focus);
     text-decoration: none;
     transition:
         border-color 0.2s ease,
@@ -190,12 +191,12 @@ $track-color: #334155; // slate-700: dark, so both phase colours stand out (3:1 
 
     &:hover,
     &:focus-visible {
-        border-color: #e0f2fe;
-        background-color: rgba(15, 23, 42, 0.6);
+        border-color: var(--focus);
+        background-color: var(--control);
     }
 
     &:focus-visible {
-        outline: 2px solid #e0f2fe;
+        outline: 2px solid var(--focus);
         outline-offset: 3px;
     }
 }

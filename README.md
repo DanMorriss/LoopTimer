@@ -15,13 +15,13 @@ Built with Angular 22 (standalone components, signals and Signal Forms), Angular
 - **Hear each phase start.** Two short high beeps for work, a long low tone for rest, and three rising notes at the finish, with matching vibrations on phones that support them (not iPhones). The beeps are scheduled ahead on the audio clock, so they stay on time in a background tab. Browsers only allow sound after a tap, so after a refresh the timer page shows a "Tap to turn on sound" button.
 - **Pause, resume or stop** while it runs, or press Space to pause and resume. Pausing freezes the countdown and the ring where they are; stopping ends the workout and goes back to the library.
 - **Keep accurate time.** The countdown is worked out from the clock, not by counting ticks. It stays correct if the tab is in the background or the phone is locked, and catches up as soon as you come back. Refreshing the page carries on where you were, paused or not.
-- **Settings** (the gear, top left): turn sound or vibration off, and play each alarm sound to hear what it is. Saved in the browser, like timers.
+- **Settings** (the gear, top left): a dark, light or match-system theme; turn sound or vibration off; and play each alarm sound to hear what it is. Saved in the browser, like timers.
 - **Save and reuse timers** in the library: start, edit or delete any of them. Timers are saved in the browser (`localStorage`), so they stay on that device.
 - **Accessible:**
   - Everything works with a keyboard, and Space pauses and resumes the timer.
   - Screen readers hear "Work, round 1 of 3", "Rest" and "Finished" as each phase starts, and "Paused" when paused.
   - Looping animations stop when the system's reduced-motion setting is on.
-  - Every page passes automated axe checks (WCAG 2.1 AA).
+  - Every page passes automated axe checks (WCAG 2.1 AA) in both themes, and every text and control colour is checked for contrast against the surfaces it sits on.
 
 ## Running it locally
 
@@ -69,6 +69,7 @@ src/app/
   shared/
     state/timer-store.service.ts   Saved timers and the active timer
     state/settings-store.service.ts Saved settings
+    theme/theme.service.ts         Applies the theme (colour tokens are in src/styles.scss)
     alarms/alarm.service.ts        Plays alarms on the audio clock, and vibrates
     components/infinity-button/    Animated button used on the empty library
     components/wheel-picker/       iPhone-style number wheel (a Signal Forms control)
@@ -84,7 +85,7 @@ These come from the original plan and aren't built yet:
 
 - **Multiple intervals per timer**, e.g. 30 seconds then 45 seconds, rather than a single work/rest pair.
 - **Alarm sounds:** proper sound files in place of the generated beeps, and alarms on a locked phone.
-- **More settings:** a light theme, and choosing the alarm order once timers have several intervals.
+- **Alarm order setting:** choosing the sound for each interval, once timers have several intervals.
 - **History:** a log of completed workouts.
 
 Work on these, plus design and technical follow-ups, is tracked in [TODO.md](TODO.md).

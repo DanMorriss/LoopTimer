@@ -31,6 +31,49 @@ describe('SettingsComponent', () => {
         ) as HTMLButtonElement;
     const isOn = (name: string) => toggle(name).getAttribute('aria-checked') === 'true';
 
+    describe('theme', () => {
+        const radios = () =>
+            Array.from(
+                fixture.nativeElement.querySelectorAll(
+                    'input[name="theme"]'
+                ) as NodeListOf<HTMLInputElement>
+            );
+        const labels = () => radios().map((r) => r.closest('label')!.textContent!.trim());
+        const checked = () => radios().find((r) => r.checked)?.value;
+
+        it('offers Dark, Light and Match system as radio buttons in a labelled group', () => {
+            create();
+
+            expect(labels()).toEqual(['Dark', 'Light', 'Match system']);
+            const group = fixture.nativeElement.querySelector('fieldset') as HTMLFieldSetElement;
+            expect(group.querySelector('legend')!.textContent).toBe('Theme');
+        });
+
+        it('has Dark chosen to begin with', () => {
+            create();
+
+            expect(checked()).toBe('dark');
+        });
+
+        it('saves the theme picked', () => {
+            create();
+
+            radios()[1].click();
+            fixture.detectChanges();
+
+            expect(settings.theme()).toBe('light');
+            expect(checked()).toBe('light');
+            expect(JSON.parse(localStorage.getItem('settings')!).theme).toBe('light');
+        });
+
+        it('shows the saved theme', () => {
+            settings.update({ theme: 'system' });
+            create();
+
+            expect(checked()).toBe('system');
+        });
+    });
+
     it('shows the saved settings', () => {
         settings.update({ sound: false });
         create();

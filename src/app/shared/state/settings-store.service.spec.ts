@@ -17,6 +17,7 @@ describe('SettingsStore', () => {
     it('saves changes, and loads them next time', () => {
         createStore().update({ sound: false });
         expect(JSON.parse(localStorage.getItem('settings')!)).toEqual({
+            theme: 'dark',
             sound: false,
             vibration: true,
         });
@@ -26,6 +27,15 @@ describe('SettingsStore', () => {
 
         expect(store.sound()).toBe(false);
         expect(store.vibration()).toBe(true);
+    });
+
+    it('defaults to the dark theme, and keeps only a theme it knows', () => {
+        localStorage.setItem('settings', '{"theme": "neon"}');
+        expect(createStore().theme()).toBe('dark');
+
+        TestBed.resetTestingModule();
+        localStorage.setItem('settings', '{"theme": "system"}');
+        expect(createStore().theme()).toBe('system');
     });
 
     for (const [label, saved] of [

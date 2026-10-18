@@ -1,6 +1,6 @@
 <div class="flex justify-center">
     <div
-        class="m-4 w-full max-w-md rounded-xl border border-slate-700/60 bg-slate-900/35 p-6 shadow-xl shadow-black/30 backdrop-blur-sm"
+        class="m-4 w-full max-w-md rounded-xl border border-(--panel-border) bg-(--panel) p-6 shadow-xl shadow-(color:--shadow) backdrop-blur-sm"
     >
         <form [formRoot]="timerForm">
             <label class="picker-field" for="title">
@@ -8,7 +8,7 @@
                 <input class="picker-field__input" id="title" [formField]="timerForm.title" />
             </label>
 
-            <p class="p-4 text-center font-bold text-slate-100">Timer</p>
+            <p class="p-4 text-center font-bold text-(--text-strong)">Timer</p>
 
             <div class="picker-row">
                 <div class="picker-field">
@@ -32,7 +32,7 @@
                 </div>
             </div>
 
-            <p class="p-4 text-center font-bold text-slate-100">Rest</p>
+            <p class="p-4 text-center font-bold text-(--text-strong)">Rest</p>
 
             <div class="picker-row">
                 <div class="picker-field">
@@ -56,7 +56,7 @@
                 </div>
             </div>
 
-            <p class="p-4 text-center font-bold text-slate-100">Repeat</p>
+            <p class="p-4 text-center font-bold text-(--text-strong)">Repeat</p>
 
             <!-- The switch and the ∞ at the end of the wheel are two ways to set the same thing -->
             <div class="picker-row mb-4">

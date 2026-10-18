@@ -1,13 +1,18 @@
 import { computed, Service, signal } from '@angular/core';
 
+export type Theme = 'dark' | 'light' | 'system';
+const THEMES: readonly Theme[] = ['dark', 'light', 'system'];
+
 export interface Settings {
+    /** Colour theme; 'system' follows the device's light or dark setting. */
+    theme: Theme;
     /** Play a sound as each phase starts. */
     sound: boolean;
     /** Vibrate as each phase starts, where the device can. */
     vibration: boolean;
 }
 
-const DEFAULT_SETTINGS: Settings = { sound: true, vibration: true };
+const DEFAULT_SETTINGS: Settings = { theme: 'dark', sound: true, vibration: true };
 const STORAGE_KEY = 'settings';
 
 /** The user's settings, saved in the browser so they apply every time. */
@@ -15,6 +20,7 @@ const STORAGE_KEY = 'settings';
 export class SettingsStore {
     private readonly settings = signal<Settings>(loadSettings());
 
+    readonly theme = computed(() => this.settings().theme);
     readonly sound = computed(() => this.settings().sound);
     readonly vibration = computed(() => this.settings().vibration);
 
@@ -35,7 +41,8 @@ function loadSettings(): Settings {
     } catch {
         // Corrupted: use the defaults
     }
-    const flag = (key: keyof Settings) =>
+    const flag = (key: 'sound' | 'vibration') =>
         typeof saved[key] === 'boolean' ? saved[key] : DEFAULT_SETTINGS[key];
-    return { sound: flag('sound'), vibration: flag('vibration') };
+    const theme = THEMES.find((t) => t === saved['theme']) ?? DEFAULT_SETTINGS.theme;
+    return { theme, sound: flag('sound'), vibration: flag('vibration') };
 }

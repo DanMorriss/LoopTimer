@@ -1,10 +1,10 @@
 <div class="timer-page flex flex-col items-center justify-center">
     @if (timer()) {
-        <p class="text-center text-4xl text-sky-50">{{ timer()?.title }}</p>
+        <p class="text-center text-4xl text-(--text-strong)">{{ timer()?.title }}</p>
         <!-- Fixed-height slot, so the ring doesn't jump when this line changes -->
         <!-- Read out by screen readers when the phase changes; the countdown itself stays quiet -->
         <div class="sr-only" aria-live="polite" aria-atomic="true">{{ announcement() }}</div>
-        <div class="timer-status text-sky-50">
+        <div class="timer-status text-(--text-strong)">
             @if (untilStopped() && isComplete() === false) {
                 <p class="text-2xl">
                     round {{ roundNumber() }} of
@@ -112,7 +112,7 @@
             }
         }
     } @else {
-        <div class="no-timer flex flex-col items-center gap-6 p-8 text-center text-sky-50">
+        <div class="no-timer flex flex-col items-center gap-6 p-8 text-center text-(--text-strong)">
             <p class="text-2xl">No timer selected.</p>
             <a routerLink="/library" class="no-timer__link">Choose one from the library</a>
         </div>

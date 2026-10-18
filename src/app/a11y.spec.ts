@@ -36,166 +36,171 @@ const DOCUMENT_LEVEL_RULES = [
     'document-title',
 ];
 
-describe('Accessibility (axe)', () => {
-    let fixture: ComponentFixture<AppComponent>;
-    let router: Router;
-    let store: TimerStore;
+// Every page and state is checked in both themes, so neither can fall below WCAG AA
+for (const theme of ['dark', 'light'] as const) {
+    describe(`Accessibility (axe), ${theme} theme`, () => {
+        let fixture: ComponentFixture<AppComponent>;
+        let router: Router;
+        let store: TimerStore;
 
-    beforeEach(() => {
-        localStorage.clear();
-        sessionStorage.clear();
-        TestBed.configureTestingModule({ providers: [provideRouter(routes)] });
-        router = TestBed.inject(Router);
-        store = TestBed.inject(TimerStore);
-        fixture = TestBed.createComponent(AppComponent);
-    });
-
-    afterEach(() => {
-        fixture.destroy();
-        localStorage.clear();
-        sessionStorage.clear();
-    });
-
-    async function open(url: string) {
-        await router.navigateByUrl(url);
-        await settle();
-    }
-
-    // Not fixture.whenStable(): the timer page's clock interval means it never settles
-    async function settle(ms = 50) {
-        fixture.detectChanges();
-        await new Promise((resolve) => setTimeout(resolve, ms));
-        fixture.detectChanges();
-    }
-
-    function click(selector: string) {
-        const element = fixture.nativeElement.querySelector(selector) as HTMLElement | null;
-        expect(element, `expected to find ${selector}`).not.toBeNull();
-        element!.click();
-    }
-
-    async function expectNoViolations() {
-        const results = await axe.run(fixture.nativeElement as HTMLElement, {
-            runOnly: {
-                type: 'tag',
-                values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'best-practice'],
-            },
-            rules: Object.fromEntries(
-                DOCUMENT_LEVEL_RULES.map((rule) => [rule, { enabled: false }])
-            ),
-        });
-        const report = results.violations.map(
-            (v) =>
-                `${v.id} (${v.impact}): ${v.help}\n    ${v.nodes.map((n) => n.target.join(' ')).join('\n    ')}`
-        );
-        expect(report, 'axe violations').toEqual([]);
-    }
-
-    it('home', async () => {
-        await open('/home');
-        await expectNoViolations();
-    });
-
-    describe('setup', () => {
-        it('new timer (with the "must have some time" error)', async () => {
-            await open('/setup');
-            await expectNoViolations();
+        beforeEach(() => {
+            document.documentElement.dataset['theme'] = theme;
+            localStorage.clear();
+            sessionStorage.clear();
+            TestBed.configureTestingModule({ providers: [provideRouter(routes)] });
+            router = TestBed.inject(Router);
+            store = TestBed.inject(TimerStore);
+            fixture = TestBed.createComponent(AppComponent);
         });
 
-        it('with the until-stopped switch on', async () => {
-            await open('/setup');
-            click('app-infinity-switch [role="switch"]');
+        afterEach(() => {
+            fixture.destroy();
+            delete document.documentElement.dataset['theme'];
+            localStorage.clear();
+            sessionStorage.clear();
+        });
+
+        async function open(url: string) {
+            await router.navigateByUrl(url);
             await settle();
+        }
+
+        // Not fixture.whenStable(): the timer page's clock interval means it never settles
+        async function settle(ms = 50) {
+            fixture.detectChanges();
+            await new Promise((resolve) => setTimeout(resolve, ms));
+            fixture.detectChanges();
+        }
+
+        function click(selector: string) {
+            const element = fixture.nativeElement.querySelector(selector) as HTMLElement | null;
+            expect(element, `expected to find ${selector}`).not.toBeNull();
+            element!.click();
+        }
+
+        async function expectNoViolations() {
+            const results = await axe.run(fixture.nativeElement as HTMLElement, {
+                runOnly: {
+                    type: 'tag',
+                    values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'best-practice'],
+                },
+                rules: Object.fromEntries(
+                    DOCUMENT_LEVEL_RULES.map((rule) => [rule, { enabled: false }])
+                ),
+            });
+            const report = results.violations.map(
+                (v) =>
+                    `${v.id} (${v.impact}): ${v.help}\n    ${v.nodes.map((n) => n.target.join(' ')).join('\n    ')}`
+            );
+            expect(report, 'axe violations').toEqual([]);
+        }
+
+        it('home', async () => {
+            await open('/home');
             await expectNoViolations();
         });
 
-        it('editing a timer', async () => {
-            store.addTimer(sprints);
-            await open('/setup?editId=1');
-            await expectNoViolations();
+        describe('setup', () => {
+            it('new timer (with the "must have some time" error)', async () => {
+                await open('/setup');
+                await expectNoViolations();
+            });
+
+            it('with the until-stopped switch on', async () => {
+                await open('/setup');
+                click('app-infinity-switch [role="switch"]');
+                await settle();
+                await expectNoViolations();
+            });
+
+            it('editing a timer', async () => {
+                store.addTimer(sprints);
+                await open('/setup?editId=1');
+                await expectNoViolations();
+            });
+        });
+
+        describe('library', () => {
+            it('empty', async () => {
+                await open('/library');
+                await expectNoViolations();
+            });
+
+            it('with timers, including an untitled one', async () => {
+                store.addTimer(sprints);
+                store.addTimer(untitled);
+                await open('/library');
+                await expectNoViolations();
+            });
+
+            it('with a card selected and its options open', async () => {
+                store.addTimer(sprints);
+                await open('/library');
+                click('.timer-card');
+                click('.timer-card__action--menu');
+                await settle();
+                await expectNoViolations();
+            });
+
+            it('with the delete dialog open', async () => {
+                store.addTimer(sprints);
+                await open('/library');
+                click('.timer-card__action--menu');
+                await settle();
+                click('.timer-card__menu-item--danger');
+                await settle();
+                await expectNoViolations();
+            });
+        });
+
+        describe('settings', () => {
+            it('as first opened', async () => {
+                await open('/settings');
+                await expectNoViolations();
+            });
+
+            it('with sound turned off', async () => {
+                await open('/settings');
+                click('[role="switch"][aria-labelledby="sound-label"]');
+                await settle();
+                await expectNoViolations();
+            });
+        });
+
+        describe('timer', () => {
+            it('with no timer selected', async () => {
+                await open('/timer');
+                await expectNoViolations();
+            });
+
+            it('during work, rest and once finished', async () => {
+                store.setActiveTimer(store.addTimer(sprints)); // 2s work, 2s rest, 2 rounds
+                await open('/timer');
+                await expectNoViolations();
+
+                await settle(2300);
+                expect(fixture.nativeElement.textContent).toContain('Rest');
+                await expectNoViolations();
+
+                await settle(4000);
+                expect(fixture.nativeElement.textContent).toContain("You're finished!");
+                await expectNoViolations();
+            }, 15000);
+
+            it('running until stopped', async () => {
+                store.setActiveTimer(store.addTimer({ ...sprints, repeats: 0 }));
+                await open('/timer');
+                expect(fixture.nativeElement.textContent).toContain('round 1 of ∞');
+                await expectNoViolations();
+            });
+
+            it('paused', async () => {
+                store.setActiveTimer(store.addTimer(sprints));
+                store.pause();
+                await open('/timer');
+                expect(fixture.nativeElement.textContent).toContain('Paused');
+                await expectNoViolations();
+            });
         });
     });
-
-    describe('library', () => {
-        it('empty', async () => {
-            await open('/library');
-            await expectNoViolations();
-        });
-
-        it('with timers, including an untitled one', async () => {
-            store.addTimer(sprints);
-            store.addTimer(untitled);
-            await open('/library');
-            await expectNoViolations();
-        });
-
-        it('with a card selected and its options open', async () => {
-            store.addTimer(sprints);
-            await open('/library');
-            click('.timer-card');
-            click('.timer-card__action--menu');
-            await settle();
-            await expectNoViolations();
-        });
-
-        it('with the delete dialog open', async () => {
-            store.addTimer(sprints);
-            await open('/library');
-            click('.timer-card__action--menu');
-            await settle();
-            click('.timer-card__menu-item--danger');
-            await settle();
-            await expectNoViolations();
-        });
-    });
-
-    describe('settings', () => {
-        it('as first opened', async () => {
-            await open('/settings');
-            await expectNoViolations();
-        });
-
-        it('with sound turned off', async () => {
-            await open('/settings');
-            click('[role="switch"][aria-labelledby="sound-label"]');
-            await settle();
-            await expectNoViolations();
-        });
-    });
-
-    describe('timer', () => {
-        it('with no timer selected', async () => {
-            await open('/timer');
-            await expectNoViolations();
-        });
-
-        it('during work, rest and once finished', async () => {
-            store.setActiveTimer(store.addTimer(sprints)); // 2s work, 2s rest, 2 rounds
-            await open('/timer');
-            await expectNoViolations();
-
-            await settle(2300);
-            expect(fixture.nativeElement.textContent).toContain('Rest');
-            await expectNoViolations();
-
-            await settle(4000);
-            expect(fixture.nativeElement.textContent).toContain("You're finished!");
-            await expectNoViolations();
-        }, 15000);
-
-        it('running until stopped', async () => {
-            store.setActiveTimer(store.addTimer({ ...sprints, repeats: 0 }));
-            await open('/timer');
-            expect(fixture.nativeElement.textContent).toContain('round 1 of ∞');
-            await expectNoViolations();
-        });
-
-        it('paused', async () => {
-            store.setActiveTimer(store.addTimer(sprints));
-            store.pause();
-            await open('/timer');
-            expect(fixture.nativeElement.textContent).toContain('Paused');
-            await expectNoViolations();
-        });
-    });
-});
+}

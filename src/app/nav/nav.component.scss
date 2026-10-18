@@ -1,14 +1,14 @@
 .nav-button {
-    background: rgba(139, 92, 246, 0.1);
-    border: 2px solid rgba(240, 249, 255, 0.2);
+    background: var(--violet-tint);
+    border: 2px solid var(--border);
     transition: all 0.3s ease;
-    color: rgba(240, 249, 255, 0.8);
+    color: var(--text);
 
     &:hover {
         background: rgba(139, 92, 246, 0.2);
-        border-color: rgba(240, 249, 255, 0.4);
+        border-color: var(--border-strong);
         transform: scale(1.05);
-        color: rgba(240, 249, 255, 1);
+        color: var(--text-strong);
     }
 
     &:active {
@@ -16,7 +16,7 @@
     }
 
     &:focus-visible {
-        outline: 2px solid #e0f2fe;
+        outline: 2px solid var(--focus);
         outline-offset: 3px;
     }
 }

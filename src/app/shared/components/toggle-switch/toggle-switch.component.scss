@@ -1,5 +1,5 @@
-$off-color: #94a3b8; // slate-400, 3:1 or more on the dark card
-$on-color: #22d3ee; // cyan-400, as on the ∞ switch
+$off-color: var(--control-off); // 3:1 or more against the box, as a control's state must be
+$on-color: var(--glow);
 
 :host {
     display: inline-block;
@@ -13,12 +13,12 @@ $on-color: #22d3ee; // cyan-400, as on the ∞ switch
     border: none;
     border-radius: 999px;
     background: none;
-    color: #bfccdd;
+    color: var(--text-muted);
     font: inherit;
     cursor: pointer;
 
     &:focus-visible {
-        outline: 2px solid #38bdf8;
+        outline: 2px solid var(--accent);
         outline-offset: 2px;
     }
 
@@ -28,7 +28,7 @@ $on-color: #22d3ee; // cyan-400, as on the ∞ switch
     }
 
     &--on {
-        color: #a5f3fc;
+        color: var(--glow-text);
     }
 }
 
@@ -38,11 +38,11 @@ $on-color: #22d3ee; // cyan-400, as on the ∞ switch
     height: 1.75rem;
     border: 2px solid $off-color;
     border-radius: 999px;
-    background: rgba(15, 23, 42, 0.75);
+    background: var(--control);
 
     .toggle-switch--on & {
         border-color: $on-color;
-        background: rgba(34, 211, 238, 0.15);
+        background: var(--glow-soft);
         box-shadow: 0 0 12px rgba(34, 211, 238, 0.3);
     }
 }
@@ -59,7 +59,7 @@ $on-color: #22d3ee; // cyan-400, as on the ∞ switch
     transition: transform 0.2s ease;
 
     .toggle-switch--on & {
-        background: #ecfeff;
+        background: var(--glow-dot);
         box-shadow: 0 0 6px 1px $on-color;
         transform: translate(1.4rem, -50%);
     }

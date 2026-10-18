@@ -78,27 +78,27 @@
 
     // Color variations
     &--primary {
-        color: #1e9bff;
-        border-color: #1e9bff;
+        color: var(--button-primary);
+        border-color: var(--button-primary);
 
         &::before {
-            background: #1e9bff;
+            background: var(--button-primary);
         }
 
         &:hover::before {
             box-shadow:
-                0 0 10px #1e9bff,
-                0 0 30px #1e9bff,
-                0 0 60px #1e9bff;
+                0 0 10px var(--button-primary),
+                0 0 30px var(--button-primary),
+                0 0 60px var(--button-primary);
         }
 
         .infinity-button__line {
-            background: #1e9bff;
+            background: var(--button-primary);
             box-shadow:
-                0 0 10px #1e9bff,
-                0 0 20px #1e9bff,
-                0 0 50px #1e9bff,
-                0 0 100px #1e9bff;
+                0 0 10px var(--button-primary),
+                0 0 20px var(--button-primary),
+                0 0 50px var(--button-primary),
+                0 0 100px var(--button-primary);
         }
 
         .infinity-button__traveling-dot {
@@ -110,27 +110,27 @@
     }
 
     &--secondary {
-        color: #8b5cf6;
-        border-color: #8b5cf6;
+        color: var(--button-secondary);
+        border-color: var(--button-secondary);
 
         &::before {
-            background: #8b5cf6;
+            background: var(--button-secondary);
         }
 
         &:hover::before {
             box-shadow:
-                0 0 10px #8b5cf6,
-                0 0 30px #8b5cf6,
-                0 0 60px #8b5cf6;
+                0 0 10px var(--button-secondary),
+                0 0 30px var(--button-secondary),
+                0 0 60px var(--button-secondary);
         }
 
         .infinity-button__line {
-            background: #8b5cf6;
+            background: var(--button-secondary);
             box-shadow:
-                0 0 10px #8b5cf6,
-                0 0 20px #8b5cf6,
-                0 0 50px #8b5cf6,
-                0 0 100px #8b5cf6;
+                0 0 10px var(--button-secondary),
+                0 0 20px var(--button-secondary),
+                0 0 50px var(--button-secondary),
+                0 0 100px var(--button-secondary);
         }
 
         .infinity-button__traveling-dot {
