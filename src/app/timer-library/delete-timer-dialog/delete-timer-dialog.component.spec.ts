@@ -1,20 +1,10 @@
 import type { Mock } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Timer } from '../../models/timer';
+import { makeTimer } from '../../shared/testing/make-timer';
 import { DeleteTimerDialogComponent } from './delete-timer-dialog.component';
 
-const timer: Timer = {
-    id: 1,
-    title: 'Sprints',
-    timerMinutes: 0,
-    timerSeconds: 30,
-    restMinutes: 0,
-    restSeconds: 10,
-    repeats: 3,
-    isTimerActive: false,
-    isRestActive: false,
-    isComplete: false,
-};
+const timer = makeTimer({ title: 'Sprints' });
 
 describe('DeleteTimerDialogComponent', () => {
     let fixture: ComponentFixture<DeleteTimerDialogComponent>;

@@ -65,14 +65,19 @@
                 >
                     @if (isComplete() === false) {
                         <div>
-                            @if (isTimerActive() === true) {
-                                <p class="text-transparent">Timer</p>
-                                <p>{{ workTime() }}</p>
-                            }
-
-                            @if (isRestActive() === true) {
-                                <p>Rest</p>
-                                <p>{{ restTime() }}</p>
+                            <!-- Unnamed work shows just the time; the empty line keeps it centred -->
+                            <p
+                                class="timer-face__label"
+                                [class.text-transparent]="!stepLabel()"
+                                [attr.aria-hidden]="!stepLabel() || null"
+                            >
+                                {{ stepLabel() || 'Work' }}
+                            </p>
+                            <p>{{ isTimerActive() ? workTime() : restTime() }}</p>
+                            @if (showStepCount()) {
+                                <p class="timer-face__step">
+                                    step {{ stepNumber() }} of {{ stepCount() }}
+                                </p>
                             }
 
                             @if (isPaused()) {
@@ -89,6 +94,10 @@
                 </div>
             </div>
         </div>
+
+        @if (upNext()) {
+            <p class="timer-next">Next: {{ upNext() }}</p>
+        }
 
         @if (isComplete() === false) {
             <div class="timer-controls">

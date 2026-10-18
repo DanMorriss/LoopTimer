@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/DanMorriss/LoopTimer/actions/workflows/ci.yml/badge.svg)](https://github.com/DanMorriss/LoopTimer/actions/workflows/ci.yml)
 
-LoopTimer is an interval timer for anything done in timed repetitions: workouts, study sessions, or other structured activities. You set a work time, a rest time and a number of rounds, save the timer to a library, and run it whenever you need it.
+LoopTimer is an interval timer for anything done in timed repetitions: workouts, study sessions, or other structured activities. You build a round from work and rest steps, choose how many rounds (or until stopped), save the timer to a library, and run it whenever you need it.
 
 **Try it:** https://loop-timer-eight.vercel.app
 
@@ -10,8 +10,8 @@ Built with Angular 22 (standalone components, signals and Signal Forms), Angular
 
 ## What it does today
 
-- **Create a timer** with a work time (up to 99:59), an optional rest time, and 1–30 rounds or ∞ (until stopped), picked on iPhone-style wheels: swipe, scroll or drag a wheel, click a number, or type one, and the one in the middle is selected. Give it a title, or leave it untitled. For ∞, scroll the rounds wheel past 30, or flip the ∞ switch beside it: the dot races round the loop and the wheel spins to ∞. Turning the switch off spins back to the rounds you had.
-- **Run it.** A ring fills as each phase goes by. Work fills clockwise in pink, rest fills anticlockwise in blue, and the face flashes in the phase colour. The page shows the rounds left and "Last one!" for the final round. There's no rest after the last round.
+- **Create a timer** from a list of work and rest steps in any order (up to 20), each up to 99:59 and optionally named, e.g. "Squats". Add steps, move them up or down, or delete them. Then pick 1–30 rounds or ∞ (until stopped). Times are picked on iPhone-style wheels: swipe, scroll or drag a wheel, click a number, or type one, and the one in the middle is selected. Give it a title, or leave it untitled. For ∞, scroll the rounds wheel past 30, or flip the ∞ switch beside it: the dot races round the loop and the wheel spins to ∞. Turning the switch off spins back to the rounds you had.
+- **Run it.** A ring fills as each phase goes by. Work fills clockwise in pink, rest fills anticlockwise in blue, and the face flashes in the phase colour. The face shows the step's name and, when a round has several work steps, which step it is; underneath, what's up next. The page shows the rounds left and "Last one!" for the final round. Rest at the end of the last round is skipped.
 - **Hear each phase start.** Two short high beeps for work, a long low tone for rest, and three rising notes at the finish, with matching vibrations on phones that support them (not iPhones). The beeps are scheduled ahead on the audio clock, so they stay on time in a background tab. Browsers only allow sound after a tap, so after a refresh the timer page shows a "Tap to turn on sound" button.
 - **Pause, resume or stop** while it runs, or press Space to pause and resume. Pausing freezes the countdown and the ring where they are; stopping ends the workout and goes back to the library.
 - **Keep accurate time.** The countdown is worked out from the clock, not by counting ticks. It stays correct if the tab is in the background or the phone is locked, and catches up as soon as you come back. Refreshing the page carries on where you were, paused or not.
@@ -83,9 +83,8 @@ src/app/
 
 These come from the original plan and aren't built yet:
 
-- **Multiple intervals per timer**, e.g. 30 seconds then 45 seconds, rather than a single work/rest pair.
 - **Alarm sounds:** proper sound files in place of the generated beeps, and alarms on a locked phone.
-- **Alarm order setting:** choosing the sound for each interval, once timers have several intervals.
+- **Alarm order setting:** choosing the sound for each step.
 - **History:** a log of completed workouts.
 
 Work on these, plus design and technical follow-ups, is tracked in [TODO.md](TODO.md).
@@ -95,8 +94,8 @@ Work on these, plus design and technical follow-ups, is tracked in [TODO.md](TOD
 | | Story | Status |
 |---|---|---|
 | 1 | As a user I want to be able to create an alarm telling me when to start and end an 'x' second exercise with a 'y' second break that repeats 'z' times. | ✅ Done |
-| 2 | As a user I want to be able to create an alarm telling me when to start and end an 'x' second exercise with a 'y' second break that repeats until I turn it off manually. | Planned |
-| 3 | As a user I want to be able to set different notifications for each different interval of time so I know when I am entering a different period of time. | Partly: work and rest are clearly different on screen; sounds and vibration are planned |
+| 2 | As a user I want to be able to create an alarm telling me when to start and end an 'x' second exercise with a 'y' second break that repeats until I turn it off manually. | ✅ Done (∞ rounds, and the Stop button) |
+| 3 | As a user I want to be able to set different notifications for each different interval of time so I know when I am entering a different period of time. | Partly: each step can be named, and work and rest have their own colour, sound and vibration; choosing a sound per step is planned |
 | 4 | As a user I want the timers to continue if my phone screen locks so I can work out with my phone in my pocket. | Partly: the countdown keeps correct time while locked and catches up when you return; alerts while locked are planned |
 | 5 | As a user I want to be able to see the alarms I have created in the past so I can reuse them. | ✅ Done (the library) |
 

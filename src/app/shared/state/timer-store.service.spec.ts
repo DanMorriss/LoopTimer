@@ -1,20 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 import { Timer } from '../../models/timer';
+import { makeTimer as baseTimer, rest, SimpleTimer, work } from '../testing/make-timer';
 import { TimerStore } from './timer-store.service';
 
-function makeTimer(overrides: Partial<Omit<Timer, 'id'>> = {}): Omit<Timer, 'id'> {
-    return {
-        title: 'Intervals',
-        timerMinutes: 0,
-        timerSeconds: 30,
-        restMinutes: 0,
-        restSeconds: 10,
-        repeats: 3,
-        isTimerActive: false,
-        isRestActive: false,
-        isComplete: false,
-        ...overrides,
-    };
+// A new timer to add: the shared test timer without its id
+function makeTimer(overrides: Partial<SimpleTimer> = {}): Omit<Timer, 'id'> {
+    const { id: _id, ...timer } = baseTimer(overrides);
+    return timer;
 }
 
 function savedTimers(): Timer[] {
@@ -60,14 +52,83 @@ describe('TimerStore', () => {
                 { ...makeTimer(), id: 0 },
                 { ...makeTimer(), id: 3, title: 42 },
                 { ...makeTimer(), id: 4, repeats: -1 },
-                { ...makeTimer(), id: 5, timerSeconds: 60 },
-                { ...makeTimer(), id: 6, restSeconds: -1 },
-                { ...makeTimer(), id: 7, timerMinutes: 1.5 },
-                { ...makeTimer(), id: 8, timerMinutes: 0, timerSeconds: 0 },
+                { ...makeTimer(), id: 5, steps: 'work' },
+                { ...makeTimer(), id: 6, steps: [] },
+                { ...makeTimer(), id: 7, steps: [rest(10)] },
+                { ...makeTimer(), id: 8, steps: [work(0)] },
+                { ...makeTimer(), id: 9, steps: [work(30.5)] },
+                { ...makeTimer(), id: 10, steps: [work(100 * 60)] },
+                { ...makeTimer(), id: 11, steps: [{ kind: 'jump', seconds: 30, name: '' }] },
+                { ...makeTimer(), id: 12, steps: [{ kind: 'work', seconds: 30 }] },
             ];
             localStorage.setItem('timers', JSON.stringify([valid, ...broken]));
 
             expect(createStore().timers()).toEqual([valid]);
+        });
+
+        it("keeps each step's kind, length and name, in order", () => {
+            const circuit: Timer = {
+                ...makeTimer({ steps: [work(30, 'Squats'), work(45, 'Plank'), rest(20)] }),
+                id: 1,
+            };
+            localStorage.setItem('timers', JSON.stringify([circuit]));
+
+            expect(createStore().timers()).toEqual([circuit]);
+        });
+
+        describe('timers saved before steps', () => {
+            const old = (overrides: Record<string, unknown> = {}) => ({
+                id: 1,
+                title: 'Old',
+                timerMinutes: 1,
+                timerSeconds: 5,
+                restMinutes: 0,
+                restSeconds: 20,
+                repeats: 4,
+                isTimerActive: false,
+                isRestActive: false,
+                isComplete: false,
+                ...overrides,
+            });
+            const load = (saved: unknown[]) => {
+                localStorage.setItem('timers', JSON.stringify(saved));
+                return createStore().timers();
+            };
+
+            it('become a work step and a rest step', () => {
+                expect(load([old()])).toEqual([
+                    { id: 1, title: 'Old', steps: [work(65), rest(20)], repeats: 4 },
+                ]);
+            });
+
+            it('have no rest step when there was no rest', () => {
+                expect(load([old({ restSeconds: 0 })])[0].steps).toEqual([work(65)]);
+            });
+
+            it('are saved in the new format the next time anything changes', () => {
+                const store = (load([old()]), TestBed.inject(TimerStore));
+
+                store.addTimer(makeTimer());
+
+                expect(savedTimers()[0]).toEqual({
+                    id: 1,
+                    title: 'Old',
+                    steps: [work(65), rest(20)],
+                    repeats: 4,
+                });
+            });
+
+            it('are dropped when broken', () => {
+                const broken = [
+                    old({ timerSeconds: 60 }),
+                    old({ restSeconds: -1 }),
+                    old({ timerMinutes: 1.5 }),
+                    old({ timerMinutes: 0, timerSeconds: 0 }),
+                    old({ restMinutes: undefined }),
+                ];
+
+                expect(load(broken)).toEqual([]);
+            });
         });
 
         it('keeps a timer that runs until stopped (repeats 0)', () => {

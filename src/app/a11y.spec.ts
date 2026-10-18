@@ -3,7 +3,7 @@ import { provideRouter, Router } from '@angular/router';
 import axe from 'axe-core';
 import { AppComponent } from './app.component';
 import { routes } from './app.routes';
-import { Timer } from './models/timer';
+import { makeTimer, rest, work } from './shared/testing/make-timer';
 import { TimerStore } from './shared/state/timer-store.service';
 
 /**
@@ -11,19 +11,8 @@ import { TimerStore } from './shared/state/timer-store.service';
  * rendered inside the real app shell, so accessibility regressions fail the tests.
  */
 
-const sprints: Timer = {
-    id: 1,
-    title: 'Sprints',
-    timerMinutes: 0,
-    timerSeconds: 2,
-    restMinutes: 0,
-    restSeconds: 2,
-    repeats: 2,
-    isTimerActive: false,
-    isRestActive: false,
-    isComplete: false,
-};
-const untitled: Timer = { ...sprints, id: 2, title: '', timerSeconds: 30 };
+const sprints = makeTimer({ title: 'Sprints', timerSeconds: 2, restSeconds: 2, repeats: 2 });
+const untitled = makeTimer({ id: 2, title: '', timerSeconds: 30, restSeconds: 2, repeats: 2 });
 
 // These rules look at the whole document (one <main>, one <h1>, everything inside a
 // landmark). The test page around the app isn't ours, so they're left to the
@@ -103,6 +92,15 @@ for (const theme of ['dark', 'light'] as const) {
         describe('setup', () => {
             it('new timer (with the "must have some time" error)', async () => {
                 await open('/setup');
+                await expectNoViolations();
+            });
+
+            it('with several steps, one of them moved', async () => {
+                await open('/setup');
+                click('.add-step');
+                await settle();
+                click('.step:nth-child(3) .step__action');
+                await settle();
                 await expectNoViolations();
             });
 
@@ -186,6 +184,17 @@ for (const theme of ['dark', 'light'] as const) {
                 expect(fixture.nativeElement.textContent).toContain("You're finished!");
                 await expectNoViolations();
             }, 15000);
+
+            it('running a round of several named steps', async () => {
+                store.setActiveTimer(
+                    store.addTimer(
+                        makeTimer({ steps: [work(30, 'Squats'), work(45, 'Plank'), rest(20)] })
+                    )
+                );
+                await open('/timer');
+                expect(fixture.nativeElement.textContent).toContain('step 1 of 3');
+                await expectNoViolations();
+            });
 
             it('running until stopped', async () => {
                 store.setActiveTimer(store.addTimer({ ...sprints, repeats: 0 }));

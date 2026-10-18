@@ -1,7 +1,7 @@
 import { Component, computed, input, output } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { runsUntilStopped, Timer } from '../../models/timer';
+import { roundSeconds, runsUntilStopped, Timer } from '../../models/timer';
 import { formatTime } from '../../shared/format-time';
 
 /**
@@ -38,12 +38,26 @@ export class TimerCardComponent {
     protected readonly title = computed(() => this.timer().title.trim());
     /** Used in accessible names, e.g. "Start Sprints" or "Start timer". */
     protected readonly name = computed(() => this.title() || 'timer');
-    protected readonly workTime = computed(() =>
-        formatTime(this.timer().timerMinutes, this.timer().timerSeconds)
-    );
-    protected readonly restTime = computed(() =>
-        formatTime(this.timer().restMinutes, this.timer().restSeconds)
-    );
+    /**
+     * A one-line summary: "01:05 - 00:20" for one work step (and maybe one rest), as
+     * timers have always shown, or "5 steps · 02:15" with the length of a round.
+     */
+    protected readonly summary = computed(() => {
+        const steps = this.timer().steps;
+        const [first, second] = steps;
+        const simple =
+            steps.length <= 2 && first.kind === 'work' && (!second || second.kind === 'rest');
+        if (simple) {
+            const work = clock(first.seconds);
+            const rest = clock(second?.seconds ?? 0);
+            return { text: `${work} - ${rest}`, spoken: `Timer ${work}, rest ${rest}` };
+        }
+        const round = clock(roundSeconds(this.timer()));
+        return {
+            text: `${steps.length} steps · ${round}`,
+            spoken: `${steps.length} steps, ${round} a round`,
+        };
+    });
     protected readonly rounds = computed(() =>
         runsUntilStopped(this.timer()) ? '∞' : String(this.timer().repeats)
     );
@@ -59,4 +73,9 @@ export class TimerCardComponent {
         event.stopPropagation();
         this.selected.emit();
     }
+}
+
+/** e.g. 75 → "01:15" */
+function clock(seconds: number): string {
+    return formatTime(Math.floor(seconds / 60), seconds % 60);
 }

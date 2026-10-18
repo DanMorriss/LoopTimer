@@ -1,20 +1,17 @@
 import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Timer, UNTIL_STOPPED } from '../../models/timer';
+import { makeTimer, rest, work } from '../../shared/testing/make-timer';
 import { TimerCardComponent } from './timer-card.component';
 
-const sprints: Timer = {
+const sprints = makeTimer({
     id: 7,
     title: 'Sprints',
     timerMinutes: 1,
     timerSeconds: 5,
-    restMinutes: 0,
     restSeconds: 20,
     repeats: 4,
-    isTimerActive: false,
-    isRestActive: false,
-    isComplete: false,
-};
+});
 
 // The card's selector is an attribute on <li>, so test it inside a list like the library does
 @Component({
@@ -78,6 +75,21 @@ describe('TimerCardComponent', () => {
         expect(el('.timer-card__summary').getAttribute('aria-label')).toBe(
             'Timer 01:05, rest 00:20, repeated until stopped'
         );
+    });
+
+    it('sums up a round of several steps by their count and total time', () => {
+        set({ timer: { ...sprints, steps: [work(30, 'Squats'), work(45), rest(20)] } });
+
+        expect(el('.timer-card__summary').textContent).toContain('3 steps · 01:35 x 4');
+        expect(el('.timer-card__summary').getAttribute('aria-label')).toBe(
+            '3 steps, 01:35 a round, repeated 4 times'
+        );
+    });
+
+    it('shows a timer with no rest as rest 00:00, as before', () => {
+        set({ timer: { ...sprints, steps: [work(65)] } });
+
+        expect(el('.timer-card__summary').textContent).toContain('01:05 - 00:00 x 4');
     });
 
     it('names an untitled timer generically', () => {

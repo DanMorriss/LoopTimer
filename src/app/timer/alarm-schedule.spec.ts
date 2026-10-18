@@ -1,22 +1,7 @@
-import { Timer, UNTIL_STOPPED } from '../models/timer';
+import { UNTIL_STOPPED } from '../models/timer';
+import { makeTimer, rest, work } from '../shared/testing/make-timer';
 import { alarmEvents } from './alarm-schedule';
 import { timerStateAt } from './timer-state';
-
-function makeTimer(overrides: Partial<Timer> = {}): Timer {
-    return {
-        id: 1,
-        title: 'Intervals',
-        timerMinutes: 0,
-        timerSeconds: 30,
-        restMinutes: 0,
-        restSeconds: 10,
-        repeats: 3,
-        isTimerActive: false,
-        isRestActive: false,
-        isComplete: false,
-        ...overrides,
-    };
-}
 
 describe('alarmEvents', () => {
     it('sounds at the start of each work and rest, then at the finish', () => {
@@ -82,5 +67,36 @@ describe('alarmEvents', () => {
         const kinds = alarmEvents(makeTimer(), 0, 2, 100).map((e) => e.kind);
 
         expect(kinds).toEqual(['work', 'finish']);
+    });
+
+    describe('several steps', () => {
+        const circuit = makeTimer({
+            steps: [work(30, 'Squats'), work(45, 'Plank'), rest(20)],
+            repeats: 2,
+        });
+
+        it('sounds at the start of every step, with work or rest to match', () => {
+            expect(alarmEvents(circuit, 0)).toEqual([
+                { kind: 'work', at: 0 },
+                { kind: 'work', at: 30_000 },
+                { kind: 'rest', at: 75_000 },
+                { kind: 'work', at: 95_000 },
+                { kind: 'work', at: 125_000 },
+                // No rest after the last round: straight to the finish
+                { kind: 'finish', at: 170_000 },
+            ]);
+        });
+
+        it('lines up with the step changes in timerStateAt()', () => {
+            const kinds = { work: 'work', rest: 'rest', finish: 'complete' } as const;
+
+            for (const event of alarmEvents(circuit, 0)) {
+                const state = timerStateAt(circuit, event.at);
+                expect(state.phase).toBe(kinds[event.kind]);
+                if (state.step) {
+                    expect(state.phaseElapsedMs).toBe(0);
+                }
+            }
+        });
     });
 });

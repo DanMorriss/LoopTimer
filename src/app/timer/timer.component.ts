@@ -40,12 +40,30 @@ export class TimerComponent implements OnDestroy {
     private readonly now = signal(Date.now());
     private readonly clockId = setInterval(() => this.syncClock(), 250);
 
-    private readonly state = computed(() => {
-        const timer = this.timer();
+    /** How long the timer has run, in ms, or null if there's no timer. */
+    private readonly elapsedMs = computed(() => {
         const startedAt = this.timerStore.activeTimerStartedAt();
         // While paused, time stands still at the moment of the pause
         const at = this.timerStore.activeTimerPausedAt() ?? this.now();
-        return timer && startedAt !== null ? timerStateAt(timer, at - startedAt) : null;
+        return this.timer() && startedAt !== null ? at - startedAt : null;
+    });
+
+    private readonly state = computed(() => {
+        const timer = this.timer();
+        const elapsedMs = this.elapsedMs();
+        return timer && elapsedMs !== null ? timerStateAt(timer, elapsedMs) : null;
+    });
+
+    // What comes after the current step: the state at the moment it ends
+    private readonly nextState = computed(() => {
+        const timer = this.timer();
+        const state = this.state();
+        const elapsedMs = this.elapsedMs();
+        if (!timer || !state || elapsedMs === null || state.phase === 'complete') {
+            return null;
+        }
+        const stepEndMs = elapsedMs - state.phaseElapsedMs + state.phaseSeconds * 1000;
+        return timerStateAt(timer, stepEndMs);
     });
 
     protected readonly alarms = inject(AlarmService);
@@ -111,6 +129,36 @@ export class TimerComponent implements OnDestroy {
     /** The round in progress, counting from 1. */
     roundNumber = computed(() => (this.state()?.round ?? 0) + 1);
 
+    /** How many steps make up a round. */
+    stepCount = computed(() => this.timer()?.steps.length ?? 0);
+    /**
+     * Whether to say which step it is. Only for rounds with more than one work step: a
+     * plain work-and-rest timer doesn't need "step 1 of 2".
+     */
+    showStepCount = computed(
+        () => (this.timer()?.steps.filter((step) => step.kind === 'work').length ?? 0) > 1
+    );
+    /** The step in progress, counting from 1. */
+    stepNumber = computed(() => (this.state()?.stepIndex ?? 0) + 1);
+    /** The step's name, or "Rest" for an unnamed rest. Unnamed work shows just the time. */
+    stepLabel = computed(() => {
+        const step = this.state()?.step;
+        return step?.name || (step?.kind === 'rest' ? 'Rest' : '');
+    });
+    /** e.g. "Plank · 00:45", or "finish" when the workout ends after this step. */
+    upNext = computed(() => {
+        const next = this.nextState();
+        if (!next) {
+            return '';
+        }
+        if (!next.step) {
+            return 'finish';
+        }
+        const name = next.step.name || (next.step.kind === 'rest' ? 'Rest' : 'Work');
+        const seconds = next.step.seconds;
+        return `${name} · ${formatTime(Math.floor(seconds / 60), seconds % 60)}`;
+    });
+
     private readonly remaining = computed(() => this.state()?.remainingSeconds ?? 0);
     private readonly time = computed(() =>
         formatTime(Math.floor(this.remaining() / 60), this.remaining() % 60)
@@ -123,8 +171,8 @@ export class TimerComponent implements OnDestroy {
         this.untilStopped() ? [] : Array.from({ length: this.repeats() }, (_, i) => i)
     );
 
-    // The ring sweep is a CSS animation that runs for the whole phase, so the browser can
-    // animate it without repainting. This only changes when a new phase starts, which
+    // The ring sweep is a CSS animation that runs for the whole step, so the browser can
+    // animate it without repainting. This only changes when a new step starts, which
     // recreates the ring element and restarts the animation from the right point.
     private readonly ringSweep = computed(
         () => {
@@ -134,7 +182,7 @@ export class TimerComponent implements OnDestroy {
             }
             const halfMs = (state.phaseSeconds * 1000) / 2;
             return {
-                key: `${this.timerStore.activeTimerStartedAt()}-${state.round}-${state.phase}`,
+                key: `${this.timerStore.activeTimerStartedAt()}-${state.round}-${state.stepIndex}`,
                 halfDuration: `${halfMs}ms`,
                 // Negative delays start part-way through, e.g. when resuming after a refresh
                 firstHalfDelay: `${-state.phaseElapsedMs}ms`,
@@ -163,8 +211,9 @@ export class TimerComponent implements OnDestroy {
     progressPercent = computed(() => Math.round(this.progress() * 100));
 
     /**
-     * What screen readers announce. It only changes when the phase changes, so the
-     * live region speaks at the start of each work, rest and the end, not every second.
+     * What screen readers announce. It only changes when a step starts, so the live region
+     * speaks at the start of each step and at the end, not every second. With several
+     * steps it says which one, so back-to-back steps of the same kind are each announced.
      */
     announcement = computed(() => {
         const state = this.state();
@@ -175,19 +224,24 @@ export class TimerComponent implements OnDestroy {
         if (this.isPaused() && state.phase !== 'complete') {
             return 'Paused';
         }
-        switch (state.phase) {
-            case 'work':
-                if (this.untilStopped()) {
-                    return `Work, round ${state.round + 1}`;
-                }
-                return state.roundsLeft === 1 && timer.repeats > 1
-                    ? 'Work, last round'
-                    : `Work, round ${state.round + 1} of ${timer.repeats}`;
-            case 'rest':
-                return 'Rest';
-            case 'complete':
-                return 'Finished';
+        if (!state.step) {
+            return 'Finished';
         }
+        const parts = [state.step.name || (state.step.kind === 'work' ? 'Work' : 'Rest')];
+        if (this.showStepCount()) {
+            parts.push(`step ${state.stepIndex + 1} of ${timer.steps.length}`);
+        }
+        // The round is given as each round starts
+        if (state.stepIndex === 0) {
+            if (this.untilStopped()) {
+                parts.push(`round ${state.round + 1}`);
+            } else if (state.roundsLeft === 1 && timer.repeats > 1) {
+                parts.push('last round');
+            } else {
+                parts.push(`round ${state.round + 1} of ${timer.repeats}`);
+            }
+        }
+        return parts.join(', ');
     });
 
     togglePause() {

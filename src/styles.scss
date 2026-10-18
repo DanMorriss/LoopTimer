@@ -50,6 +50,8 @@
     --violet-glow: rgba(139, 92, 246, 0.3);
     --violet-tint: rgba(139, 92, 246, 0.1);
     --logo-line: rgba(240, 249, 255, 0.3);
+    --work: #fda4af; // the work pink, for badges and edges
+    --rest: #38bdf8; // the rest blue
 }
 
 // Light: the same roles, chosen for at least 4.5:1 text and 3:1 controls on a pale page
@@ -97,6 +99,8 @@
     --violet-glow: rgba(109, 40, 217, 0.25);
     --violet-tint: rgba(109, 40, 217, 0.08);
     --logo-line: rgba(15, 23, 42, 0.3);
+    --work: #be123c;
+    --rest: #0369a1;
 }
 
 html,
