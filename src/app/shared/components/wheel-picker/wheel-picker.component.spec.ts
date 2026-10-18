@@ -79,6 +79,13 @@ describe('WheelPickerComponent', () => {
     });
 
     describe('showing the value', () => {
+        it('shows three rows, with the selected one in the middle', async () => {
+            await create();
+
+            expect(viewport().clientHeight).toBe(3 * rowHeight());
+            expect(valueInMiddle()).toBe(3);
+        });
+
         it('starts with the current value in the middle', async () => {
             await create();
 
@@ -120,8 +127,8 @@ describe('WheelPickerComponent', () => {
         it('turns with a mouse drag and snaps to a whole row', async () => {
             await create();
 
-            // Drag the number two rows below the middle up into the middle
-            await userEvent.dragAndDrop(item(5), item(3));
+            // Drag the bottom visible number (4) up to the top row (2): two rows
+            await userEvent.dragAndDrop(item(4), item(2));
             await scrolled();
 
             expect(host.value()).toBe(5);
@@ -148,6 +155,75 @@ describe('WheelPickerComponent', () => {
             }
 
             expect(viewport().scrollTop).toBe(before);
+            expect(host.value()).toBe(3);
+        });
+    });
+
+    describe('typing a number', () => {
+        const type = (...keys: string[]) => keys.forEach((key) => press(key));
+
+        it('jumps to a typed digit', async () => {
+            await create();
+
+            type('7');
+
+            expect(host.value()).toBe(7);
+        });
+
+        it('builds a number from digits typed in quick succession', async () => {
+            await create();
+
+            type('1', '5');
+
+            expect(host.value()).toBe(15);
+        });
+
+        it('accepts a leading zero, as the numbers are shown', async () => {
+            await create();
+
+            type('0', '9');
+
+            expect(host.value()).toBe(9);
+        });
+
+        it('starts again from the last digit when the number is not on the wheel', async () => {
+            await create();
+
+            // The wheel only goes up to 20
+            type('4', '5');
+
+            expect(host.value()).toBe(5);
+        });
+
+        it('starts a fresh number after a pause', async () => {
+            await create();
+            const now = vi.spyOn(Date, 'now');
+
+            now.mockReturnValue(10_000);
+            type('1');
+            now.mockReturnValue(11_500);
+            type('2');
+
+            expect(host.value()).toBe(2);
+        });
+
+        it('turns the wheel to the typed number', async () => {
+            await create();
+
+            type('1', '2');
+            await settle();
+            await scrolled();
+
+            expect(valueInMiddle()).toBe(12);
+        });
+
+        it('leaves shortcuts like Ctrl+1 alone', async () => {
+            await create();
+
+            viewport().dispatchEvent(
+                new KeyboardEvent('keydown', { key: '1', ctrlKey: true, bubbles: true })
+            );
+
             expect(host.value()).toBe(3);
         });
     });

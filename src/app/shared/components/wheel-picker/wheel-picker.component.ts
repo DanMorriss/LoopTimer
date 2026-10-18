@@ -18,10 +18,14 @@ export interface WheelPickerOption {
 /** How far a mouse has to move (px) before a press counts as a drag rather than a click. */
 const DRAG_THRESHOLD = 4;
 
+/** Digits typed within this many ms of each other build one number, e.g. "4" then "5" is 45. */
+const TYPING_PAUSE = 1000;
+
 /**
  * An iPhone-style wheel picker. Scroll, swipe or drag the list and the number that settles
  * in the middle is selected; clicking a number selects it too. For keyboard and screen
- * reader users it's a spin button (Up/Down, Page Up/Down, Home/End).
+ * reader users it's a spin button (Up/Down, Page Up/Down, Home/End), and typing a number
+ * jumps to it.
  *
  * Works with Signal Forms: bind it with `[formField]`.
  */
@@ -58,6 +62,8 @@ export class WheelPickerComponent implements FormValueControl<number> {
         dragging: boolean;
     } | null = null;
     private settleTimer: ReturnType<typeof setTimeout> | undefined;
+    /** Digits typed so far, and when the last one was typed. */
+    private typed = { text: '', at: 0 };
 
     constructor() {
         // Keep the wheel showing the value, whether it changed here or from the form
@@ -89,9 +95,18 @@ export class WheelPickerComponent implements FormValueControl<number> {
         if (this.drag?.dragging) {
             return;
         }
-        const option = this.options()[this.indexAtScroll()];
+        const index = this.indexAtScroll();
+        const option = this.options()[index];
         if (option && option.value !== this.value()) {
             this.value.set(option.value);
+        }
+
+        // Chrome can stop a pixel short when one smooth scroll interrupts another (e.g.
+        // typing "2" then "5"), so line the row up with the band exactly
+        const viewport = this.viewport().nativeElement;
+        const rowTop = index * this.rowHeight();
+        if (Math.abs(viewport.scrollTop - rowTop) >= 0.5) {
+            viewport.scrollTo({ top: rowTop, behavior: 'instant' });
         }
     }
 
@@ -100,6 +115,12 @@ export class WheelPickerComponent implements FormValueControl<number> {
     }
 
     protected onKeydown(event: KeyboardEvent) {
+        if (/^[0-9]$/.test(event.key) && !event.ctrlKey && !event.metaKey && !event.altKey) {
+            event.preventDefault();
+            this.typeDigit(event.key);
+            return;
+        }
+
         const last = this.options().length - 1;
         const current = this.selectedIndex();
         const target = {
@@ -159,6 +180,28 @@ export class WheelPickerComponent implements FormValueControl<number> {
             viewport.classList.remove('wheel-picker__viewport--dragging');
             viewport.releasePointerCapture(event.pointerId);
             this.selectIndex(this.indexAtScroll());
+        }
+    }
+
+    /**
+     * Jump to a typed number. Quick digits build one number; if that number isn't on the
+     * wheel (e.g. 75 on a 0-59 wheel), start again from the digit just typed.
+     */
+    private typeDigit(digit: string) {
+        const now = Date.now();
+        const continuing = now - this.typed.at <= TYPING_PAUSE;
+        const indexOf = (text: string) =>
+            this.options().findIndex((option) => option.value === Number(text));
+
+        let text = continuing ? this.typed.text + digit : digit;
+        let index = indexOf(text);
+        if (index === -1 && continuing) {
+            text = digit;
+            index = indexOf(text);
+        }
+        this.typed = { text, at: now };
+        if (index !== -1) {
+            this.selectIndex(index);
         }
     }
 

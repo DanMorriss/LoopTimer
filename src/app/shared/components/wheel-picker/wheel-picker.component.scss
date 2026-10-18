@@ -1,6 +1,10 @@
-// Five rows show; the middle one is selected.
+@use 'sass:math';
+
+// Three rows show; the middle one is selected.
 $row-height: 2.5rem;
-$visible-rows: 5;
+$visible-rows: 3;
+// Rows above (and below) the middle one
+$rows-around: math.div($visible-rows - 1, 2);
 
 :host {
     position: relative;
@@ -19,7 +23,7 @@ $visible-rows: 5;
         content: '';
         position: absolute;
         inset-inline: 0.4rem;
-        top: $row-height * 2;
+        top: $row-height * $rows-around;
         height: $row-height;
         border-block: 1px solid rgba(56, 189, 248, 0.6);
         border-radius: 0.4rem;
@@ -34,12 +38,12 @@ $visible-rows: 5;
     overscroll-behavior: contain;
     scroll-snap-type: y mandatory;
     // Room above the first number and below the last, so every number can reach the middle
-    padding-block: $row-height * 2;
+    padding-block: $row-height * $rows-around;
     border-radius: inherit;
     cursor: grab;
     scrollbar-width: none;
     // Fade the numbers out towards the top and bottom, like a drum turning away
-    mask-image: linear-gradient(transparent, #000 30%, #000 70%, transparent);
+    mask-image: linear-gradient(transparent, #000 25%, #000 75%, transparent);
     perspective: 26rem;
 
     &::-webkit-scrollbar {
