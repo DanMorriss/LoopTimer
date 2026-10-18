@@ -19,10 +19,10 @@ Built with Angular 22 (standalone components, signals and Signal Forms), Angular
 - **History** (the clock, top right): every finished workout, and any stopped after at least one step, grouped by day with its start time, time spent (not counting pauses) and rounds, plus a total for the last seven days. Delete an entry, with Undo. Saved in the browser.
 - **Save and reuse timers** in the library: start, edit or delete any of them. Timers are saved in the browser (`localStorage`), so they stay on that device.
 - **Accessible:**
-  - Everything works with a keyboard, and Space pauses and resumes the timer.
-  - Screen readers hear "Work, round 1 of 3", "Rest" and "Finished" as each phase starts, and "Paused" when paused.
-  - Looping animations stop when the system's reduced-motion setting is on.
-  - Every page passes automated axe checks (WCAG 2.1 AA) in both themes, and every text and control colour is checked for contrast against the surfaces it sits on.
+    - Everything works with a keyboard, and Space pauses and resumes the timer.
+    - Screen readers hear "Work, round 1 of 3", "Rest" and "Finished" as each phase starts, and "Paused" when paused.
+    - Looping animations stop when the system's reduced-motion setting is on.
+    - Every page passes automated axe checks (WCAG 2.1 AA) in both themes, and every text and control colour is checked for contrast against the surfaces it sits on.
 
 ## Running it locally
 
@@ -37,12 +37,12 @@ npm start      # dev server at http://localhost:4200, reloads as you edit
 
 Other commands:
 
-| Command | What it does |
-|---|---|
-| `npm run build` | Production build into `dist/loop-timer` |
-| `npm test` | Unit tests with Vitest in headless Chromium, re-running as you edit |
-| `npx ng test --watch=false` | Run the tests once (what CI runs) |
-| `npm run format:check` / `npm run format` | Check or apply Prettier formatting |
+| Command                                   | What it does                                                        |
+| ----------------------------------------- | ------------------------------------------------------------------- |
+| `npm run build`                           | Production build into `dist/loop-timer`                             |
+| `npm test`                                | Unit tests with Vitest in headless Chromium, re-running as you edit |
+| `npx ng test --watch=false`               | Run the tests once (what CI runs)                                   |
+| `npm run format:check` / `npm run format` | Check or apply Prettier formatting                                  |
 
 ## Tests
 
@@ -64,7 +64,6 @@ src/app/
   timer-setup/       Create or edit a timer (Signal Forms)
   timer-library/     Saved timers
     timer-card/        One timer in the list: start, edit, delete
-    delete-timer-dialog/
   timer/             The running timer: ring, countdown, announcements
     timer-state.ts     Works out phase, time left and round from elapsed time
     alarm-schedule.ts  When each alarm is due
@@ -78,6 +77,7 @@ src/app/
     components/wheel-picker/       iPhone-style number wheel (a Signal Forms control)
     components/infinity-switch/    The ∞ (until stopped) switch in setup
     components/toggle-switch/      On/off switch used in settings
+    components/confirm-dialog/     "Delete …?" dialog (library timers, setup steps)
     reduced-motion.ts              Follows the system reduced-motion setting
   a11y.spec.ts       axe checks across the whole app
 ```
@@ -94,13 +94,13 @@ Work on these, plus design and technical follow-ups, is tracked in [TODO.md](TOD
 
 ## User stories
 
-| | Story | Status |
-|---|---|---|
-| 1 | As a user I want to be able to create an alarm telling me when to start and end an 'x' second exercise with a 'y' second break that repeats 'z' times. | ✅ Done |
-| 2 | As a user I want to be able to create an alarm telling me when to start and end an 'x' second exercise with a 'y' second break that repeats until I turn it off manually. | ✅ Done (∞ rounds, and the Stop button) |
-| 3 | As a user I want to be able to set different notifications for each different interval of time so I know when I am entering a different period of time. | Partly: each step can be named, and work and rest have their own colour, sound and vibration; choosing a sound per step is planned |
-| 4 | As a user I want the timers to continue if my phone screen locks so I can work out with my phone in my pocket. | Partly: the countdown keeps correct time while locked and catches up when you return; alerts while locked are planned |
-| 5 | As a user I want to be able to see the alarms I have created in the past so I can reuse them. | ✅ Done (the library) |
+|     | Story                                                                                                                                                                     | Status                                                                                                                             |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | As a user I want to be able to create an alarm telling me when to start and end an 'x' second exercise with a 'y' second break that repeats 'z' times.                    | ✅ Done                                                                                                                            |
+| 2   | As a user I want to be able to create an alarm telling me when to start and end an 'x' second exercise with a 'y' second break that repeats until I turn it off manually. | ✅ Done (∞ rounds, and the Stop button)                                                                                            |
+| 3   | As a user I want to be able to set different notifications for each different interval of time so I know when I am entering a different period of time.                   | Partly: each step can be named, and work and rest have their own colour, sound and vibration; choosing a sound per step is planned |
+| 4   | As a user I want the timers to continue if my phone screen locks so I can work out with my phone in my pocket.                                                            | Partly: the countdown keeps correct time while locked and catches up when you return; alerts while locked are planned              |
+| 5   | As a user I want to be able to see the alarms I have created in the past so I can reuse them.                                                                             | ✅ Done (the library)                                                                                                              |
 
 <details>
 <summary>Original design notes (wireframes)</summary>
@@ -109,21 +109,21 @@ These are the screens from the original plan. Some have been built differently (
 
 1. **Home screen.** Landing page with the title and links to Set Timer, Timer Library and Settings.
 2. **Setup screen.** Configure timers and cycles:
-   - Add multiple intervals with "+ Add Interval", each with a duration input and a delete icon.
-   - A cycle count, with an infinite-loop option that disables it.
-   - "Start Timer", "Reset" and "Save" buttons.
+    - Add multiple intervals with "+ Add Interval", each with a duration input and a delete icon.
+    - A cycle count, with an infinite-loop option that disables it.
+    - "Start Timer", "Reset" and "Save" buttons.
 3. **Save modal.** Name input with "Save" and "Cancel".
 4. **Active timer screen:**
-   - A big countdown for the current interval.
-   - Smaller text such as "Interval 2 of 3, Cycle 1 of 5".
-   - An overall progress bar.
-   - Pause/Resume, Stop and Save controls.
+    - A big countdown for the current interval.
+    - Smaller text such as "Interval 2 of 3, Cycle 1 of 5".
+    - An overall progress bar.
+    - Pause/Resume, Stop and Save controls.
 5. **Timer library screen.** A list of saved timers with "Edit" and "Delete".
 6. **Confirm delete modal.** "Do you want to delete the timer {name}?" with "Yes" and "No".
 7. **Settings screen (optional):**
-   - Default alarm order: drag to reorder sounds, with a play button to preview each one.
-   - Light/dark theme.
-   - Vibration on or off.
+    - Default alarm order: drag to reorder sounds, with a play button to preview each one.
+    - Light/dark theme.
+    - Vibration on or off.
 8. **History screen (optional).** A log of completed cycles: start time, cycles and total duration, with an option to delete entries.
 
 </details>

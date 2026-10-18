@@ -218,6 +218,17 @@ describe('TimerLibraryComponent', () => {
                 expect(store.timers()).toHaveLength(2);
             });
 
+            it('describes an untitled timer without empty quotes', () => {
+                store.updateTimer(store.timers()[0].id, { ...store.timers()[0], title: '  ' });
+                fixture.detectChanges();
+
+                requestDelete(0);
+
+                expect(el('[role="dialog"]')?.textContent).toContain(
+                    'This will remove this timer from your timer library.'
+                );
+            });
+
             it('keeps the timer when cancelled', () => {
                 requestDelete(0);
 

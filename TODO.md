@@ -22,5 +22,5 @@ Open work, highest priority first. Tick items off (or delete them) as they're do
 ## 3. Known issues
 
 - [ ] **Runs left without Stop aren't in the history:** starting a different timer, or leaving the timer page mid-workout, drops the run. It could be logged as stopped when the next timer starts, or when the timer page closes.
-- [ ] **Setup's stylesheet is over budget:** `timer-setup.component.scss` is 5.1 kB, past the 4 kB warning in `angular.json` (the build fails at 8 kB). Most of it is button styles; moving them into shared styles as part of the buttons work above should bring it back under.
+- [ ] **Setup's stylesheet is over budget:** `timer-setup.component.scss` is 5.5 kB, past the 4 kB warning in `angular.json` (the build fails at 8 kB). Most of it is button styles; moving them into shared styles as part of the buttons work above should bring it back under.
 - [ ] **A beep can repeat on resume:** pausing within a second of a step starting, then resuming, plays that step's beep again (the alarms allow up to a second's lateness, for the first beep after Start).

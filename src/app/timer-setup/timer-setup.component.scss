@@ -63,7 +63,6 @@
     --step-color: var(--work);
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
     padding: 0.75rem;
     border: 1px solid var(--border);
     border-left: 4px solid var(--step-color);
@@ -98,10 +97,46 @@
     font-size: 0.9rem;
 }
 
+// A one-row grid, so opening and closing can animate its height from 0fr to 1fr
 .step__body {
+    display: grid;
+    grid-template-rows: 1fr;
+}
+
+.step__body-inner {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+    min-height: 0;
+    // In here rather than a gap on the step, so it opens and shuts with the rest
+    padding-top: 0.75rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .step__body--opening {
+        animation: step-body-open 0.2s ease-out;
+    }
+
+    .step__body--closing {
+        animation: step-body-open 0.15s ease-in reverse;
+    }
+
+    // Clipped only while moving, so focus outlines aren't cut off the rest of the time
+    .step__body--opening > .step__body-inner,
+    .step__body--closing > .step__body-inner {
+        overflow: hidden;
+    }
+}
+
+@keyframes step-body-open {
+    from {
+        grid-template-rows: 0fr;
+        opacity: 0;
+    }
+    to {
+        grid-template-rows: 1fr;
+        opacity: 1;
+    }
 }
 
 // Fills the space between the step number and its buttons, so it's an easy target
@@ -285,15 +320,14 @@
 
 // Drag and drop (Angular CDK)
 
-// Drawn like the step's other buttons, so it reads as something to grab, but squarer
-// and a different shape from the round ones, as it's dragged rather than pressed
+// A filled square with no border, so it reads as something to grab without looking like
+// the round buttons, as it's dragged rather than pressed
 .step__handle {
     display: inline-grid;
     flex-shrink: 0;
     place-items: center;
     width: 44px;
     height: 44px;
-    border: 1px solid var(--border);
     border-radius: 0.6rem;
     background: var(--control);
     color: var(--text);
@@ -301,7 +335,6 @@
     touch-action: none;
 
     &:hover {
-        border-color: var(--border-strong);
         background: var(--control-hover);
     }
 

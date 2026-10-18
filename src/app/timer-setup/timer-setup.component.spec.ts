@@ -340,6 +340,64 @@ describe('TimerSetupComponent', () => {
             expect(document.activeElement).toBe(button('Step 1, rest, 00:00'));
         });
 
+        describe('deleting a step with something in it', () => {
+            const dialog = () => el('[role="dialog"]');
+
+            beforeEach(() => {
+                typeName(1, 'Breathe');
+                chooseTime(1, 'seconds', '20');
+            });
+
+            it('deletes an empty step without asking', async () => {
+                await press('Delete Step 1, work');
+
+                expect(dialog()).toBeNull();
+                expect(steps()).toHaveLength(1);
+            });
+
+            it('asks first, naming the step and its time', async () => {
+                await press('Delete Step 2, Breathe');
+
+                expect(dialog()?.textContent).toContain('Delete step?');
+                expect(dialog()?.textContent).toContain(
+                    'This will remove Step 2, Breathe, set to 00:20.'
+                );
+                expect(steps()).toHaveLength(2);
+            });
+
+            it('asks about a step with only a name, or only a time', async () => {
+                typeName(0, 'Squats');
+                await press('Delete Step 1, Squats');
+                expect(dialog()).not.toBeNull();
+                await press('Cancel');
+
+                typeName(0, '');
+                chooseTime(0, 'seconds', '5');
+                await press('Delete Step 1, work');
+                expect(dialog()).not.toBeNull();
+            });
+
+            it('keeps the step when cancelled, and returns focus to its delete button', async () => {
+                await press('Delete Step 2, Breathe');
+
+                await press('Cancel');
+
+                expect(dialog()).toBeNull();
+                expect(shown().steps[1]).toEqual({ kind: 'Rest', name: 'Breathe', time: '0:20' });
+                expect(document.activeElement).toBe(button('Delete Step 2, Breathe'));
+            });
+
+            it('deletes the step when confirmed', async () => {
+                await press('Delete Step 2, Breathe');
+
+                await press('Delete');
+
+                expect(dialog()).toBeNull();
+                expect(shown().steps.map((s) => s.kind)).toEqual(['Work']);
+                expect(said()).toBe('Deleted step 2');
+            });
+        });
+
         it('always keeps at least one step', async () => {
             await press('Delete Step 2, rest');
 
