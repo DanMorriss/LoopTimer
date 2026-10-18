@@ -164,17 +164,65 @@ $track-color: #334155; // slate-700: dark, so both phase colours stand out (3:1 
     padding: 0 1rem 2rem;
 }
 
-// Tall enough for the "remaining repeats" or "Last one!" line, which come and go
+// On a phone the header shows the timer's title instead (see the nav), so the ring has more room
+@media (max-width: 639px) {
+    .timer-title {
+        display: none;
+    }
+}
+
+// Tall enough for the round line and its dots, so the ring stays put when they go at the end
 .timer-status {
-    min-height: 2.5rem;
+    min-height: 3.5rem;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 0.4rem;
     text-align: center;
 
     // body.mat-typography gives paragraphs a 12px bottom margin
     > * {
         margin: 0;
+    }
+}
+
+.timer-status__last {
+    color: var(--glow-text);
+}
+
+.round-dots {
+    display: flex;
+    gap: 0.4rem;
+}
+
+.round-dot {
+    width: 0.6rem;
+    height: 0.6rem;
+    border: 1.5px solid var(--border-strong);
+    border-radius: 50%;
+    transition:
+        background-color 0.3s ease,
+        border-color 0.3s ease,
+        transform 0.3s ease;
+
+    &--done {
+        border-color: var(--text-muted);
+        background: var(--text-muted);
+    }
+
+    // The round in progress: in the accent colour, and a little larger
+    &--current {
+        border-color: var(--glow);
+        background: var(--glow);
+        box-shadow: 0 0 6px var(--glow-soft);
+        transform: scale(1.3);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .round-dot {
+        transition: none;
     }
 }
 
@@ -227,14 +275,26 @@ $track-color: #334155; // slate-700: dark, so both phase colours stand out (3:1 
     letter-spacing: 0.04em;
 }
 
-.sound-prompt {
-    margin-top: 1rem;
+// A key cap under "Pause", only where there's a mouse or trackpad (so most likely a keyboard)
+.timer-control__key {
+    display: none;
+    padding: 0.1rem 0.45rem;
+    border: 1px solid var(--border);
+    border-bottom-width: 2px;
+    border-radius: 0.35rem;
+    background: var(--control);
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+
+    @media (hover: hover) and (pointer: fine) {
+        display: inline-block;
+    }
 }
 
-.timer-status__infinity {
-    font-size: 1.4em;
-    line-height: 1;
-    vertical-align: -0.05em;
+.sound-prompt {
+    margin-top: 1rem;
 }
 
 // A long step name shouldn't push the time out of the circle

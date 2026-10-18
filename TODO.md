@@ -14,11 +14,7 @@ Open work, highest priority first. Tick items off (or delete them) as they're do
 
 ## 2. Design
 
-- [ ] **Timer page on a phone:** show the timer's own title at the top in place of the LoopTimer logo, to free up space for the ring and controls. The header's menu button sits on the left, with an empty column on the right keeping the title centred.
-- [ ] **Remaining repeats:** the "remaining repeats: | | |" tally (Rubik Spray Paint bars) looks rough beside the new buttons. Find a clearer way to show how many rounds are left, e.g. dots or a "Round 2 of 5" line, and how it changes on the last one ("Last one!").
-- [ ] **Animate the theme picker:** the highlight should slide between Dark, Light and System instead of jumping, and the app's colours should fade from one theme to the other rather than switch at once. Both off with reduced motion.
-- [ ] **The ∞ on the rounds wheel** renders small in the app's font.
-- [ ] **Show that Space pauses:** it's announced to screen readers (`aria-keyshortcuts`), but there's no visible hint for keyboard users.
+Nothing open.
 
 ## 3. Known issues
 

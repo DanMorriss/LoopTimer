@@ -9,16 +9,21 @@
 
             <fieldset class="theme-picker">
                 <legend class="setting__name">Theme</legend>
-                <div class="theme-picker__options">
-                    @for (option of themes; track option.value) {
-                        <label class="theme-picker__option">
+                <div class="theme-picker__options" [style.--chosen]="chosenIndex()">
+                    <!-- The highlight behind the chosen option, which slides between them -->
+                    <span class="theme-picker__thumb" aria-hidden="true"></span>
+                    @for (option of themes; track option.value; let i = $index) {
+                        <label
+                            class="theme-picker__option"
+                            [class.theme-picker__option--chosen]="i === chosenIndex()"
+                        >
                             <input
                                 type="radio"
                                 name="theme"
                                 class="theme-picker__input"
                                 [value]="option.value"
                                 [checked]="settings.theme() === option.value"
-                                (change)="settings.update({ theme: option.value })"
+                                (change)="chooseTheme(option.value)"
                             />
                             <span class="theme-picker__label">{{ option.label }}</span>
                         </label>

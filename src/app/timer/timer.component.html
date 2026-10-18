@@ -1,27 +1,33 @@
 <div class="timer-page flex flex-col items-center justify-center">
     @if (timer()) {
-        <p class="text-center text-4xl text-(--text-strong)">{{ timer()?.title }}</p>
+        <!-- On a phone the header shows the title instead, leaving more room for the ring -->
+        <p class="timer-title text-center text-4xl text-(--text-strong)">{{ timer()?.title }}</p>
         <!-- Fixed-height slot, so the ring doesn't jump when this line changes -->
         <!-- Read out by screen readers when the phase changes; the countdown itself stays quiet -->
         <div class="sr-only" aria-live="polite" aria-atomic="true">{{ announcement() }}</div>
         <div class="timer-status text-(--text-strong)">
-            @if (untilStopped() && isComplete() === false) {
-                <p class="text-2xl">
-                    round {{ roundNumber() }} of
-                    <span class="timer-status__infinity" aria-hidden="true">∞</span>
-                    <span class="sr-only">until stopped</span>
-                </p>
-            }
-            @if (repeatArray().length > 1) {
-                <div class="text-2xl">
-                    <span>remaining repeats: </span>
-                    @for (i of repeatArray(); track i) {
-                        <span class="rubik-spray-paint-regular">| </span>
+            @if (isComplete() === false) {
+                @if (untilStopped()) {
+                    <p class="text-2xl">
+                        round {{ roundNumber() }} of
+                        <span class="symbol-infinity" aria-hidden="true">∞</span>
+                        <span class="sr-only">until stopped</span>
+                    </p>
+                } @else if (totalRounds() > 1) {
+                    @if (repeats() === 1) {
+                        <p class="timer-status__last text-2xl">Last one!</p>
+                    } @else {
+                        <p class="text-2xl">round {{ roundNumber() }} of {{ totalRounds() }}</p>
                     }
-                </div>
-            }
-            @if (repeatArray().length === 1 && isTimerActive() === true) {
-                <p class="text-3xl">Last one!</p>
+                    <!-- The same count as the line above, as a picture: rounds done, this one, and those to go -->
+                    @if (roundDots().length) {
+                        <div class="round-dots" aria-hidden="true">
+                            @for (dot of roundDots(); track $index) {
+                                <span class="round-dot" [class]="'round-dot--' + dot"></span>
+                            }
+                        </div>
+                    }
+                }
             }
         </div>
 
@@ -118,6 +124,8 @@
                         }}</mat-icon>
                     </button>
                     <span class="timer-control__caption" aria-hidden="true">{{ pauseLabel }}</span>
+                    <!-- Shown where there's likely a keyboard; screen readers get aria-keyshortcuts -->
+                    <kbd class="timer-control__key" aria-hidden="true">Space</kbd>
                 </div>
                 <div class="timer-control timer-control--side">
                     <button

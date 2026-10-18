@@ -2,6 +2,8 @@ import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 
+import { TimerStore } from '../shared/state/timer-store.service';
+import { makeTimer } from '../shared/testing/make-timer';
 import { NavComponent } from './nav.component';
 
 @Component({ template: '' })
@@ -66,6 +68,43 @@ describe('NavComponent', () => {
             ['History', '/history'],
             ['Settings', '/settings'],
         ]);
+    });
+
+    describe("the timer's title", () => {
+        const title = () => element.querySelector('h1') as HTMLElement;
+        const timerTitle = () => title().querySelector('.site-title__timer');
+
+        function runTimer(name: string) {
+            const store = TestBed.inject(TimerStore);
+            store.setActiveTimer(store.addTimer(makeTimer({ title: name })));
+        }
+
+        it('is in the heading on the timer page, for phones to show in place of LoopTimer', async () => {
+            runTimer('  Sprints ');
+            await TestBed.inject(Router).navigateByUrl('/timer');
+            fixture.detectChanges();
+
+            expect(title().classList).toContain('site-title--timer');
+            expect(timerTitle()?.textContent).toBe('Sprints');
+        });
+
+        it('is left out on other pages', async () => {
+            runTimer('Sprints');
+            await TestBed.inject(Router).navigateByUrl('/library');
+            fixture.detectChanges();
+
+            expect(title().classList).not.toContain('site-title--timer');
+            expect(timerTitle()).toBeNull();
+            expect(title().textContent!.trim()).toBe('LoopTimer');
+        });
+
+        it('is left out for an untitled timer, which keeps LoopTimer', async () => {
+            runTimer('');
+            await TestBed.inject(Router).navigateByUrl('/timer');
+            fixture.detectChanges();
+
+            expect(timerTitle()).toBeNull();
+        });
     });
 
     it('marks the page you are on', async () => {

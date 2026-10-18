@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AlarmService } from '../shared/alarms/alarm.service';
 import { SettingsStore } from '../shared/state/settings-store.service';
 import { FakeAudioContext, provideFakeAudioContext } from '../shared/testing/fake-audio-context';
+import { fakeReducedMotion } from '../shared/testing/fake-reduced-motion';
 import { SettingsComponent } from './settings.component';
 
 describe('SettingsComponent', () => {
@@ -55,15 +56,46 @@ describe('SettingsComponent', () => {
             expect(checked()).toBe('dark');
         });
 
-        it('saves the theme picked', () => {
+        // The change is applied inside a view transition, a frame or so after the click
+        it('saves the theme picked', async () => {
             create();
 
             radios()[1].click();
+            await vi.waitFor(() => expect(settings.theme()).toBe('light'));
             fixture.detectChanges();
 
-            expect(settings.theme()).toBe('light');
             expect(checked()).toBe('light');
             expect(JSON.parse(localStorage.getItem('settings')!).theme).toBe('light');
+        });
+
+        it('fades between themes with a view transition, and slides the highlight across', async () => {
+            const startViewTransition = vi.spyOn(document, 'startViewTransition');
+            create();
+            const thumb = () =>
+                (
+                    fixture.nativeElement.querySelector('.theme-picker__options') as HTMLElement
+                ).style.getPropertyValue('--chosen');
+            expect(thumb()).toBe('0');
+
+            radios()[2].click();
+            await vi.waitFor(() => expect(settings.theme()).toBe('system'));
+            fixture.detectChanges();
+
+            expect(startViewTransition).toHaveBeenCalledTimes(1);
+            expect(thumb()).toBe('2');
+            const chosen = fixture.nativeElement.querySelector('.theme-picker__option--chosen');
+            expect(chosen.textContent.trim()).toBe('System');
+        });
+
+        it('changes the theme at once, with no fade, when reduced motion is on', () => {
+            fakeReducedMotion(true);
+            const startViewTransition = vi.spyOn(document, 'startViewTransition');
+            create();
+
+            radios()[1].click();
+
+            expect(settings.theme()).toBe('light');
+            expect(startViewTransition).not.toHaveBeenCalled();
         });
 
         it('shows the saved theme', () => {

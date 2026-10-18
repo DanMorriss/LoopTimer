@@ -51,6 +51,15 @@
             </nav>
         }
     </div>
-    <h1 class="site-title pt-2 text-center text-2xl text-(--text-strong)">LoopTimer</h1>
+    <!-- On a phone, the timer page shows the timer's own title here instead of the app's name -->
+    <h1
+        class="site-title pt-2 text-center text-2xl text-(--text-strong)"
+        [class.site-title--timer]="timerTitle()"
+    >
+        <span class="site-title__app">LoopTimer</span>
+        @if (timerTitle()) {
+            <span class="site-title__timer">{{ timerTitle() }}</span>
+        }
+    </h1>
     <div aria-hidden="true"></div>
 </div>
