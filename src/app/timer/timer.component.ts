@@ -1,9 +1,11 @@
-import { Component, computed, effect, inject, OnDestroy, signal } from '@angular/core';
+import { Component, computed, effect, inject, OnDestroy, signal, untracked } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { runsUntilStopped } from '../models/timer';
+import { HistoryEntry, historyId } from '../models/history';
+import { runsUntilStopped, workoutSeconds } from '../models/timer';
 import { AlarmService } from '../shared/alarms/alarm.service';
 import { InfinityButtonComponent } from '../shared/components/infinity-button/infinity-button.component';
 import { formatTime } from '../shared/format-time';
+import { HistoryStore } from '../shared/state/history-store.service';
 import { SettingsStore } from '../shared/state/settings-store.service';
 import { TimerStore } from '../shared/state/timer-store.service';
 import { alarmEvents } from './alarm-schedule';
@@ -32,6 +34,7 @@ const VIBRATE_LATE_LIMIT_MS = 1000;
 export class TimerComponent implements OnDestroy {
     timerStore = inject(TimerStore);
     private readonly router = inject(Router);
+    private readonly history = inject(HistoryStore);
     timer = this.timerStore.activeTimer;
     isPaused = this.timerStore.isPaused;
 
@@ -92,6 +95,14 @@ export class TimerComponent implements OnDestroy {
     private lastAlarmCheck = Date.now() - VIBRATE_LATE_LIMIT_MS;
 
     constructor() {
+        // Log the workout once it's done. The history only keeps a run once, so seeing the
+        // finished screen again after a refresh doesn't log it twice.
+        effect(() => {
+            if (this.isComplete()) {
+                untracked(() => this.recordRun('finished'));
+            }
+        });
+
         // Hand the whole workout's alarms to the audio clock up front, and again whenever
         // the timer pauses, resumes, or sound is unlocked or turned on or off
         effect(() => {
@@ -269,7 +280,41 @@ export class TimerComponent implements OnDestroy {
         this.togglePause();
     }
 
+    /**
+     * Adds this run to the history. A stopped run is only logged once at least one step
+     * has been done, so starting a timer by mistake and stopping it leaves no trace.
+     */
+    private recordRun(outcome: HistoryEntry['outcome']) {
+        const timer = this.timer();
+        const state = this.state();
+        const runStartedAt = this.timerStore.activeRunStartedAt();
+        const startedAt = this.timerStore.activeTimerStartedAt();
+        const elapsedMs = this.elapsedMs();
+        if (!timer || !state || runStartedAt === null || startedAt === null || elapsedMs === null) {
+            return;
+        }
+        const finished = outcome === 'finished';
+        if (!finished && state.round === 0 && state.stepIndex === 0) {
+            return;
+        }
+        // A finish is dated when the workout actually ended, even if the page only notices
+        // later (e.g. it was in the background); startedAt has moved on by any pauses
+        const activeSeconds = finished ? workoutSeconds(timer) : Math.floor(elapsedMs / 1000);
+        this.history.record({
+            id: historyId(runStartedAt, timer.id),
+            timerId: timer.id,
+            title: timer.title,
+            startedAt: runStartedAt,
+            endedAt: finished ? startedAt + activeSeconds * 1000 : Date.now(),
+            activeSeconds,
+            roundsCompleted: finished ? timer.repeats : state.round,
+            totalRounds: timer.repeats,
+            outcome,
+        });
+    }
+
     async stop() {
+        this.recordRun('stopped');
         this.timerStore.stop();
         await this.router.navigate(['/library']);
     }

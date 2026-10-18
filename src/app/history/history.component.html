@@ -1,0 +1,72 @@
+<div class="flex justify-center">
+    <div
+        class="m-4 w-full max-w-md rounded-xl border border-(--panel-border) bg-(--panel) p-6 shadow-xl shadow-(color:--shadow) backdrop-blur-sm"
+    >
+        <h2 class="history__title">History</h2>
+
+        <!-- After a delete: says so, and offers to put it back -->
+        <div class="history__status" role="status">
+            @if (deleted(); as entry) {
+                <div class="history__undo">
+                    <span>Deleted {{ name(entry) }}.</span>
+                    <button
+                        type="button"
+                        id="history-undo"
+                        class="history__button"
+                        (click)="undo()"
+                    >
+                        Undo
+                    </button>
+                </div>
+            }
+        </div>
+
+        @if (groups().length === 0) {
+            <div class="history__empty">
+                <p>No workouts yet. Finished and stopped workouts show up here.</p>
+                <a routerLink="/library" class="history__button">Go to the library</a>
+            </div>
+        } @else {
+            <p class="history__summary">
+                Last 7 days: {{ lastWeek().workouts }}
+                {{ lastWeek().workouts === 1 ? 'workout' : 'workouts' }} · {{ lastWeek().time }}
+            </p>
+
+            @for (group of groups(); track group.key) {
+                <section class="history__day" [attr.aria-labelledby]="'day-' + group.key">
+                    <h3 class="history__day-label" [id]="'day-' + group.key">
+                        {{ group.label || (group.date | date: 'EEEE d MMMM') }}
+                    </h3>
+                    <ul class="history__list">
+                        @for (entry of group.entries; track entry.id) {
+                            <li class="entry" [class.entry--stopped]="entry.outcome === 'stopped'">
+                                <div class="entry__text">
+                                    <span class="entry__title">{{ name(entry) }}</span>
+                                    <span class="entry__detail">
+                                        {{ entry.startedAt | date: 'shortTime' }} ·
+                                        {{ formatDuration(entry.activeSeconds) }} ·
+                                        {{ describeRounds(entry) }}
+                                    </span>
+                                </div>
+                                <button
+                                    type="button"
+                                    class="entry__delete"
+                                    [id]="'delete-' + entry.id"
+                                    [attr.aria-label]="
+                                        'Delete ' +
+                                        name(entry) +
+                                        ' at ' +
+                                        (entry.startedAt | date: 'shortTime')
+                                    "
+                                    (click)="delete(entry)"
+                                >
+                                    <mat-icon aria-hidden="true">close</mat-icon>
+                                </button>
+                            </li>
+                        }
+                    </ul>
+                </section>
+            }
+        }
+    </div>
+</div>

@@ -424,7 +424,37 @@ describe('TimerStore', () => {
             expect(store.isPaused()).toBe(false);
             expect(sessionStorage.getItem('activeTimerId')).toBeNull();
             expect(sessionStorage.getItem('activeTimerStartedAt')).toBeNull();
+            expect(store.activeRunStartedAt()).toBeNull();
+            expect(sessionStorage.getItem('activeRunStartedAt')).toBeNull();
             expect(sessionStorage.getItem('activeTimerPausedAt')).toBeNull();
+        });
+
+        it('remembers when the run really began, which resuming does not move', () => {
+            const store = startTimer();
+            vi.advanceTimersByTime(5000);
+            store.pause();
+            vi.advanceTimersByTime(60000);
+            store.resume();
+
+            expect(store.activeRunStartedAt()).toBe(1_000_000);
+            expect(store.activeTimerStartedAt()).toBe(1_060_000);
+            expect(sessionStorage.getItem('activeRunStartedAt')).toBe('1000000');
+        });
+
+        it('restores when the run began after the app reloads', () => {
+            startTimer().pause();
+            vi.advanceTimersByTime(30000);
+            TestBed.resetTestingModule();
+
+            expect(createStore().activeRunStartedAt()).toBe(1_000_000);
+        });
+
+        it('falls back to the start time for a run saved before this was remembered', () => {
+            startTimer();
+            sessionStorage.removeItem('activeRunStartedAt');
+            TestBed.resetTestingModule();
+
+            expect(createStore().activeRunStartedAt()).toBe(1_000_000);
         });
 
         it('keeps the saved timers when stopped', () => {

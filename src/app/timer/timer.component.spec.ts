@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { Timer, UNTIL_STOPPED } from '../models/timer';
+import { HistoryStore } from '../shared/state/history-store.service';
 import { SettingsStore } from '../shared/state/settings-store.service';
 import { TimerStore } from '../shared/state/timer-store.service';
 import { AlarmService } from '../shared/alarms/alarm.service';
@@ -717,6 +718,116 @@ describe('TimerComponent', () => {
                 expect(pressSpace()).toBe(false);
                 fixture.destroy();
             });
+        });
+    });
+
+    describe('history', () => {
+        beforeEach(() => localStorage.clear());
+        afterEach(() => localStorage.clear());
+
+        const entries = () => TestBed.inject(HistoryStore).entries();
+
+        async function pressStop() {
+            vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+            const stop = Array.from(
+                fixture.nativeElement.querySelectorAll(
+                    '.timer-controls button'
+                ) as NodeListOf<HTMLElement>
+            ).find((b) => b.textContent?.trim() === 'Stop')!;
+            stop.click();
+            await fixture.whenStable();
+        }
+
+        it('logs a finished workout, with its full time and rounds', () => {
+            const startedAt = Date.now();
+            start(
+                makeTimer({ id: 4, title: 'Sprints', timerSeconds: 3, restSeconds: 2, repeats: 2 })
+            );
+
+            advance(8000);
+
+            expect(entries()).toEqual([
+                {
+                    id: `${startedAt}-4`,
+                    timerId: 4,
+                    title: 'Sprints',
+                    startedAt,
+                    endedAt: startedAt + 8000,
+                    activeSeconds: 8,
+                    roundsCompleted: 2,
+                    totalRounds: 2,
+                    outcome: 'finished',
+                },
+            ]);
+            fixture.destroy();
+        });
+
+        it('logs it once, even if the finished screen is shown again', () => {
+            start(makeTimer({ timerSeconds: 1, repeats: 1 }));
+            advance(1000);
+            fixture.destroy();
+
+            fixture = TestBed.createComponent(TimerComponent);
+            fixture.detectChanges();
+            advance(1000);
+
+            expect(entries()).toHaveLength(1);
+            fixture.destroy();
+        });
+
+        it('dates the finish when it happened, even if the page only notices later', () => {
+            const startedAt = Date.now();
+            start(makeTimer({ timerSeconds: 3, restSeconds: 2, repeats: 2 }));
+
+            // One late tick, long after the 8 second workout ended
+            vi.spyOn(Date, 'now').mockReturnValue(startedAt + 60_000);
+            advance(250);
+
+            expect(entries()[0].endedAt).toBe(startedAt + 8000);
+            fixture.destroy();
+        });
+
+        it('logs a stopped workout with the rounds done and the time spent, not counting pauses', async () => {
+            const startedAt = Date.now();
+            start(makeTimer({ timerSeconds: 3, restSeconds: 2, repeats: 5 }));
+            advance(6000); // round 2 has begun
+            store.pause();
+            advance(30_000);
+            store.resume();
+            advance(1000);
+
+            await pressStop();
+
+            expect(entries()).toEqual([
+                expect.objectContaining({
+                    startedAt,
+                    endedAt: startedAt + 37_000,
+                    activeSeconds: 7,
+                    roundsCompleted: 1,
+                    totalRounds: 5,
+                    outcome: 'stopped',
+                }),
+            ]);
+        });
+
+        it('logs a timer that runs until stopped with no total', async () => {
+            start(makeTimer({ timerSeconds: 3, restSeconds: 2, repeats: UNTIL_STOPPED }));
+            advance(12_000);
+
+            await pressStop();
+
+            expect(entries()[0]).toEqual(
+                expect.objectContaining({ roundsCompleted: 2, totalRounds: 0, outcome: 'stopped' })
+            );
+        });
+
+        it('leaves no trace of a workout stopped before its first step is done', async () => {
+            start(makeTimer({ timerSeconds: 3 }));
+            advance(2000);
+
+            await pressStop();
+
+            expect(entries()).toEqual([]);
         });
     });
 

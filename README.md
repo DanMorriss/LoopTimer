@@ -16,6 +16,7 @@ Built with Angular 22 (standalone components, signals and Signal Forms), Angular
 - **Pause, resume or stop** while it runs, or press Space to pause and resume. Pausing freezes the countdown and the ring where they are; stopping ends the workout and goes back to the library.
 - **Keep accurate time.** The countdown is worked out from the clock, not by counting ticks. It stays correct if the tab is in the background or the phone is locked, and catches up as soon as you come back. Refreshing the page carries on where you were, paused or not.
 - **Settings** (the gear, top left): a dark, light or match-system theme; turn sound or vibration off; and play each alarm sound to hear what it is. Saved in the browser, like timers.
+- **History** (the clock, top right): every finished workout, and any stopped after at least one step, grouped by day with its start time, time spent (not counting pauses) and rounds, plus a total for the last seven days. Delete an entry, with Undo. Saved in the browser.
 - **Save and reuse timers** in the library: start, edit or delete any of them. Timers are saved in the browser (`localStorage`), so they stay on that device.
 - **Accessible:**
   - Everything works with a keyboard, and Space pauses and resumes the timer.
@@ -57,7 +58,8 @@ There are around 140 unit tests, run with [Vitest](https://vitest.dev) in browse
 ```
 src/app/
   home/              Landing page with the infinity logo (Create / Library)
-  nav/               Header: settings button, site title and home button
+  nav/               Header: settings, site title, history and home buttons
+  history/           Past workouts by day, with delete and undo
   settings/          Sound and vibration switches, and alarm previews
   timer-setup/       Create or edit a timer (Signal Forms)
   timer-library/     Saved timers
@@ -69,6 +71,7 @@ src/app/
   shared/
     state/timer-store.service.ts   Saved timers and the active timer
     state/settings-store.service.ts Saved settings
+    state/history-store.service.ts  Saved workout history
     theme/theme.service.ts         Applies the theme (colour tokens are in src/styles.scss)
     alarms/alarm.service.ts        Plays alarms on the audio clock, and vibrates
     components/infinity-button/    Animated button used on the empty library
@@ -85,7 +88,6 @@ These come from the original plan and aren't built yet:
 
 - **Alarm sounds:** proper sound files in place of the generated beeps, and alarms on a locked phone.
 - **Alarm order setting:** choosing the sound for each step.
-- **History:** a log of completed workouts.
 
 Work on these, plus design and technical follow-ups, is tracked in [TODO.md](TODO.md).
 
