@@ -3,7 +3,7 @@ import { Router, RouterLink } from '@angular/router';
 import { HistoryEntry, historyId } from '../models/history';
 import { runsUntilStopped, workoutSeconds } from '../models/timer';
 import { AlarmService } from '../shared/alarms/alarm.service';
-import { InfinityButtonComponent } from '../shared/components/infinity-button/infinity-button.component';
+import { MatIconModule } from '@angular/material/icon';
 import { formatTime } from '../shared/format-time';
 import { HistoryStore } from '../shared/state/history-store.service';
 import { SettingsStore } from '../shared/state/settings-store.service';
@@ -22,7 +22,7 @@ const VIBRATE_LATE_LIMIT_MS = 1000;
 
 @Component({
     selector: 'app-timer',
-    imports: [RouterLink, InfinityButtonComponent],
+    imports: [RouterLink, MatIconModule],
     templateUrl: './timer.component.html',
     styleUrls: ['./timer.component.scss'],
     host: {

@@ -505,7 +505,9 @@ describe('TimerComponent', () => {
             Array.from(
                 fixture.nativeElement.querySelectorAll('.timer-controls button')
             ) as HTMLButtonElement[];
-        const button = (label: string) => buttons().find((b) => b.textContent?.trim() === label);
+        // The controls are icons, so they're found by their accessible name
+        const button = (label: string) =>
+            buttons().find((b) => b.getAttribute('aria-label') === label);
         const ring = () => fixture.nativeElement.querySelector('.timer-ring') as HTMLElement;
 
         function press(label: string) {
@@ -518,7 +520,22 @@ describe('TimerComponent', () => {
         it('offers Pause and Stop while running', () => {
             start(makeTimer());
 
-            expect(buttons().map((b) => b.textContent?.trim())).toEqual(['Pause', 'Stop']);
+            expect(buttons().map((b) => b.getAttribute('aria-label'))).toEqual(['Pause', 'Stop']);
+            fixture.destroy();
+        });
+
+        it('captions the icon buttons with their names, hidden from screen readers', () => {
+            start(makeTimer());
+            const captions = Array.from(
+                fixture.nativeElement.querySelectorAll('.timer-control__caption')
+            ) as HTMLElement[];
+
+            expect(captions.map((c) => c.textContent?.trim())).toEqual(['Pause', 'Stop']);
+            expect(captions.every((c) => c.getAttribute('aria-hidden') === 'true')).toBe(true);
+
+            press('Pause');
+
+            expect(captions[0].textContent?.trim()).toBe('Resume');
             fixture.destroy();
         });
 
@@ -733,7 +750,7 @@ describe('TimerComponent', () => {
                 fixture.nativeElement.querySelectorAll(
                     '.timer-controls button'
                 ) as NodeListOf<HTMLElement>
-            ).find((b) => b.textContent?.trim() === 'Stop')!;
+            ).find((b) => b.getAttribute('aria-label') === 'Stop')!;
             stop.click();
             await fixture.whenStable();
         }
@@ -1070,7 +1087,7 @@ describe('TimerComponent', () => {
             advance(1500);
             const button = (label: string) =>
                 Array.from(fixture.nativeElement.querySelectorAll('.timer-controls button')).find(
-                    (b) => (b as HTMLElement).textContent?.trim() === label
+                    (b) => (b as HTMLElement).getAttribute('aria-label') === label
                 ) as HTMLElement;
 
             button('Pause').click();
