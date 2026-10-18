@@ -95,6 +95,13 @@
                     (buttonClick)="stop()"
                 ></app-infinity-button>
             </div>
+
+            <!-- After a refresh the browser blocks sound until the page is tapped again -->
+            @if (soundLocked()) {
+                <button type="button" class="sound-prompt" (click)="alarms.unlock()">
+                    Tap to turn on sound
+                </button>
+            }
         }
     } @else {
         <div class="no-timer flex flex-col items-center gap-6 p-8 text-center text-sky-50">
