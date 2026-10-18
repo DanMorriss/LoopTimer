@@ -161,5 +161,13 @@ describe('Accessibility (axe)', () => {
             expect(fixture.nativeElement.textContent).toContain("You're finished!");
             await expectNoViolations();
         }, 15000);
+
+        it('paused', async () => {
+            store.setActiveTimer(store.addTimer(sprints));
+            store.pause();
+            await open('/timer');
+            expect(fixture.nativeElement.textContent).toContain('Paused');
+            await expectNoViolations();
+        });
     });
 });

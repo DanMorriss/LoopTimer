@@ -198,3 +198,21 @@ $track-color: #334155; // slate-700: dark, so both phase colours stand out (3:1 
         outline-offset: 3px;
     }
 }
+
+// Paused: freeze the ring and the flash where they are, and carry on from there on resume
+.timer-ring--paused .timer-ring__fill,
+.timer-face--paused::before {
+    animation-play-state: paused;
+}
+
+.timer-face__paused {
+    font-size: 1.5rem;
+}
+
+.timer-controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
