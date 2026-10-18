@@ -1,5 +1,6 @@
 import { Component, computed, effect, inject, OnDestroy, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import { runsUntilStopped } from '../models/timer';
 import { AlarmService } from '../shared/alarms/alarm.service';
 import { InfinityButtonComponent } from '../shared/components/infinity-button/infinity-button.component';
 import { formatTime } from '../shared/format-time';
@@ -9,6 +10,9 @@ import { timerStateAt } from './timer-state';
 
 // Space on one of these already does something, e.g. presses the focused button
 const SPACE_HANDLED_BY = 'button, a, input, textarea, select, [contenteditable], [role="button"]';
+
+// How many rounds of alarms to book at a time
+const ALARM_WINDOW = 100;
 
 // How late a vibration can be and still be worth doing, e.g. not after a background tab wakes up
 const VIBRATE_LATE_LIMIT_MS = 1000;
@@ -47,11 +51,21 @@ export class TimerComponent implements OnDestroy {
     /** Sound is possible but the browser is waiting for a tap before it will play any. */
     soundLocked = computed(() => this.alarms.supported && !this.alarms.unlocked());
 
-    // Changes when the timer starts, pauses or resumes, but not every tick
+    // Alarms are booked ALARM_WINDOW rounds at a time, starting from a multiple of half that,
+    // so a timer that runs until stopped is topped up halfway through each batch.
+    // Finite timers (30 rounds at most) fit in the first batch.
+    private readonly alarmBatch = computed(() =>
+        Math.floor((this.state()?.round ?? 0) / (ALARM_WINDOW / 2))
+    );
+
+    // Changes when the timer starts, pauses, resumes or needs its next batch, not every tick
     private readonly alarmEvents = computed(() => {
         const timer = this.timer();
         const startedAt = this.timerStore.activeTimerStartedAt();
-        return timer && startedAt !== null && !this.isPaused() ? alarmEvents(timer, startedAt) : [];
+        const fromRound = (this.alarmBatch() * ALARM_WINDOW) / 2;
+        return timer && startedAt !== null && !this.isPaused()
+            ? alarmEvents(timer, startedAt, fromRound, ALARM_WINDOW)
+            : [];
     });
     private lastAlarmCheck = Date.now() - VIBRATE_LATE_LIMIT_MS;
 
@@ -85,6 +99,12 @@ export class TimerComponent implements OnDestroy {
     isRestActive = computed(() => this.state()?.phase === 'rest');
     isComplete = computed(() => this.state()?.phase === 'complete');
     repeats = computed(() => this.state()?.roundsLeft ?? 0);
+    untilStopped = computed(() => {
+        const timer = this.timer();
+        return timer !== null && runsUntilStopped(timer);
+    });
+    /** The round in progress, counting from 1. */
+    roundNumber = computed(() => (this.state()?.round ?? 0) + 1);
 
     private readonly remaining = computed(() => this.state()?.remainingSeconds ?? 0);
     private readonly time = computed(() =>
@@ -93,7 +113,10 @@ export class TimerComponent implements OnDestroy {
     workTime = computed(() => (this.isTimerActive() ? this.time() : ''));
     restTime = computed(() => (this.isRestActive() ? this.time() : ''));
 
-    repeatArray = computed(() => Array.from({ length: this.repeats() }, (_, i) => i));
+    // One marker per round left; a timer that runs until stopped shows its round number instead
+    repeatArray = computed(() =>
+        this.untilStopped() ? [] : Array.from({ length: this.repeats() }, (_, i) => i)
+    );
 
     // The ring sweep is a CSS animation that runs for the whole phase, so the browser can
     // animate it without repainting. This only changes when a new phase starts, which
@@ -149,6 +172,9 @@ export class TimerComponent implements OnDestroy {
         }
         switch (state.phase) {
             case 'work':
+                if (this.untilStopped()) {
+                    return `Work, round ${state.round + 1}`;
+                }
                 return state.roundsLeft === 1 && timer.repeats > 1
                     ? 'Work, last round'
                     : `Work, round ${state.round + 1} of ${timer.repeats}`;

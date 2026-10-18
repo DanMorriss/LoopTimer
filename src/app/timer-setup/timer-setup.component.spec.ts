@@ -1,7 +1,7 @@
 import type { Mock } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
-import { Timer } from '../models/timer';
+import { Timer, UNTIL_STOPPED } from '../models/timer';
 import { TimerStore } from '../shared/state/timer-store.service';
 import { TimerSetupComponent } from './timer-setup.component';
 
@@ -174,6 +174,70 @@ describe('TimerSetupComponent', () => {
 
             expect(shown().title).toBe('');
             expect(shown().timerSeconds).toBe('0');
+        });
+    });
+
+    describe('until stopped', () => {
+        beforeEach(async () => {
+            await setup();
+            await create();
+        });
+
+        const toggle = () => el<HTMLButtonElement>('app-infinity-switch [role="switch"]');
+        const isOn = () => toggle().getAttribute('aria-checked') === 'true';
+        const roundsSaid = () => el('#repeats [role="spinbutton"]').getAttribute('aria-valuetext');
+
+        it('ends the rounds wheel with ∞, read out as "until stopped"', () => {
+            const items = Array.from(
+                fixture.nativeElement.querySelectorAll('#repeats .wheel-picker__item')
+            ) as HTMLElement[];
+
+            expect(items.at(-2)?.textContent?.trim()).toBe('30');
+            expect(items.at(-1)?.textContent?.trim()).toBe('∞');
+        });
+
+        it('has a labelled switch next to the wheel, off to begin with', () => {
+            expect(toggle().getAttribute('aria-labelledby')).toBe('untilStopped-label');
+            expect(el('#untilStopped-label').textContent).toBe('Until stopped');
+            expect(isOn()).toBe(false);
+        });
+
+        it('turns the wheel to ∞ when the switch is turned on', () => {
+            toggle().click();
+            fixture.detectChanges();
+
+            expect(isOn()).toBe(true);
+            expect(roundsSaid()).toBe('until stopped');
+        });
+
+        it('goes back to the rounds picked before when the switch is turned off', () => {
+            choose('repeats', '8');
+            toggle().click();
+            fixture.detectChanges();
+
+            toggle().click();
+            fixture.detectChanges();
+
+            expect(isOn()).toBe(false);
+            expect(shown().repeats).toBe('8');
+        });
+
+        it('turns the switch on when ∞ is picked on the wheel, and off again when a number is', () => {
+            choose('repeats', '0'); // ∞
+            expect(isOn()).toBe(true);
+
+            choose('repeats', '12');
+            expect(isOn()).toBe(false);
+        });
+
+        it('saves a timer that runs until stopped', async () => {
+            choose('timerSeconds', '30');
+            toggle().click();
+            fixture.detectChanges();
+
+            await submit();
+
+            expect(store.timers()[0].repeats).toBe(UNTIL_STOPPED);
         });
     });
 

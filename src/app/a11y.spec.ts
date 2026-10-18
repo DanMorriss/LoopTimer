@@ -102,6 +102,13 @@ describe('Accessibility (axe)', () => {
             await expectNoViolations();
         });
 
+        it('with the until-stopped switch on', async () => {
+            await open('/setup');
+            click('app-infinity-switch [role="switch"]');
+            await settle();
+            await expectNoViolations();
+        });
+
         it('editing a timer', async () => {
             store.addTimer(sprints);
             await open('/setup?editId=1');
@@ -161,6 +168,13 @@ describe('Accessibility (axe)', () => {
             expect(fixture.nativeElement.textContent).toContain("You're finished!");
             await expectNoViolations();
         }, 15000);
+
+        it('running until stopped', async () => {
+            store.setActiveTimer(store.addTimer({ ...sprints, repeats: 0 }));
+            await open('/timer');
+            expect(fixture.nativeElement.textContent).toContain('round 1 of ∞');
+            await expectNoViolations();
+        });
 
         it('paused', async () => {
             store.setActiveTimer(store.addTimer(sprints));

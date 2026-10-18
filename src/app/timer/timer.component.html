@@ -5,6 +5,13 @@
         <!-- Read out by screen readers when the phase changes; the countdown itself stays quiet -->
         <div class="sr-only" aria-live="polite" aria-atomic="true">{{ announcement() }}</div>
         <div class="timer-status text-sky-50">
+            @if (untilStopped() && isComplete() === false) {
+                <p class="text-2xl">
+                    round {{ roundNumber() }} of
+                    <span class="timer-status__infinity" aria-hidden="true">∞</span>
+                    <span class="sr-only">until stopped</span>
+                </p>
+            }
             @if (repeatArray().length > 1) {
                 <div class="text-2xl">
                     <span>remaining repeats: </span>

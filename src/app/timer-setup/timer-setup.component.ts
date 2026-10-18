@@ -1,10 +1,11 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { form, FormField, FormRoot, validate } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Timer } from '../models/timer';
+import { Timer, UNTIL_STOPPED } from '../models/timer';
+import { InfinitySwitchComponent } from '../shared/components/infinity-switch/infinity-switch.component';
 import {
     WheelPickerComponent,
     WheelPickerOption,
@@ -51,6 +52,7 @@ const EMPTY_SETUP: TimerSetupModel = {
         FormRoot,
         FormField,
         WheelPickerComponent,
+        InfinitySwitchComponent,
         MatButtonModule,
         MatFormFieldModule,
         MatIconModule,
@@ -64,7 +66,11 @@ export class TimerSetupComponent {
     protected readonly editingTimerId = signal<number | null>(null);
     protected readonly minuteOptions = pickerOptions(0, 99, padded);
     protected readonly secondOptions = pickerOptions(0, 59, padded);
-    protected readonly repeatOptions = pickerOptions(1, 30, String);
+    // 1-30, then ∞ at the end of the wheel
+    protected readonly repeatOptions: WheelPickerOption[] = [
+        ...pickerOptions(1, 30, String),
+        { value: UNTIL_STOPPED, label: '∞', spokenLabel: 'until stopped' },
+    ];
 
     private readonly model = signal<TimerSetupModel>({ ...EMPTY_SETUP });
 
@@ -88,6 +94,10 @@ export class TimerSetupComponent {
         }
     );
 
+    protected readonly untilStopped = computed(() => this.model().repeats === UNTIL_STOPPED);
+    // The last number of rounds picked, so turning the switch off goes back to it
+    private lastRounds = EMPTY_SETUP.repeats;
+
     protected readonly noTimeError = computed(() =>
         this.timerForm()
             .errors()
@@ -95,6 +105,15 @@ export class TimerSetupComponent {
     );
 
     constructor() {
+        // An effect rather than a derived signal, so the number is caught even when nothing
+        // reads it before the wheel moves on to ∞
+        effect(() => {
+            const repeats = this.model().repeats;
+            if (repeats !== UNTIL_STOPPED) {
+                this.lastRounds = repeats;
+            }
+        });
+
         const timerToEdit = this.findTimerToEdit();
         if (timerToEdit) {
             this.editingTimerId.set(timerToEdit.id);
@@ -107,6 +126,11 @@ export class TimerSetupComponent {
                 repeats: timerToEdit.repeats,
             });
         }
+    }
+
+    protected setUntilStopped(on: boolean) {
+        const repeats = on ? UNTIL_STOPPED : this.lastRounds;
+        this.model.update((setup) => ({ ...setup, repeats }));
     }
 
     private findTimerToEdit(): Timer | null {

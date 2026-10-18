@@ -1,4 +1,4 @@
-import { Timer } from '../models/timer';
+import { Timer, UNTIL_STOPPED } from '../models/timer';
 import { alarmEvents } from './alarm-schedule';
 import { timerStateAt } from './timer-state';
 
@@ -56,5 +56,31 @@ describe('alarmEvents', () => {
                 expect(timerStateAt(timer, event.at - 1).phase).not.toBe(phaseFor[event.kind]);
             }
         }
+    });
+
+    describe('until stopped', () => {
+        const forever = () => makeTimer({ repeats: UNTIL_STOPPED });
+
+        it('lists the asked-for number of rounds, resting after each, with no finish', () => {
+            const kinds = alarmEvents(forever(), 0, 0, 3).map((e) => e.kind);
+
+            expect(kinds).toEqual(['work', 'rest', 'work', 'rest', 'work', 'rest']);
+        });
+
+        it('starts from a later round to top up a long workout', () => {
+            const events = alarmEvents(forever(), 0, 50, 1);
+
+            // Round 50 starts 50 x 40s in
+            expect(events).toEqual([
+                { kind: 'work', at: 2_000_000 },
+                { kind: 'rest', at: 2_030_000 },
+            ]);
+        });
+    });
+
+    it('lists the rest of a finite workout from a later round, then the finish', () => {
+        const kinds = alarmEvents(makeTimer(), 0, 2, 100).map((e) => e.kind);
+
+        expect(kinds).toEqual(['work', 'finish']);
     });
 });

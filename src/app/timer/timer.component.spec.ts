@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
-import { Timer } from '../models/timer';
+import { Timer, UNTIL_STOPPED } from '../models/timer';
 import { TimerStore } from '../shared/state/timer-store.service';
 import { AlarmService } from '../shared/alarms/alarm.service';
 import { contrastRatio } from '../shared/testing/contrast';
@@ -728,6 +728,73 @@ describe('TimerComponent', () => {
         });
     });
 
+    describe('until stopped', () => {
+        // 3s work, 2s rest, round after round
+        const forever = () =>
+            makeTimer({ timerSeconds: 3, restSeconds: 2, repeats: UNTIL_STOPPED });
+        const said = () =>
+            (fixture.nativeElement.querySelector('[aria-live]') as HTMLElement).textContent?.trim();
+
+        it('shows which round it is on, of ∞, instead of the rounds left', () => {
+            start(forever());
+            advance(5000 * 6);
+
+            expect(text()).toContain('round 7 of ∞');
+            expect(
+                fixture.nativeElement.querySelectorAll('.rubik-spray-paint-regular')
+            ).toHaveLength(0);
+            expect(text()).not.toContain('Last one!');
+            fixture.destroy();
+        });
+
+        it('tells screen readers "until stopped" rather than reading out the symbol', () => {
+            start(forever());
+
+            const status = fixture.nativeElement.querySelector('.timer-status') as HTMLElement;
+            expect(status.querySelector('[aria-hidden="true"]')?.textContent).toBe('∞');
+            expect(status.querySelector('.sr-only')?.textContent).toBe('until stopped');
+            fixture.destroy();
+        });
+
+        it('announces the round number with no total', () => {
+            start(forever());
+            expect(said()).toBe('Work, round 1');
+
+            advance(5000);
+            expect(said()).toBe('Work, round 2');
+            fixture.destroy();
+        });
+
+        it('keeps going, and never finishes on its own', () => {
+            start(forever());
+
+            advance(60 * 60 * 1000);
+
+            expect(component.isComplete()).toBe(false);
+            expect(text()).toContain('round 721 of ∞');
+            expect(fixture.nativeElement.querySelectorAll('.timer-controls button')).toHaveLength(
+                2
+            );
+            fixture.destroy();
+        });
+
+        it('books alarms in batches, and tops them up halfway through each one', () => {
+            start(forever());
+            TestBed.inject(AlarmService).unlock();
+            fixture.detectChanges();
+            // Rounds 0-99: the last work alarm is round 99, 99 x 5s in
+            expect(audio.scheduledNotes()).toContain('880@495');
+            expect(audio.scheduledNotes()).not.toContain('880@500');
+
+            // Into round 50: rounds 50-149 are booked
+            advance(50 * 5000 + 1000);
+
+            expect(audio.scheduledNotes()).toContain('880@745');
+            expect(audio.scheduledNotes()).not.toContain('880@750');
+            fixture.destroy();
+        });
+    });
+
     describe('alarms', () => {
         // 3s work, 2s rest, 2 rounds: work at 0s, rest at 3s, work at 5s, finish at 8s
         const timer = () => makeTimer({ timerSeconds: 3, restSeconds: 2, repeats: 2 });
@@ -784,11 +851,11 @@ describe('TimerComponent', () => {
             button('Resume').click();
             fixture.detectChanges();
 
-            // 1.5s in, so everything is 1.5s sooner than at the start
+            // Resumed 11.5s after starting (on the audio clock), 1.5s into the workout
             expect(audio.scheduledNotes()).toEqual([
-                ...REST_AT(1.5),
-                ...WORK_AT(3.5),
-                ...FINISH_AT(6.5),
+                ...REST_AT(13),
+                ...WORK_AT(15),
+                ...FINISH_AT(18),
             ]);
             fixture.destroy();
         });

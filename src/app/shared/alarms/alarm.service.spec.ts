@@ -111,6 +111,20 @@ describe('AlarmService', () => {
             expect(context.scheduledNotes()).toEqual(WORK);
         });
 
+        it('does not play an alarm twice, or cut it off, when rescheduled just after it starts', () => {
+            alarms.unlock();
+            const start = Date.now();
+            const work = { kind: 'work' as const, at: start };
+            const rest = { kind: 'rest' as const, at: start + 30000 };
+            alarms.schedule([work, rest]);
+            vi.advanceTimersByTime(100);
+
+            // e.g. topping up a long workout's alarms, just as a round starts
+            alarms.schedule([work, rest, { kind: 'work', at: start + 40000 }]);
+
+            expect(context.scheduledNotes()).toEqual([...WORK, '440@30', '880@40', '880@40.25']);
+        });
+
         it('silences everything when cancelled', () => {
             alarms.unlock();
             alarms.schedule([
