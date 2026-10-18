@@ -10,6 +10,7 @@ From the original plan (see the README's Roadmap and user stories):
 - [ ] **Alarms on a locked phone or another page:** iPhones suspend web audio when locked, and the alarms only play while the timer page is open. Notifications from a service worker may be the way round both (user story 4).
 - [ ] **Alarm order setting:** pick which sound plays for each interval, with a preview. Needs the sound files first.
 - [ ] **History:** a log of completed workouts (start time, rounds, total duration), with delete.
+- [ ] **Rep steps:** a step that's a number of reps rather than a time, e.g. "20 push-ups". There's no countdown: the timer shows the reps and waits for a "Done" tap (or Space) before moving on. This adds a third kind of step to the `Step` model, and `timerStateAt()` can no longer work purely from elapsed time: each rep step's finish time has to be recorded, much as pausing is now. Also affects the alarms (none can be booked past a rep step), "Next:", the library summary and history's total duration.
 
 ## 2. Design
 

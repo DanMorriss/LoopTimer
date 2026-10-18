@@ -1,5 +1,7 @@
 import type { Mock } from 'vitest';
+import { CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { Timer, UNTIL_STOPPED } from '../models/timer';
 import { TimerStore } from '../shared/state/timer-store.service';
@@ -265,6 +267,31 @@ describe('TimerSetupComponent', () => {
             // It's now last, so its down button is disabled: focus goes to its up button
             expect(document.activeElement).toBe(button('Move Step 2, Squats up'));
             expect(said()).toBe('Moved Squats to step 2');
+        });
+
+        it('moves a step dropped by drag and drop, and says so', async () => {
+            typeName(0, 'Squats');
+            chooseTime(0, 'seconds', '30');
+            await press('Add work');
+            typeName(2, 'Plank');
+
+            // What the CDK reports when Squats is dragged from first to last
+            const list = fixture.debugElement
+                .query(By.directive(CdkDropList))
+                .injector.get(CdkDropList);
+            list.dropped.emit({ previousIndex: 0, currentIndex: 2 } as CdkDragDrop<unknown>);
+            fixture.detectChanges();
+
+            expect(shown().steps.map((s) => s.name || s.kind)).toEqual(['Rest', 'Plank', 'Squats']);
+            expect(shown().steps[2].time).toBe('0:30');
+            expect(said()).toBe('Moved Squats to step 3');
+        });
+
+        it('gives each step a drag handle, hidden from screen readers (they use the buttons)', () => {
+            const handles = steps().map((step) => el('[cdkDragHandle], .step__handle', step));
+
+            expect(handles.every((handle) => handle !== null)).toBe(true);
+            expect(handles[0].getAttribute('aria-hidden')).toBe('true');
         });
 
         it('can not move the first step up or the last step down', () => {

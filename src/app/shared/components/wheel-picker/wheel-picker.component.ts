@@ -1,8 +1,11 @@
 import {
+    afterNextRender,
     afterRenderEffect,
     Component,
     computed,
+    DestroyRef,
     ElementRef,
+    inject,
     input,
     model,
     viewChild,
@@ -84,10 +87,32 @@ export class WheelPickerComponent implements FormValueControl<number> {
                 viewport.scrollTo({ top: index * this.rowHeight(), behavior });
             }
         });
+
+        // Hiding the wheel or moving it in the page (e.g. while a list item is dragged) resets
+        // its scroll, which is how it shows the value. It changes size when that happens, so
+        // line the value back up then.
+        const destroyRef = inject(DestroyRef);
+        afterNextRender(() => {
+            const observer = new ResizeObserver(() => this.realign());
+            observer.observe(this.viewport().nativeElement);
+            destroyRef.onDestroy(() => observer.disconnect());
+        });
     }
 
     focus(options?: FocusOptions) {
         this.viewport().nativeElement.focus(options);
+    }
+
+    /** Jumps the wheel back to the selected value, if it's showing and has drifted off it. */
+    private realign() {
+        const viewport = this.viewport().nativeElement;
+        if (viewport.clientHeight === 0 || this.drag?.dragging) {
+            return;
+        }
+        const top = this.selectedIndex() * this.rowHeight();
+        if (Math.abs(viewport.scrollTop - top) >= 0.5) {
+            viewport.scrollTo({ top, behavior: 'instant' });
+        }
     }
 
     protected onScroll() {

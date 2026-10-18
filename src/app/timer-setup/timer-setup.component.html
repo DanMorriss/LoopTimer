@@ -16,14 +16,47 @@
             <!-- Says what happened after a step is added, moved or deleted -->
             <div class="sr-only" aria-live="polite">{{ stepAnnouncement() }}</div>
 
-            <ol class="steps" aria-labelledby="steps-heading">
+            <!-- Steps can be dragged by their handle; the up/down buttons do the same from a keyboard -->
+            <ol
+                class="steps"
+                aria-labelledby="steps-heading"
+                cdkDropList
+                cdkDropListLockAxis="y"
+                (cdkDropListDropped)="dropStep($event)"
+            >
                 <!-- Rows stay put and the values move between them: moving a row in the page
                      would reset its wheels' scroll, which is how they show their value -->
                 @for (step of timerForm.steps; track $index; let i = $index) {
                     @let key = step().value().key;
                     @let kind = step().value().kind;
-                    <li class="step" [class.step--rest]="kind === 'rest'">
+                    <li class="step" [class.step--rest]="kind === 'rest'" cdkDrag>
+                        <!-- What follows the pointer: a compact card, as the wheels don't copy well -->
+                        <div
+                            class="step-preview"
+                            [class.step--rest]="kind === 'rest'"
+                            *cdkDragPreview
+                        >
+                            <span class="step__badge">{{ kindName(kind) }}</span>
+                            <span>{{ step().value().name.trim() }}</span>
+                            <span class="step-preview__time">
+                                {{ step().value().minutes.toString().padStart(2, '0') }}:{{
+                                    step().value().seconds.toString().padStart(2, '0')
+                                }}
+                            </span>
+                        </div>
+                        <!-- Where it will land -->
+                        <div class="step-placeholder" *cdkDragPlaceholder></div>
+
                         <div class="step__header">
+                            <!-- Pointer only, so hidden from screen readers: they use the move buttons -->
+                            <span
+                                class="step__handle"
+                                cdkDragHandle
+                                aria-hidden="true"
+                                title="Drag to reorder"
+                            >
+                                <mat-icon>drag_indicator</mat-icon>
+                            </span>
                             <span class="step__badge">{{ kindName(kind) }}</span>
                             <span class="step__number" [id]="'step-' + key + '-title'">
                                 <span aria-hidden="true">{{ i + 1 }}</span>

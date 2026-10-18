@@ -11,6 +11,15 @@ import { applyEach, form, FormField, FormRoot, maxLength, validate } from '@angu
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import {
+    CdkDrag,
+    CdkDragDrop,
+    CdkDragHandle,
+    CdkDragPlaceholder,
+    CdkDragPreview,
+    CdkDropList,
+    moveItemInArray,
+} from '@angular/cdk/drag-drop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { hasWork, Step, StepKind, Timer, UNTIL_STOPPED } from '../models/timer';
 import { InfinitySwitchComponent } from '../shared/components/infinity-switch/infinity-switch.component';
@@ -60,6 +69,11 @@ const kindName = (kind: StepKind) => (kind === 'work' ? 'Work' : 'Rest');
     templateUrl: './timer-setup.component.html',
     styleUrl: './timer-setup.component.scss',
     imports: [
+        CdkDropList,
+        CdkDrag,
+        CdkDragHandle,
+        CdkDragPreview,
+        CdkDragPlaceholder,
         FormRoot,
         FormField,
         WheelPickerComponent,
@@ -167,23 +181,38 @@ export class TimerSetupComponent {
         this.focusAfterRender(`step-${step.key}-name`);
     }
 
+    /** The up and down buttons, for keyboard and screen reader users (and anyone else). */
     protected moveStep(index: number, by: -1 | 1) {
-        const steps = [...this.model().steps];
         const target = index + by;
-        if (target < 0 || target >= steps.length) {
+        const moved = this.moveStepTo(index, target);
+        if (!moved) {
             return;
         }
-        [steps[index], steps[target]] = [steps[target], steps[index]];
-        this.updateSteps(() => steps);
-        const moved = steps[target];
-        this.stepAnnouncement.set(
-            `Moved ${moved.name.trim() || kindName(moved.kind).toLowerCase()} to step ${target + 1}`
-        );
         // Focus follows the step to its new place: the same button, or the other move
         // button if that one has just been disabled (at the top or bottom)
-        const atEnd = by === -1 ? target === 0 : target === steps.length - 1;
+        const atEnd = by === -1 ? target === 0 : target === this.stepCount() - 1;
         const button = by === -1 ? (atEnd ? 'down' : 'up') : atEnd ? 'up' : 'down';
         this.focusAfterRender(`step-${moved.key}-${button}`);
+    }
+
+    /** A step dragged by its handle and dropped in a new place. */
+    protected dropStep(event: CdkDragDrop<unknown>) {
+        this.moveStepTo(event.previousIndex, event.currentIndex);
+    }
+
+    /** Moves a step to a new position and says so. Returns the step, or null if it can't move. */
+    private moveStepTo(from: number, to: number): StepModel | null {
+        const steps = [...this.model().steps];
+        if (from === to || to < 0 || to >= steps.length) {
+            return null;
+        }
+        moveItemInArray(steps, from, to);
+        this.updateSteps(() => steps);
+        const moved = steps[to];
+        this.stepAnnouncement.set(
+            `Moved ${moved.name.trim() || kindName(moved.kind).toLowerCase()} to step ${to + 1}`
+        );
+        return moved;
     }
 
     protected deleteStep(index: number) {
