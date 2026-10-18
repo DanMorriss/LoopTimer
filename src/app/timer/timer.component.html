@@ -100,17 +100,36 @@
         }
 
         @if (isComplete() === false) {
+            <!-- Media-player controls: a big Pause/Resume in the middle, a smaller Stop to one
+                 side so it's hard to hit by mistake. The captions repeat the buttons' names
+                 for sighted users, so screen readers skip them. -->
+            @let pauseLabel = isPaused() ? 'Resume' : 'Pause';
             <div class="timer-controls">
-                <app-infinity-button
-                    [text]="isPaused() ? 'Resume' : 'Pause'"
-                    keyShortcuts="Space"
-                    (buttonClick)="togglePause()"
-                ></app-infinity-button>
-                <app-infinity-button
-                    text="Stop"
-                    variant="secondary"
-                    (buttonClick)="stop()"
-                ></app-infinity-button>
+                <div class="timer-control timer-control--main">
+                    <button
+                        type="button"
+                        class="btn-main btn-main--round"
+                        [attr.aria-label]="pauseLabel"
+                        aria-keyshortcuts="Space"
+                        (click)="togglePause()"
+                    >
+                        <mat-icon aria-hidden="true">{{
+                            isPaused() ? 'play_arrow' : 'pause'
+                        }}</mat-icon>
+                    </button>
+                    <span class="timer-control__caption" aria-hidden="true">{{ pauseLabel }}</span>
+                </div>
+                <div class="timer-control timer-control--side">
+                    <button
+                        type="button"
+                        class="btn-icon timer-control__stop"
+                        aria-label="Stop"
+                        (click)="stop()"
+                    >
+                        <mat-icon aria-hidden="true">stop</mat-icon>
+                    </button>
+                    <span class="timer-control__caption" aria-hidden="true">Stop</span>
+                </div>
             </div>
 
             <!-- After a refresh the browser blocks sound until the page is tapped again -->

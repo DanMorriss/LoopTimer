@@ -2,15 +2,13 @@
 //
 // .btn-main   The one main action on a screen (Start timer, Add timer, Create a timer):
 //             a raised glowing pill that a band of light crosses every few seconds.
+//             .btn-main--round makes it a circle for an icon (the timer's Pause/Resume).
 // .btn-pill   Any smaller action (Play, Collapse all, Cancel, links that act like buttons).
 //             Add .btn-pill--danger for Delete.
 // .btn-icon   An icon on its own: a 44px outlined circle. Add .btn-icon--danger for delete
 //             buttons.
 // .btn-add    Adds a new thing to a list (setup's "Add work" and "Add rest"): dashed, in
 //             the colour of what it adds. Add .btn-add--rest for the rest colour.
-//
-// The timer page's Pause and Stop keep their own glowing outline (InfinityButtonComponent),
-// which is a one-off on purpose.
 
 .btn-main {
     position: relative;
@@ -97,6 +95,21 @@
         &::after {
             display: none;
         }
+    }
+}
+
+// The round version, for an icon on its own (the timer's Pause/Resume)
+.btn-main--round {
+    width: 80px;
+    min-height: 0;
+    height: 80px;
+    padding: 0;
+    border-radius: 50%;
+
+    .mat-icon {
+        width: 2.75rem;
+        height: 2.75rem;
+        font-size: 2.75rem;
     }
 }
 

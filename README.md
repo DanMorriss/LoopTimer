@@ -73,7 +73,6 @@ src/app/
     state/history-store.service.ts  Saved workout history
     theme/theme.service.ts         Applies the theme (colour tokens are in src/styles.scss)
     alarms/alarm.service.ts        Plays alarms on the audio clock, and vibrates
-    components/infinity-button/    Animated button used on the empty library
     components/wheel-picker/       iPhone-style number wheel (a Signal Forms control)
     components/infinity-switch/    The ∞ (until stopped) switch in setup
     components/toggle-switch/      On/off switch used in settings
