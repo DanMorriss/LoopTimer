@@ -11,101 +11,61 @@
             <p class="p-4 text-center font-bold text-slate-100">Timer</p>
 
             <div class="picker-row">
-                <label class="picker-field" for="timerMinutes">
-                    <span class="picker-field__label">Minutes</span>
-                    <select
-                        class="picker-field__select"
+                <div class="picker-field">
+                    <span class="picker-field__label" id="timerMinutes-label">Minutes</span>
+                    <app-wheel-picker
                         id="timerMinutes"
                         [formField]="timerForm.timerMinutes"
-                    >
-                        @for (option of minuteOptions; track option.value) {
-                            <option
-                                [value]="option.value"
-                                [selected]="option.value === timerForm.timerMinutes().value()"
-                            >
-                                {{ option.label }}
-                            </option>
-                        }
-                    </select>
-                </label>
+                        [options]="minuteOptions"
+                        labelledBy="timerMinutes-label"
+                    />
+                </div>
 
-                <label class="picker-field" for="timerSeconds">
-                    <span class="picker-field__label">Seconds</span>
-                    <select
-                        class="picker-field__select"
+                <div class="picker-field">
+                    <span class="picker-field__label" id="timerSeconds-label">Seconds</span>
+                    <app-wheel-picker
                         id="timerSeconds"
                         [formField]="timerForm.timerSeconds"
-                    >
-                        @for (option of secondOptions; track option.value) {
-                            <option
-                                [value]="option.value"
-                                [selected]="option.value === timerForm.timerSeconds().value()"
-                            >
-                                {{ option.label }}
-                            </option>
-                        }
-                    </select>
-                </label>
+                        [options]="secondOptions"
+                        labelledBy="timerSeconds-label"
+                    />
+                </div>
             </div>
 
             <p class="p-4 text-center font-bold text-slate-100">Rest</p>
 
             <div class="picker-row">
-                <label class="picker-field" for="restMinutes">
-                    <span class="picker-field__label">Minutes</span>
-                    <select
-                        class="picker-field__select"
+                <div class="picker-field">
+                    <span class="picker-field__label" id="restMinutes-label">Minutes</span>
+                    <app-wheel-picker
                         id="restMinutes"
                         [formField]="timerForm.restMinutes"
-                    >
-                        @for (option of minuteOptions; track option.value) {
-                            <option
-                                [value]="option.value"
-                                [selected]="option.value === timerForm.restMinutes().value()"
-                            >
-                                {{ option.label }}
-                            </option>
-                        }
-                    </select>
-                </label>
+                        [options]="minuteOptions"
+                        labelledBy="restMinutes-label"
+                    />
+                </div>
 
-                <label class="picker-field" for="restSeconds">
-                    <span class="picker-field__label">Seconds</span>
-                    <select
-                        class="picker-field__select"
+                <div class="picker-field">
+                    <span class="picker-field__label" id="restSeconds-label">Seconds</span>
+                    <app-wheel-picker
                         id="restSeconds"
                         [formField]="timerForm.restSeconds"
-                    >
-                        @for (option of secondOptions; track option.value) {
-                            <option
-                                [value]="option.value"
-                                [selected]="option.value === timerForm.restSeconds().value()"
-                            >
-                                {{ option.label }}
-                            </option>
-                        }
-                    </select>
-                </label>
+                        [options]="secondOptions"
+                        labelledBy="restSeconds-label"
+                    />
+                </div>
             </div>
 
             <div class="m-4 flex justify-center">
-                <label class="picker-field picker-field--single" for="repeats">
-                    <span class="picker-field__label">Rounds</span>
-                    <select
-                        class="picker-field__select"
+                <div class="picker-field picker-field--single">
+                    <span class="picker-field__label" id="repeats-label">Rounds</span>
+                    <app-wheel-picker
                         id="repeats"
                         [formField]="timerForm.repeats"
-                    >
-                        @for (option of repeatOptions; track option.value) {
-                            <option
-                                [value]="option.value"
-                                [selected]="option.value === timerForm.repeats().value()"
-                            >
-                                {{ option.label }}
-                            </option>
-                        }
-                    </select>
-                </label>
+                        [options]="repeatOptions"
+                        labelledBy="repeats-label"
+                    />
+                </div>
             </div>
 
             @if (noTimeError(); as error) {

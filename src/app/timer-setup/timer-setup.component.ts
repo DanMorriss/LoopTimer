@@ -5,29 +5,29 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Timer } from '../models/timer';
+import {
+    WheelPickerComponent,
+    WheelPickerOption,
+} from '../shared/components/wheel-picker/wheel-picker.component';
 import { TimerStore } from '../shared/state/timer-store.service';
 
-/**
- * The form's values. The numbers are strings because native <select> elements
- * always report their value as a string; they're converted when the timer is saved.
- */
+/** The form's values. */
 interface TimerSetupModel {
     title: string;
-    timerMinutes: string;
-    timerSeconds: string;
-    restMinutes: string;
-    restSeconds: string;
-    repeats: string;
+    timerMinutes: number;
+    timerSeconds: number;
+    restMinutes: number;
+    restSeconds: number;
+    repeats: number;
 }
 
-interface SelectOption {
-    value: string;
-    label: string;
-}
-
-function selectOptions(from: number, to: number, label: (n: number) => string): SelectOption[] {
+function pickerOptions(
+    from: number,
+    to: number,
+    label: (n: number) => string
+): WheelPickerOption[] {
     return Array.from({ length: to - from + 1 }, (_, i) => ({
-        value: String(from + i),
+        value: from + i,
         label: label(from + i),
     }));
 }
@@ -36,18 +36,25 @@ const padded = (n: number) => n.toString().padStart(2, '0');
 
 const EMPTY_SETUP: TimerSetupModel = {
     title: '',
-    timerMinutes: '0',
-    timerSeconds: '0',
-    restMinutes: '0',
-    restSeconds: '0',
-    repeats: '1',
+    timerMinutes: 0,
+    timerSeconds: 0,
+    restMinutes: 0,
+    restSeconds: 0,
+    repeats: 1,
 };
 
 @Component({
     selector: 'app-timer-setup',
     templateUrl: './timer-setup.component.html',
     styleUrl: './timer-setup.component.scss',
-    imports: [FormRoot, FormField, MatButtonModule, MatFormFieldModule, MatIconModule],
+    imports: [
+        FormRoot,
+        FormField,
+        WheelPickerComponent,
+        MatButtonModule,
+        MatFormFieldModule,
+        MatIconModule,
+    ],
 })
 export class TimerSetupComponent {
     private readonly timerStore = inject(TimerStore);
@@ -55,20 +62,18 @@ export class TimerSetupComponent {
     private readonly route = inject(ActivatedRoute);
 
     protected readonly editingTimerId = signal<number | null>(null);
-    // Each <option> also binds [selected] from the form value: [formField] sets the
-    // <select>'s value before the @for has created its options, which the browser ignores
-    protected readonly minuteOptions = selectOptions(0, 99, padded);
-    protected readonly secondOptions = selectOptions(0, 59, padded);
-    protected readonly repeatOptions = selectOptions(1, 30, String);
+    protected readonly minuteOptions = pickerOptions(0, 99, padded);
+    protected readonly secondOptions = pickerOptions(0, 59, padded);
+    protected readonly repeatOptions = pickerOptions(1, 30, String);
 
     private readonly model = signal<TimerSetupModel>({ ...EMPTY_SETUP });
 
     protected readonly timerForm = form(
         this.model,
         (setup) => {
-            // The dropdowns only offer valid values, so the one rule is that there's some work time
+            // The pickers only offer valid values, so the one rule is that there's some work time
             validate(setup, ({ value }) =>
-                Number(value().timerMinutes) + Number(value().timerSeconds) > 0
+                value().timerMinutes + value().timerSeconds > 0
                     ? undefined
                     : { kind: 'noTime', message: 'Timer must have some time' }
             );
@@ -95,11 +100,11 @@ export class TimerSetupComponent {
             this.editingTimerId.set(timerToEdit.id);
             this.model.set({
                 title: timerToEdit.title,
-                timerMinutes: String(timerToEdit.timerMinutes),
-                timerSeconds: String(timerToEdit.timerSeconds),
-                restMinutes: String(timerToEdit.restMinutes),
-                restSeconds: String(timerToEdit.restSeconds),
-                repeats: String(timerToEdit.repeats),
+                timerMinutes: timerToEdit.timerMinutes,
+                timerSeconds: timerToEdit.timerSeconds,
+                restMinutes: timerToEdit.restMinutes,
+                restSeconds: timerToEdit.restSeconds,
+                repeats: timerToEdit.repeats,
             });
         }
     }
@@ -114,14 +119,8 @@ export class TimerSetupComponent {
     }
 
     private async saveAndStart(): Promise<void> {
-        const value = this.model();
         const timer: Omit<Timer, 'id'> = {
-            title: value.title,
-            timerMinutes: Number(value.timerMinutes),
-            timerSeconds: Number(value.timerSeconds),
-            restMinutes: Number(value.restMinutes),
-            restSeconds: Number(value.restSeconds),
-            repeats: Number(value.repeats),
+            ...this.model(),
             isTimerActive: false,
             isRestActive: false,
             isComplete: false,
