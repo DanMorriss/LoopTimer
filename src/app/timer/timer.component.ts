@@ -1,12 +1,13 @@
 import { Component, computed, inject, OnDestroy, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { InfinityButtonComponent } from '../shared/components/infinity-button/infinity-button.component';
 import { formatTime } from '../shared/format-time';
 import { TimerStore } from '../shared/state/timer-store.service';
 import { timerStateAt } from './timer-state';
 
 @Component({
     selector: 'app-timer',
-    imports: [RouterLink],
+    imports: [RouterLink, InfinityButtonComponent],
     templateUrl: './timer.component.html',
     styleUrls: ['./timer.component.scss'],
     host: {
@@ -16,7 +17,9 @@ import { timerStateAt } from './timer-state';
 })
 export class TimerComponent implements OnDestroy {
     timerStore = inject(TimerStore);
+    private readonly router = inject(Router);
     timer = this.timerStore.activeTimer;
+    isPaused = this.timerStore.isPaused;
 
     // Everything below is worked out from the clock rather than counted tick by tick,
     // so the timer stays correct even when ticks arrive late or not at all
@@ -26,7 +29,9 @@ export class TimerComponent implements OnDestroy {
     private readonly state = computed(() => {
         const timer = this.timer();
         const startedAt = this.timerStore.activeTimerStartedAt();
-        return timer && startedAt !== null ? timerStateAt(timer, this.now() - startedAt) : null;
+        // While paused, time stands still at the moment of the pause
+        const at = this.timerStore.activeTimerPausedAt() ?? this.now();
+        return timer && startedAt !== null ? timerStateAt(timer, at - startedAt) : null;
     });
 
     isTimerActive = computed(() => this.state()?.phase === 'work');
@@ -92,6 +97,9 @@ export class TimerComponent implements OnDestroy {
         if (!state || !timer) {
             return '';
         }
+        if (this.isPaused() && state.phase !== 'complete') {
+            return 'Paused';
+        }
         switch (state.phase) {
             case 'work':
                 return state.roundsLeft === 1 && timer.repeats > 1
@@ -103,6 +111,20 @@ export class TimerComponent implements OnDestroy {
                 return 'Finished';
         }
     });
+
+    togglePause() {
+        if (this.isPaused()) {
+            this.timerStore.resume();
+        } else {
+            this.timerStore.pause();
+        }
+        this.syncClock();
+    }
+
+    async stop() {
+        this.timerStore.stop();
+        await this.router.navigate(['/library']);
+    }
 
     syncClock() {
         this.now.set(Date.now());

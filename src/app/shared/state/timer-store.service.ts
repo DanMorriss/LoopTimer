@@ -6,17 +6,23 @@ export class TimerStore {
     private _timers = signal<Timer[]>([]);
     private _activeTimer = signal<Timer | null>(null);
     private _activeTimerStartedAt = signal<number | null>(null);
+    private _activeTimerPausedAt = signal<number | null>(null);
 
     readonly timers = computed(() => this._timers());
     readonly activeTimer = computed(() => this._activeTimer());
-    /** When the active timer was started, in ms since the epoch. */
+    /** When the active timer was started, in ms since the epoch. Moves forward on resume. */
     readonly activeTimerStartedAt = computed(() => this._activeTimerStartedAt());
+    /** When the active timer was paused, in ms since the epoch, or null while it runs. */
+    readonly activeTimerPausedAt = computed(() => this._activeTimerPausedAt());
+    readonly isPaused = computed(() => this._activeTimerPausedAt() !== null);
 
     constructor() {
         this._timers.set(this.loadTimers());
         this._activeTimer.set(this.loadActiveTimer());
         if (this._activeTimer()) {
-            this._activeTimerStartedAt.set(this.loadActiveTimerStartedAt());
+            const startedAt = this.loadActiveTimerStartedAt();
+            this._activeTimerStartedAt.set(startedAt);
+            this._activeTimerPausedAt.set(this.loadActiveTimerPausedAt(startedAt));
         }
     }
 
@@ -50,6 +56,13 @@ export class TimerStore {
         return Number.isFinite(savedStart) && savedStart > 0 && savedStart <= now
             ? savedStart
             : now;
+    }
+
+    // A saved pause only counts if it falls between the start and now; otherwise the timer runs
+    private loadActiveTimerPausedAt(startedAt: number): number | null {
+        const saved = sessionStorage.getItem('activeTimerPausedAt');
+        const pausedAt = Number(saved);
+        return saved !== null && pausedAt >= startedAt && pausedAt <= Date.now() ? pausedAt : null;
     }
 
     addTimer(timer: Omit<Timer, 'id'>): Timer {
@@ -102,6 +115,45 @@ export class TimerStore {
         this._activeTimerStartedAt.set(startedAt);
         sessionStorage.setItem('activeTimerId', String(timer.id));
         sessionStorage.setItem('activeTimerStartedAt', String(startedAt));
+        this._activeTimerPausedAt.set(null);
+        sessionStorage.removeItem('activeTimerPausedAt');
+    }
+
+    /** Freezes the active timer where it is. Does nothing if it's already paused. */
+    pause() {
+        if (!this._activeTimer() || this.isPaused()) {
+            return;
+        }
+        const pausedAt = Date.now();
+        this._activeTimerPausedAt.set(pausedAt);
+        sessionStorage.setItem('activeTimerPausedAt', String(pausedAt));
+    }
+
+    /**
+     * Carries on from where the timer was paused. The start time moves forward by the
+     * time spent paused, so the elapsed time picks up exactly where it stopped.
+     */
+    resume() {
+        const pausedAt = this._activeTimerPausedAt();
+        const startedAt = this._activeTimerStartedAt();
+        if (pausedAt === null || startedAt === null) {
+            return;
+        }
+        const resumedStart = startedAt + (Date.now() - pausedAt);
+        this._activeTimerStartedAt.set(resumedStart);
+        this._activeTimerPausedAt.set(null);
+        sessionStorage.setItem('activeTimerStartedAt', String(resumedStart));
+        sessionStorage.removeItem('activeTimerPausedAt');
+    }
+
+    /** Ends the active timer, leaving no timer selected. */
+    stop() {
+        this._activeTimer.set(null);
+        this._activeTimerStartedAt.set(null);
+        this._activeTimerPausedAt.set(null);
+        sessionStorage.removeItem('activeTimerId');
+        sessionStorage.removeItem('activeTimerStartedAt');
+        sessionStorage.removeItem('activeTimerPausedAt');
     }
 
     private saveTimers() {

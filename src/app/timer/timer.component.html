@@ -22,6 +22,7 @@
             class="timer-ring"
             [class.timer-ring--work]="isTimerActive()"
             [class.timer-ring--rest]="isRestActive()"
+            [class.timer-ring--paused]="isPaused()"
             role="progressbar"
             aria-label="Progress through this phase"
             aria-valuemin="0"
@@ -52,6 +53,7 @@
                         'flash-fade': isTimerActive(),
                         'flash-fade-blue': isRestActive(),
                         'bg-sky-50/50': isComplete(),
+                        'timer-face--paused': isPaused(),
                     }"
                 >
                     @if (isComplete() === false) {
@@ -65,6 +67,10 @@
                                 <p>Rest</p>
                                 <p>{{ restTime() }}</p>
                             }
+
+                            @if (isPaused()) {
+                                <p class="timer-face__paused">Paused</p>
+                            }
                         </div>
                     }
 
@@ -76,6 +82,20 @@
                 </div>
             </div>
         </div>
+
+        @if (isComplete() === false) {
+            <div class="timer-controls">
+                <app-infinity-button
+                    [text]="isPaused() ? 'Resume' : 'Pause'"
+                    (buttonClick)="togglePause()"
+                ></app-infinity-button>
+                <app-infinity-button
+                    text="Stop"
+                    variant="secondary"
+                    (buttonClick)="stop()"
+                ></app-infinity-button>
+            </div>
+        }
     } @else {
         <div class="no-timer flex flex-col items-center gap-6 p-8 text-center text-sky-50">
             <p class="text-2xl">No timer selected.</p>

@@ -237,4 +237,135 @@ describe('TimerStore', () => {
             expect(store.activeTimer()).toEqual(timer);
         });
     });
+
+    describe('pause, resume and stop', () => {
+        beforeEach(() => {
+            sessionStorage.clear();
+            vi.useFakeTimers({ now: 1_000_000 });
+        });
+        afterEach(() => {
+            vi.useRealTimers();
+            sessionStorage.clear();
+        });
+
+        function startTimer() {
+            const store = createStore();
+            store.setActiveTimer(store.addTimer(makeTimer()));
+            return store;
+        }
+
+        it('records and remembers when the timer was paused', () => {
+            const store = startTimer();
+            vi.advanceTimersByTime(5000);
+
+            store.pause();
+
+            expect(store.isPaused()).toBe(true);
+            expect(store.activeTimerPausedAt()).toBe(1_005_000);
+            expect(sessionStorage.getItem('activeTimerPausedAt')).toBe('1005000');
+        });
+
+        it('keeps the first pause time if paused twice', () => {
+            const store = startTimer();
+            store.pause();
+            vi.advanceTimersByTime(3000);
+
+            store.pause();
+
+            expect(store.activeTimerPausedAt()).toBe(1_000_000);
+        });
+
+        it('does nothing when paused with no active timer', () => {
+            const store = createStore();
+
+            store.pause();
+
+            expect(store.isPaused()).toBe(false);
+            expect(sessionStorage.getItem('activeTimerPausedAt')).toBeNull();
+        });
+
+        it('moves the start time forward by the time spent paused when resumed', () => {
+            const store = startTimer();
+            vi.advanceTimersByTime(5000);
+            store.pause();
+            vi.advanceTimersByTime(60000);
+
+            store.resume();
+
+            expect(store.isPaused()).toBe(false);
+            // 5s had run before the pause, and still has
+            expect(Date.now() - store.activeTimerStartedAt()!).toBe(5000);
+            expect(sessionStorage.getItem('activeTimerStartedAt')).toBe(
+                String(store.activeTimerStartedAt())
+            );
+            expect(sessionStorage.getItem('activeTimerPausedAt')).toBeNull();
+        });
+
+        it('does nothing when resumed while running', () => {
+            const store = startTimer();
+            vi.advanceTimersByTime(5000);
+
+            store.resume();
+
+            expect(store.activeTimerStartedAt()).toBe(1_000_000);
+        });
+
+        it('starts unpaused when a timer is made active', () => {
+            const store = startTimer();
+            store.pause();
+
+            store.setActiveTimer(store.addTimer(makeTimer({ title: 'Next' })));
+
+            expect(store.isPaused()).toBe(false);
+            expect(sessionStorage.getItem('activeTimerPausedAt')).toBeNull();
+        });
+
+        it('stays paused after the app reloads', () => {
+            startTimer().pause();
+            vi.advanceTimersByTime(30000);
+            TestBed.resetTestingModule();
+
+            const store = createStore();
+
+            expect(store.isPaused()).toBe(true);
+            expect(store.activeTimerPausedAt()).toBe(1_000_000);
+        });
+
+        for (const [label, saved] of [
+            ['before the start time', '999999'],
+            ['in the future', '9999999999999'],
+            ['not a number', 'soon'],
+        ]) {
+            it(`runs rather than staying paused when the saved pause time is ${label}`, () => {
+                startTimer();
+                sessionStorage.setItem('activeTimerPausedAt', saved);
+                TestBed.resetTestingModule();
+
+                expect(createStore().isPaused()).toBe(false);
+            });
+        }
+
+        it('clears the active timer, its times and what was saved for the tab when stopped', () => {
+            const store = startTimer();
+            store.pause();
+
+            store.stop();
+
+            expect(store.activeTimer()).toBeNull();
+            expect(store.activeTimerStartedAt()).toBeNull();
+            expect(store.isPaused()).toBe(false);
+            expect(sessionStorage.getItem('activeTimerId')).toBeNull();
+            expect(sessionStorage.getItem('activeTimerStartedAt')).toBeNull();
+            expect(sessionStorage.getItem('activeTimerPausedAt')).toBeNull();
+        });
+
+        it('keeps the saved timers when stopped', () => {
+            const store = startTimer();
+
+            store.stop();
+
+            expect(store.timers()).toHaveLength(1);
+            expect(savedTimers()).toHaveLength(1);
+        });
+    });
 });

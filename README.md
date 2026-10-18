@@ -12,11 +12,12 @@ Built with Angular 22 (standalone components, signals and Signal Forms), Angular
 
 - **Create a timer** with a work time (up to 99:59), an optional rest time, and 1–30 rounds, picked on iPhone-style wheels: swipe, scroll or drag a wheel, click a number, or type one, and the one in the middle is selected. Give it a title, or leave it untitled.
 - **Run it.** A ring fills as each phase goes by. Work fills clockwise in pink, rest fills anticlockwise in blue, and the face flashes in the phase colour. The page shows the rounds left and "Last one!" for the final round. There's no rest after the last round.
-- **Keep accurate time.** The countdown is worked out from the clock, not by counting ticks. It stays correct if the tab is in the background or the phone is locked, and catches up as soon as you come back. Refreshing the page carries on where you were.
+- **Pause, resume or stop** while it runs. Pausing freezes the countdown and the ring where they are; stopping ends the workout and goes back to the library.
+- **Keep accurate time.** The countdown is worked out from the clock, not by counting ticks. It stays correct if the tab is in the background or the phone is locked, and catches up as soon as you come back. Refreshing the page carries on where you were, paused or not.
 - **Save and reuse timers** in the library: start, edit or delete any of them. Timers are saved in the browser (`localStorage`), so they stay on that device.
 - **Accessible:**
   - Everything works with a keyboard.
-  - Screen readers hear "Work, round 1 of 3", "Rest" and "Finished" as each phase starts.
+  - Screen readers hear "Work, round 1 of 3", "Rest" and "Finished" as each phase starts, and "Paused" when paused.
   - Looping animations stop when the system's reduced-motion setting is on.
   - Every page passes automated axe checks (WCAG 2.1 AA).
 
@@ -75,7 +76,6 @@ These come from the original plan and aren't built yet:
 
 - **Multiple intervals per timer**, e.g. 30 seconds then 45 seconds, rather than a single work/rest pair.
 - **Run until stopped:** repeat with no fixed number of rounds.
-- **Controls while running:** pause, resume and stop.
 - **Alarms:** a different sound, vibration or notification for each interval, including when the phone is locked. Today work and rest only look different on screen.
 - **Settings:** alarm order and sounds, light/dark theme, vibration on or off.
 - **History:** a log of completed workouts.

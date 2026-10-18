@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { Timer } from '../models/timer';
 import { TimerStore } from '../shared/state/timer-store.service';
 import { contrastRatio } from '../shared/testing/contrast';
@@ -499,6 +499,147 @@ describe('TimerComponent', () => {
             advance(1000);
 
             expect(ring().getAttribute('aria-valuenow')).toBe('25');
+            fixture.destroy();
+        });
+    });
+
+    describe('pause, resume and stop', () => {
+        const buttons = () =>
+            Array.from(
+                fixture.nativeElement.querySelectorAll('.timer-controls button')
+            ) as HTMLButtonElement[];
+        const button = (label: string) => buttons().find((b) => b.textContent?.trim() === label);
+        const ring = () => fixture.nativeElement.querySelector('.timer-ring') as HTMLElement;
+
+        function press(label: string) {
+            const target = button(label);
+            expect(target, `expected a ${label} button`).toBeDefined();
+            target!.click();
+            fixture.detectChanges();
+        }
+
+        it('offers Pause and Stop while running', () => {
+            start(makeTimer());
+
+            expect(buttons().map((b) => b.textContent?.trim())).toEqual(['Pause', 'Stop']);
+            fixture.destroy();
+        });
+
+        it('holds the countdown still while paused', () => {
+            start(makeTimer({ timerSeconds: 10 }));
+            advance(3000);
+
+            press('Pause');
+            advance(5000);
+
+            expect(text()).toContain('00:07');
+            expect(text()).toContain('Paused');
+            expect(component.isPaused()).toBe(true);
+            fixture.destroy();
+        });
+
+        it('does not move on to rest while paused, however long it waits', () => {
+            start(makeTimer({ timerSeconds: 3, restSeconds: 2 }));
+            press('Pause');
+
+            advance(60000);
+
+            expect(component.isTimerActive()).toBe(true);
+            expect(component.isRestActive()).toBe(false);
+            fixture.destroy();
+        });
+
+        it('carries on from where it was paused when resumed', () => {
+            start(makeTimer({ timerSeconds: 10 }));
+            advance(3000);
+            press('Pause');
+            advance(5000);
+
+            press('Resume');
+            expect(text()).toContain('00:07');
+            expect(text()).not.toContain('Paused');
+
+            advance(1000);
+            expect(text()).toContain('00:06');
+            fixture.destroy();
+        });
+
+        it('freezes the ring sweep and the flash while paused, without restarting them', () => {
+            start(makeTimer({ timerSeconds: 10 }));
+            const sweep = fixture.nativeElement.querySelector('.timer-ring__sweep');
+            const fill = () =>
+                fixture.nativeElement.querySelector('.timer-ring__fill') as HTMLElement;
+            const face = () => fixture.nativeElement.querySelector('.timer-face') as HTMLElement;
+
+            press('Pause');
+            expect(ring().classList).toContain('timer-ring--paused');
+            expect(getComputedStyle(fill()).animationPlayState).toBe('paused');
+            expect(getComputedStyle(face(), '::before').animationPlayState).toBe('paused');
+
+            press('Resume');
+            expect(ring().classList).not.toContain('timer-ring--paused');
+            expect(getComputedStyle(fill()).animationPlayState).toBe('running');
+            expect(fixture.nativeElement.querySelector('.timer-ring__sweep')).toBe(sweep);
+            fixture.destroy();
+        });
+
+        it('tells screen readers it has paused, then which phase it is back in', () => {
+            start(makeTimer({ repeats: 3 }));
+            const said = () =>
+                (
+                    fixture.nativeElement.querySelector('[aria-live]') as HTMLElement
+                ).textContent?.trim();
+
+            press('Pause');
+            expect(said()).toBe('Paused');
+
+            press('Resume');
+            expect(said()).toBe('Work, round 1 of 3');
+            fixture.destroy();
+        });
+
+        it('stays paused at the same point after a page refresh', () => {
+            localStorage.setItem(
+                'timers',
+                JSON.stringify([makeTimer({ id: 7, timerSeconds: 30 })])
+            );
+            sessionStorage.setItem('activeTimerId', '7');
+            sessionStorage.setItem('activeTimerStartedAt', String(Date.now() - 60000));
+            // Paused 4s in, a minute ago
+            sessionStorage.setItem('activeTimerPausedAt', String(Date.now() - 56000));
+            TestBed.resetTestingModule();
+            TestBed.configureTestingModule({
+                imports: [TimerComponent],
+                providers: [provideRouter([])],
+            });
+            fixture = TestBed.createComponent(TimerComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+
+            expect(text()).toContain('00:26');
+            expect(button('Resume')).toBeDefined();
+            fixture.destroy();
+            localStorage.clear();
+        });
+
+        it('ends the workout and goes back to the library when stopped', async () => {
+            start(makeTimer());
+            const router = TestBed.inject(Router);
+            const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+            press('Stop');
+
+            expect(store.activeTimer()).toBeNull();
+            expect(navigate).toHaveBeenCalledWith(['/library']);
+            fixture.destroy();
+        });
+
+        it('hides the controls once finished', () => {
+            start(makeTimer({ timerSeconds: 1, repeats: 1 }));
+
+            advance(1000);
+
+            expect(buttons()).toHaveLength(0);
             fixture.destroy();
         });
     });
