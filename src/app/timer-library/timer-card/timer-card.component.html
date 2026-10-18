@@ -10,13 +10,8 @@
     <div class="timer-card__row">
         <div class="timer-card__spacer" aria-hidden="true"></div>
 
-        <p
-            class="timer-card__summary"
-            [attr.aria-label]="
-                'Timer ' + workTime() + ', rest ' + restTime() + ', ' + spokenRounds()
-            "
-        >
-            {{ workTime() }} - {{ restTime() }} x {{ rounds() }}
+        <p class="timer-card__summary" [attr.aria-label]="summary().spoken + ', ' + spokenRounds()">
+            {{ summary().text }} x {{ rounds() }}
         </p>
 
         <div class="timer-card__spacer" aria-hidden="true"></div>

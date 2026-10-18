@@ -31,3 +31,146 @@
     outline-offset: 2px;
     border-color: var(--accent);
 }
+
+// body.mat-typography gives headings Material's Roboto and margins; keep the app's font
+.setup-heading {
+    margin: 1.5rem 0 0.25rem;
+    font-family: 'Audiowide', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-strong);
+    text-align: center;
+}
+
+.setup-hint {
+    margin: 0 0 0.75rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+// Steps: one card each, edged in the phase colour, like the timer itself
+.steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.step {
+    --step-color: var(--work);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--step-color);
+    border-radius: 0.75rem;
+    background: var(--card);
+
+    &--rest {
+        --step-color: var(--rest);
+    }
+}
+
+.step__header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.step__badge {
+    padding: 0.15rem 0.6rem;
+    border: 1px solid var(--step-color);
+    border-radius: 999px;
+    color: var(--step-color);
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.step__number {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.step__actions {
+    display: flex;
+    gap: 0.35rem;
+    margin-left: auto;
+}
+
+// 44px targets, so they're easy to hit on a phone
+.step__action {
+    display: inline-grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--control);
+    color: var(--text);
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+        border-color: var(--border-strong);
+        background: var(--control-hover);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+    }
+
+    &:disabled {
+        cursor: not-allowed;
+        opacity: 0.4;
+    }
+
+    &--delete {
+        color: var(--text-danger);
+    }
+}
+
+.add-steps {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin: 0.75rem 0;
+}
+
+.add-step {
+    --step-color: var(--work);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    min-height: 44px;
+    border: 1px dashed var(--step-color);
+    border-radius: 0.75rem;
+    background: transparent;
+    color: var(--step-color);
+    font: inherit;
+    cursor: pointer;
+
+    &--rest {
+        --step-color: var(--rest);
+    }
+
+    &:hover:not(:disabled) {
+        background: var(--control);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+    }
+
+    &:disabled {
+        cursor: not-allowed;
+        opacity: 0.4;
+    }
+}

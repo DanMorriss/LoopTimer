@@ -3,21 +3,13 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { Timer } from '../models/timer';
 import { TimerStore } from '../shared/state/timer-store.service';
+import { makeTimer as baseTimer, SimpleTimer } from '../shared/testing/make-timer';
 import { TimerLibraryComponent } from './timer-library.component';
 
-function makeTimer(overrides: Partial<Omit<Timer, 'id'>> = {}): Omit<Timer, 'id'> {
-    return {
-        title: 'Intervals',
-        timerMinutes: 0,
-        timerSeconds: 30,
-        restMinutes: 0,
-        restSeconds: 10,
-        repeats: 3,
-        isTimerActive: false,
-        isRestActive: false,
-        isComplete: false,
-        ...overrides,
-    };
+// A new timer to add: the shared test timer without its id
+function makeTimer(overrides: Partial<SimpleTimer> = {}): Omit<Timer, 'id'> {
+    const { id: _id, ...timer } = baseTimer(overrides);
+    return timer;
 }
 
 describe('TimerLibraryComponent', () => {

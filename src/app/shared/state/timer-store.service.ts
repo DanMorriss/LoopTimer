@@ -1,5 +1,5 @@
 import { computed, Service, signal } from '@angular/core';
-import { Timer } from '../../models/timer';
+import { hasWork, MAX_STEP_SECONDS, Step, Timer } from '../../models/timer';
 
 @Service()
 export class TimerStore {
@@ -36,7 +36,9 @@ export class TimerStore {
         // so drop anything that isn't a usable timer
         try {
             const parsed: unknown = JSON.parse(savedTimers);
-            return Array.isArray(parsed) ? parsed.filter((item) => isValidTimer(item)) : [];
+            return Array.isArray(parsed)
+                ? parsed.map((item) => readTimer(item)).filter((timer) => timer !== null)
+                : [];
         } catch {
             return [];
         }
@@ -165,21 +167,63 @@ function isWholeNumber(value: unknown, min: number, max = Number.MAX_SAFE_INTEGE
     return Number.isInteger(value) && (value as number) >= min && (value as number) <= max;
 }
 
-function isValidTimer(value: unknown): value is Timer {
+function isStep(value: unknown): value is Step {
     if (typeof value !== 'object' || value === null) {
         return false;
     }
-
-    const timer = value as Record<string, unknown>;
+    const step = value as Record<string, unknown>;
     return (
-        isWholeNumber(timer['id'], 1) &&
-        typeof timer['title'] === 'string' &&
-        isWholeNumber(timer['timerMinutes'], 0) &&
-        isWholeNumber(timer['timerSeconds'], 0, 59) &&
-        isWholeNumber(timer['restMinutes'], 0) &&
-        isWholeNumber(timer['restSeconds'], 0, 59) &&
-        // 0 is UNTIL_STOPPED
-        isWholeNumber(timer['repeats'], 0) &&
-        (timer['timerMinutes'] as number) + (timer['timerSeconds'] as number) > 0
+        (step['kind'] === 'work' || step['kind'] === 'rest') &&
+        isWholeNumber(step['seconds'], 1, MAX_STEP_SECONDS) &&
+        typeof step['name'] === 'string'
     );
+}
+
+/**
+ * Reads one saved timer, or returns null if it isn't usable. Timers saved before steps
+ * existed (a single work and rest time) become a work step and, if there was any rest,
+ * a rest step, which runs exactly as before.
+ */
+function readTimer(value: unknown): Timer | null {
+    if (typeof value !== 'object' || value === null) {
+        return null;
+    }
+    const saved = value as Record<string, unknown>;
+    // 0 is UNTIL_STOPPED
+    if (
+        !isWholeNumber(saved['id'], 1) ||
+        typeof saved['title'] !== 'string' ||
+        !isWholeNumber(saved['repeats'], 0)
+    ) {
+        return null;
+    }
+    const steps = Array.isArray(saved['steps']) ? saved['steps'] : stepsFromWorkAndRest(saved);
+    if (!steps?.every((step) => isStep(step)) || !hasWork(steps)) {
+        return null;
+    }
+    return {
+        id: saved['id'] as number,
+        title: saved['title'],
+        steps: steps.map(({ kind, seconds, name }) => ({ kind, seconds, name })),
+        repeats: saved['repeats'] as number,
+    };
+}
+
+/** The steps for a timer saved in the old format, or null if it isn't one. */
+function stepsFromWorkAndRest(saved: Record<string, unknown>): Step[] | null {
+    if (
+        !isWholeNumber(saved['timerMinutes'], 0, 99) ||
+        !isWholeNumber(saved['timerSeconds'], 0, 59) ||
+        !isWholeNumber(saved['restMinutes'], 0, 99) ||
+        !isWholeNumber(saved['restSeconds'], 0, 59)
+    ) {
+        return null;
+    }
+    const work = (saved['timerMinutes'] as number) * 60 + (saved['timerSeconds'] as number);
+    const rest = (saved['restMinutes'] as number) * 60 + (saved['restSeconds'] as number);
+    const steps: Step[] = [{ kind: 'work', seconds: work, name: '' }];
+    if (rest > 0) {
+        steps.push({ kind: 'rest', seconds: rest, name: '' });
+    }
+    return steps;
 }

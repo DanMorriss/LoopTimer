@@ -6,23 +6,12 @@ import { TimerStore } from '../shared/state/timer-store.service';
 import { AlarmService } from '../shared/alarms/alarm.service';
 import { contrastRatio } from '../shared/testing/contrast';
 import { FakeAudioContext, provideFakeAudioContext } from '../shared/testing/fake-audio-context';
+import { makeTimer as baseTimer, rest, SimpleTimer, work } from '../shared/testing/make-timer';
 import { TimerComponent } from './timer.component';
 
-function makeTimer(overrides: Partial<Timer> = {}): Timer {
-    return {
-        id: 1,
-        title: 'Intervals',
-        timerMinutes: 0,
-        timerSeconds: 3,
-        restMinutes: 0,
-        restSeconds: 2,
-        repeats: 2,
-        isTimerActive: false,
-        isRestActive: false,
-        isComplete: false,
-        ...overrides,
-    };
-}
+// 3s work, 2s rest, 2 rounds unless a test says otherwise
+const makeTimer = (overrides: Partial<SimpleTimer> = {}) =>
+    baseTimer({ timerSeconds: 3, restSeconds: 2, repeats: 2, ...overrides });
 
 describe('TimerComponent', () => {
     beforeEach(() => {
@@ -242,7 +231,9 @@ describe('TimerComponent', () => {
 
         expect(component.isTimerActive()).toBe(true);
         expect(component.isRestActive()).toBe(false);
-        expect(text()).not.toContain('Rest');
+        expect(fixture.nativeElement.querySelector('.timer-face').textContent).not.toContain(
+            'Rest'
+        );
         expect(fixture.nativeElement.querySelector('.timer-ring').classList).not.toContain(
             'timer-ring--rest'
         );
@@ -726,6 +717,95 @@ describe('TimerComponent', () => {
                 expect(pressSpace()).toBe(false);
                 fixture.destroy();
             });
+        });
+    });
+
+    describe('several steps', () => {
+        // Squats 3s, Plank 2s, rest 2s; 2 rounds
+        const circuit = () =>
+            makeTimer({ steps: [work(3, 'Squats'), work(2, 'Plank'), rest(2)], repeats: 2 });
+        const face = () =>
+            (fixture.nativeElement.querySelector('.timer-face') as HTMLElement)
+                .textContent!.replace(/\s+/g, ' ')
+                .trim();
+        const next = () =>
+            fixture.nativeElement
+                .querySelector('.timer-next')
+                ?.textContent?.replace(/\s+/g, ' ')
+                .trim();
+        const said = () =>
+            (fixture.nativeElement.querySelector('[aria-live]') as HTMLElement).textContent?.trim();
+
+        it("shows the step's name, its time, and which step of the round it is", () => {
+            start(circuit());
+
+            expect(face()).toBe('Squats 00:03 step 1 of 3');
+
+            advance(3000);
+            expect(face()).toBe('Plank 00:02 step 2 of 3');
+
+            advance(2000);
+            expect(face()).toBe('Rest 00:02 step 3 of 3');
+            fixture.destroy();
+        });
+
+        it('says what is up next, and "finish" before the end', () => {
+            start(circuit());
+            expect(next()).toBe('Next: Plank · 00:02');
+
+            advance(3000);
+            expect(next()).toBe('Next: Rest · 00:02');
+
+            advance(4000); // round 2
+            expect(next()).toBe('Next: Plank · 00:02');
+
+            advance(3000); // Plank, the last work of the last round: its rest is skipped
+            expect(next()).toBe('Next: finish');
+            fixture.destroy();
+        });
+
+        it('announces each step by name and number, and each round as it starts', () => {
+            start(circuit());
+            expect(said()).toBe('Squats, step 1 of 3, round 1 of 2');
+
+            advance(3000);
+            expect(said()).toBe('Plank, step 2 of 3');
+
+            advance(2000);
+            expect(said()).toBe('Rest, step 3 of 3');
+
+            advance(2000);
+            expect(said()).toBe('Squats, step 1 of 3, last round');
+            fixture.destroy();
+        });
+
+        it('starts a fresh ring sweep for each step, even back-to-back work', () => {
+            start(circuit());
+            const first = fixture.nativeElement.querySelector('.timer-ring__sweep');
+
+            advance(3000);
+
+            const second = fixture.nativeElement.querySelector('.timer-ring__sweep');
+            expect(second).not.toBe(first);
+            expect(second.style.getPropertyValue('--half-duration')).toBe('1000ms');
+            fixture.destroy();
+        });
+
+        it('finishes after the last work step of the last round', () => {
+            start(circuit());
+
+            advance(7000 + 5000);
+
+            expect(component.isComplete()).toBe(true);
+            fixture.destroy();
+        });
+
+        it('keeps a plain work-and-rest timer free of step numbers', () => {
+            start(makeTimer({ timerSeconds: 3, restSeconds: 2, repeats: 3 }));
+
+            expect(face()).toBe('Work 00:03');
+            expect(said()).toBe('Work, round 1 of 3');
+            fixture.destroy();
         });
     });
 

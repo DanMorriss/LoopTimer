@@ -231,3 +231,23 @@ $track-color: #334155; // slate-700: dark, so both phase colours stand out (3:1 
     line-height: 1;
     vertical-align: -0.05em;
 }
+
+// A long step name shouldn't push the time out of the circle
+.timer-face__label {
+    max-width: 16ch;
+    margin-inline: auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.timer-face__step {
+    font-size: 1.25rem;
+}
+
+.timer-next {
+    margin: 1rem 0 0;
+    color: var(--text-strong);
+    font-size: 1.25rem;
+    text-align: center;
+}

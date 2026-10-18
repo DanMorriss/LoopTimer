@@ -8,55 +8,138 @@
                 <input class="picker-field__input" id="title" [formField]="timerForm.title" />
             </label>
 
-            <p class="p-4 text-center font-bold text-(--text-strong)">Timer</p>
+            <h2 class="setup-heading" id="steps-heading">Steps</h2>
+            <p class="setup-hint">
+                Each round runs these in order. Steps left at 00:00 are skipped.
+            </p>
 
-            <div class="picker-row">
-                <div class="picker-field">
-                    <span class="picker-field__label" id="timerMinutes-label">Minutes</span>
-                    <app-wheel-picker
-                        id="timerMinutes"
-                        [formField]="timerForm.timerMinutes"
-                        [options]="minuteOptions"
-                        labelledBy="timerMinutes-label"
-                    />
-                </div>
+            <!-- Says what happened after a step is added, moved or deleted -->
+            <div class="sr-only" aria-live="polite">{{ stepAnnouncement() }}</div>
 
-                <div class="picker-field">
-                    <span class="picker-field__label" id="timerSeconds-label">Seconds</span>
-                    <app-wheel-picker
-                        id="timerSeconds"
-                        [formField]="timerForm.timerSeconds"
-                        [options]="secondOptions"
-                        labelledBy="timerSeconds-label"
-                    />
-                </div>
+            <ol class="steps" aria-labelledby="steps-heading">
+                <!-- Rows stay put and the values move between them: moving a row in the page
+                     would reset its wheels' scroll, which is how they show their value -->
+                @for (step of timerForm.steps; track $index; let i = $index) {
+                    @let key = step().value().key;
+                    @let kind = step().value().kind;
+                    <li class="step" [class.step--rest]="kind === 'rest'">
+                        <div class="step__header">
+                            <span class="step__badge">{{ kindName(kind) }}</span>
+                            <span class="step__number" [id]="'step-' + key + '-title'">
+                                <span aria-hidden="true">{{ i + 1 }}</span>
+                                <span class="sr-only">{{ stepTitle(i) }}</span>
+                            </span>
+                            <div class="step__actions">
+                                <button
+                                    type="button"
+                                    class="step__action"
+                                    [id]="'step-' + key + '-up'"
+                                    [attr.aria-label]="'Move ' + stepTitle(i) + ' up'"
+                                    [disabled]="i === 0"
+                                    (click)="moveStep(i, -1)"
+                                >
+                                    <mat-icon aria-hidden="true">arrow_upward</mat-icon>
+                                </button>
+                                <button
+                                    type="button"
+                                    class="step__action"
+                                    [id]="'step-' + key + '-down'"
+                                    [attr.aria-label]="'Move ' + stepTitle(i) + ' down'"
+                                    [disabled]="i === stepCount() - 1"
+                                    (click)="moveStep(i, 1)"
+                                >
+                                    <mat-icon aria-hidden="true">arrow_downward</mat-icon>
+                                </button>
+                                <button
+                                    type="button"
+                                    class="step__action step__action--delete"
+                                    [id]="'step-' + key + '-delete'"
+                                    [attr.aria-label]="'Delete ' + stepTitle(i)"
+                                    [disabled]="stepCount() === 1"
+                                    (click)="deleteStep(i)"
+                                >
+                                    <mat-icon aria-hidden="true">close</mat-icon>
+                                </button>
+                            </div>
+                        </div>
+
+                        <label class="picker-field" [for]="'step-' + key + '-name'">
+                            <span class="picker-field__label">Name (optional)</span>
+                            <input
+                                class="picker-field__input"
+                                [id]="'step-' + key + '-name'"
+                                [formField]="step.name"
+                                [placeholder]="
+                                    kind === 'work' ? 'e.g. Squats' : 'e.g. Catch your breath'
+                                "
+                                [attr.aria-describedby]="'step-' + key + '-title'"
+                            />
+                        </label>
+
+                        <div class="picker-row">
+                            <div class="picker-field">
+                                <span
+                                    class="picker-field__label"
+                                    [id]="'step-' + key + '-minutes-label'"
+                                >
+                                    Minutes
+                                </span>
+                                <app-wheel-picker
+                                    [id]="'step-' + key + '-minutes'"
+                                    [formField]="step.minutes"
+                                    [options]="minuteOptions"
+                                    [labelledBy]="
+                                        'step-' + key + '-title step-' + key + '-minutes-label'
+                                    "
+                                />
+                            </div>
+
+                            <div class="picker-field">
+                                <span
+                                    class="picker-field__label"
+                                    [id]="'step-' + key + '-seconds-label'"
+                                >
+                                    Seconds
+                                </span>
+                                <app-wheel-picker
+                                    [id]="'step-' + key + '-seconds'"
+                                    [formField]="step.seconds"
+                                    [options]="secondOptions"
+                                    [labelledBy]="
+                                        'step-' + key + '-title step-' + key + '-seconds-label'
+                                    "
+                                />
+                            </div>
+                        </div>
+                    </li>
+                }
+            </ol>
+
+            <div class="add-steps">
+                <button
+                    type="button"
+                    class="add-step"
+                    [disabled]="stepCount() >= maxSteps"
+                    (click)="addStep('work')"
+                >
+                    <mat-icon aria-hidden="true">add</mat-icon>
+                    Add work
+                </button>
+                <button
+                    type="button"
+                    class="add-step add-step--rest"
+                    [disabled]="stepCount() >= maxSteps"
+                    (click)="addStep('rest')"
+                >
+                    <mat-icon aria-hidden="true">add</mat-icon>
+                    Add rest
+                </button>
             </div>
+            @if (stepCount() >= maxSteps) {
+                <p class="setup-hint">That's the most steps a timer can have ({{ maxSteps }}).</p>
+            }
 
-            <p class="p-4 text-center font-bold text-(--text-strong)">Rest</p>
-
-            <div class="picker-row">
-                <div class="picker-field">
-                    <span class="picker-field__label" id="restMinutes-label">Minutes</span>
-                    <app-wheel-picker
-                        id="restMinutes"
-                        [formField]="timerForm.restMinutes"
-                        [options]="minuteOptions"
-                        labelledBy="restMinutes-label"
-                    />
-                </div>
-
-                <div class="picker-field">
-                    <span class="picker-field__label" id="restSeconds-label">Seconds</span>
-                    <app-wheel-picker
-                        id="restSeconds"
-                        [formField]="timerForm.restSeconds"
-                        [options]="secondOptions"
-                        labelledBy="restSeconds-label"
-                    />
-                </div>
-            </div>
-
-            <p class="p-4 text-center font-bold text-(--text-strong)">Repeat</p>
+            <h2 class="setup-heading">Repeat</h2>
 
             <!-- The switch and the ∞ at the end of the wheel are two ways to set the same thing -->
             <div class="picker-row mb-4">

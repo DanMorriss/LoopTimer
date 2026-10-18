@@ -1,4 +1,4 @@
-import { runsUntilStopped, Timer } from '../models/timer';
+import { roundSeconds, runsUntilStopped, Timer, workoutSeconds } from '../models/timer';
 
 export type AlarmKind = 'work' | 'rest' | 'finish';
 
@@ -9,8 +9,9 @@ export interface AlarmEvent {
 }
 
 /**
- * The alarms in a workout, in order: the start of each work and rest phase, then the
- * finish. Uses the same timings as `timerStateAt()`, so they line up with the countdown.
+ * The alarms in a workout, in order: the start of each step, then the finish. Uses the
+ * same timings as `timerStateAt()`, so they line up with the countdown. Rest at the end of
+ * the last round has no alarm.
  *
  * A timer that runs until stopped has no end, so only the `roundCount` rounds starting
  * at round `fromRound` (counting from 0) are listed; finite timers stop at their last round.
@@ -21,26 +22,27 @@ export function alarmEvents(
     fromRound = 0,
     roundCount = 100
 ): AlarmEvent[] {
-    const workMs = (timer.timerMinutes * 60 + timer.timerSeconds) * 1000;
-    const restMs = (timer.restMinutes * 60 + timer.restSeconds) * 1000;
+    const roundMs = roundSeconds(timer) * 1000;
     const untilStopped = runsUntilStopped(timer);
     const endRound = untilStopped
         ? fromRound + roundCount
         : Math.min(timer.repeats, fromRound + roundCount);
+    const endMs = startedAt + workoutSeconds(timer) * 1000;
     const events: AlarmEvent[] = [];
 
     for (let round = fromRound; round < endRound; round++) {
-        const roundStart = startedAt + round * (workMs + restMs);
-        events.push({ kind: 'work', at: roundStart });
-        // No rest after the last round
-        if (restMs > 0 && (untilStopped || round < timer.repeats - 1)) {
-            events.push({ kind: 'rest', at: roundStart + workMs });
+        let at = startedAt + round * roundMs;
+        for (const step of timer.steps) {
+            // Past the end only happens for rest at the end of the last round
+            if (at < endMs) {
+                events.push({ kind: step.kind, at });
+            }
+            at += step.seconds * 1000;
         }
     }
 
     if (!untilStopped && endRound === timer.repeats) {
-        const total = timer.repeats * workMs + (timer.repeats - 1) * restMs;
-        events.push({ kind: 'finish', at: startedAt + total });
+        events.push({ kind: 'finish', at: endMs });
     }
     return events;
 }
