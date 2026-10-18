@@ -283,6 +283,25 @@ describe('WheelPickerComponent', () => {
         });
     });
 
+    it('lines back up on its value after being moved in the page, as when a list item is dragged', async () => {
+        await create();
+        host.value.set(12);
+        await settle();
+        await scrolled();
+        const wheel = fixture.nativeElement.querySelector('app-wheel-picker') as HTMLElement;
+
+        // Taking a scrolled box out of the page and putting it back throws its scroll away
+        const parent = wheel.parentNode!;
+        const next = wheel.nextSibling;
+        parent.removeChild(wheel);
+        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        parent.insertBefore(wheel, next);
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        expect(valueInMiddle()).toBe(12);
+        expect(host.value()).toBe(12);
+    });
+
     it('jumps straight to a chosen number when reduced motion is on', async () => {
         await create(true);
 
