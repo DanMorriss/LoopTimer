@@ -388,6 +388,20 @@ export class TimerComponent implements OnDestroy {
         });
     }
 
+    /**
+     * From the finished screen to this run in the history: with its note box open, ready to
+     * type, or just highlighted.
+     */
+    async openHistory(withNote: boolean) {
+        const timer = this.timer();
+        const runStartedAt = this.timerStore.activeRunStartedAt();
+        const run = timer && runStartedAt !== null ? historyId(runStartedAt, timer.id) : null;
+        await this.router.navigate(
+            ['/history'],
+            run ? { queryParams: withNote ? { note: run } : { run } } : {}
+        );
+    }
+
     async stop() {
         this.recordRun('stopped');
         this.timerStore.stop();

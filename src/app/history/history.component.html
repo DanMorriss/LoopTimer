@@ -8,7 +8,7 @@
         <div class="history__status" role="status">
             @if (deleted(); as entry) {
                 <div class="history__undo">
-                    <span>Deleted {{ name(entry) }}.</span>
+                    <span>Deleted {{ entryName(entry) }}.</span>
                     <button
                         type="button"
                         id="history-undo"
@@ -39,30 +39,18 @@
                     </h3>
                     <ul class="history__list">
                         @for (entry of group.entries; track entry.id) {
-                            <li class="entry" [class.entry--stopped]="entry.outcome === 'stopped'">
-                                <div class="entry__text">
-                                    <span class="entry__title">{{ name(entry) }}</span>
-                                    <span class="entry__detail">
-                                        {{ entry.startedAt | date: 'shortTime' }} ·
-                                        {{ formatDuration(entry.activeSeconds) }} ·
-                                        {{ describeRounds(entry) }}
-                                    </span>
-                                </div>
-                                <button
-                                    type="button"
-                                    class="btn-icon btn-icon--danger entry__delete"
-                                    [id]="'delete-' + entry.id"
-                                    [attr.aria-label]="
-                                        'Delete ' +
-                                        name(entry) +
-                                        ' at ' +
-                                        (entry.startedAt | date: 'shortTime')
-                                    "
-                                    (click)="delete(entry)"
-                                >
-                                    <mat-icon aria-hidden="true">close</mat-icon>
-                                </button>
-                            </li>
+                            <li
+                                appHistoryEntry
+                                [entry]="entry"
+                                [menuOpen]="openMenuId() === entry.id"
+                                [editing]="editingId() === entry.id"
+                                [highlighted]="highlightedId() === entry.id"
+                                (menuToggled)="toggleMenu(entry.id)"
+                                (menuClosed)="closeMenu(entry.id)"
+                                (editRequested)="editNote(entry.id)"
+                                (editClosed)="closeNote(entry.id)"
+                                (deleteRequested)="delete(entry)"
+                            ></li>
                         }
                     </ul>
                 </section>

@@ -202,6 +202,16 @@ for (const theme of ['dark', 'light'] as const) {
                 await open('/history');
                 await expectNoViolations();
 
+                click('.entry__menu-button');
+                await settle();
+                await expectNoViolations();
+
+                click('.entry__edit-note');
+                await settle();
+                await expectNoViolations();
+
+                click('.entry__menu-button');
+                await settle();
                 click('.entry__delete');
                 await settle();
                 await expectNoViolations();

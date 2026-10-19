@@ -8,9 +8,6 @@ Open work, highest priority first. Tick items off (or delete them) as they're do
 - [ ] **Alarms on a locked phone or another page:** iPhones suspend web audio when locked, and the alarms only play while the timer page is open. Notifications from a service worker may be the way round both (user story 4).
 - [ ] **Alarm order setting:** pick which sound plays for each step, with a preview. Needs the sound files first.
 
-- [ ] **History page: an options menu with notes.** Each entry's delete button moves into a ⋮ menu, like the timer cards in the library, alongside a new "Add note" option. A note is a short line of free text saved with the entry (e.g. "felt strong", "knee sore") and shown under it, with edit and remove from the same menu. This adds an optional `note` to `HistoryEntry`; old entries load without one. Delete keeps its undo.
-- [ ] **"View history" when a workout finishes:** the finished timer screen gets a call to action to see the run in the history, perhaps as its main button. Worth deciding with the item above, so a note can be added straight after a workout.
-
 ## 2. Design
 
 Nothing open.

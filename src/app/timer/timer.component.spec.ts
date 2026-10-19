@@ -840,6 +840,50 @@ describe('TimerComponent', () => {
             fixture.destroy();
         });
 
+        describe('the finished screen', () => {
+            const finish = () => {
+                const startedAt = Date.now();
+                start(makeTimer({ id: 4, timerSeconds: 1, restSeconds: 0, repeats: 1 }));
+                advance(1000);
+                return `${startedAt}-4`;
+            };
+            const finishButton = (name: string) =>
+                Array.from(
+                    fixture.nativeElement.querySelectorAll('.timer-finish button, .timer-finish a')
+                ).find((b) => (b as HTMLElement).textContent!.includes(name)) as HTMLElement;
+
+            it('offers a note as the main button, then the history and the library', () => {
+                finish();
+
+                expect(finishButton('Add a note').classList).toContain('btn-main');
+                expect(finishButton('View history')).toBeDefined();
+                expect(finishButton('Library').getAttribute('href')).toBe('/library');
+                expect(fixture.nativeElement.querySelector('.timer-controls')).toBeNull();
+                fixture.destroy();
+            });
+
+            it('opens this run in the history with its note box, or just highlighted', async () => {
+                const run = finish();
+                const navigate = vi
+                    .spyOn(TestBed.inject(Router), 'navigate')
+                    .mockResolvedValue(true);
+
+                finishButton('Add a note').click();
+                await fixture.whenStable();
+                expect(navigate).toHaveBeenLastCalledWith(['/history'], {
+                    queryParams: { note: run },
+                });
+                expect(entries().map((entry) => entry.id)).toEqual([run]);
+
+                finishButton('View history').click();
+                await fixture.whenStable();
+                expect(navigate).toHaveBeenLastCalledWith(['/history'], {
+                    queryParams: { run },
+                });
+                fixture.destroy();
+            });
+        });
+
         it('logs it once, even if the finished screen is shown again', () => {
             start(makeTimer({ timerSeconds: 1, repeats: 1 }));
             advance(1000);

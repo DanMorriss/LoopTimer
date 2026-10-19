@@ -1,0 +1,92 @@
+:host {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    padding: 0.7rem 0;
+    outline: none;
+}
+
+:host + :host {
+    border-top: 1px solid var(--border-soft);
+}
+
+// Over the entries below it while its menu is open
+:host(.entry--menu-open) {
+    position: relative;
+    z-index: 5;
+}
+
+// The run just finished, arriving from the finished screen: an accent bar and tint
+:host(.entry--highlighted) {
+    margin-inline: -0.75rem;
+    padding-inline: 0.75rem;
+    border-radius: 0.6rem;
+    background: var(--accent-soft);
+    box-shadow: inset 3px 0 0 var(--accent);
+}
+
+:host(:focus-visible) {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.entry__row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.entry__text {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.entry__title {
+    overflow: hidden;
+    color: var(--text);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.entry__detail {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-variant-numeric: tabular-nums;
+}
+
+// The user's own words, set apart from the figures above with a quote line
+.entry__note {
+    margin: 0.2rem 0 0;
+    padding-left: 0.6rem;
+    border-left: 2px solid var(--border-strong);
+    color: var(--text);
+    font-size: 0.85rem;
+    overflow-wrap: anywhere;
+}
+
+.entry__menu-wrap {
+    position: relative;
+}
+
+.entry__menu {
+    position: absolute;
+    top: calc(100% + 0.2rem);
+    right: 0;
+    z-index: 9;
+    min-width: 160px;
+}
+
+.entry__note-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.entry__note-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
