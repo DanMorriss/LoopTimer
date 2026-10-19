@@ -1,5 +1,6 @@
 @use 'styles/buttons';
 @use 'styles/forms';
+@use 'styles/menu';
 
 // Colour tokens. Every colour in the app comes from here, so the theme setting can swap
 // them all: dark is the default, and [data-theme='light'] on <html> switches to light

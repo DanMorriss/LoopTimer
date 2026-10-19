@@ -1,0 +1,52 @@
+// The small menu a ⋮ button opens (a library card's options, a history entry's): a raised
+// panel of full-width items. The page places it; these are the looks.
+
+.menu {
+    min-width: 130px;
+    border: 1px solid var(--border);
+    border-radius: 0.65rem;
+    background: var(--raised);
+    box-shadow: 0 10px 24px var(--shadow);
+    overflow: hidden;
+}
+
+.menu__item {
+    width: 100%;
+    min-height: 44px;
+    padding: 0.55rem 0.7rem;
+    border: 0;
+    border-bottom: 1px solid var(--border-soft);
+    background: transparent;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font: inherit;
+    font-size: 0.9rem;
+    cursor: pointer;
+    text-align: left;
+
+    &:last-child {
+        border-bottom: 0;
+    }
+
+    &:hover {
+        background: var(--control-hover);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: -2px;
+    }
+
+    &--danger {
+        color: var(--text-danger);
+    }
+
+    .mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        line-height: 18px;
+    }
+}

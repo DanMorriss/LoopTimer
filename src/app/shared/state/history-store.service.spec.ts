@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { HistoryEntry } from '../../models/history';
+import { HistoryEntry, MAX_NOTE_LENGTH } from '../../models/history';
 import { HistoryStore, MAX_HISTORY } from './history-store.service';
 
 function makeEntry(overrides: Partial<HistoryEntry> = {}): HistoryEntry {
@@ -61,6 +61,66 @@ describe('HistoryStore', () => {
             expect.objectContaining({ outcome: 'finished', activeSeconds: 99 }),
         ]);
         expect(JSON.parse(localStorage.getItem('history')!)).toHaveLength(1);
+    });
+
+    it('keeps a note when the same run is recorded again, e.g. leaving its finished screen', () => {
+        const store = createStore();
+        store.record(makeEntry());
+        store.setNote(makeEntry().id, 'Felt strong');
+
+        store.record(makeEntry({ activeSeconds: 99 }));
+
+        expect(store.entries()[0]).toEqual(
+            expect.objectContaining({ activeSeconds: 99, note: 'Felt strong' })
+        );
+    });
+
+    describe('notes', () => {
+        it('saves a note, trimmed, with the entry', () => {
+            const store = createStore();
+            store.record(makeEntry());
+
+            store.setNote(makeEntry().id, '  Knee sore  ');
+
+            expect(store.entries()[0].note).toBe('Knee sore');
+            expect(JSON.parse(localStorage.getItem('history')!)[0].note).toBe('Knee sore');
+        });
+
+        it('cuts a note to the longest allowed', () => {
+            const store = createStore();
+            store.record(makeEntry());
+
+            store.setNote(makeEntry().id, 'x'.repeat(MAX_NOTE_LENGTH + 10));
+
+            expect(store.entries()[0].note).toHaveLength(MAX_NOTE_LENGTH);
+        });
+
+        it('removes the note when set to nothing', () => {
+            const store = createStore();
+            store.record(makeEntry({ note: 'Felt strong' }));
+
+            store.setNote(makeEntry().id, '   ');
+
+            expect('note' in store.entries()[0]).toBe(false);
+        });
+
+        it('loads saved notes, and entries saved before notes existed', () => {
+            localStorage.setItem(
+                'history',
+                JSON.stringify([
+                    makeEntry({ note: 'Felt strong' }),
+                    makeEntry({ startedAt: 5_000 }),
+                    makeEntry({ startedAt: 6_000, note: 42 as unknown as string }),
+                ])
+            );
+
+            // Newest first; the one with a broken note is dropped
+            expect(
+                createStore()
+                    .entries()
+                    .map((entry) => entry.note)
+            ).toEqual(['Felt strong', undefined]);
+        });
     });
 
     it(`keeps only the newest ${MAX_HISTORY}`, () => {

@@ -112,55 +112,12 @@
     z-index: 8;
 }
 
+// A shared .menu (styles/_menu.scss), placed under the options button
 .timer-card__menu {
     position: absolute;
     top: calc(100% + 0.2rem);
     right: 0;
-    min-width: 130px;
-    border: 1px solid var(--border);
-    border-radius: 0.65rem;
-    background: var(--raised);
-    box-shadow: 0 10px 24px var(--shadow);
-    overflow: hidden;
     z-index: 9;
-}
-
-.timer-card__menu-item {
-    width: 100%;
-    padding: 0.55rem 0.7rem;
-    border: 0;
-    border-bottom: 1px solid var(--border-soft);
-    background: transparent;
-    color: var(--text);
-    display: flex;
-    align-items: center;
-    gap: 0.45rem;
-    cursor: pointer;
-    text-align: left;
-}
-
-.timer-card__menu-item:last-child {
-    border-bottom: 0;
-}
-
-.timer-card__menu-item:hover {
-    background: var(--control-hover);
-}
-
-.timer-card__menu-item:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: -2px;
-}
-
-.timer-card__menu-item--danger {
-    color: var(--text-danger);
-}
-
-.timer-card__menu-icon {
-    font-size: 18px;
-    width: 18px;
-    height: 18px;
-    line-height: 18px;
 }
 
 .timer-card__overlay-play {

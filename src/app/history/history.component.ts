@@ -1,9 +1,11 @@
 import { DatePipe } from '@angular/common';
 import { afterNextRender, Component, computed, inject, Injector, signal } from '@angular/core';
-import { MatIconModule } from '@angular/material/icon';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HistoryEntry } from '../models/history';
+import { injectPrefersReducedMotion } from '../shared/reduced-motion';
 import { HistoryStore } from '../shared/state/history-store.service';
+import { HistoryEntryComponent } from './history-entry/history-entry.component';
+import { entryName, formatDuration } from './history-format';
 
 interface DayGroup {
     /** e.g. "2026-10-18", for tracking and ids. */
@@ -17,45 +19,31 @@ interface DayGroup {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-/** e.g. 75 → "1:15", 3725 → "1:02:05" */
-export function formatDuration(seconds: number): string {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = String(seconds % 60).padStart(2, '0');
-    return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${s}` : `${m}:${s}`;
-}
-
-/** e.g. "3 rounds", "2 of 5 rounds · stopped", "12 rounds · until stopped" */
-export function describeRounds(entry: HistoryEntry): string {
-    const rounds = (n: number) => `${n} ${n === 1 ? 'round' : 'rounds'}`;
-    if (entry.totalRounds === 0) {
-        return `${rounds(entry.roundsCompleted)} · until stopped`;
-    }
-    if (entry.outcome === 'stopped') {
-        return `${entry.roundsCompleted} of ${rounds(entry.totalRounds)} · stopped`;
-    }
-    return rounds(entry.roundsCompleted);
-}
-
 function dayKey(time: number): string {
     const date = new Date(time);
     const pad = (n: number) => String(n).padStart(2, '0');
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
+/**
+ * Workouts by day. Arriving from the finished screen, `?run=<id>` highlights that run and
+ * brings it into view, and `?note=<id>` does the same with its note box open.
+ */
 @Component({
     selector: 'app-history',
-    imports: [DatePipe, MatIconModule, RouterLink],
+    imports: [DatePipe, HistoryEntryComponent, RouterLink],
     templateUrl: './history.component.html',
     styleUrl: './history.component.scss',
+    host: {
+        // A click anywhere else closes an open menu
+        '(document:click)': 'openMenuId.set(null)',
+    },
 })
 export class HistoryComponent {
     private readonly history = inject(HistoryStore);
     private readonly injector = inject(Injector);
+    private readonly reducedMotion = injectPrefersReducedMotion();
     private readonly now = Date.now();
-
-    protected readonly formatDuration = formatDuration;
-    protected readonly describeRounds = describeRounds;
 
     /** Workouts grouped by the day they started, newest first. */
     protected readonly groups = computed(() => {
@@ -88,12 +76,52 @@ export class HistoryComponent {
 
     /** The workout just deleted, which can be put back. */
     protected readonly deleted = signal<HistoryEntry | null>(null);
+    /** Whose menu is open, and whose note is being edited: one of each at most. */
+    protected readonly openMenuId = signal<string | null>(null);
+    protected readonly editingId = signal<string | null>(null);
+    /** The run arrived at from the finished screen. */
+    protected readonly highlightedId = signal<string | null>(null);
 
-    protected name(entry: HistoryEntry): string {
-        return entry.title.trim() || 'Untitled timer';
+    protected readonly entryName = entryName;
+
+    constructor() {
+        const params = inject(ActivatedRoute).snapshot.queryParamMap;
+        const noteFor = params.get('note');
+        const run = noteFor ?? params.get('run');
+        if (run && this.history.entries().some((entry) => entry.id === run)) {
+            this.highlightedId.set(run);
+            this.editingId.set(noteFor);
+            this.bringIntoView(run, !noteFor);
+        }
+    }
+
+    protected toggleMenu(id: string) {
+        this.openMenuId.update((open) => (open === id ? null : id));
+    }
+
+    /** Closes a menu from inside it (Escape, or once it's done), returning focus to its button. */
+    protected closeMenu(id: string) {
+        if (this.openMenuId() !== id) {
+            return;
+        }
+        this.openMenuId.set(null);
+        this.focusAfterRender(`menu-${id}`);
+    }
+
+    protected editNote(id: string) {
+        this.openMenuId.set(null);
+        this.editingId.set(id);
+    }
+
+    protected closeNote(id: string) {
+        if (this.editingId() === id) {
+            this.editingId.set(null);
+        }
     }
 
     protected delete(entry: HistoryEntry) {
+        this.openMenuId.set(null);
+        this.closeNote(entry.id);
         this.history.delete(entry.id);
         this.deleted.set(entry);
         this.focusAfterRender('history-undo');
@@ -106,7 +134,27 @@ export class HistoryComponent {
         }
         this.history.record(entry);
         this.deleted.set(null);
-        this.focusAfterRender(`delete-${entry.id}`);
+        this.focusAfterRender(`menu-${entry.id}`);
+    }
+
+    /**
+     * Scrolls a run to the middle of the screen. Its note box takes focus itself when open;
+     * otherwise the entry does, so a screen reader starts from it.
+     */
+    private bringIntoView(id: string, focus: boolean) {
+        afterNextRender(
+            () => {
+                const element = document.getElementById(`entry-${id}`);
+                element?.scrollIntoView({
+                    block: 'center',
+                    behavior: this.reducedMotion() ? 'auto' : 'smooth',
+                });
+                if (focus) {
+                    element?.focus({ preventScroll: true });
+                }
+            },
+            { injector: this.injector }
+        );
     }
 
     private focusAfterRender(id: string) {

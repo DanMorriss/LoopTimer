@@ -1,0 +1,88 @@
+@let time = entry().startedAt | date: 'shortTime';
+<div class="entry__row">
+    <div class="entry__text">
+        <span class="entry__title" [id]="'entry-title-' + id()">{{ name() }}</span>
+        <span class="entry__detail">{{ time }} · {{ duration() }} · {{ rounds() }}</span>
+        @if (entry().note && !editing()) {
+            <p class="entry__note"><span class="sr-only">Note: </span>{{ entry().note }}</p>
+        }
+    </div>
+
+    <div
+        class="entry__menu-wrap"
+        (click)="$event.stopPropagation()"
+        (keydown.escape)="menuClosed.emit()"
+    >
+        <button
+            type="button"
+            class="btn-icon entry__menu-button"
+            [id]="'menu-' + id()"
+            [attr.aria-label]="'Options for ' + name() + ' at ' + time"
+            [attr.aria-expanded]="menuOpen()"
+            [attr.aria-controls]="'options-' + id()"
+            (click)="menuToggled.emit()"
+        >
+            <mat-icon aria-hidden="true">more_vert</mat-icon>
+        </button>
+
+        @if (menuOpen()) {
+            <div
+                class="menu entry__menu"
+                [id]="'options-' + id()"
+                role="group"
+                [attr.aria-label]="'Options for ' + name() + ' at ' + time"
+            >
+                <button
+                    type="button"
+                    class="menu__item entry__edit-note"
+                    (click)="editRequested.emit()"
+                >
+                    <mat-icon aria-hidden="true">edit_note</mat-icon>
+                    {{ entry().note ? 'Edit note' : 'Add note' }}
+                </button>
+                @if (entry().note) {
+                    <button
+                        type="button"
+                        class="menu__item entry__remove-note"
+                        (click)="removeNote()"
+                    >
+                        <mat-icon aria-hidden="true">backspace</mat-icon>
+                        Remove note
+                    </button>
+                }
+                <button
+                    type="button"
+                    class="menu__item menu__item--danger entry__delete"
+                    (click)="deleteRequested.emit()"
+                >
+                    <mat-icon aria-hidden="true">delete</mat-icon>
+                    Delete
+                </button>
+            </div>
+        }
+    </div>
+</div>
+
+@if (editing()) {
+    <form
+        class="entry__note-form"
+        (submit)="saveNote($event)"
+        (keydown.escape)="cancelEdit($event)"
+    >
+        <label class="picker-field" [for]="'note-' + id()">
+            <span class="picker-field__label">Note</span>
+            <input
+                class="picker-field__input"
+                [id]="'note-' + id()"
+                [formField]="noteForm.note"
+                placeholder="e.g. Felt strong"
+                autocomplete="off"
+                [attr.aria-describedby]="'entry-title-' + id()"
+            />
+        </label>
+        <div class="entry__note-actions">
+            <button type="button" class="btn-pill" (click)="cancelEdit()">Cancel</button>
+            <button type="submit" class="btn-pill entry__save-note">Save</button>
+        </div>
+    </form>
+}

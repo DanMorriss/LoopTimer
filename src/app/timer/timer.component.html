@@ -157,6 +157,24 @@
                     Tap to turn on sound
                 </button>
             }
+        } @else {
+            <!-- Done: straight on to a note about how it went, or just a look at the history -->
+            <div class="timer-finish mt-6 flex flex-col items-center gap-4">
+                <button
+                    type="button"
+                    class="btn-main timer-finish__note"
+                    (click)="openHistory(true)"
+                >
+                    <mat-icon aria-hidden="true">edit_note</mat-icon>
+                    Add a note
+                </button>
+                <div class="flex gap-3">
+                    <button type="button" class="btn-pill" (click)="openHistory(false)">
+                        View history
+                    </button>
+                    <a routerLink="/library" class="btn-pill">Library</a>
+                </div>
+            </div>
         }
     } @else {
         <div class="no-timer flex flex-col items-center gap-6 p-8 text-center text-(--text-strong)">

@@ -1,5 +1,5 @@
 import { computed, Service, signal } from '@angular/core';
-import { HistoryEntry } from '../../models/history';
+import { HistoryEntry, MAX_NOTE_LENGTH } from '../../models/history';
 
 const STORAGE_KEY = 'history';
 
@@ -17,13 +17,33 @@ export class HistoryStore {
     /**
      * Adds a workout, or updates it if this run is already in the history. A run is logged
      * as stopped when its page closes, so if it's picked up again and later stopped or
-     * finished, that replaces the earlier entry. The oldest entries go past MAX_HISTORY.
+     * finished, that replaces the earlier entry, keeping any note added to it meanwhile.
+     * The oldest entries go past MAX_HISTORY.
      */
     record(entry: HistoryEntry) {
-        this._entries.update((entries) =>
-            [entry, ...entries.filter((existing) => existing.id !== entry.id)]
+        this._entries.update((entries) => {
+            const note = entry.note ?? entries.find((existing) => existing.id === entry.id)?.note;
+            const updated = note === undefined ? entry : { ...entry, note };
+            return [updated, ...entries.filter((existing) => existing.id !== entry.id)]
                 .sort((a, b) => b.startedAt - a.startedAt)
-                .slice(0, MAX_HISTORY)
+                .slice(0, MAX_HISTORY);
+        });
+        this.save();
+    }
+
+    /**
+     * Sets a workout's note, trimmed and cut to MAX_NOTE_LENGTH. An empty note removes it.
+     */
+    setNote(id: string, note: string) {
+        const trimmed = note.trim().slice(0, MAX_NOTE_LENGTH);
+        this._entries.update((entries) =>
+            entries.map((entry) => {
+                if (entry.id !== id) {
+                    return entry;
+                }
+                const { note: _old, ...rest } = entry;
+                return trimmed ? { ...rest, note: trimmed } : rest;
+            })
         );
         this.save();
     }
@@ -70,6 +90,7 @@ function isHistoryEntry(value: unknown): value is HistoryEntry {
         isWholeNumber(entry['activeSeconds']) &&
         isWholeNumber(entry['roundsCompleted']) &&
         isWholeNumber(entry['totalRounds']) &&
-        (entry['outcome'] === 'finished' || entry['outcome'] === 'stopped')
+        (entry['outcome'] === 'finished' || entry['outcome'] === 'stopped') &&
+        (entry['note'] === undefined || typeof entry['note'] === 'string')
     );
 }

@@ -49,25 +49,25 @@
 
     @if (menuOpen()) {
         <div
-            class="timer-card__menu"
+            class="menu timer-card__menu"
             [id]="'timer-options-' + timer().id"
             role="group"
             [attr.aria-label]="'Options for ' + name()"
         >
             <button
                 type="button"
-                class="timer-card__menu-item timer-card__menu-item--edit"
+                class="menu__item timer-card__menu-item--edit"
                 (click)="editRequested.emit()"
             >
-                <mat-icon class="timer-card__menu-icon" aria-hidden="true">edit</mat-icon>
+                <mat-icon aria-hidden="true">edit</mat-icon>
                 Edit
             </button>
             <button
                 type="button"
-                class="timer-card__menu-item timer-card__menu-item--danger"
+                class="menu__item menu__item--danger timer-card__menu-item--danger"
                 (click)="deleteRequested.emit()"
             >
-                <mat-icon class="timer-card__menu-icon" aria-hidden="true">delete</mat-icon>
+                <mat-icon aria-hidden="true">delete</mat-icon>
                 Delete
             </button>
         </div>

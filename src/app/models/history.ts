@@ -16,7 +16,12 @@ export interface HistoryEntry {
     /** Rounds the timer was set to, or 0 for one that runs until stopped. */
     totalRounds: number;
     outcome: 'finished' | 'stopped';
+    /** A short line of the user's own, e.g. "felt strong". Missing when there isn't one. */
+    note?: string;
 }
+
+/** Long enough for a line about how it went, short enough to sit under the entry. */
+export const MAX_NOTE_LENGTH = 120;
 
 export function historyId(startedAt: number, timerId: number): string {
     return `${startedAt}-${timerId}`;
