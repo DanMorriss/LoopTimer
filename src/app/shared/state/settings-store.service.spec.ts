@@ -21,6 +21,7 @@ describe('SettingsStore', () => {
             sound: false,
             vibration: true,
             keepScreenOn: true,
+            lockScreenBeeps: false,
         });
 
         TestBed.resetTestingModule();

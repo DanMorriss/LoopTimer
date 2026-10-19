@@ -3,6 +3,7 @@ import { AlarmService } from '../shared/alarms/alarm.service';
 import { ToggleSwitchComponent } from '../shared/components/toggle-switch/toggle-switch.component';
 import { injectPrefersReducedMotion } from '../shared/reduced-motion';
 import { KeepAwakeService } from '../shared/run/keep-awake.service';
+import { AlarmTrackService } from '../shared/alarms/alarm-track.service';
 import { SettingsStore, Theme } from '../shared/state/settings-store.service';
 import { AlarmKind } from '../timer/alarm-schedule';
 
@@ -25,6 +26,7 @@ export class SettingsComponent {
     protected readonly settings = inject(SettingsStore);
     protected readonly alarms = inject(AlarmService);
     protected readonly keepAwake = inject(KeepAwakeService);
+    protected readonly track = inject(AlarmTrackService);
     private readonly appRef = inject(ApplicationRef);
     private readonly document = inject(DOCUMENT);
     private readonly reducedMotion = injectPrefersReducedMotion();

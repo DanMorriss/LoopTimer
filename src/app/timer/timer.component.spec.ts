@@ -6,6 +6,7 @@ import { SettingsStore } from '../shared/state/settings-store.service';
 import { TimerStore } from '../shared/state/timer-store.service';
 import { AlarmService } from '../shared/alarms/alarm.service';
 import { ActiveRunService } from '../shared/run/active-run.service';
+import { AlarmTrackService } from '../shared/alarms/alarm-track.service';
 import { KeepAwakeService } from '../shared/run/keep-awake.service';
 import { contrastRatio } from '../shared/testing/contrast';
 import { FakeAudioContext, provideFakeAudioContext } from '../shared/testing/fake-audio-context';
@@ -1368,6 +1369,113 @@ describe('TimerComponent', () => {
             fixture.detectChanges();
 
             expect(vibrate).not.toHaveBeenCalled();
+            fixture.destroy();
+        });
+    });
+
+    describe('beeps with the screen locked (the audio track)', () => {
+        beforeEach(() => localStorage.clear());
+        afterEach(() => {
+            localStorage.clear();
+            TestBed.inject(AlarmTrackService).showOnLockScreen(null);
+        });
+
+        function trackSetting(on: boolean, plays = true) {
+            TestBed.inject(SettingsStore).update({ lockScreenBeeps: on });
+            const track = TestBed.inject(AlarmTrackService);
+            return {
+                play: vi.spyOn(track, 'play').mockResolvedValue(plays),
+                stop: vi.spyOn(track, 'stop'),
+            };
+        }
+
+        /** Let a track's play() settle. */
+        async function settled() {
+            await Promise.resolve();
+            await Promise.resolve();
+        }
+
+        it('plays the alarms as a track instead of on the audio clock, never both', async () => {
+            const { play } = trackSetting(true);
+            start(makeTimer({ timerSeconds: 3, restSeconds: 2, repeats: 2 }));
+            TestBed.inject(AlarmService).unlock();
+            fixture.detectChanges();
+            await settled();
+
+            expect(play).toHaveBeenLastCalledWith([
+                { kind: 'work', at: expect.any(Number) },
+                { kind: 'rest', at: expect.any(Number) },
+                { kind: 'work', at: expect.any(Number) },
+                { kind: 'finish', at: expect.any(Number) },
+            ]);
+            expect(audio.scheduledNotes()).toEqual([]);
+            fixture.destroy();
+        });
+
+        it('falls back to the audio clock if the track will not play', async () => {
+            trackSetting(true, false);
+            start(makeTimer({ timerSeconds: 3, restSeconds: 2, repeats: 2 }));
+            TestBed.inject(AlarmService).unlock();
+            fixture.detectChanges();
+            await settled();
+
+            expect(audio.scheduledNotes()).toContain('880@0');
+            fixture.destroy();
+        });
+
+        it('makes a fresh track on pause, with nothing in it, and on resume', async () => {
+            const { play } = trackSetting(true);
+            start(makeTimer());
+
+            store.pause();
+            fixture.detectChanges();
+            expect(play).toHaveBeenLastCalledWith([]);
+
+            store.resume();
+            fixture.detectChanges();
+            expect(play.mock.calls.at(-1)![0]).not.toEqual([]);
+            fixture.destroy();
+        });
+
+        it('stops the track on Stop', async () => {
+            const { stop } = trackSetting(true);
+            start(makeTimer());
+            vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+            (fixture.nativeElement.querySelector('[aria-label="Stop"]') as HTMLElement).click();
+
+            expect(stop).toHaveBeenCalled();
+            fixture.destroy();
+        });
+
+        it('uses the audio clock as before when the setting is off', () => {
+            const { play, stop } = trackSetting(false);
+            start(makeTimer({ timerSeconds: 3, restSeconds: 2, repeats: 2 }));
+            TestBed.inject(AlarmService).unlock();
+            fixture.detectChanges();
+
+            expect(play).not.toHaveBeenCalled();
+            expect(stop).toHaveBeenCalled();
+            expect(audio.scheduledNotes()).toContain('880@0');
+            fixture.destroy();
+        });
+
+        it('shows the workout on the lock screen, whose Pause and Play pause and resume it', () => {
+            trackSetting(true);
+            const show = vi.spyOn(TestBed.inject(AlarmTrackService), 'showOnLockScreen');
+            start(makeTimer({ title: 'Sprints' }));
+
+            const shown = show.mock.calls.at(-1)![0]!;
+            expect(shown).toEqual(expect.objectContaining({ title: 'Sprints', paused: false }));
+
+            shown.onPause();
+            fixture.detectChanges();
+            expect(component.isPaused()).toBe(true);
+            expect(show.mock.calls.at(-1)![0]).toEqual(expect.objectContaining({ paused: true }));
+
+            show.mock.calls.at(-1)![0]!.onPlay();
+            fixture.detectChanges();
+            expect(component.isPaused()).toBe(false);
             fixture.destroy();
         });
     });
