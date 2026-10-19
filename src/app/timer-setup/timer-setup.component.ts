@@ -21,7 +21,7 @@ import {
 } from '@angular/cdk/drag-drop';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
-import { hasWork, Step, StepKind, Timer, UNTIL_STOPPED } from '../models/timer';
+import { hasWork, MAX_REPS, Step, StepKind, Timer, UNTIL_STOPPED } from '../models/timer';
 import { InfinitySwitchComponent } from '../shared/components/infinity-switch/infinity-switch.component';
 import { ConfirmDialogComponent } from '../shared/components/confirm-dialog/confirm-dialog.component';
 import {
@@ -30,7 +30,10 @@ import {
 } from '../shared/components/wheel-picker/wheel-picker.component';
 import { TimerStore } from '../shared/state/timer-store.service';
 
-/** One step as the form holds it: minutes and seconds for the two wheels. */
+/**
+ * One step as the form holds it: minutes and seconds for a timed step's two wheels, or
+ * reps for a rep step's one. A step keeps all three, and only uses those for its kind.
+ */
 interface StepModel {
     /** Stays with the step as it moves, for tracking and element ids. */
     key: number;
@@ -38,6 +41,7 @@ interface StepModel {
     name: string;
     minutes: number;
     seconds: number;
+    reps: number;
 }
 
 /** The form's values. */
@@ -63,7 +67,14 @@ function pickerOptions(
 }
 
 const padded = (n: number) => n.toString().padStart(2, '0');
-const kindName = (kind: StepKind) => (kind === 'work' ? 'Work' : 'Rest');
+const kindName = (kind: StepKind) => ({ work: 'Work', rest: 'Rest', reps: 'Reps' })[kind];
+
+/** What the name box suggests for each kind of step. */
+const NAME_EXAMPLES: Record<StepKind, string> = {
+    work: 'e.g. Squats',
+    rest: 'e.g. Catch your breath',
+    reps: 'e.g. Push-ups',
+};
 
 @Component({
     selector: 'app-timer-setup',
@@ -95,6 +106,8 @@ export class TimerSetupComponent {
     protected readonly editingTimerId = signal<number | null>(null);
     protected readonly minuteOptions = pickerOptions(0, 99, padded);
     protected readonly secondOptions = pickerOptions(0, 59, padded);
+    protected readonly repOptions = pickerOptions(0, MAX_REPS, String);
+    protected readonly nameExamples = NAME_EXAMPLES;
     // 1-30, then ∞ at the end of the wheel
     protected readonly repeatOptions: WheelPickerOption[] = [
         ...pickerOptions(1, 30, String),
@@ -115,7 +128,7 @@ export class TimerSetupComponent {
             validate(setup, ({ value }) =>
                 hasWork(toSteps(value().steps))
                     ? undefined
-                    : { kind: 'noTime', message: 'Timer must have some work time' }
+                    : { kind: 'noTime', message: 'Timer must have some work: a time or some reps' }
             );
         },
         {
@@ -198,8 +211,11 @@ export class TimerSetupComponent {
         return `Step ${index + 1}, ${step.name.trim() || kindName(step.kind).toLowerCase()}`;
     }
 
-    /** A step's time as the wheels show it, e.g. "02:15". */
-    protected timeText(step: StepModel): string {
+    /** How much of a step there is, as its wheels show it: e.g. "02:15", or "20 reps". */
+    protected amountText(step: StepModel): string {
+        if (step.kind === 'reps') {
+            return step.reps === 1 ? '1 rep' : `${step.reps} reps`;
+        }
         return `${padded(step.minutes)}:${padded(step.seconds)}`;
     }
 
@@ -226,11 +242,15 @@ export class TimerSetupComponent {
         if (this.stepCount() >= MAX_STEPS) {
             return;
         }
-        const step = this.stepModel({ kind, seconds: 0, name: '' });
+        const step = this.stepModel(
+            kind === 'reps' ? { kind, reps: 0, name: '' } : { kind, seconds: 0, name: '' }
+        );
         this.updateSteps((steps) => [...steps, step]);
         // Only the new step is opened, keeping the rest of the list short
         this.expandedKeys.set(new Set([step.key]));
-        this.stepAnnouncement.set(`Added a ${kind} step, step ${this.stepCount()}`);
+        this.stepAnnouncement.set(
+            `Added a ${kind === 'reps' ? 'rep' : kind} step, step ${this.stepCount()}`
+        );
         this.focusAfterRender(`step-${step.key}-name`);
     }
 
@@ -274,11 +294,11 @@ export class TimerSetupComponent {
         if (this.stepCount() <= 1) {
             return;
         }
-        const isEmpty = !step.name.trim() && step.minutes === 0 && step.seconds === 0;
-        if (isEmpty) {
+        const isSet = step.kind === 'reps' ? step.reps > 0 : step.minutes > 0 || step.seconds > 0;
+        if (!step.name.trim() && !isSet) {
             this.removeStep(index);
         } else {
-            const time = step.minutes || step.seconds ? `, set to ${this.timeText(step)}` : '';
+            const time = isSet ? `, set to ${this.amountText(step)}` : '';
             this.stepPendingDelete.set({
                 index,
                 description: `This will remove ${this.stepTitle(index)}${time}.`,
@@ -328,12 +348,14 @@ export class TimerSetupComponent {
     }
 
     private stepModel(step: Step): StepModel {
+        const seconds = step.kind === 'reps' ? 0 : step.seconds;
         return {
             key: this.nextKey++,
             kind: step.kind,
             name: step.name,
-            minutes: Math.floor(step.seconds / 60),
-            seconds: step.seconds % 60,
+            minutes: Math.floor(seconds / 60),
+            seconds: seconds % 60,
+            reps: step.kind === 'reps' ? step.reps : 0,
         };
     }
 
@@ -374,13 +396,18 @@ export class TimerSetupComponent {
     }
 }
 
-/** The steps to save: whole seconds and trimmed names, leaving out any left at 0:00. */
+/** The steps to save: whole seconds and trimmed names, leaving out any left at 0:00 or 0 reps. */
 function toSteps(steps: readonly StepModel[]): Step[] {
     return steps
-        .map((step) => ({
-            kind: step.kind,
-            seconds: step.minutes * 60 + step.seconds,
-            name: step.name.trim(),
-        }))
-        .filter((step) => step.seconds > 0);
+        .map(
+            (step): Step =>
+                step.kind === 'reps'
+                    ? { kind: 'reps', reps: step.reps, name: step.name.trim() }
+                    : {
+                          kind: step.kind,
+                          seconds: step.minutes * 60 + step.seconds,
+                          name: step.name.trim(),
+                      }
+        )
+        .filter((step) => (step.kind === 'reps' ? step.reps > 0 : step.seconds > 0));
 }

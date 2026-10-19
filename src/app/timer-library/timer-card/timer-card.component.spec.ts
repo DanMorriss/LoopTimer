@@ -1,7 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Timer, UNTIL_STOPPED } from '../../models/timer';
-import { makeTimer, rest, work } from '../../shared/testing/make-timer';
+import { makeTimer, reps, rest, work } from '../../shared/testing/make-timer';
 import { TimerCardComponent } from './timer-card.component';
 
 const sprints = makeTimer({
@@ -83,6 +83,24 @@ describe('TimerCardComponent', () => {
         expect(el('.timer-card__summary').textContent).toContain('3 steps · 01:35 x 4');
         expect(el('.timer-card__summary').getAttribute('aria-label')).toBe(
             '3 steps, 01:35 a round, repeated 4 times'
+        );
+    });
+
+    it('adds "+ reps" to the time of a round with rep steps, as they take as long as they take', () => {
+        set({ timer: { ...sprints, steps: [work(30), reps(20, 'Push-ups'), rest(20)] } });
+
+        expect(el('.timer-card__summary').textContent).toContain('3 steps · 00:50 + reps x 4');
+        expect(el('.timer-card__summary').getAttribute('aria-label')).toBe(
+            '3 steps, 00:50 a round plus reps, repeated 4 times'
+        );
+    });
+
+    it('says "reps" alone for a round with no timed steps', () => {
+        set({ timer: { ...sprints, steps: [reps(10)] } });
+
+        expect(el('.timer-card__summary').textContent).toContain('1 step · reps x 4');
+        expect(el('.timer-card__summary').getAttribute('aria-label')).toBe(
+            '1 step, all reps, repeated 4 times'
         );
     });
 

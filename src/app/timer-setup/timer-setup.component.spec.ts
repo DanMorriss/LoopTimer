@@ -12,7 +12,7 @@ import {
 import { BehaviorSubject } from 'rxjs';
 import { Timer, UNTIL_STOPPED } from '../models/timer';
 import { TimerStore } from '../shared/state/timer-store.service';
-import { rest, work } from '../shared/testing/make-timer';
+import { reps, rest, work } from '../shared/testing/make-timer';
 import { MAX_STEPS, TimerSetupComponent } from './timer-setup.component';
 
 const savedTimer: Omit<Timer, 'id'> = {
@@ -70,6 +70,19 @@ describe('TimerSetupComponent', () => {
             title: el<HTMLInputElement>('#title').value,
             steps: steps().map((step) => {
                 const kind = el('.step__badge', step).textContent!.trim();
+                // A rep step shows its count, e.g. "20 reps", on its one wheel or in one line
+                if (kind === 'Reps') {
+                    const count = isCollapsed(step)
+                        ? el('.step__summary-time', step).textContent!.trim()
+                        : `${value(el('app-wheel-picker', step))} reps`;
+                    return {
+                        kind,
+                        name: isCollapsed(step)
+                            ? el('.step__summary-name', step).textContent!.trim()
+                            : el<HTMLInputElement>('input', step).value,
+                        time: count,
+                    };
+                }
                 // A collapsed step shows its name and time in one line, e.g. "Squats 02:15"
                 if (isCollapsed(step)) {
                     const [minutes, seconds] = el('.step__summary-time', step)
@@ -102,6 +115,12 @@ describe('TimerSetupComponent', () => {
     function chooseTime(step: number, wheel: 'minutes' | 'seconds', value: string) {
         const wheels = steps()[step].querySelectorAll('app-wheel-picker');
         el(`[data-value="${value}"]`, wheels[wheel === 'minutes' ? 0 : 1]).click();
+        fixture.detectChanges();
+    }
+
+    /** Pick a number on a rep step's one wheel. */
+    function chooseReps(step: number, value: string) {
+        el(`app-wheel-picker [data-value="${value}"]`, steps()[step]).click();
         fixture.detectChanges();
     }
 
@@ -178,7 +197,9 @@ describe('TimerSetupComponent', () => {
         it('will not start a timer with no work time', async () => {
             chooseTime(1, 'seconds', '30'); // only rest
             expect(submitButton().disabled).toBe(true);
-            expect(fixture.nativeElement.textContent).toContain('Timer must have some work time');
+            expect(fixture.nativeElement.textContent).toContain(
+                'Timer must have some work: a time or some reps'
+            );
 
             await submit();
 
@@ -261,6 +282,65 @@ describe('TimerSetupComponent', () => {
             expect(shown().steps.map((s) => s.kind)).toEqual(['Work', 'Rest', 'Work', 'Rest']);
             expect(document.activeElement).toBe(el('input', steps()[3]));
             expect(said()).toBe('Added a rest step, step 4');
+        });
+
+        describe('rep steps', () => {
+            it('adds one with a single Reps wheel, focusing its name box', async () => {
+                await press('Add reps');
+
+                expect(shown().steps[2]).toEqual({ kind: 'Reps', name: '', time: '0 reps' });
+                const step = steps()[2];
+                expect(step.classList).toContain('step--reps');
+                expect(step.querySelectorAll('app-wheel-picker')).toHaveLength(1);
+                expect(
+                    el('.picker-field__label', el('.picker-row', step)).textContent!.trim()
+                ).toBe('Reps');
+                expect(el<HTMLInputElement>('input', step).placeholder).toBe('e.g. Push-ups');
+                expect(document.activeElement).toBe(el('input', step));
+                expect(fixture.nativeElement.textContent).toContain('Added a rep step, step 3');
+            });
+
+            it('saves the reps, in order with the other steps', async () => {
+                chooseTime(0, 'seconds', '30');
+                await press('Add reps');
+                typeName(2, 'Push-ups');
+                chooseReps(2, '20');
+
+                await submit();
+
+                expect(store.timers()[0].steps).toEqual([work(30), reps(20, 'Push-ups')]);
+            });
+
+            it('leaves out a rep step left at 0 reps', async () => {
+                chooseTime(0, 'seconds', '30');
+                await press('Add reps');
+
+                await submit();
+
+                expect(store.timers()[0].steps).toEqual([work(30)]);
+            });
+
+            it('counts reps as work, so a timer of only reps can start', async () => {
+                await press('Add reps');
+                expect(submitButton().disabled).toBe(true);
+
+                chooseReps(2, '10');
+
+                expect(submitButton().disabled).toBe(false);
+                await submit();
+                expect(store.timers()[0].steps).toEqual([reps(10)]);
+            });
+
+            it('names the reps when asking before deleting', async () => {
+                await press('Add reps');
+                chooseReps(2, '20');
+
+                await press('Delete Step 3, reps');
+
+                expect(
+                    fixture.nativeElement.querySelector('app-confirm-dialog')?.textContent
+                ).toContain('This will remove Step 3, reps, set to 20 reps.');
+            });
         });
 
         it('runs a round of several steps, saved in order with their names', async () => {
@@ -599,6 +679,18 @@ describe('TimerSetupComponent', () => {
                 repeats: '4',
             });
             expect(submitButton().textContent).toContain('Save & start timer');
+        });
+
+        it('shows a rep step collapsed as its name and count', async () => {
+            await setup({ editId: '1' });
+            store.addTimer({ ...savedTimer, steps: [work(30), reps(1, 'Pull-up'), reps(20)] });
+            await create();
+
+            expect(shown().steps).toEqual([
+                { kind: 'Work', name: '', time: '0:30' },
+                { kind: 'Reps', name: 'Pull-up', time: '1 rep' },
+                { kind: 'Reps', name: '', time: '20 reps' },
+            ]);
         });
 
         it('opens with every step collapsed, so the whole workout is in view', async () => {
