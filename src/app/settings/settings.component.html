@@ -67,6 +67,27 @@
                     describedBy="vibration-hint"
                 />
             </div>
+
+            <!-- Alarms stop when the phone locks, so by default it's kept awake mid-workout -->
+            <div class="setting">
+                <div class="setting__text">
+                    <span class="setting__name" id="screen-label">Keep screen on</span>
+                    <span class="setting__hint" id="screen-hint">
+                        {{
+                            keepAwake.supported
+                                ? 'Stops the phone locking mid-workout'
+                                : "This browser can't keep the screen on"
+                        }}
+                    </span>
+                </div>
+                <app-toggle-switch
+                    [checked]="settings.keepScreenOn() && keepAwake.supported"
+                    (checkedChange)="settings.update({ keepScreenOn: $event })"
+                    [disabled]="!keepAwake.supported"
+                    labelledBy="screen-label"
+                    describedBy="screen-hint"
+                />
+            </div>
         </section>
 
         <section class="settings__section" aria-labelledby="sounds-heading">

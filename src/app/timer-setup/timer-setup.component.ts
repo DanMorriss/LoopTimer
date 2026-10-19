@@ -28,6 +28,7 @@ import {
     WheelPickerComponent,
     WheelPickerOption,
 } from '../shared/components/wheel-picker/wheel-picker.component';
+import { ActiveRunService } from '../shared/run/active-run.service';
 import { TimerStore } from '../shared/state/timer-store.service';
 
 /**
@@ -97,6 +98,7 @@ const NAME_EXAMPLES: Record<StepKind, string> = {
 })
 export class TimerSetupComponent {
     private readonly timerStore = inject(TimerStore);
+    private readonly run = inject(ActiveRunService);
     private readonly router = inject(Router);
     private readonly route = inject(ActivatedRoute);
     private readonly injector = inject(Injector);
@@ -391,7 +393,7 @@ export class TimerSetupComponent {
             : this.timerStore.addTimer(timer);
 
         this.load(null);
-        this.timerStore.setActiveTimer(savedTimer);
+        this.run.start(savedTimer);
         await this.router.navigate(['/timer']);
     }
 }

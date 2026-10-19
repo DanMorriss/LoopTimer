@@ -5,6 +5,8 @@ import { HistoryStore } from '../shared/state/history-store.service';
 import { SettingsStore } from '../shared/state/settings-store.service';
 import { TimerStore } from '../shared/state/timer-store.service';
 import { AlarmService } from '../shared/alarms/alarm.service';
+import { ActiveRunService } from '../shared/run/active-run.service';
+import { KeepAwakeService } from '../shared/run/keep-awake.service';
 import { contrastRatio } from '../shared/testing/contrast';
 import { FakeAudioContext, provideFakeAudioContext } from '../shared/testing/fake-audio-context';
 import {
@@ -897,12 +899,48 @@ describe('TimerComponent', () => {
             fixture.destroy();
         });
 
-        describe('when the page is left without Stop', () => {
-            it('logs the run as stopped on leaving for another page', () => {
+        describe('the run carries on away from the timer page', () => {
+            /** The clock moving on with the timer page closed: no page to re-render. */
+            function advanceElsewhere(ms: number) {
+                vi.advanceTimersByTime(ms);
+                TestBed.tick();
+            }
+
+            it('keeps going on another page, with its alarms, and logs nothing yet', () => {
                 start(makeTimer({ timerSeconds: 3, restSeconds: 2, repeats: 5 }));
-                advance(6000); // round 2 has begun
+                TestBed.inject(AlarmService).unlock();
+                advance(6000);
 
                 fixture.destroy();
+                TestBed.tick();
+
+                expect(entries()).toEqual([]);
+                expect(audio.scheduledNotes()).not.toEqual([]);
+                expect(TestBed.inject(ActiveRunService).state()?.round).toBe(1);
+            });
+
+            it('logs the finish while on another page', () => {
+                const startedAt = Date.now();
+                start(makeTimer({ timerSeconds: 3, restSeconds: 2, repeats: 2 }));
+                fixture.destroy();
+
+                advanceElsewhere(8000);
+
+                expect(entries()).toEqual([
+                    expect.objectContaining({
+                        endedAt: startedAt + 8000,
+                        roundsCompleted: 2,
+                        outcome: 'finished',
+                    }),
+                ]);
+            });
+
+            it('logs it as stopped when another timer is started in its place', () => {
+                start(makeTimer({ timerSeconds: 3, restSeconds: 2, repeats: 5 }));
+                advance(6000); // round 2 has begun
+                fixture.destroy();
+
+                TestBed.inject(ActiveRunService).start(makeTimer({ id: 2, title: 'Next' }));
 
                 expect(entries()).toEqual([
                     expect.objectContaining({
@@ -912,9 +950,20 @@ describe('TimerComponent', () => {
                         outcome: 'stopped',
                     }),
                 ]);
+                expect(store.activeTimer()?.title).toBe('Next');
             });
 
-            it('logs it on closing the tab or refreshing, which leave the page as it is', () => {
+            it('leaves no trace of a run replaced before its first step was done', () => {
+                start(makeTimer({ timerSeconds: 3 }));
+                advance(2000);
+
+                TestBed.inject(ActiveRunService).start(makeTimer({ id: 2 }));
+
+                expect(entries()).toEqual([]);
+                fixture.destroy();
+            });
+
+            it('logs it on closing the tab or refreshing', () => {
                 start(makeTimer({ timerSeconds: 3, restSeconds: 2, repeats: 5 }));
                 advance(6000);
 
@@ -924,15 +973,12 @@ describe('TimerComponent', () => {
                 fixture.destroy();
             });
 
-            it('updates that entry, rather than adding another, if the run is picked up and finished', () => {
+            it('updates that entry, rather than adding another, if the run carries on and finishes', () => {
                 start(makeTimer({ timerSeconds: 3, restSeconds: 2, repeats: 2 }));
                 advance(4000);
-                fixture.destroy();
+                window.dispatchEvent(new Event('pagehide'));
                 expect(entries()).toEqual([expect.objectContaining({ outcome: 'stopped' })]);
 
-                // Back on the timer page, which carries on from the clock
-                fixture = TestBed.createComponent(TimerComponent);
-                fixture.detectChanges();
                 advance(4000);
 
                 expect(entries()).toEqual([
@@ -941,22 +987,14 @@ describe('TimerComponent', () => {
                 fixture.destroy();
             });
 
-            it('keeps a finished run finished when its screen is left', () => {
+            it('keeps a finished run finished when the tab closes', () => {
                 start(makeTimer({ timerSeconds: 1, repeats: 1 }));
                 advance(1000);
 
-                fixture.destroy();
+                window.dispatchEvent(new Event('pagehide'));
 
                 expect(entries()).toEqual([expect.objectContaining({ outcome: 'finished' })]);
-            });
-
-            it('leaves no trace if the first step was not done', () => {
-                start(makeTimer({ timerSeconds: 3 }));
-                advance(2000);
-
                 fixture.destroy();
-
-                expect(entries()).toEqual([]);
             });
         });
 
@@ -1292,13 +1330,16 @@ describe('TimerComponent', () => {
             localStorage.clear();
         });
 
-        it('silences the alarms when the page closes, e.g. on Stop', () => {
+        it('silences the alarms on Stop', async () => {
             start(timer());
             unlockSound();
+            vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
 
-            fixture.destroy();
+            (fixture.nativeElement.querySelector('[aria-label="Stop"]') as HTMLElement).click();
+            fixture.detectChanges();
 
             expect(audio.scheduledNotes()).toEqual([]);
+            fixture.destroy();
         });
 
         it('vibrates as each phase starts, once each', () => {
@@ -1331,13 +1372,59 @@ describe('TimerComponent', () => {
         });
     });
 
-    it('stops its intervals when destroyed', async () => {
-        start(makeTimer());
-        advance(1000);
+    describe('keeping the screen on', () => {
+        beforeEach(() => localStorage.clear());
+        afterEach(() => localStorage.clear());
 
-        fixture.destroy();
+        const held = () => {
+            const hold = vi.spyOn(TestBed.inject(KeepAwakeService), 'hold');
+            return () => hold.mock.calls.at(-1)?.[0];
+        };
 
+        it('holds the screen on while the run is going, and lets go when paused or finished', () => {
+            const lastHold = held();
+            start(makeTimer({ timerSeconds: 1, restSeconds: 0, repeats: 1 }));
+            expect(lastHold()).toBe(true);
+
+            store.pause();
+            TestBed.tick();
+            expect(lastHold()).toBe(false);
+
+            store.resume();
+            TestBed.tick();
+            expect(lastHold()).toBe(true);
+
+            advance(1000);
+            expect(component.isComplete()).toBe(true);
+            expect(lastHold()).toBe(false);
+            fixture.destroy();
+        });
+
+        it('leaves the screen alone when the setting is off', () => {
+            TestBed.inject(SettingsStore).update({ keepScreenOn: false });
+            const lastHold = held();
+
+            start(makeTimer());
+
+            expect(lastHold() ?? false).toBe(false);
+            fixture.destroy();
+        });
+    });
+
+    it('ticks only while the run is going: not paused, stopped or finished', () => {
+        start(makeTimer({ timerSeconds: 1, restSeconds: 0, repeats: 1 }));
+        expect(vi.getTimerCount()).toBe(1);
+
+        store.pause();
+        TestBed.tick();
         expect(vi.getTimerCount()).toBe(0);
+
+        store.resume();
+        TestBed.tick();
+        advance(1000);
+        expect(component.isComplete()).toBe(true);
+        expect(vi.getTimerCount()).toBe(0);
+        fixture.destroy();
     });
 
     describe('rep steps', () => {

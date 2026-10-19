@@ -12,6 +12,7 @@ import { Router } from '@angular/router';
 import { Timer } from '../models/timer';
 import { ConfirmDialogComponent } from '../shared/components/confirm-dialog/confirm-dialog.component';
 import { TimerCardComponent } from './timer-card/timer-card.component';
+import { ActiveRunService } from '../shared/run/active-run.service';
 import { TimerStore } from '../shared/state/timer-store.service';
 
 @Component({
@@ -23,6 +24,7 @@ import { TimerStore } from '../shared/state/timer-store.service';
 export class TimerLibraryComponent {
     timerStore = inject(TimerStore);
     router = inject(Router);
+    private readonly run = inject(ActiveRunService);
     private host = inject<ElementRef<HTMLElement>>(ElementRef);
     private injector = inject(Injector);
     protected timerPendingDelete = signal<Timer | null>(null);
@@ -97,7 +99,7 @@ export class TimerLibraryComponent {
     }
 
     startTimer(timer: Timer) {
-        this.timerStore.setActiveTimer(timer);
+        this.run.start(timer);
         this.router.navigate(['/timer']);
     }
 

@@ -10,9 +10,16 @@ export interface Settings {
     sound: boolean;
     /** Vibrate as each phase starts, where the device can. */
     vibration: boolean;
+    /** Stop the screen locking during a workout, where the browser can. */
+    keepScreenOn: boolean;
 }
 
-const DEFAULT_SETTINGS: Settings = { theme: 'dark', sound: true, vibration: true };
+const DEFAULT_SETTINGS: Settings = {
+    theme: 'dark',
+    sound: true,
+    vibration: true,
+    keepScreenOn: true,
+};
 const STORAGE_KEY = 'settings';
 
 /** The user's settings, saved in the browser so they apply every time. */
@@ -23,6 +30,7 @@ export class SettingsStore {
     readonly theme = computed(() => this.settings().theme);
     readonly sound = computed(() => this.settings().sound);
     readonly vibration = computed(() => this.settings().vibration);
+    readonly keepScreenOn = computed(() => this.settings().keepScreenOn);
 
     update(changes: Partial<Settings>) {
         this.settings.update((settings) => ({ ...settings, ...changes }));
@@ -41,8 +49,13 @@ function loadSettings(): Settings {
     } catch {
         // Corrupted: use the defaults
     }
-    const flag = (key: 'sound' | 'vibration') =>
+    const flag = (key: 'sound' | 'vibration' | 'keepScreenOn') =>
         typeof saved[key] === 'boolean' ? saved[key] : DEFAULT_SETTINGS[key];
     const theme = THEMES.find((t) => t === saved['theme']) ?? DEFAULT_SETTINGS.theme;
-    return { theme, sound: flag('sound'), vibration: flag('vibration') };
+    return {
+        theme,
+        sound: flag('sound'),
+        vibration: flag('vibration'),
+        keepScreenOn: flag('keepScreenOn'),
+    };
 }
