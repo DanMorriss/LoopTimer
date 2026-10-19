@@ -5,7 +5,7 @@ Open work, highest priority first. Tick items off (or delete them) as they're do
 ## 1. Features
 
 - [ ] **Alarm sound files:** swap the beeps generated in code (`AlarmService`) for proper sounds. Waiting on Dan to supply the files.
-- [ ] **Alarms on a locked phone or another page:** iPhones suspend web audio when locked, and the alarms only play while the timer page is open. Notifications from a service worker may be the way round both (user story 4).
+- [ ] **Alarms on a locked phone:** iPhones suspend web audio when locked, so the beeps stop if the phone is locked by hand ("Keep screen on" stops it locking by itself). Scheduled notifications aren't possible on iOS (no Notification Triggers), and server push needs a backend. Next: play the workout's beeps as an `<audio>` track, which iOS keeps playing when locked, with the audio as the clock (user story 4). Needs trying on a real iPhone, in Safari and as a home-screen app.
 - [ ] **Alarm order setting:** pick which sound plays for each step, with a preview. Needs the sound files first.
 
 ## 2. Design
@@ -15,5 +15,5 @@ Nothing open.
 ## 3. Known issues
 
 - [ ] **The home page is too wide on the smallest phones:** the ∞ logo is 360px wide, so at 320px (iPhone SE 1st gen) the page scrolls sideways. It should scale down with the screen.
-- [ ] **A deleted history entry can come back:** a run is logged when its timer page closes, and updated if it's picked up again. So deleting its entry from History, then going back to that run's timer page and leaving (or finishing), logs it again. Stopping or starting another timer ends the run, so this only affects a run left open. Clearing the run's id from the store on delete, or remembering deleted ids, would stop it.
+- [ ] **A deleted history entry can come back:** a run still going is logged again when it finishes or the tab closes, so deleting its entry from History mid-run (or after a refresh logged it) brings it back then. Stopping or starting another timer ends the run, so this only affects a run left open. Remembering deleted ids would stop it.
 - [ ] **A beep can repeat on resume:** pausing within a second of a step starting, then resuming, plays that step's beep again (the alarms allow up to a second's lateness, for the first beep after Start).

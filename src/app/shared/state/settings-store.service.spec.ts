@@ -20,6 +20,7 @@ describe('SettingsStore', () => {
             theme: 'dark',
             sound: false,
             vibration: true,
+            keepScreenOn: true,
         });
 
         TestBed.resetTestingModule();

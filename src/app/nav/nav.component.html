@@ -31,7 +31,7 @@
         @if (open()) {
             <nav id="site-menu" class="nav__menu" aria-label="Main">
                 <ul class="nav__list">
-                    @for (page of pages; track page.path) {
+                    @for (page of pages(); track page.path) {
                         <li>
                             <a
                                 class="nav__link"

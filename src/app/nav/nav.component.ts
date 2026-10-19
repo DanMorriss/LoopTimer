@@ -5,7 +5,10 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/ro
 import { filter, map } from 'rxjs';
 import { TimerStore } from '../shared/state/timer-store.service';
 
-/** The pages the menu links to, in the order they're listed. */
+/** The workout in progress, listed first while there is one. */
+const TIMER_PAGE = { path: '/timer', label: 'Timer', icon: 'timer' } as const;
+
+/** The pages the menu always links to, in the order they're listed. */
 const PAGES = [
     { path: '/home', label: 'Home', icon: 'home' },
     { path: '/setup', label: 'Create', icon: 'add_circle_outline' },
@@ -42,7 +45,10 @@ export class NavComponent {
         { initialValue: this.router.url }
     );
 
-    protected readonly pages = PAGES;
+    /** With a Timer link first while a workout is going, so it's easy to get back to. */
+    protected readonly pages = computed(() =>
+        this.activeTimer() ? [TIMER_PAGE, ...PAGES] : PAGES
+    );
     protected readonly open = signal(false);
     /** On the timer page, the running timer's title (if it has one); otherwise empty. */
     protected readonly timerTitle = computed(() =>

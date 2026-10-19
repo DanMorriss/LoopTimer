@@ -1,21 +1,15 @@
-import { Component, computed, effect, inject, OnDestroy, signal, untracked } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { HistoryEntry, historyId } from '../models/history';
-import { runsUntilStopped, Step, workoutSeconds } from '../models/timer';
+import { runsUntilStopped, Step } from '../models/timer';
 import { AlarmService } from '../shared/alarms/alarm.service';
 import { MatIconModule } from '@angular/material/icon';
 import { formatTime } from '../shared/format-time';
-import { HistoryStore } from '../shared/state/history-store.service';
+import { ActiveRunService } from '../shared/run/active-run.service';
 import { SettingsStore } from '../shared/state/settings-store.service';
 import { TimerStore } from '../shared/state/timer-store.service';
-import { alarmEvents } from './alarm-schedule';
-import { timerStateAt } from './timer-state';
 
 // Space on one of these already does something, e.g. presses the focused button
 const SPACE_HANDLED_BY = 'button, a, input, textarea, select, [contenteditable], [role="button"]';
-
-// How many rounds of alarms to book at a time
-const ALARM_WINDOW = 100;
 
 /** "Work", "Rest" or "Reps": what an unnamed step is called. */
 function kindName(step: Step): string {
@@ -25,64 +19,27 @@ function kindName(step: Step): string {
 // Above this many rounds, the dots under "round 2 of 20" would wrap on a phone, so only the line shows
 const MAX_ROUND_DOTS = 15;
 
-// How late a vibration can be and still be worth doing, e.g. not after a background tab wakes up
-const VIBRATE_LATE_LIMIT_MS = 1000;
-
+/**
+ * Shows the workout in progress and takes the user's presses. The run itself (its clock,
+ * alarms and history) lives in ActiveRunService, so it carries on on any page of the app.
+ */
 @Component({
     selector: 'app-timer',
     imports: [RouterLink, MatIconModule],
     templateUrl: './timer.component.html',
     styleUrls: ['./timer.component.scss'],
     host: {
-        // Browsers pause or slow timers in background tabs, so catch up as soon as the page is visible again
-        '(document:visibilitychange)': 'syncClock()',
         '(document:keydown.space)': 'onSpace($event)',
-        // Closing the tab or refreshing doesn't destroy the component, so catch that too
-        '(window:pagehide)': 'recordProgress()',
     },
 })
-export class TimerComponent implements OnDestroy {
+export class TimerComponent {
     timerStore = inject(TimerStore);
     private readonly router = inject(Router);
-    private readonly history = inject(HistoryStore);
-    timer = this.timerStore.activeTimer;
-    isPaused = this.timerStore.isPaused;
-
-    // Everything below is worked out from the clock rather than counted tick by tick,
-    // so the timer stays correct even when ticks arrive late or not at all
-    private readonly now = signal(Date.now());
-    private readonly clockId = setInterval(() => this.syncClock(), 250);
-
-    /** How long the timer has run, in ms, or null if there's no timer. */
-    private readonly elapsedMs = computed(() => {
-        const startedAt = this.timerStore.activeTimerStartedAt();
-        // While paused, time stands still at the moment of the pause
-        const at = this.timerStore.activeTimerPausedAt() ?? this.now();
-        return this.timer() && startedAt !== null ? at - startedAt : null;
-    });
-
-    private readonly state = computed(() => {
-        const timer = this.timer();
-        const elapsedMs = this.elapsedMs();
-        return timer && elapsedMs !== null
-            ? timerStateAt(timer, elapsedMs, this.timerStore.activeRepStepsDone())
-            : null;
-    });
-
-    // What comes after the current step: the state at the moment it ends
-    private readonly nextState = computed(() => {
-        const timer = this.timer();
-        const state = this.state();
-        const elapsedMs = this.elapsedMs();
-        if (!timer || !state || elapsedMs === null || state.phase === 'complete') {
-            return null;
-        }
-        const stepEndMs = elapsedMs - state.phaseElapsedMs + state.phaseSeconds * 1000;
-        // A rep step ends with Done, which adds one to the rep steps done
-        const repStepsDone =
-            this.timerStore.activeRepStepsDone() + (state.phase === 'reps' ? 1 : 0);
-        return timerStateAt(timer, stepEndMs, repStepsDone);
-    });
+    private readonly run = inject(ActiveRunService);
+    timer = this.run.timer;
+    isPaused = this.run.isPaused;
+    private readonly state = this.run.state;
+    private readonly nextState = this.run.nextState;
 
     protected readonly alarms = inject(AlarmService);
     private readonly settings = inject(SettingsStore);
@@ -90,65 +47,6 @@ export class TimerComponent implements OnDestroy {
     soundLocked = computed(
         () => this.alarms.supported && this.settings.sound() && !this.alarms.unlocked()
     );
-
-    // Alarms are booked ALARM_WINDOW rounds at a time, starting from a multiple of half that,
-    // so a timer that runs until stopped is topped up halfway through each batch.
-    // Finite timers (30 rounds at most) fit in the first batch.
-    private readonly alarmBatch = computed(() =>
-        Math.floor((this.state()?.round ?? 0) / (ALARM_WINDOW / 2))
-    );
-
-    // Changes when the timer starts, pauses, resumes or needs its next batch, not every tick
-    private readonly alarmEvents = computed(() => {
-        const timer = this.timer();
-        const startedAt = this.timerStore.activeTimerStartedAt();
-        const fromRound = (this.alarmBatch() * ALARM_WINDOW) / 2;
-        return timer && startedAt !== null && !this.isPaused()
-            ? alarmEvents(
-                  timer,
-                  startedAt,
-                  fromRound,
-                  ALARM_WINDOW,
-                  this.timerStore.activeRepStepsDone()
-              )
-            : [];
-    });
-    private lastAlarmCheck = Date.now() - VIBRATE_LATE_LIMIT_MS;
-
-    constructor() {
-        // Log the workout once it's done. The history only keeps a run once, so seeing the
-        // finished screen again after a refresh doesn't log it twice.
-        effect(() => {
-            if (this.isComplete()) {
-                untracked(() => this.recordRun('finished'));
-            }
-        });
-
-        // Hand the whole workout's alarms to the audio clock up front, and again whenever
-        // the timer pauses, resumes, or sound is unlocked or turned on or off
-        effect(() => {
-            const events = this.alarmEvents();
-            // Reading sound() here reschedules (or silences) when it's changed in settings
-            if (this.alarms.unlocked() || !this.settings.sound()) {
-                this.alarms.schedule(events);
-            }
-        });
-
-        // Vibrate as each alarm comes due
-        effect(() => {
-            const now = this.now();
-            const due = this.alarmEvents().filter(
-                (event) =>
-                    event.at > this.lastAlarmCheck &&
-                    event.at <= now &&
-                    event.at > now - VIBRATE_LATE_LIMIT_MS
-            );
-            this.lastAlarmCheck = now;
-            if (due.length > 0) {
-                this.alarms.vibrate(due[due.length - 1].kind);
-            }
-        });
-    }
 
     isTimerActive = computed(() => this.state()?.phase === 'work');
     isRestActive = computed(() => this.state()?.phase === 'rest');
@@ -311,26 +209,12 @@ export class TimerComponent implements OnDestroy {
     });
 
     togglePause() {
-        if (this.isPaused()) {
-            this.timerStore.resume();
-        } else {
-            this.timerStore.pause();
-        }
-        this.syncClock();
+        this.run.togglePause();
     }
 
-    /**
-     * Done on a rep step: on to the next step. The time it took comes off the countdown's
-     * clock, so the next step starts from its beginning.
-     */
+    /** Done on a rep step: on to the next step, from its full time. */
     finishReps() {
-        this.syncClock();
-        const state = this.state();
-        if (state?.phase !== 'reps') {
-            return;
-        }
-        this.timerStore.finishRepStep(state.phaseElapsedMs);
-        this.syncClock();
+        this.run.finishReps();
     }
 
     /** Space pauses and resumes, like most media players, or presses Done on a rep step. */
@@ -354,48 +238,11 @@ export class TimerComponent implements OnDestroy {
     }
 
     /**
-     * Adds this run to the history. A stopped run is only logged once at least one step
-     * has been done, so starting a timer by mistake and stopping it leaves no trace.
-     */
-    private recordRun(outcome: HistoryEntry['outcome']) {
-        const timer = this.timer();
-        const state = this.state();
-        const runStartedAt = this.timerStore.activeRunStartedAt();
-        const startedAt = this.timerStore.activeTimerStartedAt();
-        const elapsedMs = this.elapsedMs();
-        if (!timer || !state || runStartedAt === null || startedAt === null || elapsedMs === null) {
-            return;
-        }
-        const finished = outcome === 'finished';
-        if (!finished && state.round === 0 && state.stepIndex === 0) {
-            return;
-        }
-        // A finish is dated when the workout actually ended, even if the page only notices
-        // later (e.g. it was in the background); startedAt has moved on by any pauses and by
-        // the time spent on rep steps, which the clock leaves out
-        const countdownMs = finished ? workoutSeconds(timer) * 1000 : elapsedMs;
-        const activeSeconds = Math.floor((countdownMs + this.timerStore.activeRepMs()) / 1000);
-        this.history.record({
-            id: historyId(runStartedAt, timer.id),
-            timerId: timer.id,
-            title: timer.title,
-            startedAt: runStartedAt,
-            endedAt: finished ? startedAt + countdownMs : Date.now(),
-            activeSeconds,
-            roundsCompleted: finished ? timer.repeats : state.round,
-            totalRounds: timer.repeats,
-            outcome,
-        });
-    }
-
-    /**
      * From the finished screen to this run in the history: with its note box open, ready to
      * type, or just highlighted.
      */
     async openHistory(withNote: boolean) {
-        const timer = this.timer();
-        const runStartedAt = this.timerStore.activeRunStartedAt();
-        const run = timer && runStartedAt !== null ? historyId(runStartedAt, timer.id) : null;
+        const run = this.run.runId();
         await this.router.navigate(
             ['/history'],
             run ? { queryParams: withNote ? { note: run } : { run } } : {}
@@ -403,29 +250,7 @@ export class TimerComponent implements OnDestroy {
     }
 
     async stop() {
-        this.recordRun('stopped');
-        this.timerStore.stop();
+        this.run.stop();
         await this.router.navigate(['/library']);
-    }
-
-    syncClock() {
-        this.now.set(Date.now());
-    }
-
-    /**
-     * Logs the run as it stands when the page closes: on leaving for another page, closing
-     * the tab or refreshing. Otherwise a run left without Stop never reaches the history.
-     * If it's picked up again (coming back, or after a refresh), stopping or finishing it
-     * later updates this entry.
-     */
-    recordProgress() {
-        this.syncClock();
-        this.recordRun(this.isComplete() ? 'finished' : 'stopped');
-    }
-
-    ngOnDestroy() {
-        this.recordProgress();
-        clearInterval(this.clockId);
-        this.alarms.cancel();
     }
 }

@@ -26,7 +26,12 @@ describe('NavComponent', () => {
         await fixture.whenStable();
     });
 
-    afterEach(() => element.remove());
+    afterEach(() => {
+        element.remove();
+        // A run started here would otherwise carry over into the next test
+        sessionStorage.clear();
+        localStorage.clear();
+    });
 
     const toggle = () => element.querySelector<HTMLButtonElement>('button[aria-label="Menu"]')!;
     const menu = () => element.querySelector('#site-menu');
@@ -105,6 +110,18 @@ describe('NavComponent', () => {
 
             expect(timerTitle()).toBeNull();
         });
+    });
+
+    it('links back to the timer first while a workout is going', async () => {
+        await openMenu();
+        expect(links()[0].getAttribute('href')).toBe('/home');
+
+        const store = TestBed.inject(TimerStore);
+        store.setActiveTimer(store.addTimer(makeTimer()));
+        fixture.detectChanges();
+
+        expect(links()[0].getAttribute('href')).toBe('/timer');
+        expect(links()).toHaveLength(6);
     });
 
     it('marks the page you are on', async () => {

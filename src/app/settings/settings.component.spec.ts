@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AlarmService } from '../shared/alarms/alarm.service';
+import { KeepAwakeService } from '../shared/run/keep-awake.service';
 import { SettingsStore } from '../shared/state/settings-store.service';
 import { FakeAudioContext, provideFakeAudioContext } from '../shared/testing/fake-audio-context';
 import { fakeReducedMotion } from '../shared/testing/fake-reduced-motion';
@@ -189,5 +190,34 @@ describe('SettingsComponent', () => {
             'Play the rest alarm',
             'Play the finish alarm',
         ]);
+    });
+
+    describe('keep screen on', () => {
+        /** As if the browser does, or doesn't, have the Screen Wake Lock API. */
+        const supported = (value: boolean) =>
+            Object.defineProperty(TestBed.inject(KeepAwakeService), 'supported', { value });
+
+        it('is on to begin with, and saves being turned off', () => {
+            supported(true);
+            create();
+            expect(isOn('screen')).toBe(true);
+
+            toggle('screen').click();
+            fixture.detectChanges();
+
+            expect(settings.keepScreenOn()).toBe(false);
+            expect(isOn('screen')).toBe(false);
+        });
+
+        it("says so, and can't be turned on, where the browser can't keep the screen on", () => {
+            supported(false);
+            create();
+
+            expect(toggle('screen').disabled).toBe(true);
+            expect(isOn('screen')).toBe(false);
+            expect(fixture.nativeElement.textContent).toContain(
+                "This browser can't keep the screen on"
+            );
+        });
     });
 });
