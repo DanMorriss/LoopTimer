@@ -12,6 +12,11 @@ export interface Settings {
     vibration: boolean;
     /** Stop the screen locking during a workout, where the browser can. */
     keepScreenOn: boolean;
+    /**
+     * Play the alarms as an audio track, which an iPhone keeps playing when locked. On trial,
+     * so off to begin with.
+     */
+    lockScreenBeeps: boolean;
 }
 
 const DEFAULT_SETTINGS: Settings = {
@@ -19,6 +24,7 @@ const DEFAULT_SETTINGS: Settings = {
     sound: true,
     vibration: true,
     keepScreenOn: true,
+    lockScreenBeeps: false,
 };
 const STORAGE_KEY = 'settings';
 
@@ -31,6 +37,7 @@ export class SettingsStore {
     readonly sound = computed(() => this.settings().sound);
     readonly vibration = computed(() => this.settings().vibration);
     readonly keepScreenOn = computed(() => this.settings().keepScreenOn);
+    readonly lockScreenBeeps = computed(() => this.settings().lockScreenBeeps);
 
     update(changes: Partial<Settings>) {
         this.settings.update((settings) => ({ ...settings, ...changes }));
@@ -49,7 +56,7 @@ function loadSettings(): Settings {
     } catch {
         // Corrupted: use the defaults
     }
-    const flag = (key: 'sound' | 'vibration' | 'keepScreenOn') =>
+    const flag = (key: 'sound' | 'vibration' | 'keepScreenOn' | 'lockScreenBeeps') =>
         typeof saved[key] === 'boolean' ? saved[key] : DEFAULT_SETTINGS[key];
     const theme = THEMES.find((t) => t === saved['theme']) ?? DEFAULT_SETTINGS.theme;
     return {
@@ -57,5 +64,6 @@ function loadSettings(): Settings {
         sound: flag('sound'),
         vibration: flag('vibration'),
         keepScreenOn: flag('keepScreenOn'),
+        lockScreenBeeps: flag('lockScreenBeeps'),
     };
 }

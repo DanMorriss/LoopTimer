@@ -14,6 +14,7 @@ import { Timer, workoutSeconds } from '../../models/timer';
 import { alarmEvents } from '../../timer/alarm-schedule';
 import { timerStateAt } from '../../timer/timer-state';
 import { AlarmService } from '../alarms/alarm.service';
+import { AlarmTrackService } from '../alarms/alarm-track.service';
 import { HistoryStore } from '../state/history-store.service';
 import { SettingsStore } from '../state/settings-store.service';
 import { TimerStore } from '../state/timer-store.service';
@@ -39,6 +40,7 @@ export class ActiveRunService {
     private readonly store = inject(TimerStore);
     private readonly history = inject(HistoryStore);
     private readonly alarms = inject(AlarmService);
+    private readonly track = inject(AlarmTrackService);
     private readonly settings = inject(SettingsStore);
     private readonly keepAwake = inject(KeepAwakeService);
 
@@ -128,13 +130,52 @@ export class ActiveRunService {
         });
 
         // Hand the whole workout's alarms to the audio clock up front, and again whenever
-        // the timer pauses, resumes, or sound is unlocked or turned on or off
+        // the timer pauses, resumes, or sound is unlocked or turned on or off. With
+        // "Beeps with the screen locked" on, they play as an audio track instead (one or the
+        // other, never both), falling back to the audio clock if the track won't play.
         effect(() => {
             const events = this.alarmEvents();
-            // Reading sound() here reschedules (or silences) when it's changed in settings
-            if (this.alarms.unlocked() || !this.settings.sound()) {
+            // Reading these here reschedules (or silences) when they change
+            const unlocked = this.alarms.unlocked();
+            const sound = this.settings.sound();
+            if (sound && this.settings.lockScreenBeeps() && this.track.supported) {
+                untracked(() => {
+                    this.alarms.schedule([]);
+                    void this.track.play(events).then((playing) => {
+                        if (!playing && this.alarms.unlocked()) {
+                            this.alarms.schedule(events);
+                        }
+                    });
+                });
+                return;
+            }
+            untracked(() => this.track.stop());
+            if (unlocked || !sound) {
                 this.alarms.schedule(events);
             }
+        });
+
+        // With the track playing, the workout shows on the lock screen, with Pause and Play
+        effect(() => {
+            const timer = this.timer();
+            const paused = this.isPaused();
+            const shown =
+                timer &&
+                !this.isComplete() &&
+                this.settings.sound() &&
+                this.settings.lockScreenBeeps();
+            untracked(() =>
+                this.track.showOnLockScreen(
+                    shown
+                        ? {
+                              title: timer.title.trim() || 'Workout',
+                              paused,
+                              onPlay: () => this.isPaused() && this.togglePause(),
+                              onPause: () => !this.isPaused() && this.togglePause(),
+                          }
+                        : null
+                )
+            );
         });
 
         // Vibrate as each alarm comes due
@@ -215,6 +256,7 @@ export class ActiveRunService {
         this.recordRun('stopped');
         this.store.stop();
         this.alarms.cancel();
+        this.track.stop();
     }
 
     /** The run's id in the history, or null with no run. */
