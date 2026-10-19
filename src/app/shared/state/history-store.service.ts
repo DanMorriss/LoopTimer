@@ -15,15 +15,15 @@ export class HistoryStore {
     readonly entries = computed(() => this._entries());
 
     /**
-     * Adds a workout. A run is only ever recorded once, so recording it again (e.g. after a
-     * refresh on the "finished" screen) does nothing. The oldest entries go past MAX_HISTORY.
+     * Adds a workout, or updates it if this run is already in the history. A run is logged
+     * as stopped when its page closes, so if it's picked up again and later stopped or
+     * finished, that replaces the earlier entry. The oldest entries go past MAX_HISTORY.
      */
     record(entry: HistoryEntry) {
-        if (this._entries().some((existing) => existing.id === entry.id)) {
-            return;
-        }
         this._entries.update((entries) =>
-            [entry, ...entries].sort((a, b) => b.startedAt - a.startedAt).slice(0, MAX_HISTORY)
+            [entry, ...entries.filter((existing) => existing.id !== entry.id)]
+                .sort((a, b) => b.startedAt - a.startedAt)
+                .slice(0, MAX_HISTORY)
         );
         this.save();
     }

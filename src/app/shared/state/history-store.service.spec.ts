@@ -51,13 +51,16 @@ describe('HistoryStore', () => {
         expect(store.entries()).toEqual([newer, older]);
     });
 
-    it('records each run only once', () => {
+    it('keeps one entry per run, updated by the latest record of it', () => {
         const store = createStore();
 
-        store.record(makeEntry());
-        store.record(makeEntry({ activeSeconds: 99 }));
+        store.record(makeEntry({ outcome: 'stopped', activeSeconds: 30 }));
+        store.record(makeEntry({ outcome: 'finished', activeSeconds: 99 }));
 
-        expect(store.entries()).toHaveLength(1);
+        expect(store.entries()).toEqual([
+            expect.objectContaining({ outcome: 'finished', activeSeconds: 99 }),
+        ]);
+        expect(JSON.parse(localStorage.getItem('history')!)).toHaveLength(1);
     });
 
     it(`keeps only the newest ${MAX_HISTORY}`, () => {

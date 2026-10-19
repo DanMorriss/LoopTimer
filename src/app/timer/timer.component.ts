@@ -32,6 +32,8 @@ const VIBRATE_LATE_LIMIT_MS = 1000;
         // Browsers pause or slow timers in background tabs, so catch up as soon as the page is visible again
         '(document:visibilitychange)': 'syncClock()',
         '(document:keydown.space)': 'onSpace($event)',
+        // Closing the tab or refreshing doesn't destroy the component, so catch that too
+        '(window:pagehide)': 'recordProgress()',
     },
 })
 export class TimerComponent implements OnDestroy {
@@ -340,7 +342,19 @@ export class TimerComponent implements OnDestroy {
         this.now.set(Date.now());
     }
 
+    /**
+     * Logs the run as it stands when the page closes: on leaving for another page, closing
+     * the tab or refreshing. Otherwise a run left without Stop never reaches the history.
+     * If it's picked up again (coming back, or after a refresh), stopping or finishing it
+     * later updates this entry.
+     */
+    recordProgress() {
+        this.syncClock();
+        this.recordRun(this.isComplete() ? 'finished' : 'stopped');
+    }
+
     ngOnDestroy() {
+        this.recordProgress();
         clearInterval(this.clockId);
         this.alarms.cancel();
     }
