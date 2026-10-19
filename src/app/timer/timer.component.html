@@ -35,12 +35,14 @@
             class="timer-ring"
             [class.timer-ring--work]="isTimerActive()"
             [class.timer-ring--rest]="isRestActive()"
+            [class.timer-ring--reps]="isRepsActive()"
             [class.timer-ring--paused]="isPaused()"
             role="progressbar"
             aria-label="Progress through this phase"
             aria-valuemin="0"
             aria-valuemax="100"
             [attr.aria-valuenow]="progressPercent()"
+            [attr.aria-valuetext]="isRepsActive() ? 'Waiting for Done' : null"
         >
             @for (sweep of ringSweeps(); track sweep.key) {
                 <!-- Two rotating half-circles; transforms animate without repainting -->
@@ -66,6 +68,7 @@
                         'flash-fade': isTimerActive(),
                         'flash-fade-blue': isRestActive(),
                         'bg-sky-50/50': isComplete(),
+                        'timer-face--reps': isRepsActive(),
                         'timer-face--paused': isPaused(),
                     }"
                 >
@@ -79,7 +82,14 @@
                             >
                                 {{ stepLabel() || 'Work' }}
                             </p>
-                            <p>{{ isTimerActive() ? workTime() : restTime() }}</p>
+                            @if (isRepsActive()) {
+                                <p>
+                                    {{ reps() }}
+                                    <span class="timer-face__reps">reps</span>
+                                </p>
+                            } @else {
+                                <p>{{ isTimerActive() ? workTime() : restTime() }}</p>
+                            }
                             @if (showStepCount()) {
                                 <p class="timer-face__step">
                                     step {{ stepNumber() }} of {{ stepCount() }}
@@ -107,23 +117,24 @@
 
         @if (isComplete() === false) {
             <!-- Media-player controls: a big Pause/Resume in the middle, a smaller Stop to one
-                 side so it's hard to hit by mistake. The captions repeat the buttons' names
-                 for sighted users, so screen readers skip them. -->
-            @let pauseLabel = isPaused() ? 'Resume' : 'Pause';
+                 side so it's hard to hit by mistake. On a rep step there's nothing to pause,
+                 so the big button is Done (one button throughout, so focus stays on it).
+                 The captions repeat the buttons' names for sighted users, so screen readers
+                 skip them. -->
+            @let mainLabel = isRepsActive() ? 'Done' : isPaused() ? 'Resume' : 'Pause';
+            @let mainIcon = isRepsActive() ? 'check' : isPaused() ? 'play_arrow' : 'pause';
             <div class="timer-controls">
                 <div class="timer-control timer-control--main">
                     <button
                         type="button"
                         class="btn-main btn-main--round"
-                        [attr.aria-label]="pauseLabel"
+                        [attr.aria-label]="mainLabel"
                         aria-keyshortcuts="Space"
-                        (click)="togglePause()"
+                        (click)="isRepsActive() ? finishReps() : togglePause()"
                     >
-                        <mat-icon aria-hidden="true">{{
-                            isPaused() ? 'play_arrow' : 'pause'
-                        }}</mat-icon>
+                        <mat-icon aria-hidden="true">{{ mainIcon }}</mat-icon>
                     </button>
-                    <span class="timer-control__caption" aria-hidden="true">{{ pauseLabel }}</span>
+                    <span class="timer-control__caption" aria-hidden="true">{{ mainLabel }}</span>
                     <!-- Shown where there's likely a keyboard; screen readers get aria-keyshortcuts -->
                     <kbd class="timer-control__key" aria-hidden="true">Space</kbd>
                 </div>

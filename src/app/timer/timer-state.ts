@@ -1,6 +1,14 @@
-import { roundSeconds, runsUntilStopped, Step, Timer, workoutSeconds } from '../models/timer';
+import {
+    repStepsPerRound,
+    roundSeconds,
+    runsUntilStopped,
+    Step,
+    stepSeconds,
+    Timer,
+    workoutSeconds,
+} from '../models/timer';
 
-export type TimerPhase = 'work' | 'rest' | 'complete';
+export type TimerPhase = 'work' | 'rest' | 'reps' | 'complete';
 
 export interface TimerState {
     phase: TimerPhase;
@@ -8,9 +16,9 @@ export interface TimerState {
     step: Step | null;
     /** Which step of the round is in progress, starting at 0 (0 once complete). */
     stepIndex: number;
-    /** Whole seconds left in the current step (0 once complete). */
+    /** Whole seconds left in the current step (0 for reps, and once complete). */
     remainingSeconds: number;
-    /** Length of the current step in seconds (0 once complete). */
+    /** Length of the current step in seconds (0 for reps, and once complete). */
     phaseSeconds: number;
     /** Rounds left, counting the one in progress (0 once complete, Infinity until stopped). */
     roundsLeft: number;
@@ -21,18 +29,39 @@ export interface TimerState {
 }
 
 /**
- * Works out where a timer is from how long it has been running.
+ * Works out where a timer is from how long it has been running, and how many rep steps
+ * have been done.
  *
  * Each round runs the timer's steps in order, and rounds repeat `repeats` times. Rest at
  * the end of the last round is skipped, and a timer that runs until stopped never
  * completes.
  *
+ * A rep step takes no time on this clock: the timer stops at the first one not yet done
+ * and stays there however long it runs, until Done adds it to `repStepsDone` and moves the
+ * start time on (see `TimerStore.finishRepStep()`), so the clock picks up where it stopped.
+ *
  * Deriving this from elapsed time, rather than counting interval ticks, keeps it correct
  * when the browser slows timers down in a background tab or on a locked phone.
  */
-export function timerStateAt(timer: Timer, elapsedMs: number): TimerState {
+export function timerStateAt(timer: Timer, elapsedMs: number, repStepsDone = 0): TimerState {
     const elapsedMsClamped = Math.max(0, elapsedMs);
     const elapsed = Math.floor(elapsedMsClamped / 1000);
+    const roundLength = roundSeconds(timer);
+
+    // Waiting on a rep step, once the clock has reached it
+    const repStep = nextRepStep(timer, repStepsDone);
+    if (repStep && elapsedMsClamped >= repStep.atMs) {
+        return {
+            phase: 'reps',
+            step: timer.steps[repStep.stepIndex],
+            stepIndex: repStep.stepIndex,
+            remainingSeconds: 0,
+            phaseSeconds: 0,
+            roundsLeft: runsUntilStopped(timer) ? Infinity : timer.repeats - repStep.round,
+            round: repStep.round,
+            phaseElapsedMs: elapsedMsClamped - repStep.atMs,
+        };
+    }
 
     if (elapsed >= workoutSeconds(timer)) {
         return {
@@ -47,28 +76,61 @@ export function timerStateAt(timer: Timer, elapsedMs: number): TimerState {
         };
     }
 
-    const roundLength = roundSeconds(timer);
+    // Short of the next rep step (if any), so every rep step passed is done and takes no
+    // time. A round of only rep steps never gets here: the next one is always waiting.
     const round = Math.floor(elapsed / roundLength);
     const intoRound = elapsed % roundLength;
 
     // Find the step that this second of the round falls in
     let stepStart = 0;
     let stepIndex = 0;
-    while (intoRound >= stepStart + timer.steps[stepIndex].seconds) {
-        stepStart += timer.steps[stepIndex].seconds;
+    while (intoRound >= stepStart + stepSeconds(timer.steps[stepIndex])) {
+        stepStart += stepSeconds(timer.steps[stepIndex]);
         stepIndex++;
     }
     const step = timer.steps[stepIndex];
+    const length = stepSeconds(step);
     const stepStartMs = (round * roundLength + stepStart) * 1000;
 
     return {
         phase: step.kind,
         step,
         stepIndex,
-        remainingSeconds: stepStart + step.seconds - intoRound,
-        phaseSeconds: step.seconds,
+        remainingSeconds: stepStart + length - intoRound,
+        phaseSeconds: length,
         roundsLeft: runsUntilStopped(timer) ? Infinity : timer.repeats - round,
         round,
         phaseElapsedMs: elapsedMsClamped - stepStartMs,
     };
+}
+
+/**
+ * The first rep step not yet done: its round, its place in the round, and where it falls
+ * on the clock (ms of countdown before it). Null if there are none left.
+ */
+export function nextRepStep(
+    timer: Timer,
+    repStepsDone: number
+): { round: number; stepIndex: number; atMs: number } | null {
+    const perRound = repStepsPerRound(timer);
+    if (perRound === 0) {
+        return null;
+    }
+    const round = Math.floor(repStepsDone / perRound);
+    if (!runsUntilStopped(timer) && round >= timer.repeats) {
+        return null;
+    }
+    // Which rep step of the round it is, then which step of the round that is
+    let repsToSkip = repStepsDone % perRound;
+    let atSeconds = round * roundSeconds(timer);
+    for (const [stepIndex, step] of timer.steps.entries()) {
+        if (step.kind === 'reps') {
+            if (repsToSkip === 0) {
+                return { round, stepIndex, atMs: atSeconds * 1000 };
+            }
+            repsToSkip--;
+        }
+        atSeconds += stepSeconds(step);
+    }
+    return null;
 }

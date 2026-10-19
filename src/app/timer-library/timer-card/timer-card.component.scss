@@ -84,6 +84,8 @@
     color: var(--text);
     font-size: 1.03rem;
     letter-spacing: 0.03em;
+    // A long summary ("3 steps · 00:50 + reps x 4") wraps into two even lines, not one word on its own
+    text-wrap: balance;
 }
 
 // The options button is a shared .btn-icon; this is the play button that appears over the card

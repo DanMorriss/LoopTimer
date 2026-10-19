@@ -26,6 +26,7 @@ const TEXT = [
     '--accent',
     '--work',
     '--rest',
+    '--reps',
 ];
 // Controls and focus rings need 3:1 (WCAG 1.4.11)
 const NON_TEXT = ['--control-off', '--glow', '--accent', '--focus', '--button-primary'];

@@ -1,5 +1,5 @@
 import { computed, Service, signal } from '@angular/core';
-import { hasWork, MAX_STEP_SECONDS, Step, Timer } from '../../models/timer';
+import { hasWork, MAX_REPS, MAX_STEP_SECONDS, Step, Timer } from '../../models/timer';
 
 @Service()
 export class TimerStore {
@@ -8,6 +8,8 @@ export class TimerStore {
     private _activeTimerStartedAt = signal<number | null>(null);
     private _activeTimerPausedAt = signal<number | null>(null);
     private _activeRunStartedAt = signal<number | null>(null);
+    private _activeRepStepsDone = signal(0);
+    private _activeRepMs = signal(0);
 
     readonly timers = computed(() => this._timers());
     readonly activeTimer = computed(() => this._activeTimer());
@@ -21,6 +23,13 @@ export class TimerStore {
      * it doesn't move on resume, so it identifies the run and dates it in the history.
      */
     readonly activeRunStartedAt = computed(() => this._activeRunStartedAt());
+    /** How many rep steps of the current run have been done, across all its rounds. */
+    readonly activeRepStepsDone = computed(() => this._activeRepStepsDone());
+    /**
+     * Time spent on rep steps done so far, in ms. Done takes it off the countdown's clock
+     * (see `finishRepStep()`), so the history adds it back to the time spent.
+     */
+    readonly activeRepMs = computed(() => this._activeRepMs());
 
     constructor() {
         this._timers.set(this.loadTimers());
@@ -36,6 +45,8 @@ export class TimerStore {
                     ? runStart
                     : startedAt
             );
+            this._activeRepStepsDone.set(readCount(sessionStorage.getItem('activeRepStepsDone')));
+            this._activeRepMs.set(readCount(sessionStorage.getItem('activeRepMs')));
         }
     }
 
@@ -134,6 +145,36 @@ export class TimerStore {
         this._activeRunStartedAt.set(startedAt);
         sessionStorage.setItem('activeRunStartedAt', String(startedAt));
         sessionStorage.removeItem('activeTimerPausedAt');
+        this.clearRepSteps();
+    }
+
+    /**
+     * Done on a rep step: the timer moves on to the next step. `waitedMs` is how long the
+     * clock ran on past the rep step while it was being done; the start time moves forward
+     * by that much, so the countdown picks up exactly where the rep step began.
+     */
+    finishRepStep(waitedMs: number) {
+        const startedAt = this._activeTimerStartedAt();
+        if (!this._activeTimer() || startedAt === null) {
+            return;
+        }
+        // Done straight from a pause carries on running
+        this.resume();
+        const waited = Math.max(0, Math.round(waitedMs));
+        const movedStart = this._activeTimerStartedAt()! + waited;
+        this._activeTimerStartedAt.set(movedStart);
+        this._activeRepStepsDone.update((done) => done + 1);
+        this._activeRepMs.update((ms) => ms + waited);
+        sessionStorage.setItem('activeTimerStartedAt', String(movedStart));
+        sessionStorage.setItem('activeRepStepsDone', String(this._activeRepStepsDone()));
+        sessionStorage.setItem('activeRepMs', String(this._activeRepMs()));
+    }
+
+    private clearRepSteps() {
+        this._activeRepStepsDone.set(0);
+        this._activeRepMs.set(0);
+        sessionStorage.removeItem('activeRepStepsDone');
+        sessionStorage.removeItem('activeRepMs');
     }
 
     /** Freezes the active timer where it is. Does nothing if it's already paused. */
@@ -173,6 +214,7 @@ export class TimerStore {
         sessionStorage.removeItem('activeTimerStartedAt');
         sessionStorage.removeItem('activeTimerPausedAt');
         sessionStorage.removeItem('activeRunStartedAt');
+        this.clearRepSteps();
     }
 
     private saveTimers() {
@@ -184,16 +226,34 @@ function isWholeNumber(value: unknown, min: number, max = Number.MAX_SAFE_INTEGE
     return Number.isInteger(value) && (value as number) >= min && (value as number) <= max;
 }
 
+/** A saved count, e.g. rep steps done; anything missing or broken counts as 0. */
+function readCount(saved: string | null): number {
+    const count = Number(saved);
+    return isWholeNumber(count, 0) ? count : 0;
+}
+
 function isStep(value: unknown): value is Step {
     if (typeof value !== 'object' || value === null) {
         return false;
     }
     const step = value as Record<string, unknown>;
+    if (typeof step['name'] !== 'string') {
+        return false;
+    }
+    if (step['kind'] === 'reps') {
+        return isWholeNumber(step['reps'], 1, MAX_REPS);
+    }
     return (
         (step['kind'] === 'work' || step['kind'] === 'rest') &&
-        isWholeNumber(step['seconds'], 1, MAX_STEP_SECONDS) &&
-        typeof step['name'] === 'string'
+        isWholeNumber(step['seconds'], 1, MAX_STEP_SECONDS)
     );
+}
+
+/** Just the step's own fields, leaving out anything else that was saved with it. */
+function copyStep(step: Step): Step {
+    return step.kind === 'reps'
+        ? { kind: step.kind, reps: step.reps, name: step.name }
+        : { kind: step.kind, seconds: step.seconds, name: step.name };
 }
 
 /**
@@ -221,7 +281,7 @@ function readTimer(value: unknown): Timer | null {
     return {
         id: saved['id'] as number,
         title: saved['title'],
-        steps: steps.map(({ kind, seconds, name }) => ({ kind, seconds, name })),
+        steps: steps.map(copyStep),
         repeats: saved['repeats'] as number,
     };
 }

@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Timer } from '../../models/timer';
-import { makeTimer as baseTimer, rest, SimpleTimer, work } from '../testing/make-timer';
+import { makeTimer as baseTimer, reps, rest, SimpleTimer, work } from '../testing/make-timer';
 import { TimerStore } from './timer-store.service';
 
 // A new timer to add: the shared test timer without its id
@@ -64,6 +64,23 @@ describe('TimerStore', () => {
             localStorage.setItem('timers', JSON.stringify([valid, ...broken]));
 
             expect(createStore().timers()).toEqual([valid]);
+        });
+
+        it('loads rep steps, and drops timers with broken ones', () => {
+            const valid: Timer = {
+                ...makeTimer({ steps: [work(30), reps(20, 'Push-ups'), rest(10)] }),
+                id: 1,
+            };
+            const allReps: Timer = { ...makeTimer({ steps: [reps(5)] }), id: 2 };
+            const broken = [
+                { ...makeTimer(), id: 3, steps: [reps(0)] },
+                { ...makeTimer(), id: 4, steps: [reps(101)] },
+                { ...makeTimer(), id: 5, steps: [{ kind: 'reps', seconds: 30, name: '' }] },
+                { ...makeTimer(), id: 6, steps: [{ kind: 'reps', reps: 2.5, name: '' }] },
+            ];
+            localStorage.setItem('timers', JSON.stringify([valid, allReps, ...broken]));
+
+            expect(createStore().timers()).toEqual([valid, allReps]);
         });
 
         it("keeps each step's kind, length and name, in order", () => {
@@ -464,6 +481,96 @@ describe('TimerStore', () => {
 
             expect(store.timers()).toHaveLength(1);
             expect(savedTimers()).toHaveLength(1);
+        });
+    });
+
+    describe('rep steps', () => {
+        beforeEach(() => {
+            sessionStorage.clear();
+            vi.useFakeTimers({ now: 1_000_000 });
+        });
+        afterEach(() => {
+            vi.useRealTimers();
+            sessionStorage.clear();
+        });
+
+        function startTimer() {
+            const store = createStore();
+            store.setActiveTimer(store.addTimer(makeTimer({ steps: [work(10), reps(20)] })));
+            return store;
+        }
+
+        it('moves the start on by the time the rep step took, and counts it done', () => {
+            const store = startTimer();
+            vi.advanceTimersByTime(40_000); // 10s of work, then 30s of push-ups
+
+            store.finishRepStep(30_000);
+
+            expect(store.activeTimerStartedAt()).toBe(1_030_000);
+            expect(store.activeRepStepsDone()).toBe(1);
+            expect(store.activeRepMs()).toBe(30_000);
+            expect(store.activeRunStartedAt()).toBe(1_000_000);
+        });
+
+        it('remembers them across a refresh', () => {
+            const store = startTimer();
+            vi.advanceTimersByTime(40_000);
+            store.finishRepStep(30_000);
+
+            TestBed.resetTestingModule();
+            const reloaded = createStore();
+
+            expect(reloaded.activeTimerStartedAt()).toBe(1_030_000);
+            expect(reloaded.activeRepStepsDone()).toBe(1);
+            expect(reloaded.activeRepMs()).toBe(30_000);
+        });
+
+        it('treats a missing or broken saved count as none done', () => {
+            startTimer();
+            sessionStorage.setItem('activeRepStepsDone', 'lots');
+            sessionStorage.setItem('activeRepMs', '-5');
+
+            TestBed.resetTestingModule();
+            const reloaded = createStore();
+
+            expect(reloaded.activeRepStepsDone()).toBe(0);
+            expect(reloaded.activeRepMs()).toBe(0);
+        });
+
+        it('carries on running when Done is pressed while paused', () => {
+            const store = startTimer();
+            vi.advanceTimersByTime(15_000);
+            store.pause();
+            vi.advanceTimersByTime(60_000);
+
+            store.finishRepStep(5_000);
+
+            expect(store.isPaused()).toBe(false);
+            // 60s paused, then 5s on the rep step
+            expect(store.activeTimerStartedAt()).toBe(1_065_000);
+        });
+
+        it('starts again from none done for a new run, or after stopping', () => {
+            const store = startTimer();
+            store.finishRepStep(1000);
+
+            store.setActiveTimer(store.timers()[0]);
+            expect(store.activeRepStepsDone()).toBe(0);
+            expect(store.activeRepMs()).toBe(0);
+
+            store.finishRepStep(1000);
+            store.stop();
+            expect(store.activeRepStepsDone()).toBe(0);
+            expect(sessionStorage.getItem('activeRepStepsDone')).toBeNull();
+            expect(sessionStorage.getItem('activeRepMs')).toBeNull();
+        });
+
+        it('does nothing with no active timer', () => {
+            const store = createStore();
+
+            store.finishRepStep(1000);
+
+            expect(store.activeRepStepsDone()).toBe(0);
         });
     });
 });

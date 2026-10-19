@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, OnDestroy, signal, untracked } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { HistoryEntry, historyId } from '../models/history';
-import { runsUntilStopped, workoutSeconds } from '../models/timer';
+import { runsUntilStopped, Step, workoutSeconds } from '../models/timer';
 import { AlarmService } from '../shared/alarms/alarm.service';
 import { MatIconModule } from '@angular/material/icon';
 import { formatTime } from '../shared/format-time';
@@ -16,6 +16,11 @@ const SPACE_HANDLED_BY = 'button, a, input, textarea, select, [contenteditable],
 
 // How many rounds of alarms to book at a time
 const ALARM_WINDOW = 100;
+
+/** "Work", "Rest" or "Reps": what an unnamed step is called. */
+function kindName(step: Step): string {
+    return { work: 'Work', rest: 'Rest', reps: 'Reps' }[step.kind];
+}
 
 // Above this many rounds, the dots under "round 2 of 20" would wrap on a phone, so only the line shows
 const MAX_ROUND_DOTS = 15;
@@ -59,7 +64,9 @@ export class TimerComponent implements OnDestroy {
     private readonly state = computed(() => {
         const timer = this.timer();
         const elapsedMs = this.elapsedMs();
-        return timer && elapsedMs !== null ? timerStateAt(timer, elapsedMs) : null;
+        return timer && elapsedMs !== null
+            ? timerStateAt(timer, elapsedMs, this.timerStore.activeRepStepsDone())
+            : null;
     });
 
     // What comes after the current step: the state at the moment it ends
@@ -71,7 +78,10 @@ export class TimerComponent implements OnDestroy {
             return null;
         }
         const stepEndMs = elapsedMs - state.phaseElapsedMs + state.phaseSeconds * 1000;
-        return timerStateAt(timer, stepEndMs);
+        // A rep step ends with Done, which adds one to the rep steps done
+        const repStepsDone =
+            this.timerStore.activeRepStepsDone() + (state.phase === 'reps' ? 1 : 0);
+        return timerStateAt(timer, stepEndMs, repStepsDone);
     });
 
     protected readonly alarms = inject(AlarmService);
@@ -94,7 +104,13 @@ export class TimerComponent implements OnDestroy {
         const startedAt = this.timerStore.activeTimerStartedAt();
         const fromRound = (this.alarmBatch() * ALARM_WINDOW) / 2;
         return timer && startedAt !== null && !this.isPaused()
-            ? alarmEvents(timer, startedAt, fromRound, ALARM_WINDOW)
+            ? alarmEvents(
+                  timer,
+                  startedAt,
+                  fromRound,
+                  ALARM_WINDOW,
+                  this.timerStore.activeRepStepsDone()
+              )
             : [];
     });
     private lastAlarmCheck = Date.now() - VIBRATE_LATE_LIMIT_MS;
@@ -136,7 +152,13 @@ export class TimerComponent implements OnDestroy {
 
     isTimerActive = computed(() => this.state()?.phase === 'work');
     isRestActive = computed(() => this.state()?.phase === 'rest');
+    isRepsActive = computed(() => this.state()?.phase === 'reps');
     isComplete = computed(() => this.state()?.phase === 'complete');
+    /** The rep step's count, e.g. 20, or 0 when it isn't a rep step. */
+    reps = computed(() => {
+        const step = this.state()?.step;
+        return step?.kind === 'reps' ? step.reps : 0;
+    });
     /** Rounds left, including the one in progress. */
     repeats = computed(() => this.state()?.roundsLeft ?? 0);
     untilStopped = computed(() => {
@@ -149,20 +171,23 @@ export class TimerComponent implements OnDestroy {
     /** How many steps make up a round. */
     stepCount = computed(() => this.timer()?.steps.length ?? 0);
     /**
-     * Whether to say which step it is. Only for rounds with more than one work step: a
-     * plain work-and-rest timer doesn't need "step 1 of 2".
+     * Whether to say which step it is. Only for rounds with more than one work or rep step:
+     * a plain work-and-rest timer doesn't need "step 1 of 2".
      */
     showStepCount = computed(
-        () => (this.timer()?.steps.filter((step) => step.kind === 'work').length ?? 0) > 1
+        () => (this.timer()?.steps.filter((step) => step.kind !== 'rest').length ?? 0) > 1
     );
     /** The step in progress, counting from 1. */
     stepNumber = computed(() => (this.state()?.stepIndex ?? 0) + 1);
-    /** The step's name, or "Rest" for an unnamed rest. Unnamed work shows just the time. */
+    /**
+     * The step's name, or "Rest" or "Reps" for an unnamed one. Unnamed work shows just the
+     * time.
+     */
     stepLabel = computed(() => {
         const step = this.state()?.step;
-        return step?.name || (step?.kind === 'rest' ? 'Rest' : '');
+        return step?.name || (step && step.kind !== 'work' ? kindName(step) : '');
     });
-    /** e.g. "Plank · 00:45", or "finish" when the workout ends after this step. */
+    /** e.g. "Plank · 00:45", "Push-ups · 20 reps", or "finish" when the workout ends after this step. */
     upNext = computed(() => {
         const next = this.nextState();
         if (!next) {
@@ -171,9 +196,12 @@ export class TimerComponent implements OnDestroy {
         if (!next.step) {
             return 'finish';
         }
-        const name = next.step.name || (next.step.kind === 'rest' ? 'Rest' : 'Work');
-        const seconds = next.step.seconds;
-        return `${name} · ${formatTime(Math.floor(seconds / 60), seconds % 60)}`;
+        const step = next.step;
+        const name = step.name || kindName(step);
+        if (step.kind === 'reps') {
+            return `${name} · ${step.reps} reps`;
+        }
+        return `${name} · ${formatTime(Math.floor(step.seconds / 60), step.seconds % 60)}`;
     });
 
     private readonly remaining = computed(() => this.state()?.remainingSeconds ?? 0);
@@ -207,7 +235,8 @@ export class TimerComponent implements OnDestroy {
     private readonly ringSweep = computed(
         () => {
             const state = this.state();
-            if (!state || state.phase === 'complete') {
+            // A rep step has no countdown, so its ring is full and still
+            if (!state || state.phase === 'complete' || state.phase === 'reps') {
                 return null;
             }
             const halfMs = (state.phaseSeconds * 1000) / 2;
@@ -235,6 +264,10 @@ export class TimerComponent implements OnDestroy {
         if (state.phase === 'complete') {
             return 1;
         }
+        // Nothing to measure while it waits for Done
+        if (state.phase === 'reps') {
+            return 0;
+        }
         return 1 - state.remainingSeconds / state.phaseSeconds;
     });
 
@@ -257,7 +290,10 @@ export class TimerComponent implements OnDestroy {
         if (!state.step) {
             return 'Finished';
         }
-        const parts = [state.step.name || (state.step.kind === 'work' ? 'Work' : 'Rest')];
+        const parts = [state.step.name || kindName(state.step)];
+        if (state.step.kind === 'reps') {
+            parts.push(`${state.step.reps} reps`);
+        }
         if (this.showStepCount()) {
             parts.push(`step ${state.stepIndex + 1} of ${timer.steps.length}`);
         }
@@ -283,7 +319,21 @@ export class TimerComponent implements OnDestroy {
         this.syncClock();
     }
 
-    /** Space pauses and resumes, like most media players. */
+    /**
+     * Done on a rep step: on to the next step. The time it took comes off the countdown's
+     * clock, so the next step starts from its beginning.
+     */
+    finishReps() {
+        this.syncClock();
+        const state = this.state();
+        if (state?.phase !== 'reps') {
+            return;
+        }
+        this.timerStore.finishRepStep(state.phaseElapsedMs);
+        this.syncClock();
+    }
+
+    /** Space pauses and resumes, like most media players, or presses Done on a rep step. */
     onSpace(event: Event) {
         const target = event.target as Element | null;
         if (
@@ -296,7 +346,11 @@ export class TimerComponent implements OnDestroy {
         }
         // Otherwise Space would also scroll the page
         event.preventDefault();
-        this.togglePause();
+        if (this.isRepsActive()) {
+            this.finishReps();
+        } else {
+            this.togglePause();
+        }
     }
 
     /**
@@ -317,14 +371,16 @@ export class TimerComponent implements OnDestroy {
             return;
         }
         // A finish is dated when the workout actually ended, even if the page only notices
-        // later (e.g. it was in the background); startedAt has moved on by any pauses
-        const activeSeconds = finished ? workoutSeconds(timer) : Math.floor(elapsedMs / 1000);
+        // later (e.g. it was in the background); startedAt has moved on by any pauses and by
+        // the time spent on rep steps, which the clock leaves out
+        const countdownMs = finished ? workoutSeconds(timer) * 1000 : elapsedMs;
+        const activeSeconds = Math.floor((countdownMs + this.timerStore.activeRepMs()) / 1000);
         this.history.record({
             id: historyId(runStartedAt, timer.id),
             timerId: timer.id,
             title: timer.title,
             startedAt: runStartedAt,
-            endedAt: finished ? startedAt + activeSeconds * 1000 : Date.now(),
+            endedAt: finished ? startedAt + countdownMs : Date.now(),
             activeSeconds,
             roundsCompleted: finished ? timer.repeats : state.round,
             totalRounds: timer.repeats,

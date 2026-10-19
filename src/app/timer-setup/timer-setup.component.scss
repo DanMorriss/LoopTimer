@@ -38,6 +38,10 @@
     &--rest {
         --step-color: var(--rest);
     }
+
+    &--reps {
+        --step-color: var(--reps);
+    }
 }
 
 // The open/close chevron is always the rightmost thing in the header. Where everything fits
@@ -207,7 +211,7 @@
 
 .add-steps {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0.75rem;
     margin: 0.75rem 0;
 }
@@ -255,6 +259,10 @@
 
     &.step--rest {
         --step-color: var(--rest);
+    }
+
+    &.step--reps {
+        --step-color: var(--reps);
     }
 }
 

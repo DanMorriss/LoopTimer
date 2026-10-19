@@ -43,3 +43,4 @@ export function makeTimer(overrides: Partial<SimpleTimer> = {}): Timer {
 /** A step for tests: `work(30)`, `rest(10, 'Breathe')`. */
 export const work = (seconds: number, name = ''): Step => ({ kind: 'work', seconds, name });
 export const rest = (seconds: number, name = ''): Step => ({ kind: 'rest', seconds, name });
+export const reps = (count: number, name = ''): Step => ({ kind: 'reps', reps: count, name });

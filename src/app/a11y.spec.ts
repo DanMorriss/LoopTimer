@@ -3,7 +3,7 @@ import { provideRouter, Router } from '@angular/router';
 import axe from 'axe-core';
 import { AppComponent } from './app.component';
 import { routes } from './app.routes';
-import { makeTimer, rest, work } from './shared/testing/make-timer';
+import { makeTimer, reps, rest, work } from './shared/testing/make-timer';
 import { HistoryStore } from './shared/state/history-store.service';
 import { TimerStore } from './shared/state/timer-store.service';
 
@@ -108,6 +108,13 @@ for (const theme of ['dark', 'light'] as const) {
                 click('.add-step');
                 await settle();
                 click('.step:nth-child(3) .step__action');
+                await settle();
+                await expectNoViolations();
+            });
+
+            it('with a rep step added', async () => {
+                await open('/setup');
+                click('.add-step--reps');
                 await settle();
                 await expectNoViolations();
             });
@@ -243,6 +250,16 @@ for (const theme of ['dark', 'light'] as const) {
                 );
                 await open('/timer');
                 expect(fixture.nativeElement.textContent).toContain('step 1 of 3');
+                await expectNoViolations();
+            });
+
+            it('waiting on a rep step', async () => {
+                store.setActiveTimer(
+                    store.addTimer(makeTimer({ steps: [reps(20, 'Push-ups'), work(30)] }))
+                );
+                await open('/timer');
+                expect(fixture.nativeElement.textContent).toContain('20');
+                expect(fixture.nativeElement.textContent).toContain('Done');
                 await expectNoViolations();
             });
 

@@ -7,7 +7,13 @@ import { TimerStore } from '../shared/state/timer-store.service';
 import { AlarmService } from '../shared/alarms/alarm.service';
 import { contrastRatio } from '../shared/testing/contrast';
 import { FakeAudioContext, provideFakeAudioContext } from '../shared/testing/fake-audio-context';
-import { makeTimer as baseTimer, rest, SimpleTimer, work } from '../shared/testing/make-timer';
+import {
+    makeTimer as baseTimer,
+    reps,
+    rest,
+    SimpleTimer,
+    work,
+} from '../shared/testing/make-timer';
 import { TimerComponent } from './timer.component';
 
 // 3s work, 2s rest, 2 rounds unless a test says otherwise
@@ -1288,5 +1294,182 @@ describe('TimerComponent', () => {
         fixture.destroy();
 
         expect(vi.getTimerCount()).toBe(0);
+    });
+
+    describe('rep steps', () => {
+        // 3s work, 20 push-ups, 2s rest; 2 rounds
+        const circuit = () =>
+            makeTimer({ steps: [work(3), reps(20, 'Push-ups'), rest(2)], repeats: 2 });
+        const mainButton = () =>
+            fixture.nativeElement.querySelector('.timer-control--main button') as HTMLButtonElement;
+        const ring = () => fixture.nativeElement.querySelector('.timer-ring') as HTMLElement;
+        const said = () =>
+            (fixture.nativeElement.querySelector('[aria-live]') as HTMLElement).textContent?.trim();
+        const entries = () => TestBed.inject(HistoryStore).entries();
+
+        function pressDone() {
+            expect(mainButton().getAttribute('aria-label')).toBe('Done');
+            mainButton().click();
+            fixture.detectChanges();
+        }
+
+        beforeEach(() => localStorage.clear());
+        afterEach(() => localStorage.clear());
+
+        it('shows the reps and waits, however long it takes', () => {
+            start(circuit());
+            advance(3000);
+
+            expect(component.isRepsActive()).toBe(true);
+            expect(text()).toContain('Push-ups');
+            expect(text()).toContain('20 reps');
+            expect(ring().classList).toContain('timer-ring--reps');
+            expect(ring().getAttribute('aria-valuetext')).toBe('Waiting for Done');
+
+            advance(10 * 60 * 1000);
+
+            expect(component.isRepsActive()).toBe(true);
+            fixture.destroy();
+        });
+
+        it('swaps Pause for Done, keeping Stop', () => {
+            start(circuit());
+            expect(mainButton().getAttribute('aria-label')).toBe('Pause');
+
+            advance(3000);
+
+            expect(mainButton().getAttribute('aria-label')).toBe('Done');
+            expect(mainButton().getAttribute('aria-keyshortcuts')).toBe('Space');
+            expect(text()).toContain('Done');
+            expect(fixture.nativeElement.querySelector('[aria-label="Stop"]')).not.toBeNull();
+            fixture.destroy();
+        });
+
+        it('moves on to the next step, from its full time, on Done', () => {
+            start(circuit());
+            advance(3000 + 45_000); // 45s of push-ups
+
+            pressDone();
+
+            expect(component.isRestActive()).toBe(true);
+            expect(text()).toContain('00:02');
+            advance(2000);
+            expect(component.isTimerActive()).toBe(true);
+            expect(component.roundNumber()).toBe(2);
+            fixture.destroy();
+        });
+
+        it('takes Space as Done', () => {
+            start(circuit());
+            advance(3000);
+
+            document.body.dispatchEvent(
+                new KeyboardEvent('keydown', {
+                    key: ' ',
+                    code: 'Space',
+                    bubbles: true,
+                    cancelable: true,
+                })
+            );
+            fixture.detectChanges();
+
+            expect(component.isRestActive()).toBe(true);
+            expect(component.isPaused()).toBe(false);
+            fixture.destroy();
+        });
+
+        it('says what is next, and announces the rep step', () => {
+            start(circuit());
+            expect(text()).toContain('Next: Push-ups · 20 reps');
+
+            advance(3000);
+
+            expect(text()).toContain('Next: Rest · 00:02');
+            expect(said()).toBe('Push-ups, 20 reps, step 2 of 3');
+            fixture.destroy();
+        });
+
+        it('finishes after Done on the last round, counting the time spent on reps', () => {
+            const startedAt = Date.now();
+            start(circuit());
+            advance(3000 + 30_000);
+            pressDone(); // round 1: 30s of push-ups
+            advance(2000 + 3000 + 20_000);
+            pressDone(); // round 2: 20s of push-ups; its rest is skipped
+
+            expect(component.isComplete()).toBe(true);
+            expect(entries()).toEqual([
+                expect.objectContaining({
+                    endedAt: startedAt + 58_000,
+                    activeSeconds: 58, // 8s of countdown and 50s of push-ups
+                    roundsCompleted: 2,
+                    outcome: 'finished',
+                }),
+            ]);
+            fixture.destroy();
+        });
+
+        it('counts the reps in progress when stopped mid-set', async () => {
+            start(circuit());
+            advance(3000 + 30_000);
+            pressDone();
+            advance(2000 + 3000 + 10_000); // 10s into round 2's push-ups
+            vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+            (fixture.nativeElement.querySelector('[aria-label="Stop"]') as HTMLElement).click();
+            await fixture.whenStable();
+
+            expect(entries()[0]).toEqual(
+                expect.objectContaining({
+                    activeSeconds: 48,
+                    roundsCompleted: 1,
+                    outcome: 'stopped',
+                })
+            );
+        });
+
+        it('books no alarms past a rep step, then picks up from the next step on Done', () => {
+            start(circuit());
+            TestBed.inject(AlarmService).unlock();
+            fixture.detectChanges();
+
+            // Work at 0s, then the rep step's work beep at 3s, and nothing after
+            expect(audio.scheduledNotes()).toEqual(['880@0', '880@0.25', '880@3', '880@3.25']);
+
+            advance(3000 + 10_000);
+            pressDone();
+
+            // The rest starts now, 13s in, then round 2's work and rep step
+            expect(audio.scheduledNotes()).toEqual([
+                '440@13',
+                '880@15',
+                '880@15.25',
+                '880@18',
+                '880@18.25',
+            ]);
+            fixture.destroy();
+        });
+
+        it('carries on from the same place after a refresh', () => {
+            // Saved, so the refreshed page can find it again
+            start(store.addTimer(circuit()));
+            advance(3000 + 30_000);
+            pressDone();
+            fixture.destroy();
+
+            TestBed.resetTestingModule();
+            TestBed.configureTestingModule({
+                imports: [TimerComponent],
+                providers: [provideRouter([]), provideFakeAudioContext(audio)],
+            });
+            fixture = TestBed.createComponent(TimerComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            advance(2000 + 3000);
+
+            expect(component.isRepsActive()).toBe(true);
+            expect(component.roundNumber()).toBe(2);
+            fixture.destroy();
+        });
     });
 });

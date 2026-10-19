@@ -1,7 +1,7 @@
 import { Component, computed, input, output } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { roundSeconds, runsUntilStopped, Timer } from '../../models/timer';
+import { repStepsPerRound, roundSeconds, runsUntilStopped, Timer } from '../../models/timer';
 import { formatTime } from '../../shared/format-time';
 
 /**
@@ -40,23 +40,27 @@ export class TimerCardComponent {
     protected readonly name = computed(() => this.title() || 'timer');
     /**
      * A one-line summary: "01:05 - 00:20" for one work step (and maybe one rest), as
-     * timers have always shown, or "5 steps · 02:15" with the length of a round.
+     * timers have always shown, or "5 steps · 02:15" with the length of a round. Rep steps
+     * take as long as they take, so a round with some is "4 steps · 01:30 + reps", or
+     * "2 steps · reps" with no timed steps at all.
      */
     protected readonly summary = computed(() => {
         const steps = this.timer().steps;
         const [first, second] = steps;
-        const simple =
-            steps.length <= 2 && first.kind === 'work' && (!second || second.kind === 'rest');
-        if (simple) {
+        if (steps.length <= 2 && first.kind === 'work' && (!second || second.kind === 'rest')) {
             const work = clock(first.seconds);
-            const rest = clock(second?.seconds ?? 0);
+            const rest = clock(second?.kind === 'rest' ? second.seconds : 0);
             return { text: `${work} - ${rest}`, spoken: `Timer ${work}, rest ${rest}` };
         }
-        const round = clock(roundSeconds(this.timer()));
-        return {
-            text: `${steps.length} steps · ${round}`,
-            spoken: `${steps.length} steps, ${round} a round`,
-        };
+        const count = steps.length === 1 ? '1 step' : `${steps.length} steps`;
+        const seconds = roundSeconds(this.timer());
+        const round = clock(seconds);
+        if (repStepsPerRound(this.timer()) === 0) {
+            return { text: `${count} · ${round}`, spoken: `${count}, ${round} a round` };
+        }
+        return seconds > 0
+            ? { text: `${count} · ${round} + reps`, spoken: `${count}, ${round} a round plus reps` }
+            : { text: `${count} · reps`, spoken: `${count}, all reps` };
     });
     protected readonly rounds = computed(() =>
         runsUntilStopped(this.timer()) ? '∞' : String(this.timer().repeats)

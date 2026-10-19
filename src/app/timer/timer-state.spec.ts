@@ -1,6 +1,6 @@
 import { UNTIL_STOPPED } from '../models/timer';
-import { makeTimer, rest, work } from '../shared/testing/make-timer';
-import { timerStateAt } from './timer-state';
+import { makeTimer, reps, rest, work } from '../shared/testing/make-timer';
+import { nextRepStep, timerStateAt } from './timer-state';
 
 describe('timerStateAt', () => {
     const timer = makeTimer(); // 30s work, 10s rest, 3 rounds = 30 + 10 + 30 + 10 + 30 = 110s
@@ -222,6 +222,87 @@ describe('timerStateAt', () => {
                 stepIndex: 1,
                 phaseElapsedMs: 0,
             });
+        });
+    });
+
+    describe('rep steps', () => {
+        // 10s work, 20 push-ups, 5s rest; 2 rounds
+        const circuit = makeTimer({
+            steps: [work(10), reps(20, 'Push-ups'), rest(5)],
+            repeats: 2,
+        });
+
+        it('waits on a rep step once the clock reaches it, however long it runs', () => {
+            for (const at of [10_000, 11_500, 600_000]) {
+                expect(timerStateAt(circuit, at, 0)).toEqual({
+                    phase: 'reps',
+                    step: reps(20, 'Push-ups'),
+                    stepIndex: 1,
+                    remainingSeconds: 0,
+                    phaseSeconds: 0,
+                    roundsLeft: 2,
+                    round: 0,
+                    phaseElapsedMs: at - 10_000,
+                });
+            }
+        });
+
+        it('carries on from where the rep step began once it is done', () => {
+            expect(timerStateAt(circuit, 10_000, 1)).toMatchObject({
+                phase: 'rest',
+                stepIndex: 2,
+                remainingSeconds: 5,
+                phaseElapsedMs: 0,
+            });
+            expect(timerStateAt(circuit, 15_000, 1)).toMatchObject({
+                phase: 'work',
+                round: 1,
+                stepIndex: 0,
+            });
+        });
+
+        it("waits on the next round's rep step in turn", () => {
+            expect(timerStateAt(circuit, 25_000, 1)).toMatchObject({
+                phase: 'reps',
+                round: 1,
+                stepIndex: 1,
+                roundsLeft: 1,
+            });
+            // Last round: its rest is skipped, so Done finishes the workout
+            expect(timerStateAt(circuit, 25_000, 2).phase).toBe('complete');
+        });
+
+        it('finishes only after a rep step at the very end is done', () => {
+            const finisher = makeTimer({ steps: [work(10), reps(10)], repeats: 1 });
+
+            expect(timerStateAt(finisher, 60_000, 0).phase).toBe('reps');
+            expect(timerStateAt(finisher, 10_000, 1).phase).toBe('complete');
+        });
+
+        it('runs a round of only rep steps, with no countdown at all', () => {
+            const allReps = makeTimer({ steps: [reps(10, 'A'), reps(5, 'B')], repeats: 2 });
+
+            expect(timerStateAt(allReps, 0, 0)).toMatchObject({ phase: 'reps', stepIndex: 0 });
+            expect(timerStateAt(allReps, 0, 1)).toMatchObject({ phase: 'reps', stepIndex: 1 });
+            expect(timerStateAt(allReps, 0, 3)).toMatchObject({ round: 1, stepIndex: 1 });
+            expect(timerStateAt(allReps, 0, 4).phase).toBe('complete');
+        });
+
+        it('keeps going until stopped', () => {
+            const forever = makeTimer({ steps: [reps(10), work(5)], repeats: UNTIL_STOPPED });
+
+            expect(timerStateAt(forever, 50_000, 10)).toMatchObject({
+                phase: 'reps',
+                round: 10,
+                roundsLeft: Infinity,
+            });
+        });
+
+        it('finds the next rep step to do, and where it falls on the clock', () => {
+            expect(nextRepStep(circuit, 0)).toEqual({ round: 0, stepIndex: 1, atMs: 10_000 });
+            expect(nextRepStep(circuit, 1)).toEqual({ round: 1, stepIndex: 1, atMs: 25_000 });
+            expect(nextRepStep(circuit, 2)).toBeNull();
+            expect(nextRepStep(makeTimer(), 0)).toBeNull();
         });
     });
 });

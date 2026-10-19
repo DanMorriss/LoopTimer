@@ -10,7 +10,7 @@
 
             <h2 class="setup-heading" id="steps-heading">Steps</h2>
             <p class="setup-hint">
-                Each round runs these in order. Steps left at 00:00 are skipped.
+                Each round runs these in order. Steps left at 00:00 or 0 reps are skipped.
             </p>
             <div class="steps-toolbar">
                 <button
@@ -41,11 +41,12 @@
                 @for (step of timerForm.steps; track $index; let i = $index) {
                     @let key = step().value().key;
                     @let kind = step().value().kind;
-                    @let time = timeText(step().value());
+                    @let time = amountText(step().value());
                     @let expanded = isExpanded(key);
                     <li
                         class="step"
                         [class.step--rest]="kind === 'rest'"
+                        [class.step--reps]="kind === 'reps'"
                         [class.step--collapsed]="!expanded"
                         cdkDrag
                     >
@@ -53,6 +54,7 @@
                         <div
                             class="step-preview"
                             [class.step--rest]="kind === 'rest'"
+                            [class.step--reps]="kind === 'reps'"
                             *cdkDragPreview
                         >
                             <span class="step__badge">{{ kindName(kind) }}</span>
@@ -151,58 +153,79 @@
                                             class="picker-field__input"
                                             [id]="'step-' + key + '-name'"
                                             [formField]="step.name"
-                                            [placeholder]="
-                                                kind === 'work'
-                                                    ? 'e.g. Squats'
-                                                    : 'e.g. Catch your breath'
-                                            "
+                                            [placeholder]="nameExamples[kind]"
                                             [attr.aria-describedby]="'step-' + key + '-title'"
                                         />
                                     </label>
 
-                                    <div class="picker-row">
-                                        <div class="picker-field">
-                                            <span
-                                                class="picker-field__label"
-                                                [id]="'step-' + key + '-minutes-label'"
-                                            >
-                                                Minutes
-                                            </span>
-                                            <app-wheel-picker
-                                                [id]="'step-' + key + '-minutes'"
-                                                [formField]="step.minutes"
-                                                [options]="minuteOptions"
-                                                [labelledBy]="
-                                                    'step-' +
-                                                    key +
-                                                    '-title step-' +
-                                                    key +
-                                                    '-minutes-label'
-                                                "
-                                            />
+                                    @if (kind === 'reps') {
+                                        <div class="picker-row">
+                                            <div class="picker-field">
+                                                <span
+                                                    class="picker-field__label"
+                                                    [id]="'step-' + key + '-reps-label'"
+                                                >
+                                                    Reps
+                                                </span>
+                                                <app-wheel-picker
+                                                    [id]="'step-' + key + '-reps'"
+                                                    [formField]="step.reps"
+                                                    [options]="repOptions"
+                                                    [labelledBy]="
+                                                        'step-' +
+                                                        key +
+                                                        '-title step-' +
+                                                        key +
+                                                        '-reps-label'
+                                                    "
+                                                />
+                                            </div>
                                         </div>
+                                    } @else {
+                                        <div class="picker-row">
+                                            <div class="picker-field">
+                                                <span
+                                                    class="picker-field__label"
+                                                    [id]="'step-' + key + '-minutes-label'"
+                                                >
+                                                    Minutes
+                                                </span>
+                                                <app-wheel-picker
+                                                    [id]="'step-' + key + '-minutes'"
+                                                    [formField]="step.minutes"
+                                                    [options]="minuteOptions"
+                                                    [labelledBy]="
+                                                        'step-' +
+                                                        key +
+                                                        '-title step-' +
+                                                        key +
+                                                        '-minutes-label'
+                                                    "
+                                                />
+                                            </div>
 
-                                        <div class="picker-field">
-                                            <span
-                                                class="picker-field__label"
-                                                [id]="'step-' + key + '-seconds-label'"
-                                            >
-                                                Seconds
-                                            </span>
-                                            <app-wheel-picker
-                                                [id]="'step-' + key + '-seconds'"
-                                                [formField]="step.seconds"
-                                                [options]="secondOptions"
-                                                [labelledBy]="
-                                                    'step-' +
-                                                    key +
-                                                    '-title step-' +
-                                                    key +
-                                                    '-seconds-label'
-                                                "
-                                            />
+                                            <div class="picker-field">
+                                                <span
+                                                    class="picker-field__label"
+                                                    [id]="'step-' + key + '-seconds-label'"
+                                                >
+                                                    Seconds
+                                                </span>
+                                                <app-wheel-picker
+                                                    [id]="'step-' + key + '-seconds'"
+                                                    [formField]="step.seconds"
+                                                    [options]="secondOptions"
+                                                    [labelledBy]="
+                                                        'step-' +
+                                                        key +
+                                                        '-title step-' +
+                                                        key +
+                                                        '-seconds-label'
+                                                    "
+                                                />
+                                            </div>
                                         </div>
-                                    </div>
+                                    }
                                 </div>
                             </div>
                         }
@@ -210,24 +233,37 @@
                 }
             </ol>
 
+            <!-- Three in a row, so each shows just its kind after the +; the full name is for screen readers -->
             <div class="add-steps">
                 <button
                     type="button"
                     class="btn-add add-step"
                     [disabled]="stepCount() >= maxSteps"
+                    aria-label="Add work"
                     (click)="addStep('work')"
                 >
                     <mat-icon aria-hidden="true">add</mat-icon>
-                    Add work
+                    Work
                 </button>
                 <button
                     type="button"
                     class="btn-add btn-add--rest add-step add-step--rest"
                     [disabled]="stepCount() >= maxSteps"
+                    aria-label="Add rest"
                     (click)="addStep('rest')"
                 >
                     <mat-icon aria-hidden="true">add</mat-icon>
-                    Add rest
+                    Rest
+                </button>
+                <button
+                    type="button"
+                    class="btn-add btn-add--reps add-step add-step--reps"
+                    [disabled]="stepCount() >= maxSteps"
+                    aria-label="Add reps"
+                    (click)="addStep('reps')"
+                >
+                    <mat-icon aria-hidden="true">add</mat-icon>
+                    Reps
                 </button>
             </div>
             @if (stepCount() >= maxSteps) {

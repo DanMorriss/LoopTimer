@@ -1,5 +1,5 @@
 import { UNTIL_STOPPED } from '../models/timer';
-import { makeTimer, rest, work } from '../shared/testing/make-timer';
+import { makeTimer, reps, rest, work } from '../shared/testing/make-timer';
 import { alarmEvents } from './alarm-schedule';
 import { timerStateAt } from './timer-state';
 
@@ -97,6 +97,34 @@ describe('alarmEvents', () => {
                     expect(state.phaseElapsedMs).toBe(0);
                 }
             }
+        });
+    });
+
+    describe('rep steps', () => {
+        const circuit = makeTimer({ steps: [work(10), reps(20), rest(5)], repeats: 2 });
+
+        it('sounds the work alarm as a rep step starts, and books nothing after it', () => {
+            expect(alarmEvents(circuit, 1000)).toEqual([
+                { kind: 'work', at: 1000 },
+                { kind: 'work', at: 11_000 },
+            ]);
+        });
+
+        it('carries on from the next step once it is done, with no alarm for it again', () => {
+            // Done 30s in: the start has moved on by the 30s it took
+            expect(alarmEvents(circuit, 31_000, 0, 100, 1)).toEqual([
+                { kind: 'work', at: 31_000 },
+                { kind: 'rest', at: 41_000 },
+                { kind: 'work', at: 46_000 },
+                { kind: 'work', at: 56_000 },
+            ]);
+        });
+
+        it('books the finish once every rep step is done', () => {
+            const events = alarmEvents(circuit, 0, 0, 100, 2);
+
+            expect(events.map((event) => event.kind)).toEqual(['work', 'rest', 'work', 'finish']);
+            expect(events.at(-1)!.at).toBe(25_000);
         });
     });
 });
