@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AlarmService } from '../shared/alarms/alarm.service';
 import { KeepAwakeService } from '../shared/run/keep-awake.service';
-import { AlarmTrackService } from '../shared/alarms/alarm-track.service';
 import { SettingsStore } from '../shared/state/settings-store.service';
 import { FakeAudioContext, provideFakeAudioContext } from '../shared/testing/fake-audio-context';
 import { fakeReducedMotion } from '../shared/testing/fake-reduced-motion';
@@ -219,20 +218,6 @@ describe('SettingsComponent', () => {
             expect(fixture.nativeElement.textContent).toContain(
                 "This browser can't keep the screen on"
             );
-        });
-    });
-
-    describe('beeps with the screen locked', () => {
-        it('is off to begin with, as it is on trial, and saves being turned on', () => {
-            Object.defineProperty(TestBed.inject(AlarmTrackService), 'supported', { value: true });
-            create();
-            expect(isOn('track')).toBe(false);
-            expect(fixture.nativeElement.textContent).toContain('Pauses other music');
-
-            toggle('track').click();
-            fixture.detectChanges();
-
-            expect(settings.lockScreenBeeps()).toBe(true);
         });
     });
 });

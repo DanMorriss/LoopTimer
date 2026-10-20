@@ -1,7 +1,6 @@
 import { DestroyRef, inject, InjectionToken, Service, signal } from '@angular/core';
 import { AlarmEvent, AlarmKind } from '../../timer/alarm-schedule';
 import { SettingsStore } from '../state/settings-store.service';
-import { FADE_IN, FADE_OUT, Note, SOUNDS, VOLUME } from './alarm-sounds';
 
 /** Makes the audio context, or returns null where the browser has no Web Audio. */
 export const AUDIO_CONTEXT_FACTORY = new InjectionToken<() => AudioContext | null>(
@@ -17,12 +16,37 @@ interface ScheduledNote {
     end: number;
 }
 
+interface Note {
+    frequency: number;
+    /** Seconds after the alarm starts. */
+    offset: number;
+    /** Seconds. */
+    length: number;
+}
+
+// Simple beeps for now, until there are proper sound files. Each alarm sounds different:
+// two short high beeps for work, one long low tone for rest, three rising notes to finish.
+const SOUNDS: Record<AlarmKind, Note[]> = {
+    work: [
+        { frequency: 880, offset: 0, length: 0.15 },
+        { frequency: 880, offset: 0.25, length: 0.15 },
+    ],
+    rest: [{ frequency: 440, offset: 0, length: 0.5 }],
+    finish: [
+        { frequency: 523.25, offset: 0, length: 0.18 },
+        { frequency: 659.25, offset: 0.2, length: 0.18 },
+        { frequency: 783.99, offset: 0.4, length: 0.6 },
+    ],
+};
+
 // Vibration patterns (on, off, on... in ms) to match each sound
 const VIBRATIONS: Record<AlarmKind, number[]> = {
     work: [150, 100, 150],
     rest: [500],
     finish: [180, 20, 180, 20, 600],
 };
+
+const VOLUME = 0.3;
 
 // An alarm that is due but up to this late still plays (e.g. the first work alarm, which
 // is due the moment Start is pressed). Anything older is skipped, e.g. after a refresh.
@@ -189,8 +213,8 @@ export class AlarmService {
         // Fade in and out quickly, so the beep doesn't click
         const envelope = context.createGain();
         envelope.gain.setValueAtTime(0, start);
-        envelope.gain.linearRampToValueAtTime(VOLUME, start + FADE_IN);
-        envelope.gain.setValueAtTime(VOLUME, end - FADE_OUT);
+        envelope.gain.linearRampToValueAtTime(VOLUME, start + 0.01);
+        envelope.gain.setValueAtTime(VOLUME, end - 0.03);
         envelope.gain.linearRampToValueAtTime(0, end);
         envelope.connect(output);
 
