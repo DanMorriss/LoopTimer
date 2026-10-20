@@ -27,6 +27,7 @@ Status: ✅ done, ◐ partly, — not started. The iOS column fills in as a port
 | RUN-3  | Tap Done when a set of reps is finished                                | ✅  | —   | [run-a-timer](run-a-timer.md)                 |
 | RUN-4  | Know when I've finished, and note how it went                          | ✅  | —   | [run-a-timer](run-a-timer.md)                 |
 | RUN-5  | Keep accurate time whatever the device does                            | ✅  | —   | [run-a-timer](run-a-timer.md)                 |
+| RUN-6  | Change the reps or weight mid-workout, e.g. going up a weight          | ✅  | —   | [run-a-timer](run-a-timer.md)                 |
 | CTL-1  | Pause and resume                                                       | ✅  | —   | [pause-and-stop](pause-and-stop.md)           |
 | CTL-2  | Stop a workout early                                                   | ✅  | —   | [pause-and-stop](pause-and-stop.md)           |
 | CTL-3  | Pick up where I was if the app is closed or reloaded                   | ✅  | —   | [pause-and-stop](pause-and-stop.md)           |
@@ -41,6 +42,7 @@ Status: ✅ done, ◐ partly, — not started. The iOS column fills in as a port
 | HIS-2  | See how much I've done this week                                       | ✅  | —   | [history](history.md)                         |
 | HIS-3  | Add a note to a workout                                                | ✅  | —   | [history](history.md)                         |
 | HIS-4  | Delete a workout from the history, with Undo                           | ✅  | —   | [history](history.md)                         |
+| HIS-5  | See the sets I did: reps and weight for each rep step                  | ✅  | —   | [history](history.md)                         |
 | SET-1  | Choose a dark, light or system theme                                   | ✅  | —   | [settings](settings.md)                       |
 | SET-2  | Turn sound, vibration and keeping the screen on, on or off             | ✅  | —   | [settings](settings.md)                       |
 | SET-3  | Hear each alarm sound before a workout                                 | ✅  | —   | [settings](settings.md)                       |

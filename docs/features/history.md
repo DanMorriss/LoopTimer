@@ -6,6 +6,7 @@
 - **HIS-2** As a user I want to see how much I've done in the last week.
 - **HIS-3** As a user I want to add a short note to a workout (e.g. "felt strong").
 - **HIS-4** As a user I want to delete a workout from the history, and undo it if I didn't mean to.
+- **HIS-5** As a user I want to see the sets I did in each workout, reps and weight, so I can see my improvements over time.
 
 ## Rules
 
@@ -19,6 +20,7 @@
     - the full **rounds done**, and the rounds it was set to (or "until stopped")
     - finished or stopped
     - an optional note
+    - the **sets** of its rep steps (HIS-5): for each Done, the round, the step, its name, the reps and the weight. A set is only logged on Done, so a workout stopped mid-set doesn't log that set.
 - **One entry per run**: logging the same run again (e.g. stopped when the app closed, then finished after a reload) updates its entry, keeping any note added meanwhile.
 - The newest **500** are kept; older ones drop off.
 
@@ -29,6 +31,12 @@
 - Each entry shows its title (or "Untitled timer") and a line: start time · time spent · rounds, e.g. "9:05 AM · 12:30 · 3 rounds".
     - Time spent is m:ss, or h:mm:ss over an hour.
     - Rounds: "3 rounds" when finished, "2 of 5 rounds · stopped" when stopped, "12 rounds · until stopped" for a timer that runs until stopped.
+- **Sets**, one line per rep step, under the entry, in the unit chosen in settings, e.g.:
+    - "Squats: 3 × 10 @ 60 kg": the same every set
+    - "Squats: 10, 10, 8 @ 60 kg": the reps changed
+    - "Squats: 10 @ 60, 8 @ 62.5 kg": the weight changed
+    - "Push-ups: 3 × 20", or "Push-ups: 20 reps" for one set: no weight. An unnamed step is called "Reps".
+    - Screen readers hear words, e.g. "Squats, 3 sets of 10 reps at 60 kg".
 - The note, if any, sits under the entry.
 - With no workouts: "No workouts yet. Finished and stopped workouts show up here." with a link to the library.
 
@@ -45,6 +53,8 @@
 
 ## Acceptance criteria
 
+- Given 3 sets of 10 squats at 60 kg, then the entry shows "Squats: 3 × 10 @ 60 kg"; given 10 then 8 at 62.5 kg, then "Squats: 10 @ 60, 8 @ 62.5 kg".
+- Given weights in lb, then a set saved at 61.235 kg shows as 135 lb.
 - Given workouts today, yesterday and last Tuesday, then they're grouped under Today, Yesterday and the date, newest first.
 - Given a finished 3-round workout of 12:30 started at 9:05 AM, then it shows "9:05 AM · 12:30 · 3 rounds".
 - Given a workout stopped in round 3 of 5, then it shows "2 of 5 rounds · stopped".

@@ -1,6 +1,7 @@
 import { computed, Service, signal } from '@angular/core';
 import { hasWork, MAX_REPS, MAX_STEP_SECONDS, Step, Timer } from '../../models/timer';
 import { MAX_WEIGHT_KG } from '../../models/weight';
+import { isLoggedSet, LoggedSet } from '../../models/history';
 
 @Service()
 export class TimerStore {
@@ -11,6 +12,7 @@ export class TimerStore {
     private _activeRunStartedAt = signal<number | null>(null);
     private _activeRepStepsDone = signal(0);
     private _activeRepMs = signal(0);
+    private _activeSets = signal<LoggedSet[]>([]);
 
     readonly timers = computed(() => this._timers());
     readonly activeTimer = computed(() => this._activeTimer());
@@ -31,6 +33,8 @@ export class TimerStore {
      * (see `finishRepStep()`), so the history adds it back to the time spent.
      */
     readonly activeRepMs = computed(() => this._activeRepMs());
+    /** The sets of rep steps done so far in the current run, in order. */
+    readonly activeSets = computed(() => this._activeSets());
 
     constructor() {
         this._timers.set(this.loadTimers());
@@ -48,6 +52,7 @@ export class TimerStore {
             );
             this._activeRepStepsDone.set(readCount(sessionStorage.getItem('activeRepStepsDone')));
             this._activeRepMs.set(readCount(sessionStorage.getItem('activeRepMs')));
+            this._activeSets.set(readSets(sessionStorage.getItem('activeSets')));
         }
     }
 
@@ -152,9 +157,10 @@ export class TimerStore {
     /**
      * Done on a rep step: the timer moves on to the next step. `waitedMs` is how long the
      * clock ran on past the rep step while it was being done; the start time moves forward
-     * by that much, so the countdown picks up exactly where the rep step began.
+     * by that much, so the countdown picks up exactly where the rep step began. `set` is
+     * what was done, logged for the history.
      */
-    finishRepStep(waitedMs: number) {
+    finishRepStep(waitedMs: number, set: LoggedSet) {
         const startedAt = this._activeTimerStartedAt();
         if (!this._activeTimer() || startedAt === null) {
             return;
@@ -169,13 +175,37 @@ export class TimerStore {
         sessionStorage.setItem('activeTimerStartedAt', String(movedStart));
         sessionStorage.setItem('activeRepStepsDone', String(this._activeRepStepsDone()));
         sessionStorage.setItem('activeRepMs', String(this._activeRepMs()));
+        this._activeSets.update((sets) => [...sets, set]);
+        sessionStorage.setItem('activeSets', JSON.stringify(this._activeSets()));
     }
 
     private clearRepSteps() {
         this._activeRepStepsDone.set(0);
         this._activeRepMs.set(0);
+        this._activeSets.set([]);
         sessionStorage.removeItem('activeRepStepsDone');
         sessionStorage.removeItem('activeRepMs');
+        sessionStorage.removeItem('activeSets');
+    }
+
+    /**
+     * Replaces one step of the running timer, e.g. its reps or weight changed mid-workout,
+     * and of the saved timer too, so it starts from there next time.
+     */
+    updateActiveStep(stepIndex: number, step: Step) {
+        const timer = this._activeTimer();
+        if (!timer || !timer.steps[stepIndex]) {
+            return;
+        }
+        const updated: Timer = {
+            ...timer,
+            steps: timer.steps.map((existing, i) => (i === stepIndex ? step : existing)),
+        };
+        this._activeTimer.set(updated);
+        if (this.findTimerById(timer.id)) {
+            this._timers.update((timers) => timers.map((t) => (t.id === timer.id ? updated : t)));
+            this.saveTimers();
+        }
     }
 
     /** Freezes the active timer where it is. Does nothing if it's already paused. */
@@ -225,6 +255,16 @@ export class TimerStore {
 
 function isWholeNumber(value: unknown, min: number, max = Number.MAX_SAFE_INTEGER): boolean {
     return Number.isInteger(value) && (value as number) >= min && (value as number) <= max;
+}
+
+/** The saved sets of the run in progress; anything broken is dropped. */
+function readSets(saved: string | null): LoggedSet[] {
+    try {
+        const parsed: unknown = JSON.parse(saved ?? '[]');
+        return Array.isArray(parsed) ? parsed.filter(isLoggedSet) : [];
+    } catch {
+        return [];
+    }
 }
 
 /** A saved count, e.g. rep steps done; anything missing or broken counts as 0. */

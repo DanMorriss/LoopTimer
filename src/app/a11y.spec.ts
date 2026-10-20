@@ -208,6 +208,13 @@ for (const theme of ['dark', 'light'] as const) {
                         roundsCompleted: 2,
                         totalRounds: outcome === 'stopped' ? 0 : 2,
                         outcome,
+                        ...(i === 0
+                            ? {
+                                  sets: [
+                                      { round: 0, step: 0, name: 'Squats', reps: 10, weight: 60 },
+                                  ],
+                              }
+                            : {}),
                     });
                 }
                 await open('/history');
@@ -281,6 +288,21 @@ for (const theme of ['dark', 'light'] as const) {
                 await open('/timer');
                 expect(fixture.nativeElement.textContent).toContain('20');
                 expect(fixture.nativeElement.textContent).toContain('Done');
+                await expectNoViolations();
+            });
+
+            it('changing the reps or weight of a rep step', async () => {
+                store.setActiveTimer(
+                    store.addTimer(
+                        makeTimer({
+                            steps: [{ kind: 'reps', reps: 10, name: 'Squats', weight: 60 }],
+                        })
+                    )
+                );
+                await open('/timer');
+                click('.timer-change');
+                await settle();
+                expect(fixture.nativeElement.querySelector('#timer-change-panel')).not.toBeNull();
                 await expectNoViolations();
             });
 

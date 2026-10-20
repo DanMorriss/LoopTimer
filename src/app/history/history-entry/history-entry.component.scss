@@ -57,6 +57,17 @@
     font-variant-numeric: tabular-nums;
 }
 
+// One line per rep step, e.g. "Squats: 3 × 10 @ 60 kg"
+.entry__sets {
+    margin: 0.1rem 0 0;
+    padding: 0;
+    list-style: none;
+    color: var(--text);
+    font-size: 0.85rem;
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+}
+
 // The user's own words, set apart from the figures above with a quote line
 .entry__note {
     margin: 0.2rem 0 0;

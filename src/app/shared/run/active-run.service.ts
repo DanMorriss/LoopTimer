@@ -10,7 +10,7 @@ import {
     untracked,
 } from '@angular/core';
 import { HistoryEntry, historyId } from '../../models/history';
-import { Timer, workoutSeconds } from '../../models/timer';
+import { RepStep, Timer, workoutSeconds } from '../../models/timer';
 import { alarmEvents } from '../../timer/alarm-schedule';
 import { timerStateAt } from '../../timer/timer-state';
 import { AlarmService } from '../alarms/alarm.service';
@@ -212,11 +212,39 @@ export class ActiveRunService {
     finishReps() {
         this.sync();
         const state = this.state();
-        if (state?.phase !== 'reps') {
+        if (state?.phase !== 'reps' || state.step?.kind !== 'reps') {
             return;
         }
-        this.store.finishRepStep(state.phaseElapsedMs);
+        const { name, reps, weight } = state.step;
+        this.store.finishRepStep(state.phaseElapsedMs, {
+            round: state.round,
+            step: state.stepIndex,
+            name,
+            reps,
+            ...(weight === undefined ? {} : { weight }),
+        });
         this.sync();
+    }
+
+    /**
+     * Changes the reps or weight of the rep step being waited on, e.g. going up a weight:
+     * for this set, the rest of this run, and the saved timer, so next time starts there.
+     * A weight of undefined is none.
+     */
+    changeReps(change: { reps: number } | { weight: number | undefined }) {
+        const state = this.state();
+        const step = state?.step;
+        if (state?.phase !== 'reps' || step?.kind !== 'reps') {
+            return;
+        }
+        const reps = 'reps' in change ? change.reps : step.reps;
+        const weight = 'weight' in change ? change.weight : step.weight;
+        // No weight is left out, rather than saved as undefined
+        const changed: RepStep = { kind: 'reps', reps, name: step.name };
+        this.store.updateActiveStep(
+            state.stepIndex,
+            weight === undefined ? changed : { ...changed, weight }
+        );
     }
 
     /** Ends the run, logging it as stopped, and silences any alarm still sounding. */
@@ -260,6 +288,7 @@ export class ActiveRunService {
         // the time spent on rep steps, which the clock leaves out
         const countdownMs = finished ? workoutSeconds(timer) * 1000 : elapsedMs;
         const activeSeconds = Math.floor((countdownMs + this.store.activeRepMs()) / 1000);
+        const sets = this.store.activeSets();
         this.history.record({
             id,
             timerId: timer.id,
@@ -270,6 +299,7 @@ export class ActiveRunService {
             roundsCompleted: finished ? timer.repeats : state.round,
             totalRounds: timer.repeats,
             outcome,
+            ...(sets.length > 0 ? { sets } : {}),
         });
     }
 }

@@ -4,7 +4,6 @@ Open work, highest priority first. Tick items off (or delete them) as they're do
 
 ## 1. Features
 
-- [ ] **Change reps and weight mid-workout, and log each set:** while waiting on a rep step, tap the reps or weight to change them before Done (e.g. going up a weight). The change counts for this set, the rest of this workout's rounds, and is saved to the timer, so next time starts from there. Each history entry gains a log of its sets (step, round, reps, weight), shown simply under the entry, e.g. "Squats 3 × 10 @ 60 kg", or "10, 10, 8 @ 60 kg" when the sets differed. Builds on the weights added in #70 (BLD-7). Anything more in the history (progress over time and so on) is for the item below.
 - [ ] **Work out where the app is going: fitness tracker, planner, workout helper:** LoopTimer has grown from an interval timer towards something bigger. Before building much more, decide what it's for and how that changes it. Questions to answer:
     - Who is it for, and what's the main job: running a workout, planning a programme, or tracking progress?
     - Exercises as things in their own right (Squats used across many timers), so their history can be followed, rather than step names that happen to match.

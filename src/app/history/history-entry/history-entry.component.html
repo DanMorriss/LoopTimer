@@ -3,6 +3,16 @@
     <div class="entry__text">
         <span class="entry__title" [id]="'entry-title-' + id()">{{ name() }}</span>
         <span class="entry__detail">{{ time }} · {{ duration() }} · {{ rounds() }}</span>
+        @if (sets().length) {
+            <ul class="entry__sets">
+                @for (line of sets(); track $index) {
+                    <li>
+                        <span aria-hidden="true">{{ line.name }}: {{ line.text }}</span>
+                        <span class="sr-only">{{ line.name }}, {{ line.spoken }}</span>
+                    </li>
+                }
+            </ul>
+        }
         @if (entry().note && !editing()) {
             <p class="entry__note"><span class="sr-only">Note: </span>{{ entry().note }}</p>
         }
