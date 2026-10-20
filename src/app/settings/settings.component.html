@@ -88,27 +88,6 @@
                     describedBy="screen-hint"
                 />
             </div>
-
-            <!-- On trial until it's been tried on an iPhone, so off to begin with -->
-            <div class="setting">
-                <div class="setting__text">
-                    <span class="setting__name" id="track-label">Beeps with the screen locked</span>
-                    <span class="setting__hint" id="track-hint">
-                        {{
-                            track.supported
-                                ? 'On trial. Plays the alarms as a track, so an iPhone keeps playing them when locked. Pauses other music during a workout.'
-                                : "This browser can't play them that way"
-                        }}
-                    </span>
-                </div>
-                <app-toggle-switch
-                    [checked]="settings.lockScreenBeeps() && track.supported"
-                    (checkedChange)="settings.update({ lockScreenBeeps: $event })"
-                    [disabled]="!track.supported"
-                    labelledBy="track-label"
-                    describedBy="track-hint"
-                />
-            </div>
         </section>
 
         <section class="settings__section" aria-labelledby="sounds-heading">
