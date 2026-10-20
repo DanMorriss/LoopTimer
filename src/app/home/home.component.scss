@@ -2,16 +2,13 @@
     min-height: 80vh;
 }
 
+// Scales with the screen (up to 600px wide), so it fits on the smallest phones. The
+// zones are placed in percentages of it, over the centres of the loops.
 .infinity-logo {
     position: relative;
-    width: 600px;
-    height: 300px;
+    width: min(600px, 100%);
+    aspect-ratio: 2 / 1;
     cursor: pointer;
-
-    @media (max-width: 640px) {
-        width: 400px;
-        height: 200px;
-    }
 }
 
 // The glow filter lives on the path's own SVG, separate from the moving dot,
@@ -61,8 +58,9 @@
 
 .interaction-zone {
     position: absolute;
-    width: 140px;
-    height: 140px;
+    // Big enough to tap on the smallest phones, scaling with the logo above that
+    width: clamp(64px, 23.5%, 140px);
+    aspect-ratio: 1;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -79,11 +77,6 @@
         outline-offset: 4px;
     }
 
-    @media (max-width: 640px) {
-        width: 100px;
-        height: 100px;
-    }
-
     &:hover {
         transform: scale(1.2);
         border-color: var(--border-strong);
@@ -96,12 +89,8 @@
 
 .left-zone {
     top: 50%;
-    left: 150px;
+    left: 25%;
     transform: translateY(-50%) translateX(-50%);
-
-    @media (max-width: 640px) {
-        left: 100px;
-    }
 
     &:hover {
         transform: translateY(-50%) translateX(-50%) scale(1.2);
@@ -114,12 +103,8 @@
 
 .right-zone {
     top: 50%;
-    right: 150px;
+    right: 25%;
     transform: translateY(-50%) translateX(50%);
-
-    @media (max-width: 640px) {
-        right: 100px;
-    }
 
     &:hover {
         transform: translateY(-50%) translateX(50%) scale(1.2);

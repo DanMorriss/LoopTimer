@@ -2,14 +2,23 @@ import { computed, Service, signal } from '@angular/core';
 import { HistoryEntry, MAX_NOTE_LENGTH } from '../../models/history';
 
 const STORAGE_KEY = 'history';
+const DELETED_KEY = 'history-deleted';
 
 /** Plenty of workouts to look back on, without letting browser storage grow forever. */
 export const MAX_HISTORY = 500;
+
+/**
+ * Deleted ids remembered, so a run still going can't log itself back in. Only the latest
+ * run's matters, so a few is plenty.
+ */
+const MAX_DELETED = 20;
 
 /** Completed and stopped workouts, newest first, saved in the browser. */
 @Service()
 export class HistoryStore {
     private readonly _entries = signal<HistoryEntry[]>(loadHistory());
+    /** Newest last. */
+    private deletedIds = loadDeletedIds();
 
     /** Newest first. */
     readonly entries = computed(() => this._entries());
@@ -18,9 +27,13 @@ export class HistoryStore {
      * Adds a workout, or updates it if this run is already in the history. A run is logged
      * as stopped when its page closes, so if it's picked up again and later stopped or
      * finished, that replaces the earlier entry, keeping any note added to it meanwhile.
-     * The oldest entries go past MAX_HISTORY.
+     * The oldest entries go past MAX_HISTORY. A deleted entry isn't recorded again (its run
+     * may still be going when it's deleted); restore() puts one back.
      */
     record(entry: HistoryEntry) {
+        if (this.deletedIds.includes(entry.id)) {
+            return;
+        }
         this._entries.update((entries) => {
             const note = entry.note ?? entries.find((existing) => existing.id === entry.id)?.note;
             const updated = note === undefined ? entry : { ...entry, note };
@@ -50,7 +63,19 @@ export class HistoryStore {
 
     delete(id: string) {
         this._entries.update((entries) => entries.filter((entry) => entry.id !== id));
+        this.setDeletedIds([...this.deletedIds.filter((d) => d !== id), id].slice(-MAX_DELETED));
         this.save();
+    }
+
+    /** Puts a deleted entry back, e.g. on Undo. */
+    restore(entry: HistoryEntry) {
+        this.setDeletedIds(this.deletedIds.filter((id) => id !== entry.id));
+        this.record(entry);
+    }
+
+    private setDeletedIds(ids: string[]) {
+        this.deletedIds = ids;
+        localStorage.setItem(DELETED_KEY, JSON.stringify(ids));
     }
 
     private save() {
@@ -65,6 +90,17 @@ function loadHistory(): HistoryEntry[] {
         const parsed: unknown = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]');
         return Array.isArray(parsed)
             ? parsed.filter(isHistoryEntry).sort((a, b) => b.startedAt - a.startedAt)
+            : [];
+    } catch {
+        return [];
+    }
+}
+
+function loadDeletedIds(): string[] {
+    try {
+        const parsed: unknown = JSON.parse(localStorage.getItem(DELETED_KEY) ?? '[]');
+        return Array.isArray(parsed)
+            ? parsed.filter((id): id is string => typeof id === 'string')
             : [];
     } catch {
         return [];
