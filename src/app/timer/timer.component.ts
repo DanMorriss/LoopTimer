@@ -1,6 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { runsUntilStopped, Step } from '../models/timer';
+import { RepStep, runsUntilStopped, Step } from '../models/timer';
+import { formatWeight } from '../models/weight';
 import { AlarmService } from '../shared/alarms/alarm.service';
 import { MatIconModule } from '@angular/material/icon';
 import { formatTime } from '../shared/format-time';
@@ -11,7 +12,7 @@ import { TimerStore } from '../shared/state/timer-store.service';
 // Space on one of these already does something, e.g. presses the focused button
 const SPACE_HANDLED_BY = 'button, a, input, textarea, select, [contenteditable], [role="button"]';
 
-/** "Work", "Rest" or "Reps": what an unnamed step is called. */
+/** "Timed", "Rest" or "Reps": what an unnamed step is called. */
 function kindName(step: Step): string {
     return { work: 'Timed', rest: 'Rest', reps: 'Reps' }[step.kind];
 }
@@ -57,6 +58,11 @@ export class TimerComponent {
         const step = this.state()?.step;
         return step?.kind === 'reps' ? step.reps : 0;
     });
+    /** The rep step's weight, e.g. "60 kg", or '' when there's none. */
+    weight = computed(() => {
+        const step = this.state()?.step;
+        return step?.kind === 'reps' ? this.weightText(step) : '';
+    });
     /** Rounds left, including the one in progress. */
     repeats = computed(() => this.state()?.roundsLeft ?? 0);
     untilStopped = computed(() => {
@@ -85,7 +91,7 @@ export class TimerComponent {
         const step = this.state()?.step;
         return step?.name || (step && step.kind !== 'work' ? kindName(step) : '');
     });
-    /** e.g. "Plank · 00:45", "Push-ups · 20 reps", or "finish" when the workout ends after this step. */
+    /** e.g. "Plank · 00:45", "Squats · 10 reps @ 60 kg", or "finish" when the workout ends after this step. */
     upNext = computed(() => {
         const next = this.nextState();
         if (!next) {
@@ -97,7 +103,8 @@ export class TimerComponent {
         const step = next.step;
         const name = step.name || kindName(step);
         if (step.kind === 'reps') {
-            return `${name} · ${step.reps} reps`;
+            const weight = this.weightText(step);
+            return `${name} · ${step.reps} reps${weight ? ` @ ${weight}` : ''}`;
         }
         return `${name} · ${formatTime(Math.floor(step.seconds / 60), step.seconds % 60)}`;
     });
@@ -190,7 +197,8 @@ export class TimerComponent {
         }
         const parts = [state.step.name || kindName(state.step)];
         if (state.step.kind === 'reps') {
-            parts.push(`${state.step.reps} reps`);
+            const weight = this.weightText(state.step);
+            parts.push(`${state.step.reps} reps${weight ? ` at ${weight}` : ''}`);
         }
         if (this.showStepCount()) {
             parts.push(`step ${state.stepIndex + 1} of ${timer.steps.length}`);
@@ -207,6 +215,11 @@ export class TimerComponent {
         }
         return parts.join(', ');
     });
+
+    /** A rep step's weight in the unit chosen in settings, e.g. "60 kg", or '' for none. */
+    private weightText(step: RepStep): string {
+        return step.weight ? formatWeight(step.weight, this.settings.weightUnit()) : '';
+    }
 
     togglePause() {
         this.run.togglePause();

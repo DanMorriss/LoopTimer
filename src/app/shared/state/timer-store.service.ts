@@ -1,5 +1,6 @@
 import { computed, Service, signal } from '@angular/core';
 import { hasWork, MAX_REPS, MAX_STEP_SECONDS, Step, Timer } from '../../models/timer';
+import { MAX_WEIGHT_KG } from '../../models/weight';
 
 @Service()
 export class TimerStore {
@@ -241,7 +242,12 @@ function isStep(value: unknown): value is Step {
         return false;
     }
     if (step['kind'] === 'reps') {
-        return isWholeNumber(step['reps'], 1, MAX_REPS);
+        const weight = step['weight'];
+        return (
+            isWholeNumber(step['reps'], 1, MAX_REPS) &&
+            (weight === undefined ||
+                (typeof weight === 'number' && weight > 0 && weight <= MAX_WEIGHT_KG))
+        );
     }
     return (
         (step['kind'] === 'work' || step['kind'] === 'rest') &&
@@ -252,7 +258,12 @@ function isStep(value: unknown): value is Step {
 /** Just the step's own fields, leaving out anything else that was saved with it. */
 function copyStep(step: Step): Step {
     return step.kind === 'reps'
-        ? { kind: step.kind, reps: step.reps, name: step.name }
+        ? {
+              kind: step.kind,
+              reps: step.reps,
+              name: step.name,
+              ...(step.weight === undefined ? {} : { weight: step.weight }),
+          }
         : { kind: step.kind, seconds: step.seconds, name: step.name };
 }
 

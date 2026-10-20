@@ -11,7 +11,7 @@
 - As each step starts, the timer announces it politely (it doesn't interrupt), and **not every second**:
     - "Timed, round 1 of 3" at the start of a round (an unnamed timed step is called "Timed"); "Rest" mid-round.
     - With several steps: the name and number, e.g. "Squats, step 1 of 3, round 2 of 5".
-    - Rep steps add the count: "Push-ups, 20 reps".
+    - Rep steps add the count, and the weight if there is one: "Push-ups, 20 reps", "Squats, 10 reps at 60 kg".
     - "last round" in place of the count in the final round (but "round 1 of 1" for a one-round timer); "round 4" with no total when it runs until stopped.
     - "Paused" when paused; "Finished" at the end.
 - ∞ is read as "until stopped". The round dots are hidden (the announcements say the same).

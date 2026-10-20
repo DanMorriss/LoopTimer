@@ -83,6 +83,23 @@ describe('TimerStore', () => {
             expect(createStore().timers()).toEqual([valid, allReps]);
         });
 
+        it("loads a rep step's weight, if it has one, and drops timers with a broken one", () => {
+            const weighted: Timer = {
+                ...makeTimer({
+                    steps: [{ kind: 'reps', reps: 10, name: 'Squats', weight: 20.412 }, reps(5)],
+                }),
+                id: 1,
+            };
+            const broken = [0, -5, 300.5, '60'].map((weight, i) => ({
+                ...makeTimer(),
+                id: i + 2,
+                steps: [{ kind: 'reps', reps: 10, name: '', weight }],
+            }));
+            localStorage.setItem('timers', JSON.stringify([weighted, ...broken]));
+
+            expect(createStore().timers()).toEqual([weighted]);
+        });
+
         it("keeps each step's kind, length and name, in order", () => {
             const circuit: Timer = {
                 ...makeTimer({ steps: [work(30, 'Squats'), work(45, 'Plank'), rest(20)] }),

@@ -20,6 +20,11 @@ export interface RepStep {
     reps: number;
     /** Optional, e.g. "Push-ups". Empty when not named. */
     name: string;
+    /**
+     * The weight lifted, in kg whatever unit it's shown in (see `models/weight.ts`), up to
+     * MAX_WEIGHT_KG. Missing for none, e.g. bodyweight moves.
+     */
+    weight?: number;
 }
 
 /** One step of a round. */

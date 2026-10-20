@@ -21,6 +21,7 @@ Status: ✅ done, ◐ partly, — not started. The iOS column fills in as a port
 | BLD-4  | Count reps instead of a time                                           | ✅  | —   | [build-a-timer](build-a-timer.md)             |
 | BLD-5  | Reorder and delete steps                                               | ✅  | —   | [build-a-timer](build-a-timer.md)             |
 | BLD-6  | Edit a saved timer                                                     | ✅  | —   | [build-a-timer](build-a-timer.md)             |
+| BLD-7  | Add a weight to a rep step, in kg or lb                                | ✅  | —   | [build-a-timer](build-a-timer.md)             |
 | RUN-1  | See where I am in the workout at a glance                              | ✅  | —   | [run-a-timer](run-a-timer.md)                 |
 | RUN-2  | See what's next                                                        | ✅  | —   | [run-a-timer](run-a-timer.md)                 |
 | RUN-3  | Tap Done when a set of reps is finished                                | ✅  | —   | [run-a-timer](run-a-timer.md)                 |
@@ -43,6 +44,7 @@ Status: ✅ done, ◐ partly, — not started. The iOS column fills in as a port
 | SET-1  | Choose a dark, light or system theme                                   | ✅  | —   | [settings](settings.md)                       |
 | SET-2  | Turn sound, vibration and keeping the screen on, on or off             | ✅  | —   | [settings](settings.md)                       |
 | SET-3  | Hear each alarm sound before a workout                                 | ✅  | —   | [settings](settings.md)                       |
+| SET-4  | Choose kg or lb for weights                                            | ✅  | —   | [settings](settings.md)                       |
 | NAV-1  | Get to any page from anywhere, and back to a workout in progress       | ✅  | —   | [home-and-navigation](home-and-navigation.md) |
 | A11Y-1 | Use every feature with a screen reader, keyboard or reduced motion     | ✅  | —   | [accessibility](accessibility.md)             |
 

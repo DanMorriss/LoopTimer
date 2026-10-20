@@ -183,6 +183,28 @@
                                                     "
                                                 />
                                             </div>
+
+                                            <!-- Optional: left at – for bodyweight moves -->
+                                            <div class="picker-field">
+                                                <span
+                                                    class="picker-field__label"
+                                                    [id]="'step-' + key + '-weight-label'"
+                                                >
+                                                    Weight ({{ weightUnit }})
+                                                </span>
+                                                <app-wheel-picker
+                                                    [id]="'step-' + key + '-weight'"
+                                                    [formField]="step.weight"
+                                                    [options]="weightOptions"
+                                                    [labelledBy]="
+                                                        'step-' +
+                                                        key +
+                                                        '-title step-' +
+                                                        key +
+                                                        '-weight-label'
+                                                    "
+                                                />
+                                            </div>
                                         </div>
                                     } @else {
                                         <div class="picker-row">

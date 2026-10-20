@@ -1541,6 +1541,35 @@ describe('TimerComponent', () => {
             fixture.destroy();
         });
 
+        it('shows, says and reads out the weight, in the unit chosen in settings', () => {
+            const squats = () =>
+                makeTimer({
+                    steps: [work(3), { kind: 'reps', reps: 10, name: 'Squats', weight: 61.235 }],
+                    repeats: 2,
+                });
+            start(squats());
+            expect(text()).toContain('Next: Squats · 10 reps @ 61 kg');
+
+            advance(3000);
+            expect(fixture.nativeElement.querySelector('.timer-face__weight').textContent).toBe(
+                '61 kg'
+            );
+            expect(said()).toBe('Squats, 10 reps at 61 kg, step 2 of 2');
+
+            TestBed.inject(SettingsStore).update({ weightUnit: 'lb' });
+            fixture.detectChanges();
+            expect(text()).toContain('135 lb');
+            fixture.destroy();
+        });
+
+        it('shows no weight for a rep step without one', () => {
+            start(circuit());
+            advance(3000);
+
+            expect(fixture.nativeElement.querySelector('.timer-face__weight')).toBeNull();
+            fixture.destroy();
+        });
+
         it('finishes after Done on the last round, counting the time spent on reps', () => {
             const startedAt = Date.now();
             start(circuit());

@@ -192,6 +192,38 @@ describe('SettingsComponent', () => {
         ]);
     });
 
+    describe('weight units', () => {
+        const radios = () =>
+            Array.from(
+                fixture.nativeElement.querySelectorAll(
+                    'input[name="weightUnit"]'
+                ) as NodeListOf<HTMLInputElement>
+            );
+
+        it('offers kg and lb in a labelled group, with kg chosen to begin with', () => {
+            create();
+
+            expect(radios().map((r) => r.closest('label')!.textContent!.trim())).toEqual([
+                'Kilograms (kg)',
+                'Pounds (lb)',
+            ]);
+            expect(radios()[0].closest('fieldset')!.querySelector('legend')!.textContent).toBe(
+                'Weight'
+            );
+            expect(radios().find((r) => r.checked)?.value).toBe('kg');
+        });
+
+        it('saves lb when picked', () => {
+            create();
+
+            radios()[1].click();
+            fixture.detectChanges();
+
+            expect(settings.weightUnit()).toBe('lb');
+            expect(radios().find((r) => r.checked)?.value).toBe('lb');
+        });
+    });
+
     describe('keep screen on', () => {
         /** As if the browser does, or doesn't, have the Screen Wake Lock API. */
         const supported = (value: boolean) =>

@@ -5,16 +5,18 @@
 - **SET-1** As a user I want a dark, light or match-my-device theme.
 - **SET-2** As a user I want to turn sound, vibration, and keeping the screen on, on or off.
 - **SET-3** As a user I want to hear what each alarm sounds like before a workout.
+- **SET-4** As a user I want to see and pick weights in kg or lb, whichever I lift in.
 
 ## Rules
 
-| Section      | Setting             | Default | Hint                                                          | Notes                                                                        |
-| ------------ | ------------------- | ------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| Appearance   | Theme               | Dark    | —                                                             | Dark, Light or System. System follows the device, including when it changes. |
-| Alarms       | Sound               | On      | Beeps as each phase starts                                    |                                                                              |
-| Alarms       | Vibration           | On      | Buzzes as each phase starts                                   | Disabled, saying "This device can't vibrate", where it can't.                |
-| Alarms       | Keep screen on      | On      | Stops the phone locking mid-workout                           | Disabled, saying "This browser can't keep the screen on", where it can't.    |
-| Alarm sounds | Timed, Rest, Finish | —       | Two short high beeps / One long low tone / Three rising notes | A Play button for each.                                                      |
+| Section      | Setting             | Default | Hint                                                          | Notes                                                                                      |
+| ------------ | ------------------- | ------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Appearance   | Theme               | Dark    | —                                                             | Dark, Light or System. System follows the device, including when it changes.               |
+| Units        | Weight              | kg      | —                                                             | Kilograms (kg) or Pounds (lb). Weights are always saved in kg, so switching loses nothing. |
+| Alarms       | Sound               | On      | Beeps as each phase starts                                    |                                                                                            |
+| Alarms       | Vibration           | On      | Buzzes as each phase starts                                   | Disabled, saying "This device can't vibrate", where it can't.                              |
+| Alarms       | Keep screen on      | On      | Stops the phone locking mid-workout                           | Disabled, saying "This browser can't keep the screen on", where it can't.                  |
+| Alarm sounds | Timed, Rest, Finish | —       | Two short high beeps / One long low tone / Three rising notes | A Play button for each.                                                                    |
 
 - Changes are **saved at once** and apply at once, mid-workout too (e.g. turning sound off silences alarms already booked).
 - **Play** plays that alarm straight away, even with Sound turned off (it was asked for), without touching any booked alarms.
@@ -27,6 +29,7 @@
 - Given System is chosen and the device switches to dark, then the app does too.
 - Given Sound is off, when I press Play on Rest, then the rest alarm plays.
 - Given saved settings are broken, then the defaults are used.
+- Given weights in kg, when I choose Pounds, then a step saved at 61.235 kg shows as 135 lb on the timer and in setup.
 
 ## Platform notes
 

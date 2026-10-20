@@ -186,10 +186,11 @@ export class WheelPickerComponent implements FormValueControl<number> {
             this.close();
             return;
         }
-        if (/^[0-9]$/.test(event.key) && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        // A decimal point too, for wheels with halves, e.g. 22.5 (a comma where that's the point)
+        if (/^[0-9.,]$/.test(event.key) && !event.ctrlKey && !event.metaKey && !event.altKey) {
             event.preventDefault();
             this.openWheel();
-            this.typeDigit(event.key);
+            this.typeDigit(event.key === ',' ? '.' : event.key);
             return;
         }
 
@@ -314,8 +315,9 @@ export class WheelPickerComponent implements FormValueControl<number> {
     }
 
     /**
-     * Jump to a typed number. Quick digits build one number; if that number isn't on the
-     * wheel (e.g. 75 on a 0-59 wheel), start again from the digit just typed.
+     * Jump to a typed number. Quick digits (and a decimal point) build one number; if that
+     * number isn't on the wheel (e.g. 75 on a 0-59 wheel), start again from the digit just
+     * typed.
      */
     private typeDigit(digit: string) {
         const now = Date.now();

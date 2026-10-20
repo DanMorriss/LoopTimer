@@ -87,6 +87,9 @@
                                     {{ reps() }}
                                     <span class="timer-face__reps">reps</span>
                                 </p>
+                                @if (weight()) {
+                                    <p class="timer-face__weight">{{ weight() }}</p>
+                                }
                             } @else {
                                 <p>{{ isTimerActive() ? workTime() : restTime() }}</p>
                             }

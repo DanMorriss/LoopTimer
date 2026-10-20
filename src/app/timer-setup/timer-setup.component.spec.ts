@@ -11,6 +11,7 @@ import {
 } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 import { Timer, UNTIL_STOPPED } from '../models/timer';
+import { SettingsStore } from '../shared/state/settings-store.service';
 import { TimerStore } from '../shared/state/timer-store.service';
 import { reps, rest, work } from '../shared/testing/make-timer';
 import { MAX_STEPS, TimerSetupComponent } from './timer-setup.component';
@@ -293,16 +294,18 @@ describe('TimerSetupComponent', () => {
         });
 
         describe('rep steps', () => {
-            it('adds one with a single Reps wheel, focusing its name box', async () => {
+            it('adds one with Reps and Weight wheels, focusing its name box', async () => {
                 await press('Add reps');
 
                 expect(shown().steps[2]).toEqual({ kind: 'Reps', name: '', time: '0 reps' });
                 const step = steps()[2];
                 expect(step.classList).toContain('step--reps');
-                expect(step.querySelectorAll('app-wheel-picker')).toHaveLength(1);
+                expect(step.querySelectorAll('app-wheel-picker')).toHaveLength(2);
                 expect(
-                    el('.picker-field__label', el('.picker-row', step)).textContent!.trim()
-                ).toBe('Reps');
+                    Array.from(step.querySelectorAll('.picker-row .picker-field__label')).map(
+                        (label) => label.textContent!.trim()
+                    )
+                ).toEqual(['Reps', 'Weight (kg)']);
                 expect(el<HTMLInputElement>('input', step).placeholder).toBe('e.g. Push-ups');
                 expect(document.activeElement).toBe(el('input', step));
                 expect(fixture.nativeElement.textContent).toContain('Added a rep step, step 3');
@@ -337,6 +340,67 @@ describe('TimerSetupComponent', () => {
                 expect(submitButton().disabled).toBe(false);
                 await submit();
                 expect(store.timers()[0].steps).toEqual([reps(10)]);
+            });
+
+            describe('weight', () => {
+                /** Pick a weight on a rep step's second wheel. */
+                function chooseWeight(step: number, value: string) {
+                    const wheel = steps()[step].querySelectorAll('app-wheel-picker')[1];
+                    el(`[data-value="${value}"]`, wheel).click();
+                    fixture.detectChanges();
+                }
+
+                it('starts at none, read out as "none", and goes up in halves', async () => {
+                    await press('Add reps');
+                    const wheel = steps()[2].querySelectorAll('app-wheel-picker')[1];
+                    const spin = el('[role="spinbutton"]', wheel);
+
+                    expect(spin.getAttribute('aria-valuetext')).toBe('none');
+                    expect(el('[data-value="22.5"]', wheel)).not.toBeNull();
+                    expect(spin.getAttribute('aria-valuemax')).toBe('300');
+                });
+
+                it('saves the weight in kg, and none for a step left at –', async () => {
+                    await press('Add reps');
+                    typeName(2, 'Squats');
+                    chooseReps(2, '10');
+                    chooseWeight(2, '22.5');
+                    await press('Add reps');
+                    chooseReps(3, '20');
+
+                    await submit();
+
+                    expect(store.timers()[0].steps).toEqual([
+                        { kind: 'reps', reps: 10, name: 'Squats', weight: 22.5 },
+                        reps(20),
+                    ]);
+                });
+
+                it('shows it with the reps once collapsed, and when asking before deleting', async () => {
+                    await press('Add reps');
+                    chooseReps(2, '10');
+                    chooseWeight(2, '60');
+
+                    await press('Step 3, reps, 10 reps @ 60 kg');
+                    expect(shown().steps[2].time).toBe('10 reps @ 60 kg');
+
+                    await press('Step 3, reps, 10 reps @ 60 kg');
+                    await press('Delete Step 3, reps');
+                    expect(
+                        fixture.nativeElement.querySelector('app-confirm-dialog')?.textContent
+                    ).toContain('This will remove Step 3, reps, set to 10 reps @ 60 kg.');
+                });
+
+                it('asks before deleting a step with only a weight', async () => {
+                    await press('Add reps');
+                    chooseWeight(2, '20');
+
+                    await press('Delete Step 3, reps');
+
+                    expect(
+                        fixture.nativeElement.querySelector('app-confirm-dialog')
+                    ).not.toBeNull();
+                });
             });
 
             it('names the reps when asking before deleting', async () => {
@@ -684,6 +748,52 @@ describe('TimerSetupComponent', () => {
                 repeats: '4',
             });
             expect(submitButton().textContent).toContain('Save & start timer');
+        });
+
+        describe('weights in pounds', () => {
+            // 45 lb, saved in kg
+            const pressed: Omit<Timer, 'id'> = {
+                ...savedTimer,
+                steps: [{ kind: 'reps', reps: 10, name: 'Bench', weight: 20.412 }],
+            };
+
+            async function editInPounds() {
+                await setup({ editId: '1' });
+                TestBed.inject(SettingsStore).update({ weightUnit: 'lb' });
+                store.addTimer(pressed);
+                await create();
+            }
+
+            it('shows and picks weights in lb, as chosen in settings', async () => {
+                await editInPounds();
+
+                expect(shown().steps[0].time).toBe('10 reps @ 45 lb');
+                await press('Step 1, Bench, 10 reps @ 45 lb');
+                expect(fixture.nativeElement.textContent).toContain('Weight (lb)');
+            });
+
+            it('keeps a weight as it was saved when it is left alone', async () => {
+                await editInPounds();
+                typeTitle('Renamed');
+
+                await submit();
+
+                expect(store.timers()[0].steps).toEqual(pressed.steps);
+            });
+
+            it('saves a weight picked in lb in kg', async () => {
+                await editInPounds();
+                await press('Step 1, Bench, 10 reps @ 45 lb');
+                const wheel = steps()[0].querySelectorAll('app-wheel-picker')[1];
+                el('[data-value="135"]', wheel).click();
+                fixture.detectChanges();
+
+                await submit();
+
+                expect(store.timers()[0].steps).toEqual([
+                    { kind: 'reps', reps: 10, name: 'Bench', weight: 61.235 },
+                ]);
+            });
         });
 
         it('shows a rep step collapsed as its name and count', async () => {
