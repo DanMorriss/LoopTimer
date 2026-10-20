@@ -13,7 +13,7 @@ const SPACE_HANDLED_BY = 'button, a, input, textarea, select, [contenteditable],
 
 /** "Work", "Rest" or "Reps": what an unnamed step is called. */
 function kindName(step: Step): string {
-    return { work: 'Work', rest: 'Rest', reps: 'Reps' }[step.kind];
+    return { work: 'Timed', rest: 'Rest', reps: 'Reps' }[step.kind];
 }
 
 // Above this many rounds, the dots under "round 2 of 20" would wrap on a phone, so only the line shows

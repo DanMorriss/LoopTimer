@@ -32,13 +32,13 @@
     - "**Last one!**" in place of the count in the final round.
     - "round 3 of ∞" for a timer that runs until stopped.
     - Nothing for a single-round timer.
-- **Ring**: fills as the step goes by. Work fills clockwise in pink, rest fills anticlockwise in blue. The face behind the time flashes in the phase colour.
+- **Ring**: fills as the step goes by. Timed steps fill clockwise in pink, rest fills anticlockwise in blue. The face behind the time flashes in the phase colour.
 - **Face**:
     - The step's name. Unnamed work shows just the time; unnamed rest says "Rest"; unnamed reps say "Reps".
     - The time left as mm:ss, e.g. "00:45", or the reps.
     - "step 2 of 5" when a round has more than one work or rep step. A plain work-and-rest timer leaves it out.
     - "Paused" while paused.
-- **Next**: "Next: Plank · 00:45", "Next: Push-ups · 20 reps", or "Next: finish" before the last step. Unnamed steps use their kind ("Work", "Rest", "Reps").
+- **Next**: "Next: Plank · 00:45", "Next: Push-ups · 20 reps", or "Next: finish" before the last step. Unnamed steps use their kind ("Timed", "Rest", "Reps").
 
 ### Finishing
 

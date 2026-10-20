@@ -186,7 +186,7 @@ describe('SettingsComponent', () => {
         ).map((b) => b.getAttribute('aria-label'));
 
         expect(labels).toEqual([
-            'Play the work alarm',
+            'Play the timed alarm',
             'Play the rest alarm',
             'Play the finish alarm',
         ]);

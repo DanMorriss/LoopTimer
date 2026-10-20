@@ -45,10 +45,19 @@ describe('TimerSetupComponent', () => {
         navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     }
 
-    async function create() {
+    /**
+     * Opens the page. A new timer starts empty, so most tests add an empty timed step and
+     * rest step first, both open, to have something to work on; `empty` leaves it as it opens.
+     */
+    async function create({ empty = false } = {}) {
         fixture = TestBed.createComponent(TimerSetupComponent);
         fixture.detectChanges();
         await fixture.whenStable();
+        if (!empty && steps().length === 0) {
+            await press('Add timed');
+            await press('Add rest');
+            await press('Step 1, timed, 00:00');
+        }
     }
 
     function el<T extends HTMLElement>(
@@ -138,7 +147,7 @@ describe('TimerSetupComponent', () => {
     const typeTitle = (value: string) => typeInto(el('#title'), value);
     const typeName = (step: number, value: string) => typeInto(el('input', steps()[step]), value);
 
-    /** A button by its accessible name, e.g. "Add work" or "Move Step 2, rest up". */
+    /** A button by its accessible name, e.g. "Add timed" or "Move Step 2, rest up". */
     function button(name: string): HTMLButtonElement {
         const all = Array.from(
             fixture.nativeElement.querySelectorAll('button')
@@ -181,15 +190,15 @@ describe('TimerSetupComponent', () => {
             await create();
         });
 
-        it('starts with a work step and a rest step, both empty', () => {
-            expect(shown()).toEqual({
-                title: '',
-                steps: [
-                    { kind: 'Work', name: '', time: '0:0' },
-                    { kind: 'Rest', name: '', time: '0:0' },
-                ],
-                repeats: '1',
-            });
+        it('starts with no steps, just the Add buttons and a hint, and nothing to start', async () => {
+            await create({ empty: true });
+
+            expect(shown()).toEqual({ title: '', steps: [], repeats: '1' });
+            expect(fixture.nativeElement.textContent).toContain('Add a step to start.');
+            expect(fixture.nativeElement.textContent).not.toContain('Timer needs');
+            expect(fixture.nativeElement.textContent).not.toContain('Collapse all');
+            expect(button('Add timed').disabled).toBe(false);
+            expect(submitButton().disabled).toBe(true);
             expect(submitButton().textContent).toContain('Start timer');
             expect(submitButton().textContent).not.toContain('Save');
         });
@@ -198,7 +207,7 @@ describe('TimerSetupComponent', () => {
             chooseTime(1, 'seconds', '30'); // only rest
             expect(submitButton().disabled).toBe(true);
             expect(fixture.nativeElement.textContent).toContain(
-                'Timer must have some work: a time or some reps'
+                'Timer needs a timed step or some reps'
             );
 
             await submit();
@@ -210,7 +219,7 @@ describe('TimerSetupComponent', () => {
         it('allows a timer with only seconds, or only minutes', () => {
             chooseTime(0, 'seconds', '5');
             expect(submitButton().disabled).toBe(false);
-            expect(fixture.nativeElement.textContent).not.toContain('Timer must have some');
+            expect(fixture.nativeElement.textContent).not.toContain('Timer needs');
 
             chooseTime(0, 'seconds', '0');
             chooseTime(0, 'minutes', '1');
@@ -262,8 +271,7 @@ describe('TimerSetupComponent', () => {
 
             await submit();
 
-            expect(shown().title).toBe('');
-            expect(shown().steps[0].time).toBe('0:0');
+            expect(shown()).toEqual({ title: '', steps: [], repeats: '1' });
         });
     });
 
@@ -276,10 +284,10 @@ describe('TimerSetupComponent', () => {
         const said = () => el('[aria-live="polite"]').textContent!.trim();
 
         it('adds work and rest steps at the end, focusing the new name box', async () => {
-            await press('Add work');
+            await press('Add timed');
             await press('Add rest');
 
-            expect(shown().steps.map((s) => s.kind)).toEqual(['Work', 'Rest', 'Work', 'Rest']);
+            expect(shown().steps.map((s) => s.kind)).toEqual(['Timed', 'Rest', 'Timed', 'Rest']);
             expect(document.activeElement).toBe(el('input', steps()[3]));
             expect(said()).toBe('Added a rest step, step 4');
         });
@@ -346,7 +354,7 @@ describe('TimerSetupComponent', () => {
         it('runs a round of several steps, saved in order with their names', async () => {
             typeName(0, 'Squats');
             chooseTime(0, 'seconds', '30');
-            await press('Add work');
+            await press('Add timed');
             typeName(2, 'Plank');
             chooseTime(2, 'seconds', '45');
             await press('Step 2, rest, 00:00');
@@ -370,7 +378,7 @@ describe('TimerSetupComponent', () => {
 
             expect(shown().steps).toEqual([
                 { kind: 'Rest', name: '', time: '0:10' },
-                { kind: 'Work', name: 'Squats', time: '0:30' },
+                { kind: 'Timed', name: 'Squats', time: '0:30' },
             ]);
             // It's now last, so its down button is disabled: focus goes to its up button
             expect(document.activeElement).toBe(button('Move Step 2, Squats up'));
@@ -380,7 +388,7 @@ describe('TimerSetupComponent', () => {
         it('moves a step dropped by drag and drop, and says so', async () => {
             typeName(0, 'Squats');
             chooseTime(0, 'seconds', '30');
-            await press('Add work');
+            await press('Add timed');
             typeName(2, 'Plank');
 
             // What the CDK reports when Squats is dragged from first to last
@@ -403,28 +411,28 @@ describe('TimerSetupComponent', () => {
         });
 
         it('can not move the first step up or the last step down', () => {
-            expect(button('Move Step 1, work up').disabled).toBe(true);
+            expect(button('Move Step 1, timed up').disabled).toBe(true);
             expect(button('Move Step 2, rest down').disabled).toBe(true);
-            expect(button('Move Step 1, work down').disabled).toBe(false);
+            expect(button('Move Step 1, timed down').disabled).toBe(false);
         });
 
         it('deletes a step, focusing the step that takes its place', async () => {
-            await press('Add work');
+            await press('Add timed');
             typeName(2, 'Plank');
             await press('Step 2, rest, 00:00');
 
             await press('Delete Step 2, rest');
 
-            expect(shown().steps.map((s) => s.name || s.kind)).toEqual(['Work', 'Plank']);
+            expect(shown().steps.map((s) => s.name || s.kind)).toEqual(['Timed', 'Plank']);
             expect(document.activeElement).toBe(button('Delete Step 2, Plank'));
             expect(said()).toBe('Deleted step 2');
         });
 
         it('focuses the open button of a collapsed step that takes a deleted one’s place', async () => {
             await press('Collapse all');
-            await press('Step 1, work, 00:00');
+            await press('Step 1, timed, 00:00');
 
-            await press('Delete Step 1, work');
+            await press('Delete Step 1, timed');
 
             expect(document.activeElement).toBe(button('Step 1, rest, 00:00'));
         });
@@ -438,7 +446,7 @@ describe('TimerSetupComponent', () => {
             });
 
             it('deletes an empty step without asking', async () => {
-                await press('Delete Step 1, work');
+                await press('Delete Step 1, timed');
 
                 expect(dialog()).toBeNull();
                 expect(steps()).toHaveLength(1);
@@ -462,7 +470,7 @@ describe('TimerSetupComponent', () => {
 
                 typeName(0, '');
                 chooseTime(0, 'seconds', '5');
-                await press('Delete Step 1, work');
+                await press('Delete Step 1, timed');
                 expect(dialog()).not.toBeNull();
             });
 
@@ -482,25 +490,27 @@ describe('TimerSetupComponent', () => {
                 await press('Delete');
 
                 expect(dialog()).toBeNull();
-                expect(shown().steps.map((s) => s.kind)).toEqual(['Work']);
+                expect(shown().steps.map((s) => s.kind)).toEqual(['Timed']);
                 expect(said()).toBe('Deleted step 2');
             });
         });
 
-        it('always keeps at least one step', async () => {
+        it('deletes every step if asked, then focuses "Add timed"', async () => {
             await press('Delete Step 2, rest');
+            await press('Delete Step 1, timed');
 
-            expect(steps()).toHaveLength(1);
-            expect(button('Delete Step 1, work').disabled).toBe(true);
+            expect(steps()).toHaveLength(0);
+            expect(fixture.nativeElement.textContent).toContain('Add a step to start.');
+            expect(document.activeElement).toBe(button('Add timed'));
         });
 
         it(`stops adding at ${MAX_STEPS} steps, and says why`, async () => {
             for (let i = 2; i < MAX_STEPS; i++) {
-                await press('Add work');
+                await press('Add timed');
             }
 
             expect(steps()).toHaveLength(MAX_STEPS);
-            expect(button('Add work').disabled).toBe(true);
+            expect(button('Add timed').disabled).toBe(true);
             expect(button('Add rest').disabled).toBe(true);
             expect(fixture.nativeElement.textContent).toContain(
                 `That's the most steps a timer can have (${MAX_STEPS})`
@@ -508,13 +518,8 @@ describe('TimerSetupComponent', () => {
         });
 
         describe('collapsing', () => {
-            it('opens both steps of a new timer, as they need filling in', () => {
-                expect(collapsed()).toEqual([false, false]);
-                expect(button('Collapse all')).toBeDefined();
-            });
-
             it('opens only the step just added, closing the others', async () => {
-                await press('Add work');
+                await press('Add timed');
 
                 expect(collapsed()).toEqual([true, true, false]);
             });
@@ -529,7 +534,7 @@ describe('TimerSetupComponent', () => {
                 expect(steps()[0].querySelector('app-wheel-picker')).toBeNull();
                 expect(el('.step__summary', steps()[0]).textContent).toContain('Squats');
                 expect(el('.step__summary', steps()[0]).textContent).toContain('02:15');
-                expect(shown().steps[0]).toEqual({ kind: 'Work', name: 'Squats', time: '2:15' });
+                expect(shown().steps[0]).toEqual({ kind: 'Timed', name: 'Squats', time: '2:15' });
             });
 
             it('opens and closes a step with its button, which says whether it is open', async () => {
@@ -539,21 +544,21 @@ describe('TimerSetupComponent', () => {
                 expect(body()?.querySelector('app-wheel-picker')).not.toBeNull();
 
                 toggle(0).focus();
-                await press('Step 1, work, 00:00');
+                await press('Step 1, timed, 00:00');
 
                 expect(toggle(0).getAttribute('aria-expanded')).toBe('false');
                 // Nothing to point at while closed
                 expect(toggle(0).hasAttribute('aria-controls')).toBe(false);
                 expect(document.activeElement).toBe(toggle(0));
 
-                await press('Step 1, work, 00:00');
+                await press('Step 1, timed, 00:00');
 
                 expect(toggle(0).getAttribute('aria-expanded')).toBe('true');
                 expect(document.activeElement).toBe(toggle(0));
             });
 
             it('collapses and expands every step at once', async () => {
-                await press('Add work');
+                await press('Add timed');
 
                 await press('Collapse all');
                 expect(collapsed()).toEqual([true, true, true]);
@@ -565,9 +570,9 @@ describe('TimerSetupComponent', () => {
             it('keeps a step open or closed as it moves', async () => {
                 await press('Step 2, rest, 00:00');
 
-                await press('Move Step 1, work down');
+                await press('Move Step 1, timed down');
 
-                expect(shown().steps.map((s) => s.kind)).toEqual(['Rest', 'Work']);
+                expect(shown().steps.map((s) => s.kind)).toEqual(['Rest', 'Timed']);
                 expect(collapsed()).toEqual([true, false]);
             });
 
@@ -577,10 +582,10 @@ describe('TimerSetupComponent', () => {
                 expect(el('.step__handle', steps()[0])).not.toBeNull();
                 expect(el('.step__actions', steps()[0])).toBeNull();
 
-                await press('Step 1, work, 00:00');
+                await press('Step 1, timed, 00:00');
 
-                expect(button('Move Step 1, work down').disabled).toBe(false);
-                expect(button('Delete Step 1, work').disabled).toBe(false);
+                expect(button('Move Step 1, timed down').disabled).toBe(false);
+                expect(button('Delete Step 1, timed').disabled).toBe(false);
             });
         });
 
@@ -673,7 +678,7 @@ describe('TimerSetupComponent', () => {
             expect(shown()).toEqual({
                 title: 'Saved timer',
                 steps: [
-                    { kind: 'Work', name: 'Squats', time: '2:15' },
+                    { kind: 'Timed', name: 'Squats', time: '2:15' },
                     { kind: 'Rest', name: '', time: '0:45' },
                 ],
                 repeats: '4',
@@ -687,7 +692,7 @@ describe('TimerSetupComponent', () => {
             await create();
 
             expect(shown().steps).toEqual([
-                { kind: 'Work', name: '', time: '0:30' },
+                { kind: 'Timed', name: '', time: '0:30' },
                 { kind: 'Reps', name: 'Pull-up', time: '1 rep' },
                 { kind: 'Reps', name: '', time: '20 reps' },
             ]);
@@ -731,15 +736,7 @@ describe('TimerSetupComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(shown()).toEqual({
-                title: '',
-                steps: [
-                    { kind: 'Work', name: '', time: '0:0' },
-                    { kind: 'Rest', name: '', time: '0:0' },
-                ],
-                repeats: '1',
-            });
-            expect(collapsed()).toEqual([false, false]);
+            expect(shown()).toEqual({ title: '', steps: [], repeats: '1' });
             expect(submitButton().textContent).not.toContain('Save');
         });
 

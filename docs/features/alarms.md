@@ -11,11 +11,11 @@
 
 ### Sounds
 
-| Alarm  | Plays at                           | Sound                                                                               | Vibration (on, off, … in ms) |
-| ------ | ---------------------------------- | ----------------------------------------------------------------------------------- | ---------------------------- |
-| Work   | the start of each work or rep step | two short high beeps: 880 Hz, 0.15s each, the second at 0.25s                       | 150, 100, 150                |
-| Rest   | the start of each rest step        | one long low tone: 440 Hz, 0.5s                                                     | 500                          |
-| Finish | the end of the workout             | three rising notes: 523.25, 659.25, 783.99 Hz at 0s, 0.2s, 0.4s; the last held 0.6s | 180, 20, 180, 20, 600        |
+| Alarm  | Plays at                            | Sound                                                                               | Vibration (on, off, … in ms) |
+| ------ | ----------------------------------- | ----------------------------------------------------------------------------------- | ---------------------------- |
+| Timed  | the start of each timed or rep step | two short high beeps: 880 Hz, 0.15s each, the second at 0.25s                       | 150, 100, 150                |
+| Rest   | the start of each rest step         | one long low tone: 440 Hz, 0.5s                                                     | 500                          |
+| Finish | the end of the workout              | three rising notes: 523.25, 659.25, 783.99 Hz at 0s, 0.2s, 0.4s; the last held 0.6s | 180, 20, 180, 20, 600        |
 
 - Notes are triangle waves at 30% volume, faded in over 10 ms and out over 30 ms so they don't click. They're placeholders until proper sound files arrive.
 - A **rep step** sounds the work alarm as it starts.

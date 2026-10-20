@@ -68,7 +68,7 @@ function pickerOptions(
 }
 
 const padded = (n: number) => n.toString().padStart(2, '0');
-const kindName = (kind: StepKind) => ({ work: 'Work', rest: 'Rest', reps: 'Reps' })[kind];
+const kindName = (kind: StepKind) => ({ work: 'Timed', rest: 'Rest', reps: 'Reps' })[kind];
 
 /** What the name box suggests for each kind of step. */
 const NAME_EXAMPLES: Record<StepKind, string> = {
@@ -130,7 +130,7 @@ export class TimerSetupComponent {
             validate(setup, ({ value }) =>
                 hasWork(toSteps(value().steps))
                     ? undefined
-                    : { kind: 'noTime', message: 'Timer must have some work: a time or some reps' }
+                    : { kind: 'noTime', message: 'Timer needs a timed step or some reps' }
             );
         },
         {
@@ -161,10 +161,13 @@ export class TimerSetupComponent {
         description: string;
     } | null>(null);
 
+    // With no steps yet, the hint to add one says enough
     protected readonly noTimeError = computed(() =>
-        this.timerForm()
-            .errors()
-            .find((error) => error.kind === 'noTime')
+        this.stepCount() === 0
+            ? undefined
+            : this.timerForm()
+                  .errors()
+                  .find((error) => error.kind === 'noTime')
     );
 
     constructor() {
@@ -251,7 +254,7 @@ export class TimerSetupComponent {
         // Only the new step is opened, keeping the rest of the list short
         this.expandedKeys.set(new Set([step.key]));
         this.stepAnnouncement.set(
-            `Added a ${kind === 'reps' ? 'rep' : kind} step, step ${this.stepCount()}`
+            `Added a ${{ work: 'timed', rest: 'rest', reps: 'rep' }[kind]} step, step ${this.stepCount()}`
         );
         this.focusAfterRender(`step-${step.key}-name`);
     }
@@ -293,9 +296,6 @@ export class TimerSetupComponent {
     /** The X button: deletes an empty step straight away, and asks first about anything else. */
     protected deleteStep(index: number) {
         const step = this.model().steps[index];
-        if (this.stepCount() <= 1) {
-            return;
-        }
         const isSet = step.kind === 'reps' ? step.reps > 0 : step.minutes > 0 || step.seconds > 0;
         if (!step.name.trim() && !isSet) {
             this.removeStep(index);
@@ -329,9 +329,14 @@ export class TimerSetupComponent {
         this.updateSteps((all) => all.filter((step) => step.key !== deleted.key));
         this.stepAnnouncement.set(`Deleted step ${index + 1}`);
         // Focus the step that took its place, or the one before if it was last: its delete
-        // button, or its open button if it's collapsed (and so has no delete button)
+        // button, or its open button if it's collapsed (and so has no delete button). With
+        // none left, the first Add button.
         const remaining = this.model().steps;
         const next = remaining[Math.min(index, remaining.length - 1)];
+        if (!next) {
+            this.focusAfterRender('add-timed');
+            return;
+        }
         this.focusAfterRender(
             `step-${next.key}-${this.isExpanded(next.key) ? 'delete' : 'toggle'}`
         );
@@ -361,17 +366,9 @@ export class TimerSetupComponent {
         };
     }
 
-    // A new timer starts with a work step and a rest step, as timers always have, both open
-    // as they need filling in
+    // A new timer starts with no steps, just the Add buttons
     private emptySetup(): TimerSetupModel {
-        return {
-            title: '',
-            steps: [
-                this.stepModel({ kind: 'work', seconds: 0, name: '' }),
-                this.stepModel({ kind: 'rest', seconds: 0, name: '' }),
-            ],
-            repeats: 1,
-        };
+        return { title: '', steps: [], repeats: 1 };
     }
 
     private findTimerToEdit(params: ParamMap): Timer | null {

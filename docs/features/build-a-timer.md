@@ -16,25 +16,24 @@
 - A timer has a **title** (optional), a list of **steps** that make one round, and a number of **rounds**.
 - Rounds: **1 to 30**, or **∞** (until stopped). A new timer starts at 1.
 - Steps run in order to make one round; then the round repeats.
-- **Rest at the end of the last round is skipped**: every rest step after the last work or rep step of the round is left out of the final round, since the workout is over. Rest at the start or middle of a round is kept.
-- A timer must have **some work**: at least one work step with time, or one rep step with reps. Otherwise it can't be started, and the form says "Timer must have some work: a time or some reps".
+- **Rest at the end of the last round is skipped**: every rest step after the last timed or rep step of the round is left out of the final round, since the workout is over. Rest at the start or middle of a round is kept.
+- A timer must have **some work**: at least one timed step with time, or one rep step with reps. Otherwise it can't be started, and once it has a step the form says "Timer needs a timed step or some reps".
 
 ### Steps
 
 - Three kinds:
-    - **Work**: a time, 0:01 to 99:59 (minutes 0–99, seconds 0–59).
+    - **Timed**: a time, 0:01 to 99:59 (minutes 0–99, seconds 0–59). Called "Work" until October 2026; saved data still says `work`.
     - **Rest**: a time, the same range.
     - **Reps**: a count, 1 to 100. No countdown; the timer waits until Done (see [run-a-timer](run-a-timer.md)).
-- Each step has an optional **name**, up to 40 characters, trimmed when saved. The name box suggests "e.g. Squats" (work), "e.g. Catch your breath" (rest) or "e.g. Push-ups" (reps).
+- Each step has an optional **name**, up to 40 characters, trimmed when saved. The name box suggests "e.g. Squats" (timed), "e.g. Catch your breath" (rest) or "e.g. Push-ups" (reps).
 - **Up to 20 steps.** At 20, the add buttons are disabled and the page says "That's the most steps a timer can have (20)."
-- **At least 1 step**: the last step can't be deleted.
-- A new timer starts with **one work step and one rest step**, both empty (0:00).
+- A new timer starts with **no steps**, just the Add buttons and the hint "Add a step to start." Every step can be deleted, which brings the hint back.
 - Steps left at **0:00 or 0 reps are left out** when the timer is saved.
 - Back-to-back steps of the same kind stay separate steps (each gets its own alarm and countdown).
 
 ### Adding, moving and deleting
 
-- **Add work**, **Add rest** and **Add reps** add a step at the end, open it (closing the others) and put the cursor in its name box.
+- **Add timed**, **Add rest** and **Add reps** (shown as "+ Timed", "+ Rest", "+ Reps") add a step at the end, open it (closing the others) and put the cursor in its name box.
 - A step can be moved up or down one place with buttons, or dragged by its handle. The first step can't move up; the last can't move down.
 - **Deleting** an empty step (no name, no time or reps) happens at once. A step with a name, time or reps asks first: "This will remove Step 2, Squats, set to 00:45." Cancel keeps it.
 
@@ -42,7 +41,7 @@
 
 - Each step can be **open** (name box and wheels) or **collapsed** to one line: its name (or kind) and time, e.g. "Squats 00:45" or "Push-ups 20 reps".
 - **Expand all / Collapse all** opens or closes every step at once.
-- A new timer opens with both steps open. A saved timer opens with every step collapsed, so the whole workout is in view.
+- A step opens as it's added. A saved timer opens with every step collapsed, so the whole workout is in view.
 
 ### Picking numbers
 
@@ -57,12 +56,12 @@
 
 ## Acceptance criteria
 
-- Given a new timer, then it has a work step and a rest step, both 0:00, and 1 round.
-- Given every step is 0:00, when I try to start, then it won't, and says it needs some work.
-- Given work 0:45 and rest 0:00, when I start, then the saved timer has just the work step.
+- Given a new timer, then it has no steps and 1 round, and can't be started.
+- Given every step is 0:00, when I try to start, then it won't, and says it needs a timed step or some reps.
+- Given timed 0:45 and rest 0:00, when I start, then the saved timer has just the timed step.
 - Given a timer with only rep steps, when I start, then it starts (reps count as work).
 - Given 20 steps, then the add buttons are disabled, with the reason shown.
-- Given one step, then it can't be deleted.
+- Given one step, when I delete it, then there are none, the hint shows, and focus goes to "Add timed".
 - Given a step named "Squats" at 0:45, when I delete it, then I'm asked first, naming it and its time.
 - Given steps A, B, C, when I move C up, then the order is A, C, B, and C keeps its name and time.
 - Given the Until stopped switch is turned on after picking 5 rounds, when it's turned off, then rounds go back to 5.

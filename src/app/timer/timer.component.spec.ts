@@ -397,16 +397,16 @@ describe('TimerComponent', () => {
 
         it('announces each phase as it starts, then the finish', async () => {
             start(makeTimer({ timerSeconds: 3, restSeconds: 2, repeats: 3 }));
-            expect(said()).toBe('Work, round 1 of 3');
+            expect(said()).toBe('Timed, round 1 of 3');
 
             advance(3000);
             expect(said()).toBe('Rest');
 
             advance(2000);
-            expect(said()).toBe('Work, round 2 of 3');
+            expect(said()).toBe('Timed, round 2 of 3');
 
             advance(5000);
-            expect(said()).toBe('Work, last round');
+            expect(said()).toBe('Timed, last round');
 
             advance(3000);
             expect(said()).toBe('Finished');
@@ -429,7 +429,7 @@ describe('TimerComponent', () => {
         it('says "round 1 of 1" rather than "last round" for a single-round timer', async () => {
             start(makeTimer({ repeats: 1 }));
 
-            expect(said()).toBe('Work, round 1 of 1');
+            expect(said()).toBe('Timed, round 1 of 1');
             fixture.destroy();
         });
     });
@@ -667,7 +667,7 @@ describe('TimerComponent', () => {
             expect(said()).toBe('Paused');
 
             press('Resume');
-            expect(said()).toBe('Work, round 1 of 3');
+            expect(said()).toBe('Timed, round 1 of 3');
             fixture.destroy();
         });
 
@@ -1137,8 +1137,8 @@ describe('TimerComponent', () => {
         it('keeps a plain work-and-rest timer free of step numbers', () => {
             start(makeTimer({ timerSeconds: 3, restSeconds: 2, repeats: 3 }));
 
-            expect(face()).toBe('Work 00:03');
-            expect(said()).toBe('Work, round 1 of 3');
+            expect(face()).toBe('Timed 00:03');
+            expect(said()).toBe('Timed, round 1 of 3');
             fixture.destroy();
         });
     });
@@ -1171,10 +1171,10 @@ describe('TimerComponent', () => {
 
         it('announces the round number with no total', () => {
             start(forever());
-            expect(said()).toBe('Work, round 1');
+            expect(said()).toBe('Timed, round 1');
 
             advance(5000);
-            expect(said()).toBe('Work, round 2');
+            expect(said()).toBe('Timed, round 2');
             fixture.destroy();
         });
 

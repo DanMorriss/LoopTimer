@@ -8,13 +8,13 @@
 
 ## Rules
 
-| Section      | Setting            | Default | Hint                                                          | Notes                                                                        |
-| ------------ | ------------------ | ------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| Appearance   | Theme              | Dark    | —                                                             | Dark, Light or System. System follows the device, including when it changes. |
-| Alarms       | Sound              | On      | Beeps as each phase starts                                    |                                                                              |
-| Alarms       | Vibration          | On      | Buzzes as each phase starts                                   | Disabled, saying "This device can't vibrate", where it can't.                |
-| Alarms       | Keep screen on     | On      | Stops the phone locking mid-workout                           | Disabled, saying "This browser can't keep the screen on", where it can't.    |
-| Alarm sounds | Work, Rest, Finish | —       | Two short high beeps / One long low tone / Three rising notes | A Play button for each.                                                      |
+| Section      | Setting             | Default | Hint                                                          | Notes                                                                        |
+| ------------ | ------------------- | ------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Appearance   | Theme               | Dark    | —                                                             | Dark, Light or System. System follows the device, including when it changes. |
+| Alarms       | Sound               | On      | Beeps as each phase starts                                    |                                                                              |
+| Alarms       | Vibration           | On      | Buzzes as each phase starts                                   | Disabled, saying "This device can't vibrate", where it can't.                |
+| Alarms       | Keep screen on      | On      | Stops the phone locking mid-workout                           | Disabled, saying "This browser can't keep the screen on", where it can't.    |
+| Alarm sounds | Timed, Rest, Finish | —       | Two short high beeps / One long low tone / Three rising notes | A Play button for each.                                                      |
 
 - Changes are **saved at once** and apply at once, mid-workout too (e.g. turning sound off silences alarms already booked).
 - **Play** plays that alarm straight away, even with Sound turned off (it was asked for), without touching any booked alarms.

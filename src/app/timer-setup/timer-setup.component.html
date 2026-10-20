@@ -12,18 +12,22 @@
             <p class="setup-hint">
                 Each round runs these in order. Steps left at 00:00 or 0 reps are skipped.
             </p>
-            <div class="steps-toolbar">
-                <button
-                    type="button"
-                    class="btn-pill steps-toggle-all"
-                    (click)="setAllExpanded(!anyExpanded())"
-                >
-                    <mat-icon aria-hidden="true">{{
-                        anyExpanded() ? 'unfold_less' : 'unfold_more'
-                    }}</mat-icon>
-                    {{ anyExpanded() ? 'Collapse all' : 'Expand all' }}
-                </button>
-            </div>
+            @if (stepCount() > 0) {
+                <div class="steps-toolbar">
+                    <button
+                        type="button"
+                        class="btn-pill steps-toggle-all"
+                        (click)="setAllExpanded(!anyExpanded())"
+                    >
+                        <mat-icon aria-hidden="true">{{
+                            anyExpanded() ? 'unfold_less' : 'unfold_more'
+                        }}</mat-icon>
+                        {{ anyExpanded() ? 'Collapse all' : 'Expand all' }}
+                    </button>
+                </div>
+            } @else {
+                <p class="setup-hint setup-hint--empty">Add a step to start.</p>
+            }
 
             <!-- Says what happened after a step is added, moved or deleted -->
             <div class="sr-only" aria-live="polite">{{ stepAnnouncement() }}</div>
@@ -129,7 +133,6 @@
                                         class="btn-icon btn-icon--danger step__action step__action--delete"
                                         [id]="'step-' + key + '-delete'"
                                         [attr.aria-label]="'Delete ' + stepTitle(i)"
-                                        [disabled]="stepCount() === 1"
                                         (click)="deleteStep(i)"
                                     >
                                         <mat-icon aria-hidden="true">close</mat-icon>
@@ -237,13 +240,14 @@
             <div class="add-steps">
                 <button
                     type="button"
+                    id="add-timed"
                     class="btn-add add-step"
                     [disabled]="stepCount() >= maxSteps"
-                    aria-label="Add work"
+                    aria-label="Add timed"
                     (click)="addStep('work')"
                 >
                     <mat-icon aria-hidden="true">add</mat-icon>
-                    Work
+                    Timed
                 </button>
                 <button
                     type="button"
