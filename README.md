@@ -91,6 +91,8 @@ Not built yet:
 
 - **Alarm sounds:** proper sound files in place of the generated beeps, and alarms on a locked phone.
 - **Alarm order setting:** choosing the sound for each step.
+- **Changing reps and weight mid-workout**, with each set logged in the history.
+- **Where the app goes next:** from an interval timer towards a fitness tracker and planner (exercises, progress over time, planning).
 
 Work on these, plus design and technical follow-ups, is tracked in [TODO.md](TODO.md).
 
