@@ -133,7 +133,7 @@ describe('HistoryStore', () => {
         expect(store.entries().at(-1)?.startedAt).toBe(2000);
     });
 
-    it('deletes an entry, and can record it again (for undo)', () => {
+    it('deletes an entry, and can restore it (for undo)', () => {
         const store = createStore();
         const entry = makeEntry();
         store.record(entry);
@@ -142,8 +142,44 @@ describe('HistoryStore', () => {
         expect(store.entries()).toEqual([]);
         expect(saved()).toEqual([]);
 
-        store.record(entry);
+        store.restore(entry);
         expect(store.entries()).toEqual([entry]);
+        expect(saved()).toEqual([entry]);
+    });
+
+    // The run may still be going, and logs itself again when it finishes or the tab closes
+    it("doesn't let a deleted entry be recorded again, even after a reload", () => {
+        const entry = makeEntry({ outcome: 'stopped' });
+        createStore().record(entry);
+        createStore().delete(entry.id);
+
+        TestBed.resetTestingModule();
+        const store = createStore();
+        store.record({ ...entry, outcome: 'finished' });
+
+        expect(store.entries()).toEqual([]);
+        expect(saved()).toEqual([]);
+    });
+
+    it('records a restored entry again as its run goes on', () => {
+        const store = createStore();
+        const entry = makeEntry({ outcome: 'stopped' });
+        store.record(entry);
+        store.delete(entry.id);
+        store.restore(entry);
+
+        store.record({ ...entry, outcome: 'finished' });
+
+        expect(store.entries().map((e) => e.outcome)).toEqual(['finished']);
+    });
+
+    it('ignores unusable saved deleted ids', () => {
+        localStorage.setItem('history-deleted', '{broken');
+        const store = createStore();
+
+        store.record(makeEntry());
+
+        expect(store.entries()).toHaveLength(1);
     });
 
     it('loads saved history, newest first', () => {

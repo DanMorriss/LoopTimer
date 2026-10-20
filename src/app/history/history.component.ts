@@ -132,7 +132,7 @@ export class HistoryComponent {
         if (!entry) {
             return;
         }
-        this.history.record(entry);
+        this.history.restore(entry);
         this.deleted.set(null);
         this.focusAfterRender(`menu-${entry.id}`);
     }

@@ -1311,6 +1311,27 @@ describe('TimerComponent', () => {
             fixture.destroy();
         });
 
+        it("doesn't repeat a step's alarm when paused just after it, then resumed", () => {
+            start(timer());
+            unlockSound();
+            advance(3500);
+            const button = (label: string) =>
+                Array.from(fixture.nativeElement.querySelectorAll('.timer-controls button')).find(
+                    (b) => (b as HTMLElement).getAttribute('aria-label') === label
+                ) as HTMLElement;
+
+            // Half a second into rest, which has beeped
+            button('Pause').click();
+            fixture.detectChanges();
+            advance(10000);
+            button('Resume').click();
+            fixture.detectChanges();
+
+            // Resumed 13.5s after starting (on the audio clock), with no rest beep again
+            expect(audio.scheduledNotes()).toEqual([...WORK_AT(15), ...FINISH_AT(18)]);
+            fixture.destroy();
+        });
+
         it('skips the alarms already past after a page refresh', () => {
             localStorage.setItem('timers', JSON.stringify([{ ...timer(), id: 7 }]));
             sessionStorage.setItem('activeTimerId', '7');

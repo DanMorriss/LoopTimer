@@ -90,11 +90,19 @@ export class ActiveRunService {
         Math.floor((this.state()?.round ?? 0) / (ALARM_WINDOW / 2))
     );
 
+    /**
+     * When the run last resumed. Resuming moves the clock on by the pause, so an alarm that
+     * sounded just before it now looks due a moment ago, and alarms that late still play
+     * (for the first one after Start); anything due by this was heard already.
+     */
+    private readonly resumedAt = signal(0);
+
     // Changes when the timer starts, pauses, resumes or needs its next batch, not every tick
     private readonly alarmEvents = computed(() => {
         const timer = this.timer();
         const startedAt = this.store.activeTimerStartedAt();
         const fromRound = (this.alarmBatch() * ALARM_WINDOW) / 2;
+        const resumedAt = this.resumedAt();
         return timer && startedAt !== null && !this.isPaused()
             ? alarmEvents(
                   timer,
@@ -102,7 +110,7 @@ export class ActiveRunService {
                   fromRound,
                   ALARM_WINDOW,
                   this.store.activeRepStepsDone()
-              )
+              ).filter((event) => event.at > resumedAt)
             : [];
     });
     private lastAlarmCheck = Date.now() - VIBRATE_LATE_LIMIT_MS;
@@ -183,12 +191,14 @@ export class ActiveRunService {
             this.recordRun('stopped');
         }
         this.store.setActiveTimer(timer);
+        this.resumedAt.set(0);
         this.sync();
     }
 
     togglePause() {
         if (this.isPaused()) {
             this.store.resume();
+            this.resumedAt.set(Date.now());
         } else {
             this.store.pause();
         }
