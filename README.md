@@ -96,6 +96,10 @@ Work on these, plus design and technical follow-ups, is tracked in [TODO.md](TOD
 
 ## User stories
 
+Every feature's stories, exact rules and acceptance criteria are in [docs/features](docs/features/README.md), written so the app could be rebuilt on another platform (e.g. as an iPhone app) without reading the code. A change in behaviour updates its file there in the same PR.
+
+These were the original five:
+
 |     | Story                                                                                                                                                                     | Status                                                                                                                                              |
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | As a user I want to be able to create an alarm telling me when to start and end an 'x' second exercise with a 'y' second break that repeats 'z' times.                    | ✅ Done                                                                                                                                             |
