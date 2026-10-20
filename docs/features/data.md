@@ -26,8 +26,9 @@ A JSON list of timers:
 - `id`: a whole number from 1, unique; a new timer gets the highest + 1.
 - `repeats`: 1–30, or **0 for until stopped**.
 - `seconds`: 1–5999 (99:59). `reps`: 1–100. `name`: may be empty.
-- A timer with no work (no work step with time, and no rep step) isn't valid.
-- **Older format:** timers saved before steps existed have `timerMinutes`, `timerSeconds`, `restMinutes`, `restSeconds` in place of `steps`. They're read as a work step plus a rest step (left out if 0), and saved in the new format the next time anything changes.
+- `weight` (rep steps only, optional): in **kg whatever unit is shown**, to the gram, more than 0 and up to 300. Missing for none. A weight picked in lb is converted (1 lb = 0.45359237 kg), so 45 lb saves as 20.412 kg.
+- A timer with no work (no timed step with time, and no rep step) isn't valid.
+- **Older format:** timers saved before steps existed have `timerMinutes`, `timerSeconds`, `restMinutes`, `restSeconds` in place of `steps`. They're read as a timed step plus a rest step (left out if 0), and saved in the new format the next time anything changes.
 
 ### `history`: the history
 
@@ -61,10 +62,10 @@ The ids of the last 20 history entries deleted, oldest first, so a run still goi
 ### `settings`
 
 ```json
-{ "theme": "dark", "sound": true, "vibration": true, "keepScreenOn": true }
+{ "theme": "dark", "sound": true, "vibration": true, "keepScreenOn": true, "weightUnit": "kg" }
 ```
 
-`theme` is `dark`, `light` or `system`.
+`theme` is `dark`, `light` or `system`. `weightUnit` is `kg` or `lb`.
 
 ## Saved for the run in progress (`sessionStorage` on the web, per tab)
 

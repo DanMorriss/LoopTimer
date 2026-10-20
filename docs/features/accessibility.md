@@ -9,9 +9,9 @@
 ### Screen readers
 
 - As each step starts, the timer announces it politely (it doesn't interrupt), and **not every second**:
-    - "Work, round 1 of 3" at the start of a round; "Rest" mid-round.
+    - "Timed, round 1 of 3" at the start of a round (an unnamed timed step is called "Timed"); "Rest" mid-round.
     - With several steps: the name and number, e.g. "Squats, step 1 of 3, round 2 of 5".
-    - Rep steps add the count: "Push-ups, 20 reps".
+    - Rep steps add the count, and the weight if there is one: "Push-ups, 20 reps", "Squats, 10 reps at 60 kg".
     - "last round" in place of the count in the final round (but "round 1 of 1" for a one-round timer); "round 4" with no total when it runs until stopped.
     - "Paused" when paused; "Finished" at the end.
 - ∞ is read as "until stopped". The round dots are hidden (the announcements say the same).
@@ -35,7 +35,7 @@
 
 ## Acceptance criteria
 
-- Given a run of 3 rounds, then a screen reader hears "Work, round 1 of 3", "Rest", "Work, round 2 of 3", …, "Finished", and nothing between.
+- Given a run of 3 rounds, then a screen reader hears "Timed, round 1 of 3", "Rest", "Timed, round 2 of 3", …, "Finished", and nothing between.
 - Given a run paused, then it hears "Paused", and on resume, which phase it's back in.
 - Given the delete dialog opens, then focus starts on Cancel, and Escape closes it without deleting.
 - Given reduced motion is on, then nothing loops.

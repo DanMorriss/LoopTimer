@@ -21,6 +21,7 @@ describe('SettingsStore', () => {
             sound: false,
             vibration: true,
             keepScreenOn: true,
+            weightUnit: 'kg',
         });
 
         TestBed.resetTestingModule();
@@ -37,6 +38,18 @@ describe('SettingsStore', () => {
         TestBed.resetTestingModule();
         localStorage.setItem('settings', '{"theme": "system"}');
         expect(createStore().theme()).toBe('system');
+    });
+
+    it('shows weights in kg by default, and keeps only a unit it knows', () => {
+        expect(createStore().weightUnit()).toBe('kg');
+
+        TestBed.resetTestingModule();
+        localStorage.setItem('settings', '{"weightUnit": "stone"}');
+        expect(createStore().weightUnit()).toBe('kg');
+
+        TestBed.resetTestingModule();
+        localStorage.setItem('settings', '{"weightUnit": "lb"}');
+        expect(createStore().weightUnit()).toBe('lb');
     });
 
     for (const [label, saved] of [

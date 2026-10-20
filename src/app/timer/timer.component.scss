@@ -175,6 +175,11 @@ $track-color: #334155; // slate-700: dark, so both phase colours stand out (3:1 
     font-size: 1.5rem;
 }
 
+.timer-face__weight {
+    font-size: 1.5rem;
+    line-height: 1.2;
+}
+
 .timer-page {
     gap: 0.25rem;
     padding: 0 1rem 2rem;

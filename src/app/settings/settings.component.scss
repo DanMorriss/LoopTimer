@@ -74,8 +74,10 @@
 .theme-picker__options {
     --gap: 0.2rem;
     position: relative;
+    // How many options there are; three for the theme
+    --count: 3;
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(var(--count), 1fr);
     border: 1px solid var(--border);
     border-radius: 999px;
     background: var(--control);
@@ -83,13 +85,13 @@
     gap: var(--gap);
 }
 
-// One option wide, moved along by --chosen (0, 1 or 2) option widths plus the gaps between
+// One option wide, moved along by --chosen (0, 1, …) option widths plus the gaps between
 .theme-picker__thumb {
     position: absolute;
     top: var(--gap);
     bottom: var(--gap);
     left: var(--gap);
-    width: calc((100% - 4 * var(--gap)) / 3);
+    width: calc((100% - (var(--count) + 1) * var(--gap)) / var(--count));
     border: 1px solid var(--glow);
     border-radius: 999px;
     // The lighter tint, so the label keeps 4.5:1 in the light theme

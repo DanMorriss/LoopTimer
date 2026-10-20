@@ -1,4 +1,5 @@
 import { ApplicationRef, Component, computed, DOCUMENT, inject } from '@angular/core';
+import { WeightUnit } from '../models/weight';
 import { AlarmService } from '../shared/alarms/alarm.service';
 import { ToggleSwitchComponent } from '../shared/components/toggle-switch/toggle-switch.component';
 import { injectPrefersReducedMotion } from '../shared/reduced-motion';
@@ -41,8 +42,16 @@ export class SettingsComponent {
         this.themes.findIndex((option) => option.value === this.settings.theme())
     );
 
+    protected readonly weightUnits: { value: WeightUnit; label: string }[] = [
+        { value: 'kg', label: 'Kilograms (kg)' },
+        { value: 'lb', label: 'Pounds (lb)' },
+    ];
+    protected readonly chosenUnitIndex = computed(() =>
+        this.weightUnits.findIndex((option) => option.value === this.settings.weightUnit())
+    );
+
     protected readonly previews: AlarmPreview[] = [
-        { kind: 'work', name: 'Work', description: 'Two short high beeps' },
+        { kind: 'work', name: 'Timed', description: 'Two short high beeps' },
         { kind: 'rest', name: 'Rest', description: 'One long low tone' },
         { kind: 'finish', name: 'Finish', description: 'Three rising notes' },
     ];

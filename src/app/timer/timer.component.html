@@ -80,13 +80,16 @@
                                 [class.text-transparent]="!stepLabel()"
                                 [attr.aria-hidden]="!stepLabel() || null"
                             >
-                                {{ stepLabel() || 'Work' }}
+                                {{ stepLabel() || 'Timed' }}
                             </p>
                             @if (isRepsActive()) {
                                 <p>
                                     {{ reps() }}
                                     <span class="timer-face__reps">reps</span>
                                 </p>
+                                @if (weight()) {
+                                    <p class="timer-face__weight">{{ weight() }}</p>
+                                }
                             } @else {
                                 <p>{{ isTimerActive() ? workTime() : restTime() }}</p>
                             }

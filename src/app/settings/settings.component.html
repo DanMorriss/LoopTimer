@@ -32,6 +32,38 @@
             </fieldset>
         </section>
 
+        <section class="settings__section" aria-labelledby="units-heading">
+            <h3 class="settings__heading" id="units-heading">Units</h3>
+
+            <!-- Weights are always saved in kg, so switching loses nothing -->
+            <fieldset class="theme-picker">
+                <legend class="setting__name">Weight</legend>
+                <div
+                    class="theme-picker__options"
+                    [style.--count]="weightUnits.length"
+                    [style.--chosen]="chosenUnitIndex()"
+                >
+                    <span class="theme-picker__thumb" aria-hidden="true"></span>
+                    @for (option of weightUnits; track option.value; let i = $index) {
+                        <label
+                            class="theme-picker__option"
+                            [class.theme-picker__option--chosen]="i === chosenUnitIndex()"
+                        >
+                            <input
+                                type="radio"
+                                name="weightUnit"
+                                class="theme-picker__input"
+                                [value]="option.value"
+                                [checked]="settings.weightUnit() === option.value"
+                                (change)="settings.update({ weightUnit: option.value })"
+                            />
+                            <span class="theme-picker__label">{{ option.label }}</span>
+                        </label>
+                    }
+                </div>
+            </fieldset>
+        </section>
+
         <section class="settings__section" aria-labelledby="alarms-heading">
             <h3 class="settings__heading" id="alarms-heading">Alarms</h3>
 

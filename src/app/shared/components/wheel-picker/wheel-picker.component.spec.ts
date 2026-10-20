@@ -362,6 +362,21 @@ describe('WheelPickerComponent', () => {
             expect(host.value()).toBe(15);
         });
 
+        it('takes a decimal point, or a comma, on a wheel of halves', async () => {
+            await create();
+            host.options.set(
+                Array.from({ length: 41 }, (_, i) => ({ value: i / 2, label: String(i / 2) }))
+            );
+            await settle();
+
+            type('1', '2', '.', '5');
+            expect(host.value()).toBe(12.5);
+
+            await wait(1100);
+            type('7', ',', '5');
+            expect(host.value()).toBe(7.5);
+        });
+
         it('accepts a leading zero, as the numbers are shown', async () => {
             await create();
 

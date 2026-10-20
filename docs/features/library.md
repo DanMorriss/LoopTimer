@@ -11,7 +11,7 @@
 - Each card shows:
     - The **title**, or "Untitled timer".
     - A **summary of one round**:
-        - "01:05 - 00:20" (work - rest) for a timer of one work step and at most one rest step. With no rest it shows "- 00:00".
+        - "01:05 - 00:20" (timed - rest) for a timer of one timed step and at most one rest step. With no rest it shows "- 00:00".
         - "5 steps · 02:15" otherwise, with the length of one round.
         - "4 steps · 01:30 + reps" when a round has rep steps, since they take as long as they take, or "2 steps · reps" when there are no timed steps at all.
     - The **rounds**: the number, or ∞.

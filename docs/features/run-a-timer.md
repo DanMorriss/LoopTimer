@@ -20,7 +20,7 @@
 
 ### Rep steps
 
-- When the clock reaches a rep step, the timer **stops and waits**, however long it takes. The ring is full and still, in violet, and the face shows the reps, e.g. "20 reps".
+- When the clock reaches a rep step, the timer **stops and waits**, however long it takes. The ring is full and still, in violet, and the face shows the reps, e.g. "20 reps", with the weight under them if there is one, e.g. "60 kg".
 - The main button becomes **Done** (in place of Pause). Done moves on to the next step, which starts from its **full time**.
 - The time spent on reps doesn't come off any countdown, but it **counts as time spent** in the history.
 
@@ -32,13 +32,13 @@
     - "**Last one!**" in place of the count in the final round.
     - "round 3 of ∞" for a timer that runs until stopped.
     - Nothing for a single-round timer.
-- **Ring**: fills as the step goes by. Work fills clockwise in pink, rest fills anticlockwise in blue. The face behind the time flashes in the phase colour.
+- **Ring**: fills as the step goes by. Timed steps fill clockwise in pink, rest fills anticlockwise in blue. The face behind the time flashes in the phase colour.
 - **Face**:
     - The step's name. Unnamed work shows just the time; unnamed rest says "Rest"; unnamed reps say "Reps".
     - The time left as mm:ss, e.g. "00:45", or the reps.
     - "step 2 of 5" when a round has more than one work or rep step. A plain work-and-rest timer leaves it out.
     - "Paused" while paused.
-- **Next**: "Next: Plank · 00:45", "Next: Push-ups · 20 reps", or "Next: finish" before the last step. Unnamed steps use their kind ("Work", "Rest", "Reps").
+- **Next**: "Next: Plank · 00:45", "Next: Push-ups · 20 reps", "Next: Squats · 10 reps @ 60 kg", or "Next: finish" before the last step. Unnamed steps use their kind ("Timed", "Rest", "Reps").
 
 ### Finishing
 
@@ -63,6 +63,7 @@
 - Given a rep step, when Done is pressed, then the next step starts from its full time.
 - Given a rep step at the very end of the last round, then the workout only finishes after Done.
 - Given a round of only rep steps, then it runs with no countdown at all, waiting on each in turn.
+- Given a rep step of 10 squats at 60 kg, then the face shows "10 reps" and "60 kg", "Next:" before it says "Squats · 10 reps @ 60 kg", and a screen reader hears "Squats, 10 reps at 60 kg".
 - Given steps Squats (work), Rest, Plank (work), then Squats shows "step 1 of 3" and "Next: Rest · 00:15".
 - Given the workout finishes, then "Add a note" opens it in the history with the note box open.
 

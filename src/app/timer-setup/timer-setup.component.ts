@@ -22,6 +22,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { hasWork, MAX_REPS, Step, StepKind, Timer, UNTIL_STOPPED } from '../models/timer';
+import { MAX_WEIGHT, WEIGHT_STEP, WeightUnit, weightIn, weightToKg } from '../models/weight';
 import { InfinitySwitchComponent } from '../shared/components/infinity-switch/infinity-switch.component';
 import { ConfirmDialogComponent } from '../shared/components/confirm-dialog/confirm-dialog.component';
 import {
@@ -29,11 +30,12 @@ import {
     WheelPickerOption,
 } from '../shared/components/wheel-picker/wheel-picker.component';
 import { ActiveRunService } from '../shared/run/active-run.service';
+import { SettingsStore } from '../shared/state/settings-store.service';
 import { TimerStore } from '../shared/state/timer-store.service';
 
 /**
  * One step as the form holds it: minutes and seconds for a timed step's two wheels, or
- * reps for a rep step's one. A step keeps all three, and only uses those for its kind.
+ * reps and weight for a rep step's. A step keeps them all, and only uses those for its kind.
  */
 interface StepModel {
     /** Stays with the step as it moves, for tracking and element ids. */
@@ -43,6 +45,13 @@ interface StepModel {
     minutes: number;
     seconds: number;
     reps: number;
+    /** In the unit chosen in settings, to the nearest half; 0 for none. */
+    weight: number;
+    /**
+     * The weight as saved, in kg, kept as it was unless the wheel moves, so rounding it
+     * for the wheel doesn't change it. Null for a new step.
+     */
+    savedWeight: number | null;
 }
 
 /** The form's values. */
@@ -68,7 +77,7 @@ function pickerOptions(
 }
 
 const padded = (n: number) => n.toString().padStart(2, '0');
-const kindName = (kind: StepKind) => ({ work: 'Work', rest: 'Rest', reps: 'Reps' })[kind];
+const kindName = (kind: StepKind) => ({ work: 'Timed', rest: 'Rest', reps: 'Reps' })[kind];
 
 /** What the name box suggests for each kind of step. */
 const NAME_EXAMPLES: Record<StepKind, string> = {
@@ -102,6 +111,8 @@ export class TimerSetupComponent {
     private readonly router = inject(Router);
     private readonly route = inject(ActivatedRoute);
     private readonly injector = inject(Injector);
+    /** Weights are shown and picked in this, and saved in kg. */
+    protected readonly weightUnit = inject(SettingsStore).weightUnit();
 
     protected readonly maxSteps = MAX_STEPS;
     protected readonly kindName = kindName;
@@ -109,6 +120,14 @@ export class TimerSetupComponent {
     protected readonly minuteOptions = pickerOptions(0, 99, padded);
     protected readonly secondOptions = pickerOptions(0, 59, padded);
     protected readonly repOptions = pickerOptions(0, MAX_REPS, String);
+    // None, then halves up to the top weight, e.g. 22.5
+    protected readonly weightOptions: WheelPickerOption[] = [
+        { value: 0, label: '–', spokenLabel: 'none' },
+        ...Array.from({ length: MAX_WEIGHT[this.weightUnit] / WEIGHT_STEP }, (_, i) => {
+            const weight = (i + 1) * WEIGHT_STEP;
+            return { value: weight, label: String(weight) };
+        }),
+    ];
     protected readonly nameExamples = NAME_EXAMPLES;
     // 1-30, then ∞ at the end of the wheel
     protected readonly repeatOptions: WheelPickerOption[] = [
@@ -128,9 +147,9 @@ export class TimerSetupComponent {
             applyEach(setup.steps, (step) => maxLength(step.name, MAX_NAME_LENGTH));
             // The wheels only offer valid times, so the one rule is that there's some work
             validate(setup, ({ value }) =>
-                hasWork(toSteps(value().steps))
+                hasWork(toSteps(value().steps, this.weightUnit))
                     ? undefined
-                    : { kind: 'noTime', message: 'Timer must have some work: a time or some reps' }
+                    : { kind: 'noTime', message: 'Timer needs a timed step or some reps' }
             );
         },
         {
@@ -161,10 +180,13 @@ export class TimerSetupComponent {
         description: string;
     } | null>(null);
 
+    // With no steps yet, the hint to add one says enough
     protected readonly noTimeError = computed(() =>
-        this.timerForm()
-            .errors()
-            .find((error) => error.kind === 'noTime')
+        this.stepCount() === 0
+            ? undefined
+            : this.timerForm()
+                  .errors()
+                  .find((error) => error.kind === 'noTime')
     );
 
     constructor() {
@@ -213,10 +235,14 @@ export class TimerSetupComponent {
         return `Step ${index + 1}, ${step.name.trim() || kindName(step.kind).toLowerCase()}`;
     }
 
-    /** How much of a step there is, as its wheels show it: e.g. "02:15", or "20 reps". */
+    /**
+     * How much of a step there is, as its wheels show it: e.g. "02:15", "20 reps", or
+     * "10 reps @ 60 kg".
+     */
     protected amountText(step: StepModel): string {
         if (step.kind === 'reps') {
-            return step.reps === 1 ? '1 rep' : `${step.reps} reps`;
+            const reps = step.reps === 1 ? '1 rep' : `${step.reps} reps`;
+            return step.weight > 0 ? `${reps} @ ${step.weight} ${this.weightUnit}` : reps;
         }
         return `${padded(step.minutes)}:${padded(step.seconds)}`;
     }
@@ -251,7 +277,7 @@ export class TimerSetupComponent {
         // Only the new step is opened, keeping the rest of the list short
         this.expandedKeys.set(new Set([step.key]));
         this.stepAnnouncement.set(
-            `Added a ${kind === 'reps' ? 'rep' : kind} step, step ${this.stepCount()}`
+            `Added a ${{ work: 'timed', rest: 'rest', reps: 'rep' }[kind]} step, step ${this.stepCount()}`
         );
         this.focusAfterRender(`step-${step.key}-name`);
     }
@@ -293,10 +319,10 @@ export class TimerSetupComponent {
     /** The X button: deletes an empty step straight away, and asks first about anything else. */
     protected deleteStep(index: number) {
         const step = this.model().steps[index];
-        if (this.stepCount() <= 1) {
-            return;
-        }
-        const isSet = step.kind === 'reps' ? step.reps > 0 : step.minutes > 0 || step.seconds > 0;
+        const isSet =
+            step.kind === 'reps'
+                ? step.reps > 0 || step.weight > 0
+                : step.minutes > 0 || step.seconds > 0;
         if (!step.name.trim() && !isSet) {
             this.removeStep(index);
         } else {
@@ -329,9 +355,14 @@ export class TimerSetupComponent {
         this.updateSteps((all) => all.filter((step) => step.key !== deleted.key));
         this.stepAnnouncement.set(`Deleted step ${index + 1}`);
         // Focus the step that took its place, or the one before if it was last: its delete
-        // button, or its open button if it's collapsed (and so has no delete button)
+        // button, or its open button if it's collapsed (and so has no delete button). With
+        // none left, the first Add button.
         const remaining = this.model().steps;
         const next = remaining[Math.min(index, remaining.length - 1)];
+        if (!next) {
+            this.focusAfterRender('add-timed');
+            return;
+        }
         this.focusAfterRender(
             `step-${next.key}-${this.isExpanded(next.key) ? 'delete' : 'toggle'}`
         );
@@ -358,20 +389,15 @@ export class TimerSetupComponent {
             minutes: Math.floor(seconds / 60),
             seconds: seconds % 60,
             reps: step.kind === 'reps' ? step.reps : 0,
+            weight:
+                step.kind === 'reps' && step.weight ? weightIn(step.weight, this.weightUnit) : 0,
+            savedWeight: (step.kind === 'reps' && step.weight) || null,
         };
     }
 
-    // A new timer starts with a work step and a rest step, as timers always have, both open
-    // as they need filling in
+    // A new timer starts with no steps, just the Add buttons
     private emptySetup(): TimerSetupModel {
-        return {
-            title: '',
-            steps: [
-                this.stepModel({ kind: 'work', seconds: 0, name: '' }),
-                this.stepModel({ kind: 'rest', seconds: 0, name: '' }),
-            ],
-            repeats: 1,
-        };
+        return { title: '', steps: [], repeats: 1 };
     }
 
     private findTimerToEdit(params: ParamMap): Timer | null {
@@ -385,7 +411,7 @@ export class TimerSetupComponent {
 
     private async saveAndStart(): Promise<void> {
         const { title, steps, repeats } = this.model();
-        const timer: Omit<Timer, 'id'> = { title, steps: toSteps(steps), repeats };
+        const timer: Omit<Timer, 'id'> = { title, steps: toSteps(steps, this.weightUnit), repeats };
 
         const editingId = this.editingTimerId();
         const savedTimer = editingId
@@ -398,13 +424,21 @@ export class TimerSetupComponent {
     }
 }
 
-/** The steps to save: whole seconds and trimmed names, leaving out any left at 0:00 or 0 reps. */
-function toSteps(steps: readonly StepModel[]): Step[] {
+/**
+ * The steps to save: whole seconds, trimmed names and weights in kg, leaving out any left
+ * at 0:00 or 0 reps.
+ */
+function toSteps(steps: readonly StepModel[], unit: WeightUnit): Step[] {
     return steps
         .map(
             (step): Step =>
                 step.kind === 'reps'
-                    ? { kind: 'reps', reps: step.reps, name: step.name.trim() }
+                    ? {
+                          kind: 'reps',
+                          reps: step.reps,
+                          name: step.name.trim(),
+                          ...(step.weight > 0 ? { weight: savedWeight(step, unit) } : {}),
+                      }
                     : {
                           kind: step.kind,
                           seconds: step.minutes * 60 + step.seconds,
@@ -412,4 +446,11 @@ function toSteps(steps: readonly StepModel[]): Step[] {
                       }
         )
         .filter((step) => (step.kind === 'reps' ? step.reps > 0 : step.seconds > 0));
+}
+
+/** A rep step's weight in kg: as it was saved, if the wheel hasn't moved, so it isn't rounded. */
+function savedWeight(step: StepModel, unit: WeightUnit): number {
+    return step.savedWeight !== null && weightIn(step.savedWeight, unit) === step.weight
+        ? step.savedWeight
+        : weightToKg(step.weight, unit);
 }

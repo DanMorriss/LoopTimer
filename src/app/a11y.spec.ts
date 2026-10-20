@@ -98,13 +98,24 @@ for (const theme of ['dark', 'light'] as const) {
         });
 
         describe('setup', () => {
-            it('new timer (with the "must have some time" error)', async () => {
+            it('new timer, with no steps', async () => {
                 await open('/setup');
+                await expectNoViolations();
+            });
+
+            it('with an empty step (and the "needs a timed step" error)', async () => {
+                await open('/setup');
+                click('.add-step');
+                await settle();
                 await expectNoViolations();
             });
 
             it('with several steps, one of them moved', async () => {
                 await open('/setup');
+                click('.add-step');
+                await settle();
+                click('.add-step--rest');
+                await settle();
                 click('.add-step');
                 await settle();
                 click('.step:nth-child(3) .step__action');

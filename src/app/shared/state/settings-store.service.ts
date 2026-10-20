@@ -1,4 +1,5 @@
 import { computed, Service, signal } from '@angular/core';
+import { WEIGHT_UNITS, WeightUnit } from '../../models/weight';
 
 export type Theme = 'dark' | 'light' | 'system';
 const THEMES: readonly Theme[] = ['dark', 'light', 'system'];
@@ -12,6 +13,8 @@ export interface Settings {
     vibration: boolean;
     /** Stop the screen locking during a workout, where the browser can. */
     keepScreenOn: boolean;
+    /** What weights are shown and picked in; they're always saved in kg. */
+    weightUnit: WeightUnit;
 }
 
 const DEFAULT_SETTINGS: Settings = {
@@ -19,6 +22,7 @@ const DEFAULT_SETTINGS: Settings = {
     sound: true,
     vibration: true,
     keepScreenOn: true,
+    weightUnit: 'kg',
 };
 const STORAGE_KEY = 'settings';
 
@@ -31,6 +35,7 @@ export class SettingsStore {
     readonly sound = computed(() => this.settings().sound);
     readonly vibration = computed(() => this.settings().vibration);
     readonly keepScreenOn = computed(() => this.settings().keepScreenOn);
+    readonly weightUnit = computed(() => this.settings().weightUnit);
 
     update(changes: Partial<Settings>) {
         this.settings.update((settings) => ({ ...settings, ...changes }));
@@ -52,10 +57,13 @@ function loadSettings(): Settings {
     const flag = (key: 'sound' | 'vibration' | 'keepScreenOn') =>
         typeof saved[key] === 'boolean' ? saved[key] : DEFAULT_SETTINGS[key];
     const theme = THEMES.find((t) => t === saved['theme']) ?? DEFAULT_SETTINGS.theme;
+    const weightUnit =
+        WEIGHT_UNITS.find((u) => u === saved['weightUnit']) ?? DEFAULT_SETTINGS.weightUnit;
     return {
         theme,
         sound: flag('sound'),
         vibration: flag('vibration'),
         keepScreenOn: flag('keepScreenOn'),
+        weightUnit,
     };
 }
