@@ -72,10 +72,10 @@ An example to match:
 
 ## Backlog
 
-50 written (batches 1–5). These take it to 80; more can be added at the end.
+60 written (batches 1–6). These take it to 80; more can be added at the end.
 
 - [x] **Batch 4, core, carries and variations:** side plank, dead bug, Russian twist, farmer's carry, sumo deadlift, Bulgarian split squat, step-up, hammer curl, skull crusher, glute bridge
 - [x] **Batch 5, chest, shoulders and arms:** dumbbell bench press, incline bench press, close-grip bench press, dumbbell fly, cable crossover, Arnold press, rear delt fly, shrug, preacher curl, overhead triceps extension
-- [ ] **Batch 6, legs:** hack squat, walking lunge, reverse lunge, single-leg Romanian deadlift, good morning, back extension, Nordic curl, seated calf raise, hip abduction machine, hip adduction machine
+- [x] **Batch 6, legs:** hack squat, walking lunge, reverse lunge, single-leg Romanian deadlift, good morning, back extension, Nordic curl, seated calf raise, hip abduction machine, hip adduction machine
 - [ ] **Batch 7, back, pulling and bodyweight pushing:** inverted row, T-bar row, straight-arm pulldown, rack pull, band pull-apart, cable curl, bench dip, diamond push-up, pike push-up, dead hang
 - [ ] **Batch 8, conditioning and abs:** burpee, mountain climber, jumping jack, jump squat, box jump, bodyweight squat, wall sit, crunch, bicycle crunch, ab wheel rollout

@@ -970,4 +970,200 @@ export const BUILT_IN_EXERCISES: readonly BuiltInExercise[] = [
             'Arching your back? Brace your middle, or sit on a bench with a backrest.',
         ],
     },
+
+    // Sixth batch: legs
+    {
+        id: 'builtin:hack-squat',
+        name: 'Hack squat',
+        otherNames: ['Machine hack squat', 'Hack squat machine'],
+        equipment: ['machine'],
+        measuredBy: 'reps',
+        mainMuscles: ['quads'],
+        supportingMuscles: ['glutes', 'adductors', 'hamstrings'],
+        description:
+            'A squat in a machine, with your back against a sloped pad and the weight on your shoulders. Hits the quads hard.',
+        steps: [
+            'Stand on the platform with your back flat against the pad and your shoulders under the shoulder pads.',
+            'Put your feet shoulder-width apart, a little forward of your hips, then stand up and release the safety handles.',
+            'Bend your knees to lower yourself until your thighs are at least level with the platform.',
+            'Push through your whole foot to stand back up, without locking your knees out at the top.',
+        ],
+        tips: [
+            'Feet lower on the platform work your quads more; higher brings in your glutes and hamstrings.',
+        ],
+    },
+    {
+        id: 'builtin:walking-lunge',
+        name: 'Walking lunge',
+        otherNames: ['Dumbbell walking lunge', 'Walking lunge with dumbbells'],
+        equipment: ['none'],
+        measuredBy: 'reps',
+        mainMuscles: ['quads', 'glutes'],
+        supportingMuscles: ['hamstrings', 'adductors', 'calves'],
+        description:
+            'You lunge forward one leg after the other, moving across the floor. Works your legs and tests your balance.',
+        steps: [
+            'Stand tall with your feet together and plenty of clear floor in front of you.',
+            'Take a long step forward and bend both knees until your back knee nearly touches the floor.',
+            'Push through your front foot to stand up, bringing your back foot forward into the next step.',
+            'Keep going, one leg after the other, until you have done your reps.',
+        ],
+        tips: [
+            'Count each leg as a rep, or each pair, but always count the same way.',
+            'Too easy? Hold a dumbbell in each hand.',
+        ],
+    },
+    {
+        id: 'builtin:reverse-lunge',
+        name: 'Reverse lunge',
+        otherNames: ['Backward lunge', 'Step-back lunge', 'Rear lunge'],
+        equipment: ['none'],
+        measuredBy: 'reps',
+        mainMuscles: ['glutes', 'quads'],
+        supportingMuscles: ['hamstrings', 'adductors', 'calves'],
+        description:
+            'You step backwards and drop your back knee towards the floor. Kinder on your knees than stepping forward.',
+        steps: [
+            'Stand tall with your feet hip-width apart.',
+            'Take a long step back with one foot and bend both knees until your back knee nearly touches the floor.',
+            'Push through your front foot to bring your back foot forward and stand up again.',
+            'Swap legs each time, or do all your reps on one leg, then the other.',
+        ],
+        tips: [
+            'Keep most of your weight on your front foot; the back one is only there for balance.',
+            'Too easy? Hold a dumbbell in each hand.',
+        ],
+    },
+    {
+        id: 'builtin:single-leg-romanian-deadlift',
+        name: 'Single-leg Romanian deadlift',
+        otherNames: ['Single-leg RDL', 'One-leg Romanian deadlift', 'Single-leg deadlift'],
+        equipment: [['dumbbells', 'kettlebell']],
+        measuredBy: 'reps',
+        mainMuscles: ['hamstrings', 'glutes'],
+        supportingMuscles: ['lower-back', 'abductors', 'forearms'],
+        description:
+            'Standing on one leg, you tip forward with a weight in your hand, your other leg reaching back. Works hamstrings and balance.',
+        steps: [
+            'Stand on your left leg, knee slightly bent, holding a dumbbell or kettlebell in your right hand.',
+            'Push your hips back and tip forward, letting your right leg rise behind you in line with your body.',
+            'Lower the weight towards the floor until you feel a strong stretch in your left hamstring.',
+            'Squeeze your glutes to stand back up. Do all your reps, then swap sides.',
+        ],
+        tips: [
+            'Keep your hips level, as if both were headlights pointing at the floor.',
+            'Wobbly? Rest a fingertip on a wall, or start with no weight.',
+        ],
+    },
+    {
+        id: 'builtin:good-morning',
+        name: 'Good morning',
+        otherNames: ['Barbell good morning'],
+        equipment: ['barbell', 'rack'],
+        measuredBy: 'reps',
+        mainMuscles: ['hamstrings', 'glutes'],
+        supportingMuscles: ['lower-back', 'abs'],
+        description:
+            'With a bar across your upper back, you bow forward from your hips and stand back up. Works the whole back of your legs.',
+        steps: [
+            'Take the bar from a rack so it rests across your upper back, as for a back squat, and step back.',
+            'Stand with your feet hip-width apart, knees slightly bent, and brace your middle.',
+            'Push your hips back and lean forward, back flat, until your body is nearly level with the floor.',
+            'Push your hips forward to stand back up.',
+        ],
+        tips: ['Start much lighter than you squat; only go as low as you can with a flat back.'],
+    },
+    {
+        id: 'builtin:back-extension',
+        name: 'Back extension',
+        otherNames: ['Hyperextension', 'Roman chair back extension', '45-degree back extension'],
+        equipment: ['machine'],
+        measuredBy: 'reps',
+        mainMuscles: ['lower-back', 'glutes'],
+        supportingMuscles: ['hamstrings'],
+        description:
+            'With your hips on a pad and your heels held, you lower your body forward and lift it back up. Builds a strong lower back.',
+        steps: [
+            'Set the pad so its top edge sits just below your hips, and hook your heels under the foot pads.',
+            'Cross your arms over your chest, with your body in a straight line.',
+            'Bend at your hips to lower your body towards the floor, keeping your back flat.',
+            'Lift yourself back up until your body is straight again, without leaning back past it.',
+        ],
+        tips: ['Too easy? Hold a plate against your chest.'],
+    },
+    {
+        id: 'builtin:nordic-curl',
+        name: 'Nordic curl',
+        otherNames: ['Nordic hamstring curl', 'Nordic ham curl'],
+        equipment: ['none'],
+        measuredBy: 'reps',
+        mainMuscles: ['hamstrings'],
+        supportingMuscles: ['glutes', 'calves'],
+        description:
+            'Kneeling with your heels held down, you lower your body slowly towards the floor. One of the hardest hamstring moves.',
+        steps: [
+            "Kneel on a pad with your heels held down by a partner, or hooked under something that won't move.",
+            'Keep your body straight from knees to head, arms in front of your chest.',
+            'Lower yourself forward as slowly as you can, holding it with your hamstrings.',
+            'Catch yourself on your hands, then push off the floor to get back up.',
+        ],
+        tips: [
+            "It's the lowering that counts: most people can't pull themselves back up at first.",
+        ],
+    },
+    {
+        id: 'builtin:seated-calf-raise',
+        name: 'Seated calf raise',
+        otherNames: ['Machine seated calf raise', 'Seated calf machine'],
+        equipment: ['machine'],
+        measuredBy: 'reps',
+        mainMuscles: ['calves'],
+        supportingMuscles: [],
+        description:
+            'Sitting at a machine with a pad on your knees, you lift your heels. Works the lower part of your calves.',
+        steps: [
+            'Sit at the machine with the balls of your feet on the step and the pad resting on your thighs, just above your knees.',
+            'Lift your heels to raise the pad, and release the safety lever.',
+            'Lower your heels below the step until you feel a stretch in your calves.',
+            'Rise up onto your toes as high as you can, and hold for a moment at the top.',
+        ],
+        tips: ["Don't bounce at the bottom; pause there for a moment before lifting."],
+    },
+    {
+        id: 'builtin:hip-abduction',
+        name: 'Hip abduction',
+        otherNames: ['Hip abduction machine', 'Abductor machine', 'Seated hip abduction'],
+        equipment: ['machine'],
+        measuredBy: 'reps',
+        mainMuscles: ['abductors'],
+        supportingMuscles: ['glutes'],
+        description:
+            'Sitting at a machine, you push your knees out against pads. Works the outsides of your hips.',
+        steps: [
+            'Sit at the machine with your back against the pad and the pads on the outsides of your knees.',
+            'Push your knees out as far as they will go.',
+            'Hold for a moment, then let them back in slowly, without letting the weights touch.',
+        ],
+        tips: ['Lean forward a little to work more of your glutes.'],
+    },
+    {
+        id: 'builtin:hip-adduction',
+        name: 'Hip adduction',
+        otherNames: ['Hip adduction machine', 'Adductor machine', 'Seated hip adduction'],
+        equipment: ['machine'],
+        measuredBy: 'reps',
+        mainMuscles: ['adductors'],
+        supportingMuscles: [],
+        description:
+            'Sitting at a machine, you squeeze your knees together against pads. Works your inner thighs.',
+        steps: [
+            'Sit at the machine with your back against the pad and the pads on the insides of your knees.',
+            'Set it so your legs start apart, as wide as is comfortable.',
+            'Squeeze your knees together until the pads meet.',
+            'Hold for a moment, then let them back out slowly.',
+        ],
+        tips: [
+            "Don't start wider than feels comfortable; the stretch at the start is where it's hardest.",
+        ],
+    },
 ];
