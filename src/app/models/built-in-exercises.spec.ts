@@ -28,11 +28,23 @@ describe('built-in exercises', () => {
         }
     });
 
-    it('each have some equipment, or none, but not both', () => {
+    it('each list the equipment they need, or none, but not both', () => {
         for (const exercise of BUILT_IN_EXERCISES) {
             expect(exercise.equipment.length, exercise.name).toBeGreaterThan(0);
-            if (exercise.equipment.includes('none')) {
+            const items = exercise.equipment.flat();
+            if (items.includes('none')) {
                 expect(exercise.equipment, exercise.name).toEqual(['none']);
+            }
+            expect(new Set(items).size, exercise.name).toBe(items.length);
+        }
+    });
+
+    it('offer a choice of equipment only between two or more things', () => {
+        for (const exercise of BUILT_IN_EXERCISES) {
+            for (const need of exercise.equipment) {
+                if (typeof need !== 'string') {
+                    expect(need.length, exercise.name).toBeGreaterThanOrEqual(2);
+                }
             }
         }
     });
