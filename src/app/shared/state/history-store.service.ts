@@ -1,5 +1,5 @@
 import { computed, Service, signal } from '@angular/core';
-import { HistoryEntry, MAX_NOTE_LENGTH } from '../../models/history';
+import { HistoryEntry, isLoggedSet, MAX_NOTE_LENGTH } from '../../models/history';
 
 const STORAGE_KEY = 'history';
 const DELETED_KEY = 'history-deleted';
@@ -89,7 +89,10 @@ function loadHistory(): HistoryEntry[] {
     try {
         const parsed: unknown = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]');
         return Array.isArray(parsed)
-            ? parsed.filter(isHistoryEntry).sort((a, b) => b.startedAt - a.startedAt)
+            ? parsed
+                  .filter(isHistoryEntry)
+                  .map(withUsableSets)
+                  .sort((a, b) => b.startedAt - a.startedAt)
             : [];
     } catch {
         return [];
@@ -105,6 +108,13 @@ function loadDeletedIds(): string[] {
     } catch {
         return [];
     }
+}
+
+// A broken set is dropped rather than the whole workout; with none left, so are the sets
+function withUsableSets(entry: HistoryEntry): HistoryEntry {
+    const { sets, ...rest } = entry;
+    const usable = Array.isArray(sets) ? sets.filter(isLoggedSet) : [];
+    return usable.length > 0 ? { ...rest, sets: usable } : rest;
 }
 
 function isWholeNumber(value: unknown, min = 0): value is number {

@@ -182,6 +182,22 @@ describe('HistoryStore', () => {
         expect(store.entries()).toHaveLength(1);
     });
 
+    it('loads saved sets, dropping broken ones but keeping the workout', () => {
+        const good = { round: 0, step: 1, name: 'Squats', reps: 10, weight: 60 };
+        localStorage.setItem(
+            'history',
+            JSON.stringify([
+                makeEntry({ startedAt: 2_000, sets: [good, { ...good, reps: 0 }] }),
+                { ...makeEntry({ startedAt: 1_000 }), sets: 'lots' },
+            ])
+        );
+
+        const [withSets, withBroken] = createStore().entries();
+
+        expect(withSets.sets).toEqual([good]);
+        expect(withBroken).toEqual(makeEntry({ startedAt: 1_000 }));
+    });
+
     it('loads saved history, newest first', () => {
         const older = makeEntry({ startedAt: 1_000 });
         const newer = makeEntry({ startedAt: 2_000 });

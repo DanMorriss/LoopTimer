@@ -1,7 +1,8 @@
-import { Component, computed, inject } from '@angular/core';
+import { afterNextRender, Component, computed, inject, Injector, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { RepStep, runsUntilStopped, Step } from '../models/timer';
-import { formatWeight } from '../models/weight';
+import { MAX_REPS, RepStep, runsUntilStopped, Step } from '../models/timer';
+import { formatWeight, weightIn, weightOptions, weightToKg } from '../models/weight';
+import { WheelPickerComponent } from '../shared/components/wheel-picker/wheel-picker.component';
 import { AlarmService } from '../shared/alarms/alarm.service';
 import { MatIconModule } from '@angular/material/icon';
 import { formatTime } from '../shared/format-time';
@@ -10,7 +11,8 @@ import { SettingsStore } from '../shared/state/settings-store.service';
 import { TimerStore } from '../shared/state/timer-store.service';
 
 // Space on one of these already does something, e.g. presses the focused button
-const SPACE_HANDLED_BY = 'button, a, input, textarea, select, [contenteditable], [role="button"]';
+const SPACE_HANDLED_BY =
+    'button, a, input, textarea, select, [contenteditable], [role="button"], [role="spinbutton"]';
 
 /** "Timed", "Rest" or "Reps": what an unnamed step is called. */
 function kindName(step: Step): string {
@@ -26,7 +28,7 @@ const MAX_ROUND_DOTS = 15;
  */
 @Component({
     selector: 'app-timer',
-    imports: [RouterLink, MatIconModule],
+    imports: [RouterLink, MatIconModule, WheelPickerComponent],
     templateUrl: './timer.component.html',
     styleUrls: ['./timer.component.scss'],
     host: {
@@ -36,6 +38,7 @@ const MAX_ROUND_DOTS = 15;
 export class TimerComponent {
     timerStore = inject(TimerStore);
     private readonly router = inject(Router);
+    private readonly injector = inject(Injector);
     private readonly run = inject(ActiveRunService);
     timer = this.run.timer;
     isPaused = this.run.isPaused;
@@ -63,6 +66,30 @@ export class TimerComponent {
         const step = this.state()?.step;
         return step?.kind === 'reps' ? this.weightText(step) : '';
     });
+    // Changing the reps or weight of the rep step being waited on, e.g. going up a weight
+    protected readonly repOptions = Array.from({ length: MAX_REPS }, (_, i) => ({
+        value: i + 1,
+        label: String(i + 1),
+    }));
+    protected readonly weightUnit = this.settings.weightUnit;
+    protected readonly weightOptions = computed(() => weightOptions(this.weightUnit()));
+    /** The rep step's weight as its wheel shows it, or 0 for none. */
+    protected readonly weightValue = computed(() => {
+        const step = this.state()?.step;
+        return step?.kind === 'reps' && step.weight ? weightIn(step.weight, this.weightUnit()) : 0;
+    });
+    /** Which rep set is being changed, so the wheels close by themselves on Done. */
+    private readonly changingSet = signal<string | null>(null);
+    private readonly currentSet = computed(() => {
+        const state = this.state();
+        return state?.phase === 'reps'
+            ? `${this.timerStore.activeRunStartedAt()}-${this.timerStore.activeRepStepsDone()}`
+            : null;
+    });
+    protected readonly changingReps = computed(
+        () => this.currentSet() !== null && this.changingSet() === this.currentSet()
+    );
+
     /** Rounds left, including the one in progress. */
     repeats = computed(() => this.state()?.roundsLeft ?? 0);
     untilStopped = computed(() => {
@@ -223,6 +250,31 @@ export class TimerComponent {
 
     togglePause() {
         this.run.togglePause();
+    }
+
+    protected toggleChangingReps() {
+        const opening = !this.changingReps();
+        this.changingSet.set(opening ? this.currentSet() : null);
+        // On a phone the wheels open below the fold, so bring them into view
+        if (opening) {
+            afterNextRender(
+                () =>
+                    document
+                        .getElementById('timer-change-panel')
+                        ?.scrollIntoView?.({ block: 'nearest' }),
+                { injector: this.injector }
+            );
+        }
+    }
+
+    protected setReps(reps: number) {
+        this.run.changeReps({ reps });
+    }
+
+    protected setWeight(value: number) {
+        this.run.changeReps({
+            weight: value > 0 ? weightToKg(value, this.weightUnit()) : undefined,
+        });
     }
 
     /** Done on a rep step: on to the next step, from its full time. */

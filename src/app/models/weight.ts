@@ -31,3 +31,16 @@ export function weightToKg(value: number, unit: WeightUnit): number {
 export function formatWeight(kg: number, unit: WeightUnit): string {
     return `${weightIn(kg, unit)} ${unit}`;
 }
+
+/** The weight wheel's options in `unit`: none, then halves up to the top, e.g. 22.5. */
+export function weightOptions(
+    unit: WeightUnit
+): { value: number; label: string; spokenLabel?: string }[] {
+    return [
+        { value: 0, label: '–', spokenLabel: 'none' },
+        ...Array.from({ length: MAX_WEIGHT[unit] / WEIGHT_STEP }, (_, i) => {
+            const weight = (i + 1) * WEIGHT_STEP;
+            return { value: weight, label: String(weight) };
+        }),
+    ];
+}

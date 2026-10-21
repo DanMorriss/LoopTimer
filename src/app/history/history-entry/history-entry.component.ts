@@ -16,7 +16,8 @@ import { form, FormField, maxLength } from '@angular/forms/signals';
 import { MatIconModule } from '@angular/material/icon';
 import { HistoryEntry, MAX_NOTE_LENGTH } from '../../models/history';
 import { HistoryStore } from '../../shared/state/history-store.service';
-import { describeRounds, entryName, formatDuration } from '../history-format';
+import { describeRounds, describeSets, entryName, formatDuration } from '../history-format';
+import { SettingsStore } from '../../shared/state/settings-store.service';
 
 /**
  * One workout in the history, with a ⋮ menu to add, edit or remove its note, or delete it.
@@ -41,6 +42,7 @@ import { describeRounds, entryName, formatDuration } from '../history-format';
 })
 export class HistoryEntryComponent {
     private readonly history = inject(HistoryStore);
+    private readonly settings = inject(SettingsStore);
     private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
     private readonly injector = inject(Injector);
 
@@ -61,6 +63,10 @@ export class HistoryEntryComponent {
     protected readonly name = computed(() => entryName(this.entry()));
     protected readonly duration = computed(() => formatDuration(this.entry().activeSeconds));
     protected readonly rounds = computed(() => describeRounds(this.entry()));
+    /** Its rep steps' sets, one line per step, in the unit chosen in settings. */
+    protected readonly sets = computed(() =>
+        describeSets(this.entry().sets ?? [], this.settings.weightUnit())
+    );
     protected readonly id = computed(() => this.entry().id);
 
     // The box starts from the saved note each time it opens

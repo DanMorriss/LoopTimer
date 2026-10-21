@@ -7,6 +7,7 @@
 - **RUN-3** As a user I want the timer to wait while I do a set of reps, and carry on when I tap Done.
 - **RUN-4** As a user I want to know when I've finished, and be able to note how it went.
 - **RUN-5** As a user I want the countdown to stay right even if my phone sleeps or I switch apps.
+- **RUN-6** As a user I want to change the reps or weight while I'm on a rep step (e.g. going up a weight, or managing fewer reps), so what I log is what I did, and next time starts from there.
 
 ## Rules
 
@@ -40,6 +41,13 @@
     - "Paused" while paused.
 - **Next**: "Next: Plank · 00:45", "Next: Push-ups · 20 reps", "Next: Squats · 10 reps @ 60 kg", or "Next: finish" before the last step. Unnamed steps use their kind ("Timed", "Rest", "Reps").
 
+### Changing reps or weight mid-workout (RUN-6)
+
+- While a rep step is waiting, a **Change reps or weight** button sits under the controls. It opens a **Reps** wheel (1–100) and a **Weight** wheel (none, then halves, in the unit chosen in settings), and scrolls them into view. It's placed under the controls so opening it never moves Done.
+- A change applies at once, to **this set, the rest of this workout's rounds, and the saved timer**, so next time starts from there. If the timer has been deleted from the library meanwhile, only this workout changes.
+- The wheels close by themselves on Done; the next rep step starts with them closed.
+- Space on a focused wheel is left to the wheel, rather than pressing Done.
+
 ### Finishing
 
 - The face says "**You're finished!**", the controls go, and three buttons show:
@@ -64,6 +72,8 @@
 - Given a rep step at the very end of the last round, then the workout only finishes after Done.
 - Given a round of only rep steps, then it runs with no countdown at all, waiting on each in turn.
 - Given a rep step of 10 squats at 60 kg, then the face shows "10 reps" and "60 kg", "Next:" before it says "Squats · 10 reps @ 60 kg", and a screen reader hears "Squats, 10 reps at 60 kg".
+- Given 20 push-ups in round 1, when I change them to 15 at 22.5 kg, then the face shows "15 reps" and "22.5 kg", the saved timer has 15 at 22.5 kg, and round 2 starts from 15 at 22.5 kg.
+- Given a step at 40 kg, when I set the weight to –, then the step has no weight.
 - Given steps Squats (work), Rest, Plank (work), then Squats shows "step 1 of 3" and "Next: Rest · 00:15".
 - Given the workout finishes, then "Add a note" opens it in the history with the note box open.
 

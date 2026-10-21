@@ -46,7 +46,11 @@ A JSON list of entries, newest first, at most 500:
         "roundsCompleted": 5,
         "totalRounds": 5,
         "outcome": "finished",
-        "note": "felt strong"
+        "note": "felt strong",
+        "sets": [
+            { "round": 0, "step": 0, "name": "Squats", "reps": 10, "weight": 60 },
+            { "round": 1, "step": 0, "name": "Squats", "reps": 8, "weight": 62.5 }
+        ]
     }
 ]
 ```
@@ -54,6 +58,7 @@ A JSON list of entries, newest first, at most 500:
 - Times are ms since 1970 (UTC).
 - `id` is `<startedAt>-<timerId>`: unique per run, so the same run logged again replaces its entry.
 - `totalRounds` is 0 for a timer that runs until stopped. `outcome` is `finished` or `stopped`. `note` is missing when there isn't one (up to 120 characters).
+- `sets` (missing when there were none): one per Done on a rep step, in order. `round` and `step` count from 0, `reps` is at least 1, `weight` is in kg (missing for none). A broken set is dropped when loading, keeping the rest of the entry.
 
 ### `history-deleted`
 
@@ -77,6 +82,7 @@ The ids of the last 20 history entries deleted, oldest first, so a run still goi
 | `activeTimerPausedAt`  | When it was paused, if it is.                                                                                                      |
 | `activeRepStepsDone`   | How many rep steps have been done, counting across rounds.                                                                         |
 | `activeRepMs`          | Time spent on rep steps so far, which counts as time spent in the history.                                                         |
+| `activeSets`           | The sets done so far, as they'll go in the history entry.                                                                          |
 
 From these, everything on the timer page is worked out (see [run-a-timer](run-a-timer.md)).
 

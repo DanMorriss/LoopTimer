@@ -22,7 +22,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { hasWork, MAX_REPS, Step, StepKind, Timer, UNTIL_STOPPED } from '../models/timer';
-import { MAX_WEIGHT, WEIGHT_STEP, WeightUnit, weightIn, weightToKg } from '../models/weight';
+import { WeightUnit, weightIn, weightOptions, weightToKg } from '../models/weight';
 import { InfinitySwitchComponent } from '../shared/components/infinity-switch/infinity-switch.component';
 import { ConfirmDialogComponent } from '../shared/components/confirm-dialog/confirm-dialog.component';
 import {
@@ -120,14 +120,7 @@ export class TimerSetupComponent {
     protected readonly minuteOptions = pickerOptions(0, 99, padded);
     protected readonly secondOptions = pickerOptions(0, 59, padded);
     protected readonly repOptions = pickerOptions(0, MAX_REPS, String);
-    // None, then halves up to the top weight, e.g. 22.5
-    protected readonly weightOptions: WheelPickerOption[] = [
-        { value: 0, label: '–', spokenLabel: 'none' },
-        ...Array.from({ length: MAX_WEIGHT[this.weightUnit] / WEIGHT_STEP }, (_, i) => {
-            const weight = (i + 1) * WEIGHT_STEP;
-            return { value: weight, label: String(weight) };
-        }),
-    ];
+    protected readonly weightOptions = weightOptions(this.weightUnit);
     protected readonly nameExamples = NAME_EXAMPLES;
     // 1-30, then ∞ at the end of the wheel
     protected readonly repeatOptions: WheelPickerOption[] = [

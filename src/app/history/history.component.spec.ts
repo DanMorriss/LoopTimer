@@ -1,9 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { HistoryEntry } from '../models/history';
+import { HistoryEntry, LoggedSet } from '../models/history';
 import { HistoryStore } from '../shared/state/history-store.service';
-import { describeRounds, formatDuration } from './history-format';
+import { describeRounds, describeSets, formatDuration } from './history-format';
+import { SettingsStore } from '../shared/state/settings-store.service';
 import { HistoryComponent } from './history.component';
 
 // Midday on Sunday 18 October 2026, so "today" and "yesterday" can't flip mid-test
@@ -106,6 +107,24 @@ describe('HistoryComponent', () => {
         );
 
         expect(text('.entry__detail')).toEqual(['11:00 AM · 12:34 · 2 of 5 rounds · stopped']);
+    });
+
+    it('lists the sets of its rep steps under it, read out in words, in the unit chosen', () => {
+        TestBed.inject(SettingsStore).update({ weightUnit: 'lb' });
+        create(
+            makeEntry({
+                sets: [
+                    { round: 0, step: 0, name: 'Bench', reps: 5, weight: 61.235 },
+                    { round: 1, step: 0, name: 'Bench', reps: 5, weight: 61.235 },
+                ],
+            }),
+            makeEntry({ startedAt: NOW - 2 * HOUR })
+        );
+
+        expect(text('.entry__sets li [aria-hidden="true"]')).toEqual(['Bench: 2 × 5 @ 135 lb']);
+        expect(text('.entry__sets li .sr-only')).toEqual(['Bench, 2 sets of 5 reps at 135 lb']);
+        // The workout without rep steps has no list
+        expect(fixture.nativeElement.querySelectorAll('.entry__sets')).toHaveLength(1);
     });
 
     it('names an untitled timer', () => {
@@ -368,6 +387,61 @@ describe('HistoryComponent', () => {
                     makeEntry({ roundsCompleted: 12, totalRounds: 0, outcome: 'stopped' })
                 )
             ).toBe('12 rounds · until stopped');
+        });
+    });
+
+    describe('describeSets', () => {
+        const set = (
+            round: number,
+            reps: number,
+            weight?: number,
+            step = 1,
+            name = 'Squats'
+        ): LoggedSet => ({
+            round,
+            step,
+            name,
+            reps,
+            ...(weight === undefined ? {} : { weight }),
+        });
+
+        it('sums up sets that were all the same', () => {
+            expect(describeSets([set(0, 10, 60), set(1, 10, 60), set(2, 10, 60)], 'kg')).toEqual([
+                { name: 'Squats', text: '3 × 10 @ 60 kg', spoken: '3 sets of 10 reps at 60 kg' },
+            ]);
+        });
+
+        it('lists the reps when they changed, and each set when the weight did', () => {
+            expect(describeSets([set(0, 10, 60), set(1, 10, 60), set(2, 8, 60)], 'kg')[0]).toEqual({
+                name: 'Squats',
+                text: '10, 10, 8 @ 60 kg',
+                spoken: 'sets of 10, 10, 8 reps at 60 kg',
+            });
+            expect(describeSets([set(0, 10, 60), set(1, 8, 62.5)], 'kg')[0]).toEqual({
+                name: 'Squats',
+                text: '10 @ 60, 8 @ 62.5 kg',
+                spoken: '10 reps at 60 kg, 8 reps at 62.5 kg',
+            });
+        });
+
+        it('leaves out the weight when there was none, and names an unnamed step "Reps"', () => {
+            expect(
+                describeSets([set(0, 20, undefined, 0, ''), set(1, 20, undefined, 0, '')], 'kg')
+            ).toEqual([{ name: 'Reps', text: '2 × 20', spoken: '2 sets of 20 reps' }]);
+            expect(describeSets([set(0, 12)], 'kg')[0].text).toBe('12 reps');
+        });
+
+        it('gives a line per rep step, in the order they came, in the unit chosen', () => {
+            const sets = [
+                set(0, 5, 20.412, 0, 'Bench'),
+                set(0, 20, undefined, 2, 'Push-ups'),
+                set(1, 5, 20.412, 0, 'Bench'),
+            ];
+
+            expect(describeSets(sets, 'lb').map((line) => `${line.name}: ${line.text}`)).toEqual([
+                'Bench: 2 × 5 @ 45 lb',
+                'Push-ups: 20 reps',
+            ]);
         });
     });
 });

@@ -1511,6 +1511,143 @@ describe('TimerComponent', () => {
             fixture.destroy();
         });
 
+        describe('changing the reps or weight mid-workout', () => {
+            const changeButton = () =>
+                fixture.nativeElement.querySelector('.timer-change') as HTMLButtonElement | null;
+            const wheel = (label: string) =>
+                fixture.nativeElement.querySelector(
+                    `app-wheel-picker:has([aria-labelledby="timer-change-${label}"])`
+                ) as HTMLElement;
+            function choose(label: 'reps' | 'weight', value: string) {
+                (wheel(label).querySelector(`[data-value="${value}"]`) as HTMLElement).click();
+                fixture.detectChanges();
+            }
+            /** Starts the circuit as saved in the library, so changes can be saved to it. */
+            function startSaved() {
+                start(store.addTimer(circuit()));
+            }
+
+            it('offers it only on a rep step, opening the reps and weight wheels', () => {
+                startSaved();
+                expect(changeButton()).toBeNull();
+
+                advance(3000);
+                expect(changeButton()!.getAttribute('aria-expanded')).toBe('false');
+                changeButton()!.click();
+                fixture.detectChanges();
+
+                expect(changeButton()!.getAttribute('aria-expanded')).toBe('true');
+                expect(wheel('reps')).not.toBeNull();
+                expect(
+                    wheel('weight')
+                        .querySelector('[role="spinbutton"]')!
+                        .getAttribute('aria-valuetext')
+                ).toBe('none');
+                expect(text()).toContain('Weight (kg)');
+                fixture.destroy();
+            });
+
+            it('changes this set, the rest of the workout, and the saved timer', () => {
+                startSaved();
+                advance(3000);
+                changeButton()!.click();
+                fixture.detectChanges();
+
+                choose('reps', '15');
+                choose('weight', '22.5');
+
+                expect(text()).toContain('15 reps');
+                expect(text()).toContain('22.5 kg');
+                expect(store.timers()[0].steps[1]).toEqual({
+                    kind: 'reps',
+                    reps: 15,
+                    name: 'Push-ups',
+                    weight: 22.5,
+                });
+
+                // Done closes the wheels; round 2's set starts from the new numbers
+                pressDone();
+                expect(fixture.nativeElement.querySelector('#timer-change-panel')).toBeNull();
+                advance(2000 + 3000);
+                expect(text()).toContain('15 reps');
+                expect(text()).toContain('22.5 kg');
+                expect(changeButton()!.getAttribute('aria-expanded')).toBe('false');
+                fixture.destroy();
+            });
+
+            it('takes the weight off again at –', () => {
+                start(
+                    store.addTimer(
+                        makeTimer({ steps: [{ kind: 'reps', reps: 5, name: '', weight: 40 }] })
+                    )
+                );
+                changeButton()!.click();
+                fixture.detectChanges();
+
+                choose('weight', '0');
+
+                expect(store.timers()[0].steps[0]).toEqual({ kind: 'reps', reps: 5, name: '' });
+                expect(fixture.nativeElement.querySelector('.timer-face__weight')).toBeNull();
+                fixture.destroy();
+            });
+
+            it('picks the weight in lb when chosen in settings, saving it in kg', () => {
+                TestBed.inject(SettingsStore).update({ weightUnit: 'lb' });
+                startSaved();
+                advance(3000);
+                changeButton()!.click();
+                fixture.detectChanges();
+
+                choose('weight', '135');
+
+                expect(text()).toContain('135 lb');
+                expect((store.timers()[0].steps[1] as { weight?: number }).weight).toBe(61.235);
+                fixture.destroy();
+            });
+
+            it('leaves Space to a focused wheel, rather than pressing Done', () => {
+                startSaved();
+                advance(3000);
+                changeButton()!.click();
+                fixture.detectChanges();
+
+                wheel('reps')
+                    .querySelector('[role="spinbutton"]')!
+                    .dispatchEvent(
+                        new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true })
+                    );
+                fixture.detectChanges();
+
+                expect(component.isRepsActive()).toBe(true);
+                fixture.destroy();
+            });
+        });
+
+        it('logs each set in the history, with any changes made to it', () => {
+            start(store.addTimer(circuit()));
+            advance(3000);
+            pressDone(); // round 1: 20 push-ups
+            advance(2000 + 3000);
+            component['setReps'](15);
+            component['setWeight'](10);
+            fixture.detectChanges();
+            pressDone(); // round 2: 15 at 10 kg, then finished
+
+            expect(entries()[0].sets).toEqual([
+                { round: 0, step: 1, name: 'Push-ups', reps: 20 },
+                { round: 1, step: 1, name: 'Push-ups', reps: 15, weight: 10 },
+            ]);
+            fixture.destroy();
+        });
+
+        it('logs no sets for a workout without rep steps', () => {
+            start(makeTimer({ steps: [work(3)], repeats: 1 }));
+            advance(3000);
+
+            expect(entries()[0].sets).toBeUndefined();
+            fixture.destroy();
+        });
+
         it('takes Space as Done', () => {
             start(circuit());
             advance(3000);
