@@ -51,4 +51,4 @@ Do these first: everything after builds on them. The data is ready for sync (#81
 
 ## 3. Known issues
 
-Nothing open.
+- [ ] **Library cards show a timer's id as a tooltip:** hovering a card's title shows "ID: " and the id, which since #81 is a long random UUID. Drop the tooltip in the "Workouts" rename (EXR-5).
