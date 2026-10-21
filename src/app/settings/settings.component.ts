@@ -118,12 +118,16 @@ function count(n: number, thing: string): string {
     return `${n} ${thing}${n === 1 ? '' : 's'}`;
 }
 
-/** "2 timers and 14 workouts", leaving out either if there are none. */
-function timersAndWorkouts(timers: number, workouts: number): string {
-    return [
+/** "2 timers, 3 exercises and 14 workouts", leaving out any there are none of. */
+function listOf(timers: number, exercises: number, workouts: number): string {
+    const items = [
         ...(timers > 0 ? [count(timers, 'timer')] : []),
+        ...(exercises > 0 ? [count(exercises, 'exercise')] : []),
         ...(workouts > 0 ? [count(workouts, 'workout')] : []),
-    ].join(' and ');
+    ];
+    return items.length > 1
+        ? `${items.slice(0, -1).join(', ')} and ${items.at(-1)}`
+        : (items[0] ?? '');
 }
 
 /** e.g. "Added 2 timers and 14 workouts to the history. Updated 1 workout." */
@@ -139,8 +143,8 @@ export function importMessage(result: ImportResult): string {
                 return "That file couldn't be read. Is it a LoopTimer backup?";
         }
     }
-    const added = timersAndWorkouts(result.timersAdded, result.workoutsAdded);
-    const updated = timersAndWorkouts(result.timersUpdated, result.workoutsUpdated);
+    const added = listOf(result.timersAdded, result.exercisesAdded, result.workoutsAdded);
+    const updated = listOf(result.timersUpdated, result.exercisesUpdated, result.workoutsUpdated);
     const parts = [
         ...(added ? [`Added ${added}${result.workoutsAdded > 0 ? ' to the history' : ''}.`] : []),
         ...(updated ? [`Updated ${updated}.`] : []),

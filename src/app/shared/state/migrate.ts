@@ -1,26 +1,145 @@
+import { BUILT_IN_EXERCISES } from '../../models/built-in-exercises';
+import { Exercise, MeasuredBy, OwnExercise } from '../../models/exercise';
+import { ExerciseFinder, findByName, linkSets, linkSteps } from '../../models/exercise-links';
+import { isLoggedSet } from '../../models/history';
 import { Deletion, newId } from '../../models/sync';
+import { Step } from '../../models/timer';
 
 /** Which shape the saved data is in. Missing means 1, from before this was saved. */
 const VERSION_KEY = 'data-version';
-export const DATA_VERSION = 2;
+export const DATA_VERSION = 3;
 
 /** Each old timer id and the new one it was given, so a run in progress can still find it. */
 export const LEGACY_TIMER_IDS_KEY = 'legacy-timer-ids';
 
 /**
  * Brings data saved by an older version of the app up to date, once, before anything reads
- * it. Version 2 (see docs/features/data.md):
+ * it, a version at a time (see docs/features/data.md). Anything unreadable is left as it is:
+ * the stores drop what they can't use.
+ */
+export function migrateSavedData(now = Date.now()) {
+    const version = Number(localStorage.getItem(VERSION_KEY) ?? 1);
+    if (version >= DATA_VERSION) {
+        return;
+    }
+    if (version < 2) {
+        toVersion2(now);
+    }
+    if (version < 3) {
+        toVersion3(now);
+    }
+    localStorage.setItem(VERSION_KEY, String(DATA_VERSION));
+}
+
+/**
+ * Version 3: exercises (EXR-4). Each named work step in a timer, and each named set in the
+ * history, is linked to the exercise its name means, built-in where one matches and
+ * otherwise a new one of your own, one per name.
+ */
+function toVersion3(now: number) {
+    const own = (readList('exercises') ?? []).filter(isOwnExercise);
+    const finder = listFinder(own, now);
+    const timers = readList('timers');
+    if (timers) {
+        localStorage.setItem(
+            'timers',
+            JSON.stringify(timers.map((timer) => withLinkedSteps(timer, finder)))
+        );
+    }
+    const history = readList('history');
+    if (history) {
+        localStorage.setItem(
+            'history',
+            JSON.stringify(history.map((entry) => withLinkedSets(entry, finder)))
+        );
+    }
+    if (own.length > 0) {
+        localStorage.setItem('exercises', JSON.stringify(own));
+    }
+}
+
+/**
+ * Finds exercises among the built-in ones and `own`, and makes new ones of your own into
+ * `own`, for linking saved data before the exercise store is there to do it.
+ */
+export function listFinder(own: OwnExercise[], now: number): ExerciseFinder {
+    return {
+        find: (name) => findByName(name, [...BUILT_IN_EXERCISES, ...own] as Exercise[]),
+        create: (name: string, measuredBy: MeasuredBy) => {
+            const exercise: OwnExercise = {
+                id: newId(),
+                updatedAt: now,
+                name: name.trim().replace(/\s+/g, ' '),
+                otherNames: [],
+                equipment: [],
+                measuredBy,
+                mainMuscles: [],
+                supportingMuscles: [],
+                description: '',
+                steps: [],
+                tips: [],
+            };
+            own.push(exercise);
+            return exercise;
+        },
+    };
+}
+
+// Only enough to find by name; the exercise store reads them properly
+function isOwnExercise(value: unknown): value is OwnExercise {
+    if (typeof value !== 'object' || value === null) {
+        return false;
+    }
+    const exercise = value as Record<string, unknown>;
+    return (
+        typeof exercise['id'] === 'string' &&
+        typeof exercise['name'] === 'string' &&
+        Array.isArray(exercise['otherNames'])
+    );
+}
+
+const isNamedStep = (value: unknown): value is Step =>
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as Record<string, unknown>)['name'] === 'string' &&
+    typeof (value as Record<string, unknown>)['kind'] === 'string';
+
+/** A timer with its steps linked to exercises; a broken step is left for the store to drop. */
+export function withLinkedSteps(value: unknown, finder: ExerciseFinder) {
+    if (typeof value !== 'object' || value === null) {
+        return value;
+    }
+    const timer = value as Record<string, unknown>;
+    const steps = timer['steps'];
+    if (!Array.isArray(steps) || !steps.every(isNamedStep)) {
+        return value;
+    }
+    return { ...timer, steps: linkSteps(steps, finder) };
+}
+
+/** A history entry with its sets linked to exercises; a broken set is left for the store. */
+export function withLinkedSets(value: unknown, finder: ExerciseFinder) {
+    if (typeof value !== 'object' || value === null) {
+        return value;
+    }
+    const entry = value as Record<string, unknown>;
+    const sets = entry['sets'];
+    if (!Array.isArray(sets)) {
+        return value;
+    }
+    const linked = linkSets(sets.filter(isLoggedSet), finder);
+    let next = 0;
+    return { ...entry, sets: sets.map((set) => (isLoggedSet(set) ? linked[next++] : set)) };
+}
+
+/**
+ * Version 2: ready for sync.
  *
  * - timers get random string ids in place of 1, 2, 3…, and an `updatedAt`
  * - history entries point to the new ids, and get an `updatedAt` (when they ended)
  * - `history-deleted` becomes deletion markers in `deleted`
- *
- * Anything unreadable is left as it is: the stores drop what they can't use.
  */
-export function migrateSavedData(now = Date.now()) {
-    if (Number(localStorage.getItem(VERSION_KEY) ?? 1) >= DATA_VERSION) {
-        return;
-    }
+function toVersion2(now: number) {
     const newIds: Record<string, string> = {};
     const timers = readList('timers');
     if (timers) {
@@ -44,7 +163,6 @@ export function migrateSavedData(now = Date.now()) {
         localStorage.setItem('deleted', JSON.stringify([...existing, ...deletions]));
         localStorage.removeItem('history-deleted');
     }
-    localStorage.setItem(VERSION_KEY, String(DATA_VERSION));
 }
 
 /**

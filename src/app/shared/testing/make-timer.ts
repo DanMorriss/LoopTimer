@@ -52,3 +52,11 @@ export function makeTimer(overrides: Partial<SimpleTimer> = {}): Timer {
 export const work = (seconds: number, name = ''): Step => ({ kind: 'work', seconds, name });
 export const rest = (seconds: number, name = ''): Step => ({ kind: 'rest', seconds, name });
 export const reps = (count: number, name = ''): Step => ({ kind: 'reps', reps: count, name });
+
+/** Steps without their exercise links, for tests that check what the steps are. */
+export const unlinked = (steps: readonly Step[]): Step[] =>
+    steps.map(({ exerciseId: _id, ...step }) => step as Step);
+
+/** A timer without its steps' exercise links. */
+export const unlinkedTimer = (timer: Timer | null): Timer | null =>
+    timer && { ...timer, steps: unlinked(timer.steps) };

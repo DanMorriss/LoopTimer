@@ -1,3 +1,5 @@
+import { Synced } from './sync';
+
 /**
  * The muscle groups the body map can shade, one per shape on its figure (see
  * docs/features/exercises.md). Front, side and rear shoulders, and the lats, aren't apart
@@ -111,3 +113,42 @@ export function canDoWith(
 /** Which figure the body map draws, chosen in settings (SET-5). */
 export type BodyFigure = 'male' | 'female';
 export const BODY_FIGURE_CHOICES: readonly BodyFigure[] = ['male', 'female'];
+
+/**
+ * An exercise of your own (EXR-9): made by typing a name no exercise has, and saved and
+ * synced as your data. It has the same details as a built-in one, though most start empty.
+ */
+export interface OwnExercise extends Synced {
+    name: string;
+    otherNames: string[];
+    equipment: EquipmentNeed[];
+    measuredBy: MeasuredBy;
+    mainMuscles: MuscleGroup[];
+    supportingMuscles: MuscleGroup[];
+    /** Empty until you add one. */
+    description: string;
+    steps: string[];
+    tips: string[];
+}
+
+export type Exercise = BuiltInExercise | OwnExercise;
+
+export function isBuiltIn(exercise: Exercise): exercise is BuiltInExercise {
+    return exercise.id.startsWith('builtin:');
+}
+
+/** Your own note on an exercise, built-in or your own (EXR-10). Its id is the exercise's. */
+export interface ExerciseNote extends Synced {
+    text: string;
+}
+
+/** Long enough for a cue or a machine setting, short enough to show beside a rep step. */
+export const MAX_EXERCISE_NOTE_LENGTH = 200;
+
+/**
+ * What two names must share to be the same exercise: case, spaces and a plural "s" don't
+ * count, so "Squats " and "squat" match, as do "Push-ups" and "Push-up".
+ */
+export function exerciseKey(name: string): string {
+    return name.trim().replace(/\s+/g, ' ').toLowerCase().replace(/s$/, '');
+}

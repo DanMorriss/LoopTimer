@@ -127,3 +127,100 @@ describe('migrating saved data', () => {
         expect(TestBed.inject(TimerStore).activeTimer()?.title).toBe('Arms');
     });
 });
+
+describe('migrating saved data to version 3: exercises', () => {
+    beforeEach(() => {
+        localStorage.clear();
+        localStorage.setItem('data-version', '2');
+    });
+    afterEach(() => localStorage.clear());
+
+    const saveVersion2 = () => {
+        localStorage.setItem(
+            'timers',
+            JSON.stringify([
+                makeTimer({
+                    id: 'legs',
+                    steps: [
+                        { kind: 'reps', reps: 10, name: 'Squats', weight: 60 },
+                        { kind: 'rest', seconds: 60, name: 'Breathe' },
+                        { kind: 'work', seconds: 30, name: 'Wall sit hold' },
+                        { kind: 'reps', reps: 5, name: '' },
+                    ],
+                }),
+            ])
+        );
+        localStorage.setItem(
+            'history',
+            JSON.stringify([
+                {
+                    ...v1Entry(1_000_000, 1),
+                    timerId: 'legs',
+                    updatedAt: 1_060_000,
+                    sets: [
+                        { round: 0, step: 0, name: 'Squats', reps: 10, weight: 60 },
+                        { round: 0, step: 1, name: 'Sled push', reps: 3 },
+                        { round: 0, step: 2, name: '', reps: 5 },
+                    ],
+                },
+            ])
+        );
+    };
+
+    it('links named steps to exercises, built-in where the name matches, your own otherwise', () => {
+        saveVersion2();
+
+        migrateSavedData(7000);
+
+        const own = saved('exercises');
+        const wallSit = own.find((e: { name: string }) => e.name === 'Wall sit hold');
+        expect(wallSit).toEqual(expect.objectContaining({ measuredBy: 'timed', updatedAt: 7000 }));
+        expect(saved('timers')[0].steps.map((s: { exerciseId?: string }) => s.exerciseId)).toEqual([
+            'builtin:back-squat',
+            undefined,
+            wallSit.id,
+            undefined,
+        ]);
+        expect(localStorage.getItem('data-version')).toBe('3');
+    });
+
+    it('links named sets in the history the same way, one exercise per name', () => {
+        saveVersion2();
+
+        migrateSavedData(7000);
+
+        const own = saved('exercises');
+        expect(own.map((e: { name: string }) => e.name)).toEqual(['Wall sit hold', 'Sled push']);
+        expect(saved('history')[0].sets.map((s: { exerciseId?: string }) => s.exerciseId)).toEqual([
+            'builtin:back-squat',
+            own[1].id,
+            undefined,
+        ]);
+    });
+
+    it('brings version 1 data all the way, linking it too', () => {
+        localStorage.removeItem('data-version');
+        const {
+            id: _id,
+            updatedAt: _at,
+            ...timer
+        } = makeTimer({
+            steps: [{ kind: 'reps', reps: 20, name: 'Push-ups' }],
+        });
+        localStorage.setItem('timers', JSON.stringify([{ ...timer, id: 1 }]));
+
+        migrateSavedData(7000);
+
+        const [saved1] = saved('timers');
+        expect(saved1.id).toMatch(/^[0-9a-f-]{36}$/);
+        expect(saved1.steps[0].exerciseId).toBe('builtin:push-up');
+    });
+
+    it('leaves a timer with a broken step for the store to drop', () => {
+        localStorage.setItem('timers', JSON.stringify([{ id: 'x', steps: [{ kind: 'reps' }] }]));
+
+        migrateSavedData(7000);
+
+        expect(saved('timers')).toEqual([{ id: 'x', steps: [{ kind: 'reps' }] }]);
+    });
+});

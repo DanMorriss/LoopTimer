@@ -215,13 +215,14 @@ export class ActiveRunService {
         if (state?.phase !== 'reps' || state.step?.kind !== 'reps') {
             return;
         }
-        const { name, reps, weight } = state.step;
+        const { name, reps, weight, exerciseId } = state.step;
         this.store.finishRepStep(state.phaseElapsedMs, {
             round: state.round,
             step: state.stepIndex,
             name,
             reps,
             ...(weight === undefined ? {} : { weight }),
+            ...(exerciseId === undefined ? {} : { exerciseId }),
         });
         this.sync();
     }
@@ -239,8 +240,13 @@ export class ActiveRunService {
         }
         const reps = 'reps' in change ? change.reps : step.reps;
         const weight = 'weight' in change ? change.weight : step.weight;
-        // No weight is left out, rather than saved as undefined
-        const changed: RepStep = { kind: 'reps', reps, name: step.name };
+        // No weight is left out, rather than saved as undefined; the exercise stays linked
+        const changed: RepStep = {
+            kind: 'reps',
+            reps,
+            name: step.name,
+            ...(step.exerciseId === undefined ? {} : { exerciseId: step.exerciseId }),
+        };
         this.store.updateActiveStep(
             state.stepIndex,
             weight === undefined ? changed : { ...changed, weight }

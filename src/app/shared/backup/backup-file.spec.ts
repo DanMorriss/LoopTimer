@@ -47,16 +47,25 @@ describe('backup file', () => {
         });
 
         const backup = makeBackup(
-            { timers: [timer], history: [ENTRY], deleted: [DELETION], settings: SETTINGS },
+            {
+                timers: [timer],
+                history: [ENTRY],
+                exercises: [],
+                exerciseNotes: [],
+                deleted: [DELETION],
+                settings: SETTINGS,
+            },
             5
         );
 
         expect(backup).toEqual({
             app: 'LoopTimer',
-            version: 2,
+            version: 3,
             exportedAt: 5,
             timers: [timer],
             history: [ENTRY],
+            exercises: [],
+            exerciseNotes: [],
             deleted: [DELETION],
             settings: SETTINGS,
         });
@@ -66,7 +75,14 @@ describe('backup file', () => {
         const timer = makeTimer({ title: 'Legs' });
         const text = JSON.stringify(
             makeBackup(
-                { timers: [timer], history: [ENTRY], deleted: [DELETION], settings: SETTINGS },
+                {
+                    timers: [timer],
+                    history: [ENTRY],
+                    exercises: [],
+                    exerciseNotes: [],
+                    deleted: [DELETION],
+                    settings: SETTINGS,
+                },
                 5
             )
         );
@@ -75,6 +91,8 @@ describe('backup file', () => {
             ok: true,
             timers: [timer],
             history: [ENTRY],
+            exercises: [],
+            exerciseNotes: [],
             deleted: [DELETION],
             fromVersion1: false,
             skipped: 0,
@@ -127,6 +145,8 @@ describe('backup file', () => {
             ok: true,
             timers: [timer],
             history: [ENTRY],
+            exercises: [],
+            exerciseNotes: [],
             deleted: [DELETION],
             fromVersion1: false,
             skipped: 3,

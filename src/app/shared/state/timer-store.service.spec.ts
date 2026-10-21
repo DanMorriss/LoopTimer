@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { Timer, TimerFields } from '../../models/timer';
 import { LoggedSet } from '../../models/history';
 import { makeTimer as baseTimer, reps, rest, SimpleTimer, work } from '../testing/make-timer';
+import { ExerciseStore } from './exercise-store.service';
 import { TimerStore } from './timer-store.service';
 
 // What Done logs in the rep step tests: round 1's push-ups
@@ -18,7 +19,11 @@ function savedTimers(): Timer[] {
 }
 
 describe('TimerStore', () => {
-    beforeEach(() => localStorage.clear());
+    beforeEach(() => {
+        localStorage.clear();
+        // Saved as this version of the app saves it, so loading isn't converting (see migrate.spec)
+        localStorage.setItem('data-version', '3');
+    });
     afterEach(() => localStorage.clear());
 
     const createStore = () => TestBed.inject(TimerStore);
@@ -319,6 +324,56 @@ describe('TimerStore', () => {
             const ids = Array.from({ length: 20 }, () => store.addTimer(makeTimer()).id);
 
             expect(new Set(ids).size).toBe(20);
+        });
+    });
+
+    describe('linking steps to exercises', () => {
+        it('links named work steps by name when a timer is saved, making your own as needed', () => {
+            const store = createStore();
+
+            const timer = store.addTimer(
+                makeTimer({
+                    steps: [
+                        reps(10, 'Squats'),
+                        rest(60, 'Breathe'),
+                        work(30, 'Wall sit hold'),
+                        reps(5),
+                    ],
+                })
+            );
+
+            const mine = TestBed.inject(ExerciseStore).own();
+            expect(mine.map((e) => [e.name, e.measuredBy])).toEqual([['Wall sit hold', 'timed']]);
+            expect(timer.steps.map((s) => s.exerciseId)).toEqual([
+                'builtin:back-squat',
+                undefined,
+                mine[0].id,
+                undefined,
+            ]);
+            expect(savedTimers()[0].steps[0].exerciseId).toBe('builtin:back-squat');
+        });
+
+        it('links again when a timer is edited, so a renamed step follows its name', () => {
+            const store = createStore();
+            const timer = store.addTimer(makeTimer({ steps: [reps(10, 'Squats')] }));
+
+            const updated = store.updateTimer(
+                timer.id,
+                makeTimer({ steps: [reps(10, 'Push-ups')] })
+            );
+
+            expect(updated!.steps[0].exerciseId).toBe('builtin:push-up');
+        });
+
+        it("keeps a saved step's link when loading", () => {
+            const saved = {
+                ...baseTimer({
+                    steps: [{ ...reps(10, 'Squats'), exerciseId: 'builtin:back-squat' }],
+                }),
+            };
+            localStorage.setItem('timers', JSON.stringify([saved]));
+
+            expect(createStore().timers()[0].steps[0].exerciseId).toBe('builtin:back-squat');
         });
     });
 

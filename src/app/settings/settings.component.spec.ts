@@ -13,6 +13,8 @@ const NOTHING: ImportCounts = {
     timersUpdated: 0,
     workoutsAdded: 0,
     workoutsUpdated: 0,
+    exercisesAdded: 0,
+    exercisesUpdated: 0,
     removed: 0,
     skipped: 0,
 };

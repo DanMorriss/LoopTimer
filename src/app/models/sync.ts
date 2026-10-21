@@ -10,7 +10,8 @@ export interface Synced {
 }
 
 /** The kinds of record that are synced, and so leave a deletion behind. */
-export type SyncedKind = 'timer' | 'history';
+export type SyncedKind = 'timer' | 'history' | 'exercise' | 'exercise-note';
+const SYNCED_KINDS: readonly SyncedKind[] = ['timer', 'history', 'exercise', 'exercise-note'];
 
 /** A record that was deleted, kept so the deletion can reach other copies too. */
 export interface Deletion {
@@ -101,7 +102,7 @@ export function isDeletion(value: unknown): value is Deletion {
     }
     const deletion = value as Record<string, unknown>;
     return (
-        (deletion['kind'] === 'timer' || deletion['kind'] === 'history') &&
+        SYNCED_KINDS.includes(deletion['kind'] as SyncedKind) &&
         typeof deletion['id'] === 'string' &&
         deletion['id'] !== '' &&
         Number.isInteger(deletion['deletedAt']) &&

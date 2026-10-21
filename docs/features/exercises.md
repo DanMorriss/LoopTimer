@@ -1,6 +1,6 @@
 # Exercises
 
-Planned (see [direction](../direction.md)). Rules are a first draft and get firmed up, with acceptance criteria, when this is built.
+Partly built: exercises are in the data (#86): the built-in list, your own exercises and notes, steps and sets linked to an exercise by name, and existing data carried over (EXR-4). The body map is built too. Still to come: the picker in Create, renaming, notes and hiding in the app, and the exercise pages. Rules not yet built are a first draft (see [direction](../direction.md)).
 
 ## Stories
 

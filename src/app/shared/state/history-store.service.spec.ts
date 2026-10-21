@@ -27,6 +27,7 @@ const NOW = 5_000_000;
 describe('HistoryStore', () => {
     beforeEach(() => {
         localStorage.clear();
+        localStorage.setItem('data-version', '3');
         vi.spyOn(Date, 'now').mockReturnValue(NOW);
     });
     afterEach(() => localStorage.clear());

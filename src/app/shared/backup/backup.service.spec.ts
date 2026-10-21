@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HistoryEntry } from '../../models/history';
 import { Deletion } from '../../models/sync';
 import { Timer } from '../../models/timer';
+import { ExerciseStore } from '../state/exercise-store.service';
 import { HistoryStore } from '../state/history-store.service';
 import { SettingsStore } from '../state/settings-store.service';
 import { TimerStore } from '../state/timer-store.service';
@@ -42,6 +43,8 @@ const result = (counts: Partial<ImportResult & { ok: true }>): ImportResult => (
     timersUpdated: 0,
     workoutsAdded: 0,
     workoutsUpdated: 0,
+    exercisesAdded: 0,
+    exercisesUpdated: 0,
     removed: 0,
     skipped: 0,
     ...counts,
@@ -54,7 +57,7 @@ describe('BackupService', () => {
 
     beforeEach(() => {
         localStorage.clear();
-        localStorage.setItem('data-version', '2');
+        localStorage.setItem('data-version', '3');
     });
     afterEach(() => localStorage.clear());
 
@@ -87,7 +90,7 @@ describe('BackupService', () => {
             expect(link.href).toBe('blob:backup');
             const file: BackupFile = JSON.parse(await blob!.text());
             expect(file.app).toBe('LoopTimer');
-            expect(file.version).toBe(2);
+            expect(file.version).toBe(3);
             expect(file.timers).toEqual(timers().timers());
             expect(file.history).toEqual(history().entries());
             expect(file.deleted).toEqual([
@@ -294,6 +297,119 @@ describe('BackupService', () => {
                     .entries()
                     .map((e) => e.note)
             ).toEqual([undefined, 'felt strong']);
+        });
+    });
+
+    describe('exercises', () => {
+        const fileOf = (contents: Record<string, unknown>) =>
+            new Blob([
+                JSON.stringify({
+                    app: 'LoopTimer',
+                    version: 3,
+                    exportedAt: 1,
+                    timers: [],
+                    history: [],
+                    exercises: [],
+                    exerciseNotes: [],
+                    deleted: [],
+                    ...contents,
+                }),
+            ]);
+
+        it('exports your own exercises and your notes', async () => {
+            start();
+            const exercises = TestBed.inject(ExerciseStore);
+            const mine = exercises.addOwn('Sled push', 'reps');
+            exercises.setNote('builtin:back-squat', 'Pause at the bottom');
+            let blob: Blob | undefined;
+            vi.spyOn(URL, 'createObjectURL').mockImplementation((b) => {
+                blob = b as Blob;
+                return 'blob:backup';
+            });
+            vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+
+            backup.export();
+
+            const file: BackupFile = JSON.parse(await blob!.text());
+            expect(file.exercises).toEqual([mine]);
+            expect(file.exerciseNotes).toEqual([
+                {
+                    id: 'builtin:back-squat',
+                    text: 'Pause at the bottom',
+                    updatedAt: expect.any(Number),
+                },
+            ]);
+        });
+
+        it('adds your own exercises and notes, and links timers to them', async () => {
+            start();
+            const sled = {
+                ...TestBed.inject(ExerciseStore).addOwn('x', 'reps'),
+                id: 'sled',
+                name: 'Sled push',
+            };
+            const timer = makeTimer({
+                id: 'legs',
+                steps: [{ kind: 'reps', reps: 3, name: 'Sled push', exerciseId: 'sled' }],
+            });
+
+            const imported = await backup.import(
+                fileOf({
+                    timers: [timer],
+                    exercises: [sled],
+                    exerciseNotes: [{ id: 'sled', text: 'Low and fast', updatedAt: 1 }],
+                })
+            );
+
+            const exercises = TestBed.inject(ExerciseStore);
+            expect(imported).toEqual(result({ timersAdded: 1, exercisesAdded: 1 }));
+            expect(exercises.byId('sled')?.name).toBe('Sled push');
+            expect(exercises.noteFor('sled')).toBe('Low and fast');
+            expect(timers().timers()[0].steps[0].exerciseId).toBe('sled');
+        });
+
+        it('links the steps and sets of a backup from before exercises, by name', async () => {
+            start();
+
+            await backup.import(
+                fileOf({
+                    version: 2,
+                    timers: [
+                        makeTimer({
+                            id: 'legs',
+                            steps: [{ kind: 'reps', reps: 10, name: 'Squats' }],
+                        }),
+                    ],
+                    history: [
+                        makeEntry(1_000_000, {
+                            sets: [{ round: 0, step: 0, name: 'Bear crawl', reps: 10 }],
+                        }),
+                    ],
+                })
+            );
+
+            const crawl = TestBed.inject(ExerciseStore).finder.find('Bear crawl');
+            expect(timers().timers()[0].steps[0].exerciseId).toBe('builtin:back-squat');
+            expect(history().entries()[0].sets![0].exerciseId).toBe(crawl!.id);
+        });
+
+        it('links a step anew when its exercise is neither here nor in the file', async () => {
+            start();
+
+            await backup.import(
+                fileOf({
+                    timers: [
+                        makeTimer({
+                            id: 'legs',
+                            steps: [
+                                { kind: 'reps', reps: 10, name: 'Push-ups', exerciseId: 'gone' },
+                            ],
+                        }),
+                    ],
+                })
+            );
+
+            expect(timers().timers()[0].steps[0].exerciseId).toBe('builtin:push-up');
         });
     });
 });
