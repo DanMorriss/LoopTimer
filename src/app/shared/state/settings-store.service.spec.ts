@@ -22,6 +22,7 @@ describe('SettingsStore', () => {
             vibration: true,
             keepScreenOn: true,
             weightUnit: 'kg',
+            bodyFigure: 'male',
         });
 
         TestBed.resetTestingModule();
@@ -50,6 +51,18 @@ describe('SettingsStore', () => {
         TestBed.resetTestingModule();
         localStorage.setItem('settings', '{"weightUnit": "lb"}');
         expect(createStore().weightUnit()).toBe('lb');
+    });
+
+    it('draws the male figure by default, and keeps only a figure it knows', () => {
+        expect(createStore().bodyFigure()).toBe('male');
+
+        TestBed.resetTestingModule();
+        localStorage.setItem('settings', '{"bodyFigure": "robot"}');
+        expect(createStore().bodyFigure()).toBe('male');
+
+        TestBed.resetTestingModule();
+        localStorage.setItem('settings', '{"bodyFigure": "female"}');
+        expect(createStore().bodyFigure()).toBe('female');
     });
 
     for (const [label, saved] of [

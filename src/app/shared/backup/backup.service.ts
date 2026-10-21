@@ -50,6 +50,7 @@ export class BackupService {
                     vibration: this.settings.vibration(),
                     keepScreenOn: this.settings.keepScreenOn(),
                     weightUnit: this.settings.weightUnit(),
+                    bodyFigure: this.settings.bodyFigure(),
                 },
             },
             exportedAt

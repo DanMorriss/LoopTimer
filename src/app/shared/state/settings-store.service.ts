@@ -1,4 +1,5 @@
 import { computed, Service, signal } from '@angular/core';
+import { BODY_FIGURE_CHOICES, BodyFigure } from '../../models/exercise';
 import { WEIGHT_UNITS, WeightUnit } from '../../models/weight';
 
 export type Theme = 'dark' | 'light' | 'system';
@@ -15,6 +16,8 @@ export interface Settings {
     keepScreenOn: boolean;
     /** What weights are shown and picked in; they're always saved in kg. */
     weightUnit: WeightUnit;
+    /** Which figure the body map draws. */
+    bodyFigure: BodyFigure;
 }
 
 const DEFAULT_SETTINGS: Settings = {
@@ -23,6 +26,7 @@ const DEFAULT_SETTINGS: Settings = {
     vibration: true,
     keepScreenOn: true,
     weightUnit: 'kg',
+    bodyFigure: 'male',
 };
 const STORAGE_KEY = 'settings';
 
@@ -36,6 +40,7 @@ export class SettingsStore {
     readonly vibration = computed(() => this.settings().vibration);
     readonly keepScreenOn = computed(() => this.settings().keepScreenOn);
     readonly weightUnit = computed(() => this.settings().weightUnit);
+    readonly bodyFigure = computed(() => this.settings().bodyFigure);
 
     update(changes: Partial<Settings>) {
         this.settings.update((settings) => ({ ...settings, ...changes }));
@@ -65,5 +70,8 @@ function loadSettings(): Settings {
         vibration: flag('vibration'),
         keepScreenOn: flag('keepScreenOn'),
         weightUnit,
+        bodyFigure:
+            BODY_FIGURE_CHOICES.find((f) => f === saved['bodyFigure']) ??
+            DEFAULT_SETTINGS.bodyFigure,
     };
 }

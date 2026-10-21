@@ -67,6 +67,16 @@
     --cta-sheen: rgba(255, 255, 255, 0.55);
     --cta-near: rgba(34, 211, 238, 0.45);
     --cta-far: rgba(34, 211, 238, 0.22);
+
+    // The body map: muscles shaded strong for main, darker for supporting, and grey when
+    // unworked, apart in lightness as well as colour; each label's ink is for its shade
+    --muscle-main: #22d3ee;
+    --muscle-main-ink: #032029;
+    --muscle-supporting: #0e7490;
+    --muscle-supporting-ink: #ecfeff;
+    --muscle-idle: #1e293b;
+    --muscle-other: #334155; // head, hands, feet and knees, never shaded
+    --muscle-outline: rgba(148, 163, 184, 0.5);
 }
 
 // Light: the same roles, chosen for at least 4.5:1 text and 3:1 controls on a pale page
@@ -126,6 +136,15 @@
     --cta-sheen: rgba(255, 255, 255, 0.35);
     --cta-near: rgba(8, 145, 178, 0.35);
     --cta-far: rgba(8, 145, 178, 0.18);
+
+    // Darkest for main here, so the strongest shade still reads strongest on a pale page
+    --muscle-main: #0e7490;
+    --muscle-main-ink: #ffffff;
+    --muscle-supporting: #4fb3c8;
+    --muscle-supporting-ink: #083344;
+    --muscle-idle: #e8edf3;
+    --muscle-other: #cbd5e1;
+    --muscle-outline: rgba(71, 85, 105, 0.55);
 }
 
 html,

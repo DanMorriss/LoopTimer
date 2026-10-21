@@ -1,0 +1,41 @@
+<!-- The labels below say the same in words, so the drawing itself is hidden from screen readers -->
+<div class="body-map__figures" aria-hidden="true">
+    @for (side of sides(); track side.name) {
+        <figure class="body-map__figure">
+            <svg class="body-map__svg" [attr.viewBox]="side.viewBox" focusable="false">
+                @for (path of side.paths; track $index) {
+                    <path
+                        [attr.d]="path.d"
+                        [class]="'body-map__shape body-map__shape--' + path.shade"
+                    />
+                }
+                <path class="body-map__outline" [attr.d]="side.outline" />
+            </svg>
+            <figcaption class="body-map__side">{{ side.name }}</figcaption>
+        </figure>
+    }
+</div>
+
+@if (mainLabels().length === 0 && supportingLabels().length === 0) {
+    <p class="body-map__none">No muscles listed.</p>
+}
+@if (mainLabels().length > 0) {
+    <div class="body-map__group">
+        <p class="body-map__heading" [id]="id + '-main'">Main</p>
+        <ul class="body-map__labels" [attr.aria-labelledby]="id + '-main'">
+            @for (label of mainLabels(); track label) {
+                <li class="body-map__label body-map__label--main">{{ label }}</li>
+            }
+        </ul>
+    </div>
+}
+@if (supportingLabels().length > 0) {
+    <div class="body-map__group">
+        <p class="body-map__heading" [id]="id + '-supporting'">Supporting</p>
+        <ul class="body-map__labels" [attr.aria-labelledby]="id + '-supporting'">
+            @for (label of supportingLabels(); track label) {
+                <li class="body-map__label body-map__label--supporting">{{ label }}</li>
+            }
+        </ul>
+    </div>
+}

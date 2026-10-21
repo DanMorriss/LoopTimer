@@ -107,3 +107,7 @@ export function canDoWith(
         return options.some((option) => option === 'none' || available.includes(option));
     });
 }
+
+/** Which figure the body map draws, chosen in settings (SET-5). */
+export type BodyFigure = 'male' | 'female';
+export const BODY_FIGURE_CHOICES: readonly BodyFigure[] = ['male', 'female'];
