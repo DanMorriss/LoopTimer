@@ -23,7 +23,7 @@ How the exercises that come with LoopTimer are written, and which are still to w
 | `steps`             | 3–5, in order: set up, do it, go back. Each a sentence or two, at most 140 characters.                                                                                                                                               |
 | `tips`              | 1 or 2, each at most 140 characters: the commonest mistake, or how to make it easier or harder.                                                                                                                                      |
 
-Equipment is one of: `barbell`, `dumbbells`, `kettlebell`, `bench`, `rack`, `pull-up bar`, `parallel bars`, `cable`, `machine` (a dedicated gym machine), `band`, `step` (a box, step or stair), `none`. If an exercise truly needs something else (e.g. an ab wheel), add it to `Equipment` in `exercise.ts` and to the list in [features/exercises](features/exercises.md#the-built-in-list-exr-6-exr-7), in the same batch.
+Equipment is one of: `barbell`, `dumbbells`, `kettlebell`, `bench`, `rack`, `pull-up bar`, `parallel bars`, `cable`, `machine` (a dedicated gym machine), `band`, `step` (a box, step or stair), `ab wheel`, `none`. If an exercise truly needs something else (e.g. a preacher bench), add it to `Equipment` in `exercise.ts` and to the list in [features/exercises](features/exercises.md#the-built-in-list-exr-6-exr-7), in the same batch.
 
 Muscle groups are the 18 in `MuscleGroup`, the shapes on the body map. There are no separate front, side or rear shoulders, and no lats: use `shoulders` and `upper-back`.
 
@@ -72,10 +72,10 @@ An example to match:
 
 ## Backlog
 
-70 written (batches 1–7). These take it to 80; more can be added at the end.
+80 written (batches 1–8). The list is complete for now; more can be added at the end of the backlog.
 
 - [x] **Batch 4, core, carries and variations:** side plank, dead bug, Russian twist, farmer's carry, sumo deadlift, Bulgarian split squat, step-up, hammer curl, skull crusher, glute bridge
 - [x] **Batch 5, chest, shoulders and arms:** dumbbell bench press, incline bench press, close-grip bench press, dumbbell fly, cable crossover, Arnold press, rear delt fly, shrug, preacher curl, overhead triceps extension
 - [x] **Batch 6, legs:** hack squat, walking lunge, reverse lunge, single-leg Romanian deadlift, good morning, back extension, Nordic curl, seated calf raise, hip abduction machine, hip adduction machine
 - [x] **Batch 7, back, pulling and bodyweight pushing:** inverted row, T-bar row, straight-arm pulldown, rack pull, band pull-apart, cable curl, bench dip, diamond push-up, pike push-up, dead hang
-- [ ] **Batch 8, conditioning and abs:** burpee, mountain climber, jumping jack, jump squat, box jump, bodyweight squat, wall sit, crunch, bicycle crunch, ab wheel rollout
+- [x] **Batch 8, conditioning and abs:** burpee, mountain climber, jumping jack, jump squat, box jump, bodyweight squat, wall sit, crunch, bicycle crunch, ab wheel rollout
