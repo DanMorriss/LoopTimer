@@ -65,9 +65,9 @@ Top to bottom: back to Exercises; the name; "Also called: …"; equipment and ho
 
 ### Carrying over (EXR-4)
 
-On first load, each distinct step name (trimmed, ignoring case):
+On first load, each distinct step name (trimmed, ignoring case, and ignoring a plural "s", so "Squats" and "Push-ups" match "Squat" and "Push-up"):
 
-1. **Matches a built-in exercise** by name or other name → linked to it.
+1. **Matches a built-in exercise** by name or other name → linked to it. "Squat" is one of Back squat's other names, so a plain "Squats" step becomes a back squat; picking another exercise for the step changes it.
 2. **Otherwise** → becomes one of your own exercises, with no muscles yet.
 
 Past logged sets are linked the same way. Unnamed steps stay unnamed and aren't tracked as an exercise.
