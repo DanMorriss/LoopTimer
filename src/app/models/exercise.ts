@@ -56,7 +56,15 @@ export type Equipment =
     | 'cable'
     | 'machine'
     | 'band'
+    /** A box, bench-height step or stair. */
+    | 'step'
     | 'none';
+
+/**
+ * One thing an exercise needs: a piece of equipment, or a choice of them where any one will
+ * do (e.g. a dumbbell or a kettlebell for a goblet squat).
+ */
+export type EquipmentNeed = Equipment | readonly Equipment[];
 
 /** Reps (with a weight where there is one), or a time held, e.g. a plank. */
 export type MeasuredBy = 'reps' | 'timed';
@@ -68,7 +76,11 @@ export interface BuiltInExercise {
     name: string;
     /** Other names it goes by, matched by the picker and when old steps carry over. */
     otherNames: string[];
-    equipment: Equipment[];
+    /**
+     * Everything it needs, all of it, so it can be filtered by what someone has; `['none']`
+     * for nothing at all. Plates and a floor are taken for granted.
+     */
+    equipment: EquipmentNeed[];
     measuredBy: MeasuredBy;
     /** The muscles doing most of the work: bright on the body map. */
     mainMuscles: MuscleGroup[];
@@ -80,4 +92,18 @@ export interface BuiltInExercise {
     steps: string[];
     /** One or two. */
     tips: string[];
+}
+
+/**
+ * Whether an exercise can be done with only `available` equipment: every need is met, where
+ * a choice is met by any one of it. Needing nothing is always met.
+ */
+export function canDoWith(
+    exercise: { equipment: readonly EquipmentNeed[] },
+    available: readonly Equipment[]
+): boolean {
+    return exercise.equipment.every((need) => {
+        const options: readonly Equipment[] = typeof need === 'string' ? [need] : need;
+        return options.some((option) => option === 'none' || available.includes(option));
+    });
 }
