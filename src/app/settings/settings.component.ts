@@ -1,4 +1,5 @@
 import { ApplicationRef, Component, computed, DOCUMENT, inject, signal } from '@angular/core';
+import { BodyFigure } from '../models/exercise';
 import { WeightUnit } from '../models/weight';
 import { AlarmService } from '../shared/alarms/alarm.service';
 import { BackupService, ImportResult } from '../shared/backup/backup.service';
@@ -50,6 +51,14 @@ export class SettingsComponent {
     ];
     protected readonly chosenUnitIndex = computed(() =>
         this.weightUnits.findIndex((option) => option.value === this.settings.weightUnit())
+    );
+
+    protected readonly figures: { value: BodyFigure; label: string }[] = [
+        { value: 'male', label: 'Male' },
+        { value: 'female', label: 'Female' },
+    ];
+    protected readonly chosenFigureIndex = computed(() =>
+        this.figures.findIndex((option) => option.value === this.settings.bodyFigure())
     );
 
     protected readonly previews: AlarmPreview[] = [

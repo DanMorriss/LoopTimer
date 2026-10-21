@@ -1,0 +1,95 @@
+:host {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.body-map__figures {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+}
+
+.body-map__figure {
+    display: flex;
+    flex: 0 1 9rem;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    margin: 0;
+    min-width: 0;
+}
+
+.body-map__svg {
+    display: block;
+    width: 100%;
+    // The same box for every side and figure, whose drawings come on different-sized
+    // canvases, so front and back line up and match in size
+    aspect-ratio: 1 / 2;
+    height: auto;
+}
+
+.body-map__shape {
+    fill: var(--muscle-idle);
+    stroke: var(--muscle-outline);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+
+    &--main {
+        fill: var(--muscle-main);
+    }
+
+    &--supporting {
+        fill: var(--muscle-supporting);
+    }
+
+    &--other {
+        fill: var(--muscle-other);
+    }
+}
+
+.body-map__outline {
+    fill: none;
+    stroke: var(--muscle-outline);
+    stroke-width: 1.5;
+    vector-effect: non-scaling-stroke;
+}
+
+.body-map__side,
+.body-map__heading,
+.body-map__none {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.body-map__group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.body-map__labels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.body-map__label {
+    padding: 0.4rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.875rem;
+
+    &--main {
+        background: var(--muscle-main);
+        color: var(--muscle-main-ink);
+    }
+
+    &--supporting {
+        background: var(--muscle-supporting);
+        color: var(--muscle-supporting-ink);
+    }
+}

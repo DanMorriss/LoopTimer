@@ -235,6 +235,38 @@ describe('SettingsComponent', () => {
         });
     });
 
+    describe('body figure', () => {
+        const radios = () =>
+            Array.from(
+                fixture.nativeElement.querySelectorAll(
+                    'input[name="bodyFigure"]'
+                ) as NodeListOf<HTMLInputElement>
+            );
+
+        it('offers Male and Female in a labelled group, with Male chosen to begin with', () => {
+            create();
+
+            expect(radios().map((r) => r.closest('label')!.textContent!.trim())).toEqual([
+                'Male',
+                'Female',
+            ]);
+            const group = radios()[0].closest('fieldset')!;
+            expect(group.querySelector('legend')!.textContent).toBe('Body figure');
+            expect(group.getAttribute('aria-describedby')).toBe('figure-hint');
+            expect(radios().find((r) => r.checked)?.value).toBe('male');
+        });
+
+        it('saves Female when picked', () => {
+            create();
+
+            radios()[1].click();
+            fixture.detectChanges();
+
+            expect(settings.bodyFigure()).toBe('female');
+            expect(radios().find((r) => r.checked)?.value).toBe('female');
+        });
+    });
+
     describe('keep screen on', () => {
         /** As if the browser does, or doesn't, have the Screen Wake Lock API. */
         const supported = (value: boolean) =>

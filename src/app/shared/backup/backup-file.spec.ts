@@ -10,6 +10,7 @@ const SETTINGS: Settings = {
     vibration: true,
     keepScreenOn: true,
     weightUnit: 'kg',
+    bodyFigure: 'male',
 };
 
 const ENTRY: HistoryEntry = {

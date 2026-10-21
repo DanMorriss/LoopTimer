@@ -89,5 +89,32 @@ for (const theme of ['dark', 'light'] as const) {
         it('keeps the switch dot visible on the lit-up loop', () => {
             expect(contrastRatio(token('--glow-dot'), token('--glow'))).toBeGreaterThanOrEqual(1.5);
         });
+
+        describe('body map', () => {
+            it('keeps each muscle label readable on its own shade', () => {
+                for (const shade of ['main', 'supporting']) {
+                    expect(
+                        contrastRatio(token(`--muscle-${shade}-ink`), token(`--muscle-${shade}`))
+                    ).toBeGreaterThanOrEqual(4.5);
+                }
+            });
+
+            // The labels say the same in words, so the figure needs its shades apart, not 3:1
+            it('keeps main, supporting and unworked muscles apart in lightness', () => {
+                const [main, supporting, idle] = ['main', 'supporting', 'idle'].map((s) =>
+                    token(`--muscle-${s}`)
+                );
+
+                expect(contrastRatio(main, idle)).toBeGreaterThanOrEqual(3);
+                expect(contrastRatio(supporting, idle)).toBeGreaterThanOrEqual(2);
+                expect(contrastRatio(main, supporting)).toBeGreaterThanOrEqual(2);
+            });
+
+            it('makes the main muscles stand out on the page (at least 3:1)', () => {
+                expect(
+                    contrastRatio(token('--muscle-main'), flatten(['--page-bg', '--panel']))
+                ).toBeGreaterThanOrEqual(3);
+            });
+        });
     });
 }

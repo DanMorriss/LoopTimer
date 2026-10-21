@@ -9,9 +9,8 @@ Open work, highest priority first. Tick items off (or delete them) as they're do
 Do these first: everything after builds on them. The data is ready for sync (#81: random ids, `updatedAt`, deletion markers, backup version 2). Exercises build on that: your own exercises and notes get the same, steps and logged sets gain an exercise id, and the conversion that links them is the next `data-version` (3) in `migrate.ts`.
 
 - [ ] **Write the built-in exercise list (for EXR-6, EXR-7):** 40 of about 80 written, in `src/app/models/built-in-exercises.ts`. The rules, the voice and the backlog of the other 40 are in `docs/writing-exercises.md`; the `exercise-writer` agent (`.claude/agents/`) writes one batch of 10 per run and raises it as a PR, for Dan to review before the next. Not used by the app until the exercises work below.
-- [ ] **Body map component (for EXR-8):** front and back figures from react-native-body-highlighter's MIT shapes (keep the licence notice), as an Angular component that shades main and supporting muscles from colour tokens, with the muscle labels underneath as its key and text. Male and female figures, picked by a new "Body figure" setting (SET-5). Design: "A + C" in the exercise page options canvas linked from `docs/features/exercises.md`.
 - [ ] **Exercises as things in their own right (EXR-1–4, EXR-9, EXR-10):** built-in and your own exercises, steps and logged sets pointing to an exercise id, a picker in Create (search the list, or type a new name to make one), renaming your own everywhere, your own note on any exercise, and existing step names and history converted on load (matched to built-in exercises where they can be). Add your own exercises to the backup file. Steps can still have no exercise; weights follow the settings unit.
-- [ ] **Exercise pages (EXR-6–8):** browse and search the list, and a page per exercise with its description, how-to steps and the body map shaded for main and supporting muscles. Phase 3's progress goes on the same page.
+- [ ] **Exercise pages (EXR-6–8):** browse and search the list, and a page per exercise with its description, how-to steps and the body map (`<app-body-map [main] [supporting]>`, built in #83). Phase 3's progress goes on the same page.
 - [ ] **More room for history (SYN-5):** move it from `localStorage` to IndexedDB and lift the 500-entry cap, so years of progress fit.
 - [ ] **"Workouts", not "Timers" (EXR-5):** rename in the menu, library, Create, the timer page, history ("Untitled timer") and the docs. The app keeps the name LoopTimer; code names can follow or stay.
 
@@ -52,3 +51,4 @@ Do these first: everything after builds on them. The data is ready for sync (#81
 ## 3. Known issues
 
 - [ ] **Library cards show a timer's id as a tooltip:** hovering a card's title shows "ID: " and the id, which since #81 is a long random UUID. Drop the tooltip in the "Workouts" rename (EXR-5).
+- [ ] **The body map can't shade abductors:** react-native-body-highlighter has no abductor shapes on either figure, so exercises that work them (side plank, hip abduction) list them without shading. Fix by drawing the shapes ourselves, or swap to a diagram that has them.

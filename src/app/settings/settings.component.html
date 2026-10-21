@@ -30,6 +30,35 @@
                     }
                 </div>
             </fieldset>
+
+            <!-- Which figure the body map on exercise pages draws -->
+            <fieldset class="theme-picker settings__picker" aria-describedby="figure-hint">
+                <legend class="setting__name">Body figure</legend>
+                <div
+                    class="theme-picker__options"
+                    [style.--count]="figures.length"
+                    [style.--chosen]="chosenFigureIndex()"
+                >
+                    <span class="theme-picker__thumb" aria-hidden="true"></span>
+                    @for (option of figures; track option.value; let i = $index) {
+                        <label
+                            class="theme-picker__option"
+                            [class.theme-picker__option--chosen]="i === chosenFigureIndex()"
+                        >
+                            <input
+                                type="radio"
+                                name="bodyFigure"
+                                class="theme-picker__input"
+                                [value]="option.value"
+                                [checked]="settings.bodyFigure() === option.value"
+                                (change)="settings.update({ bodyFigure: option.value })"
+                            />
+                            <span class="theme-picker__label">{{ option.label }}</span>
+                        </label>
+                    }
+                </div>
+                <p class="setting__hint" id="figure-hint">Shows which muscles an exercise works</p>
+            </fieldset>
         </section>
 
         <section class="settings__section" aria-labelledby="units-heading">
