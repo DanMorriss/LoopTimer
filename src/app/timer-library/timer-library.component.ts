@@ -28,8 +28,8 @@ export class TimerLibraryComponent {
     private host = inject<ElementRef<HTMLElement>>(ElementRef);
     private injector = inject(Injector);
     protected timerPendingDelete = signal<Timer | null>(null);
-    protected activeTimerCardId = signal<number | null>(null);
-    protected openTimerMenuId = signal<number | null>(null);
+    protected activeTimerCardId = signal<string | null>(null);
+    protected openTimerMenuId = signal<string | null>(null);
 
     protected isExistingTimers = computed(() => this.timerStore.timers().length > 0);
 
@@ -63,7 +63,7 @@ export class TimerLibraryComponent {
         );
     }
 
-    setActiveTimerCard(timerId: number) {
+    setActiveTimerCard(timerId: string) {
         this.activeTimerCardId.set(timerId);
     }
 
@@ -72,14 +72,14 @@ export class TimerLibraryComponent {
         this.openTimerMenuId.set(null);
     }
 
-    toggleTimerMenu(timerId: number) {
+    toggleTimerMenu(timerId: string) {
         this.activeTimerCardId.set(timerId);
         this.openTimerMenuId.update((currentMenuId) =>
             currentMenuId === timerId ? null : timerId
         );
     }
 
-    closeTimerMenu(timerId: number) {
+    closeTimerMenu(timerId: string) {
         if (this.openTimerMenuId() !== timerId) {
             return;
         }
@@ -107,7 +107,7 @@ export class TimerLibraryComponent {
         this.router.navigate(['/setup']);
     }
 
-    navigateToEditTimer(timerId: number) {
+    navigateToEditTimer(timerId: string) {
         this.openTimerMenuId.set(null);
         this.activeTimerCardId.set(null);
         this.router.navigate(['/setup'], { queryParams: { editId: timerId } });

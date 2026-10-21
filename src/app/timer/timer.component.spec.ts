@@ -271,7 +271,7 @@ describe('TimerComponent', () => {
         start(makeTimer({ timerSeconds: 10 }));
         advance(4000);
 
-        store.setActiveTimer(makeTimer({ id: 2, title: 'Second', timerSeconds: 20 }));
+        store.setActiveTimer(makeTimer({ id: 'timer-2', title: 'Second', timerSeconds: 20 }));
         fixture.detectChanges();
 
         expect(text()).toContain('Second');
@@ -286,7 +286,7 @@ describe('TimerComponent', () => {
         advance(3000);
         expect(component.isRestActive()).toBe(true);
 
-        store.setActiveTimer(makeTimer({ id: 2, title: 'Second', timerSeconds: 20 }));
+        store.setActiveTimer(makeTimer({ id: 'timer-2', title: 'Second', timerSeconds: 20 }));
         fixture.detectChanges();
 
         expect(component.isTimerActive()).toBe(true);
@@ -304,9 +304,9 @@ describe('TimerComponent', () => {
         // Simulate a refresh: the timer was saved and made active in a previous page load
         localStorage.setItem(
             'timers',
-            JSON.stringify([makeTimer({ id: 7, title: 'Saved', timerSeconds: 30 })])
+            JSON.stringify([makeTimer({ id: 'timer-7', title: 'Saved', timerSeconds: 30 })])
         );
-        sessionStorage.setItem('activeTimerId', '7');
+        sessionStorage.setItem('activeTimerId', 'timer-7');
         TestBed.resetTestingModule();
         TestBed.configureTestingModule({
             imports: [TimerComponent],
@@ -329,9 +329,11 @@ describe('TimerComponent', () => {
         // Started 42s ago in a previous page load: 30s work done, 10s rest done, 2s into round 2
         localStorage.setItem(
             'timers',
-            JSON.stringify([makeTimer({ id: 7, timerSeconds: 30, restSeconds: 10, repeats: 3 })])
+            JSON.stringify([
+                makeTimer({ id: 'timer-7', timerSeconds: 30, restSeconds: 10, repeats: 3 }),
+            ])
         );
-        sessionStorage.setItem('activeTimerId', '7');
+        sessionStorage.setItem('activeTimerId', 'timer-7');
         sessionStorage.setItem('activeTimerStartedAt', String(Date.now() - 42000));
         TestBed.resetTestingModule();
         TestBed.configureTestingModule({
@@ -519,9 +521,9 @@ describe('TimerComponent', () => {
             // 3.5s into a 10s work phase
             localStorage.setItem(
                 'timers',
-                JSON.stringify([makeTimer({ id: 7, timerSeconds: 10 })])
+                JSON.stringify([makeTimer({ id: 'timer-7', timerSeconds: 10 })])
             );
-            sessionStorage.setItem('activeTimerId', '7');
+            sessionStorage.setItem('activeTimerId', 'timer-7');
             sessionStorage.setItem('activeTimerStartedAt', String(Date.now() - 3500));
             TestBed.resetTestingModule();
             TestBed.configureTestingModule({
@@ -674,9 +676,9 @@ describe('TimerComponent', () => {
         it('stays paused at the same point after a page refresh', () => {
             localStorage.setItem(
                 'timers',
-                JSON.stringify([makeTimer({ id: 7, timerSeconds: 30 })])
+                JSON.stringify([makeTimer({ id: 'timer-7', timerSeconds: 30 })])
             );
-            sessionStorage.setItem('activeTimerId', '7');
+            sessionStorage.setItem('activeTimerId', 'timer-7');
             sessionStorage.setItem('activeTimerStartedAt', String(Date.now() - 60000));
             // Paused 4s in, a minute ago
             sessionStorage.setItem('activeTimerPausedAt', String(Date.now() - 56000));
@@ -821,15 +823,21 @@ describe('TimerComponent', () => {
         it('logs a finished workout, with its full time and rounds', () => {
             const startedAt = Date.now();
             start(
-                makeTimer({ id: 4, title: 'Sprints', timerSeconds: 3, restSeconds: 2, repeats: 2 })
+                makeTimer({
+                    id: 'timer-4',
+                    title: 'Sprints',
+                    timerSeconds: 3,
+                    restSeconds: 2,
+                    repeats: 2,
+                })
             );
 
             advance(8000);
 
             expect(entries()).toEqual([
                 {
-                    id: `${startedAt}-4`,
-                    timerId: 4,
+                    id: `${startedAt}-timer-4`,
+                    timerId: 'timer-4',
                     title: 'Sprints',
                     startedAt,
                     endedAt: startedAt + 8000,
@@ -837,6 +845,7 @@ describe('TimerComponent', () => {
                     roundsCompleted: 2,
                     totalRounds: 2,
                     outcome: 'finished',
+                    updatedAt: expect.any(Number),
                 },
             ]);
             fixture.destroy();
@@ -845,9 +854,9 @@ describe('TimerComponent', () => {
         describe('the finished screen', () => {
             const finish = () => {
                 const startedAt = Date.now();
-                start(makeTimer({ id: 4, timerSeconds: 1, restSeconds: 0, repeats: 1 }));
+                start(makeTimer({ id: 'timer-4', timerSeconds: 1, restSeconds: 0, repeats: 1 }));
                 advance(1000);
-                return `${startedAt}-4`;
+                return `${startedAt}-timer-4`;
             };
             const finishButton = (name: string) =>
                 Array.from(
@@ -940,7 +949,7 @@ describe('TimerComponent', () => {
                 advance(6000); // round 2 has begun
                 fixture.destroy();
 
-                TestBed.inject(ActiveRunService).start(makeTimer({ id: 2, title: 'Next' }));
+                TestBed.inject(ActiveRunService).start(makeTimer({ id: 'timer-2', title: 'Next' }));
 
                 expect(entries()).toEqual([
                     expect.objectContaining({
@@ -957,7 +966,7 @@ describe('TimerComponent', () => {
                 start(makeTimer({ timerSeconds: 3 }));
                 advance(2000);
 
-                TestBed.inject(ActiveRunService).start(makeTimer({ id: 2 }));
+                TestBed.inject(ActiveRunService).start(makeTimer({ id: 'timer-2' }));
 
                 expect(entries()).toEqual([]);
                 fixture.destroy();
@@ -1333,8 +1342,8 @@ describe('TimerComponent', () => {
         });
 
         it('skips the alarms already past after a page refresh', () => {
-            localStorage.setItem('timers', JSON.stringify([{ ...timer(), id: 7 }]));
-            sessionStorage.setItem('activeTimerId', '7');
+            localStorage.setItem('timers', JSON.stringify([{ ...timer(), id: 'timer-7' }]));
+            sessionStorage.setItem('activeTimerId', 'timer-7');
             sessionStorage.setItem('activeTimerStartedAt', String(Date.now() - 4500));
             TestBed.resetTestingModule();
             TestBed.configureTestingModule({
@@ -1722,6 +1731,7 @@ describe('TimerComponent', () => {
                     activeSeconds: 58, // 8s of countdown and 50s of push-ups
                     roundsCompleted: 2,
                     outcome: 'finished',
+                    updatedAt: expect.any(Number),
                 }),
             ]);
             fixture.destroy();

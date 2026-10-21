@@ -1,10 +1,11 @@
+import { Synced } from './sync';
 import { MAX_WEIGHT_KG } from './weight';
 
 /** One workout in the history: a timer run that finished, or was stopped part-way. */
-export interface HistoryEntry {
+export interface HistoryEntry extends Synced {
     /** Unique per run: the run's start time and the timer's id. */
     id: string;
-    timerId: number;
+    timerId: string;
     /** The timer's title when it ran (it may be renamed or deleted later). */
     title: string;
     /** When the run began, in ms since the epoch. */
@@ -27,7 +28,7 @@ export interface HistoryEntry {
 /** Long enough for a line about how it went, short enough to sit under the entry. */
 export const MAX_NOTE_LENGTH = 120;
 
-export function historyId(startedAt: number, timerId: number): string {
+export function historyId(startedAt: number, timerId: string): string {
     return `${startedAt}-${timerId}`;
 }
 

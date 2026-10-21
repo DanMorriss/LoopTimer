@@ -109,7 +109,15 @@ function count(n: number, thing: string): string {
     return `${n} ${thing}${n === 1 ? '' : 's'}`;
 }
 
-/** e.g. "Added 2 timers and 14 workouts to the history." */
+/** "2 timers and 14 workouts", leaving out either if there are none. */
+function timersAndWorkouts(timers: number, workouts: number): string {
+    return [
+        ...(timers > 0 ? [count(timers, 'timer')] : []),
+        ...(workouts > 0 ? [count(workouts, 'workout')] : []),
+    ].join(' and ');
+}
+
+/** e.g. "Added 2 timers and 14 workouts to the history. Updated 1 workout." */
 export function importMessage(result: ImportResult): string {
     if (!result.ok) {
         switch (result.problem) {
@@ -122,15 +130,18 @@ export function importMessage(result: ImportResult): string {
                 return "That file couldn't be read. Is it a LoopTimer backup?";
         }
     }
-    const added = [
-        ...(result.timersAdded > 0 ? [count(result.timersAdded, 'timer')] : []),
-        ...(result.workoutsAdded > 0
-            ? [`${count(result.workoutsAdded, 'workout')} to the history`]
+    const added = timersAndWorkouts(result.timersAdded, result.workoutsAdded);
+    const updated = timersAndWorkouts(result.timersUpdated, result.workoutsUpdated);
+    const parts = [
+        ...(added ? [`Added ${added}${result.workoutsAdded > 0 ? ' to the history' : ''}.`] : []),
+        ...(updated ? [`Updated ${updated}.`] : []),
+        ...(result.removed > 0
+            ? [`Removed ${count(result.removed, 'item')} deleted since on the other device.`]
             : []),
     ];
     const summary =
-        added.length > 0
-            ? `Added ${added.join(' and ')}.`
+        parts.length > 0
+            ? parts.join(' ')
             : 'Nothing new: everything in that backup is already here.';
     if (result.skipped === 0) {
         return summary;

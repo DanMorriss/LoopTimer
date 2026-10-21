@@ -2,7 +2,8 @@ import { Step, Timer } from '../../models/timer';
 
 /** A timer described the simple way: one work time and one rest time. */
 export interface SimpleTimer {
-    id: number;
+    id: string;
+    updatedAt: number;
     title: string;
     timerMinutes: number;
     timerSeconds: number;
@@ -17,11 +18,12 @@ export interface SimpleTimer {
  * Builds a timer for tests. Most tests only care about one work and one rest time, so
  * those can be given as before steps existed (`timerSeconds: 3, restSeconds: 2`), and
  * become a work step and, if there's any rest, a rest step, the same as saved timers do.
- * Defaults: "Intervals", 30s work, 10s rest, 3 rounds.
+ * Defaults: "Intervals" (id timer-1), 30s work, 10s rest, 3 rounds.
  */
 export function makeTimer(overrides: Partial<SimpleTimer> = {}): Timer {
     const simple: SimpleTimer = {
-        id: 1,
+        id: 'timer-1',
+        updatedAt: 1,
         title: 'Intervals',
         timerMinutes: 0,
         timerSeconds: 30,
@@ -37,7 +39,13 @@ export function makeTimer(overrides: Partial<SimpleTimer> = {}): Timer {
         { kind: 'work', seconds: work, name: '' },
         ...(rest > 0 ? [{ kind: 'rest' as const, seconds: rest, name: '' }] : []),
     ];
-    return { id: simple.id, title: simple.title, steps, repeats: simple.repeats };
+    return {
+        id: simple.id,
+        title: simple.title,
+        steps,
+        repeats: simple.repeats,
+        updatedAt: simple.updatedAt,
+    };
 }
 
 /** A step for tests: `work(30)`, `rest(10, 'Breathe')`. */

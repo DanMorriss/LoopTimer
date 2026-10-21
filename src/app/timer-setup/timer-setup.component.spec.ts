@@ -10,13 +10,13 @@ import {
     provideRouter,
 } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
-import { Timer, UNTIL_STOPPED } from '../models/timer';
+import { Timer, TimerFields, UNTIL_STOPPED } from '../models/timer';
 import { SettingsStore } from '../shared/state/settings-store.service';
 import { TimerStore } from '../shared/state/timer-store.service';
 import { reps, rest, work } from '../shared/testing/make-timer';
 import { MAX_STEPS, TimerSetupComponent } from './timer-setup.component';
 
-const savedTimer: Omit<Timer, 'id'> = {
+const savedTimer: TimerFields = {
     title: 'Saved timer',
     steps: [work(135, 'Squats'), rest(45)],
     repeats: 4,
@@ -29,6 +29,11 @@ describe('TimerSetupComponent', () => {
     let queryParamMap: BehaviorSubject<ParamMap>;
 
     async function setup(queryParams: Record<string, string> = {}) {
+        // Ids are random; here they're timer-1, timer-2… in the order timers are made
+        let made = 0;
+        vi.spyOn(crypto, 'randomUUID').mockImplementation(
+            () => `timer-${++made}` as ReturnType<typeof crypto.randomUUID>
+        );
         localStorage.clear();
         queryParamMap = new BehaviorSubject(convertToParamMap(queryParams));
         await TestBed.configureTestingModule({
@@ -248,7 +253,8 @@ describe('TimerSetupComponent', () => {
             await submit();
 
             const expected: Timer = {
-                id: 1,
+                id: 'timer-1',
+                updatedAt: expect.any(Number),
                 title: 'Sprints',
                 steps: [work(90, 'Hill sprint'), rest(20)],
                 repeats: 6,
@@ -735,7 +741,7 @@ describe('TimerSetupComponent', () => {
 
     describe('editing a timer', () => {
         it('fills the form from the timer in ?editId', async () => {
-            await setup({ editId: '1' });
+            await setup({ editId: 'timer-1' });
             store.addTimer(savedTimer);
             await create();
 
@@ -752,13 +758,13 @@ describe('TimerSetupComponent', () => {
 
         describe('weights in pounds', () => {
             // 45 lb, saved in kg
-            const pressed: Omit<Timer, 'id'> = {
+            const pressed: TimerFields = {
                 ...savedTimer,
                 steps: [{ kind: 'reps', reps: 10, name: 'Bench', weight: 20.412 }],
             };
 
             async function editInPounds() {
-                await setup({ editId: '1' });
+                await setup({ editId: 'timer-1' });
                 TestBed.inject(SettingsStore).update({ weightUnit: 'lb' });
                 store.addTimer(pressed);
                 await create();
@@ -797,7 +803,7 @@ describe('TimerSetupComponent', () => {
         });
 
         it('shows a rep step collapsed as its name and count', async () => {
-            await setup({ editId: '1' });
+            await setup({ editId: 'timer-1' });
             store.addTimer({ ...savedTimer, steps: [work(30), reps(1, 'Pull-up'), reps(20)] });
             await create();
 
@@ -809,7 +815,7 @@ describe('TimerSetupComponent', () => {
         });
 
         it('opens with every step collapsed, so the whole workout is in view', async () => {
-            await setup({ editId: '1' });
+            await setup({ editId: 'timer-1' });
             store.addTimer(savedTimer);
             await create();
 
@@ -818,7 +824,7 @@ describe('TimerSetupComponent', () => {
         });
 
         it('updates the existing timer instead of adding a new one', async () => {
-            await setup({ editId: '1' });
+            await setup({ editId: 'timer-1' });
             store.addTimer(savedTimer);
             await create();
 
@@ -828,17 +834,18 @@ describe('TimerSetupComponent', () => {
 
             expect(store.timers()).toHaveLength(1);
             expect(store.timers()[0]).toEqual({
-                id: 1,
+                id: 'timer-1',
+                updatedAt: expect.any(Number),
                 title: 'Renamed',
                 steps: savedTimer.steps,
                 repeats: 2,
             });
-            expect(store.activeTimer()?.id).toBe(1);
+            expect(store.activeTimer()?.id).toBe('timer-1');
             expect(navigate).toHaveBeenCalledWith(['/timer']);
         });
 
         it('empties the form for a new timer when the editId goes, as Create from the menu does', async () => {
-            await setup({ editId: '1' });
+            await setup({ editId: 'timer-1' });
             store.addTimer(savedTimer);
             await create();
 
@@ -851,12 +858,12 @@ describe('TimerSetupComponent', () => {
         });
 
         it('switches to another timer when the editId changes', async () => {
-            await setup({ editId: '1' });
+            await setup({ editId: 'timer-1' });
             store.addTimer(savedTimer);
             store.addTimer({ ...savedTimer, title: 'Other timer' });
             await create();
 
-            queryParamMap.next(convertToParamMap({ editId: '2' }));
+            queryParamMap.next(convertToParamMap({ editId: 'timer-2' }));
             fixture.detectChanges();
             await fixture.whenStable();
 

@@ -6,10 +6,11 @@ function makeEntry(overrides: Partial<HistoryEntry> = {}): HistoryEntry {
     const startedAt = overrides.startedAt ?? 1_000_000;
     return {
         id: `${startedAt}-1`,
-        timerId: 1,
+        timerId: 'timer-1',
         title: 'Sprints',
         startedAt,
         endedAt: startedAt + 60_000,
+        updatedAt: NOW,
         activeSeconds: 60,
         roundsCompleted: 3,
         totalRounds: 3,
@@ -20,8 +21,14 @@ function makeEntry(overrides: Partial<HistoryEntry> = {}): HistoryEntry {
 
 const saved = (): HistoryEntry[] => JSON.parse(localStorage.getItem('history') ?? '[]');
 
+// When the tests run: Date.now() for anything the store dates, e.g. a record
+const NOW = 5_000_000;
+
 describe('HistoryStore', () => {
-    beforeEach(() => localStorage.clear());
+    beforeEach(() => {
+        localStorage.clear();
+        vi.spyOn(Date, 'now').mockReturnValue(NOW);
+    });
     afterEach(() => localStorage.clear());
 
     const createStore = () => TestBed.inject(HistoryStore);
@@ -173,13 +180,47 @@ describe('HistoryStore', () => {
         expect(store.entries().map((e) => e.outcome)).toEqual(['finished']);
     });
 
-    it('ignores unusable saved deleted ids', () => {
-        localStorage.setItem('history-deleted', '{broken');
+    it('ignores unusable saved deletions', () => {
+        localStorage.setItem('deleted', '{broken');
         const store = createStore();
 
         store.record(makeEntry());
 
         expect(store.entries()).toHaveLength(1);
+    });
+
+    describe('dates for sync', () => {
+        it('dates each record and note, as the time it changed', () => {
+            const store = createStore();
+            store.record({ ...makeEntry(), updatedAt: 1 } as never);
+            expect(store.entries()[0].updatedAt).toBe(NOW);
+
+            vi.spyOn(Date, 'now').mockReturnValue(NOW + 500);
+            store.setNote(makeEntry().id, 'Felt strong');
+
+            expect(store.entries()[0].updatedAt).toBe(NOW + 500);
+            expect(saved()[0].updatedAt).toBe(NOW + 500);
+        });
+
+        it('leaves a dated deletion behind, which restoring clears', () => {
+            const store = createStore();
+            store.record(makeEntry());
+
+            store.delete(makeEntry().id);
+            expect(JSON.parse(localStorage.getItem('deleted')!)).toEqual([
+                { kind: 'history', id: makeEntry().id, deletedAt: NOW },
+            ]);
+
+            store.restore(makeEntry());
+            expect(JSON.parse(localStorage.getItem('deleted')!)).toEqual([]);
+        });
+
+        it('dates a saved entry with no date by when it ended', () => {
+            const { updatedAt: _u, ...undated } = makeEntry();
+            localStorage.setItem('history', JSON.stringify([undated]));
+
+            expect(createStore().entries()[0].updatedAt).toBe(makeEntry().endedAt);
+        });
     });
 
     it('loads saved sets, dropping broken ones but keeping the workout', () => {
@@ -212,7 +253,7 @@ describe('HistoryStore', () => {
             null,
             'text',
             { ...makeEntry(), id: 7 },
-            { ...makeEntry(), timerId: 0 },
+            { ...makeEntry(), timerId: '' },
             { ...makeEntry(), title: null },
             { ...makeEntry(), endedAt: 0 },
             { ...makeEntry(), activeSeconds: -1 },
