@@ -1166,4 +1166,198 @@ export const BUILT_IN_EXERCISES: readonly BuiltInExercise[] = [
             "Don't start wider than feels comfortable; the stretch at the start is where it's hardest.",
         ],
     },
+
+    // Seventh batch: back, pulling and bodyweight pushing
+    {
+        id: 'builtin:inverted-row',
+        name: 'Inverted row',
+        otherNames: ['Bodyweight row', 'Australian pull-up', 'Body row'],
+        equipment: ['barbell', 'rack'],
+        measuredBy: 'reps',
+        mainMuscles: ['upper-back'],
+        supportingMuscles: ['biceps', 'shoulders', 'forearms', 'abs'],
+        description:
+            'Lying under a bar set at waist height, you pull your chest up to it. A row using your own weight.',
+        steps: [
+            'Set a bar in a rack at about waist height, and lie under it with your chest below the bar.',
+            'Grip it a little wider than your shoulders, and lift your hips so your body is straight from heels to head.',
+            'Pull your chest up to the bar, squeezing your shoulder blades together.',
+            'Lower yourself slowly until your arms are straight.',
+        ],
+        tips: [
+            'Too hard? Set the bar higher, or bend your knees and put your feet flat. Too easy? Set it lower.',
+        ],
+    },
+    {
+        id: 'builtin:t-bar-row',
+        name: 'T-bar row',
+        otherNames: ['T bar row', 'Landmine row'],
+        equipment: ['barbell'],
+        measuredBy: 'reps',
+        mainMuscles: ['upper-back'],
+        supportingMuscles: ['biceps', 'shoulders', 'lower-back', 'forearms'],
+        description:
+            'Leaning forward over a bar fixed at one end, you pull the loaded end up to your chest. Lets you row heavy.',
+        steps: [
+            'Wedge one end of a bar into a corner or landmine, load the other end, and stand astride it facing the plates.',
+            'Push your hips back and lean forward until your back is nearly flat, and grip the bar just behind the plates.',
+            'Pull it up to your chest, elbows back, squeezing your shoulder blades together.',
+            'Lower it until your arms are straight, without letting your back round.',
+        ],
+        tips: [
+            'A V-shaped cable handle hooked under the bar gives you a grip for both hands.',
+            'Keep your back still: only your arms move.',
+        ],
+    },
+    {
+        id: 'builtin:straight-arm-pulldown',
+        name: 'Straight-arm pulldown',
+        otherNames: ['Straight arm pulldown', 'Straight-arm lat pulldown', 'Cable pullover'],
+        equipment: ['cable'],
+        measuredBy: 'reps',
+        mainMuscles: ['upper-back'],
+        supportingMuscles: ['triceps', 'abs'],
+        description:
+            'Standing at a high cable, you sweep a bar down to your thighs with straight arms. Works your back without your biceps.',
+        steps: [
+            'Set the cable high with a straight bar or rope, and hold it with your hands shoulder-width apart.',
+            'Step back, lean forward a little from your hips, and hold your arms out straight at about head height.',
+            'Keeping your arms straight, pull the bar down in an arc until it touches your thighs.',
+            'Let it back up slowly until your arms are at head height again.',
+        ],
+        tips: [
+            'Keep a slight bend in your elbows, but never more: bending them turns it into a pushdown.',
+        ],
+    },
+    {
+        id: 'builtin:rack-pull',
+        name: 'Rack pull',
+        otherNames: ['Rack deadlift', 'Block pull'],
+        equipment: ['barbell', 'rack'],
+        measuredBy: 'reps',
+        mainMuscles: ['lower-back', 'glutes', 'traps'],
+        supportingMuscles: ['hamstrings', 'upper-back', 'forearms'],
+        description:
+            'A deadlift from a bar resting on the rack, about knee height. Works the top of the lift, usually heavier.',
+        steps: [
+            "Set the rack's safety bars so the bar rests just below or just above your knees.",
+            'Stand close to the bar, feet hip-width apart, and grip it just outside your legs.',
+            'Push your hips back, flatten your back, take a big breath and brace.',
+            'Push your hips forward to stand tall, then lower the bar back to the safety bars under control.',
+        ],
+        tips: ["Don't lean back at the top or shrug it up; just stand up straight."],
+    },
+    {
+        id: 'builtin:band-pull-apart',
+        name: 'Band pull-apart',
+        otherNames: ['Band pull apart', 'Resistance band pull-apart'],
+        equipment: ['band'],
+        measuredBy: 'reps',
+        mainMuscles: ['shoulders'],
+        supportingMuscles: ['upper-back', 'traps'],
+        description:
+            'Holding a band out in front of you, you pull it apart until it touches your chest. Good for the backs of your shoulders.',
+        steps: [
+            'Stand tall holding a light band in both hands, arms straight out in front at shoulder height.',
+            'Pull your hands apart and out to the sides, squeezing your shoulder blades together.',
+            'Stop when the band touches your chest, then let your hands come back together slowly.',
+        ],
+        tips: [
+            'Keep your shoulders down, away from your ears.',
+            'Too easy? Hold the band with your hands closer together.',
+        ],
+    },
+    {
+        id: 'builtin:cable-curl',
+        name: 'Cable curl',
+        otherNames: ['Cable biceps curl', 'Cable bicep curl', 'Standing cable curl'],
+        equipment: ['cable'],
+        measuredBy: 'reps',
+        mainMuscles: ['biceps'],
+        supportingMuscles: ['forearms'],
+        description:
+            'Standing at a low cable, you bend your elbows to lift a bar to your shoulders. The cable keeps the pull steady.',
+        steps: [
+            'Set the cable low with a straight or bent bar, and hold it with your palms facing up.',
+            'Stand tall, close to the cable, arms straight and elbows by your sides.',
+            'Keeping your elbows where they are, bend them to lift the bar towards your shoulders.',
+            'Lower it slowly until your arms are straight.',
+        ],
+        tips: ["If you're leaning back to lift it, it's too heavy."],
+    },
+    {
+        id: 'builtin:bench-dip',
+        name: 'Bench dip',
+        otherNames: ['Chair dip', 'Triceps bench dip', 'Tricep bench dip'],
+        equipment: ['bench'],
+        measuredBy: 'reps',
+        mainMuscles: ['triceps'],
+        supportingMuscles: ['chest', 'shoulders'],
+        description:
+            'With your hands on a bench behind you, you lower your body by bending your elbows and press back up.',
+        steps: [
+            'Sit on the edge of a bench, hands beside your hips, fingers over the edge.',
+            'Walk your feet out and slide your bottom off the bench, arms straight.',
+            'Bend your elbows to lower yourself until your upper arms are about level with the floor.',
+            'Press back up until your arms are straight.',
+        ],
+        tips: [
+            'Keep your back close to the bench, and stop higher if your shoulders ache.',
+            'Too easy? Put your feet up on a second bench.',
+        ],
+    },
+    {
+        id: 'builtin:diamond-push-up',
+        name: 'Diamond push-up',
+        otherNames: ['Diamond press-up', 'Close-grip push-up', 'Triangle push-up'],
+        equipment: ['none'],
+        measuredBy: 'reps',
+        mainMuscles: ['triceps', 'chest'],
+        supportingMuscles: ['shoulders', 'abs'],
+        description:
+            'A push-up with your hands close together under your chest. Puts more of the work on the backs of your arms.',
+        steps: [
+            'Put your hands on the floor under your chest, thumbs and first fingers touching to make a diamond.',
+            'Step your feet back so your body makes a straight line from head to heels.',
+            'Lower yourself until your chest nearly touches your hands, elbows close to your sides.',
+            'Push back up until your arms are straight.',
+        ],
+        tips: ['Too hard? Do them from your knees, or with your hands on a bench.'],
+    },
+    {
+        id: 'builtin:pike-push-up',
+        name: 'Pike push-up',
+        otherNames: ['Pike press-up', 'Pike pushup'],
+        equipment: ['none'],
+        measuredBy: 'reps',
+        mainMuscles: ['shoulders'],
+        supportingMuscles: ['triceps', 'traps', 'abs'],
+        description:
+            'With your hips high in an upside-down V, you lower your head towards the floor and press back up. A shoulder press with no weights.',
+        steps: [
+            'Start in a push-up position, then walk your feet in and lift your hips high, so your body makes an upside-down V.',
+            'Bend your elbows to lower the top of your head towards the floor, just in front of your hands.',
+            'Press back up until your arms are straight, keeping your hips high.',
+        ],
+        tips: ['Too easy? Put your feet up on a bench or step.'],
+    },
+    {
+        id: 'builtin:dead-hang',
+        name: 'Dead hang',
+        otherNames: ['Bar hang', 'Passive hang'],
+        equipment: ['pull-up bar'],
+        measuredBy: 'timed',
+        mainMuscles: ['forearms'],
+        supportingMuscles: ['upper-back', 'shoulders'],
+        description:
+            'You hang from a bar with your arms straight for as long as you can. Builds your grip and stretches your shoulders.',
+        steps: [
+            'Grip the bar about shoulder-width apart, palms facing away.',
+            'Lift your feet, or step off a box, so you hang with your arms straight.',
+            'Let your body relax and hang still, breathing steadily, until the time is up.',
+        ],
+        tips: [
+            'Keep your feet just off the floor, or a box under you, so you can step down when your grip goes.',
+        ],
+    },
 ];
