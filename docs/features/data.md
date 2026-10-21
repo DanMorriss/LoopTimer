@@ -86,10 +86,35 @@ The ids of the last 20 history entries deleted, oldest first, so a run still goi
 
 From these, everything on the timer page is worked out (see [run-a-timer](run-a-timer.md)).
 
+## Backup file
+
+**Export backup** in settings saves everything as one JSON file, e.g. `looptimer-2026-10-21.json`; **Import backup** reads one back (see [backup-and-sync](backup-and-sync.md) for how it merges):
+
+```json
+{
+    "app": "LoopTimer",
+    "version": 1,
+    "exportedAt": 1761055200000,
+    "timers": [],
+    "history": [],
+    "settings": {
+        "theme": "dark",
+        "sound": true,
+        "vibration": true,
+        "keepScreenOn": true,
+        "weightUnit": "kg"
+    }
+}
+```
+
+- `timers`, `history` and `settings` are in the same shapes as above; `exportedAt` is ms since 1970.
+- `version` goes up whenever the file's shape changes. A file from an older version is converted when imported; one from a newer version is turned down.
+- A file that isn't JSON, doesn't say `"app": "LoopTimer"`, lacks `timers` or `history` lists, or is over 10 MB isn't a backup.
+
 ## Broken data
 
-Saved data that's broken or unexpected never stops the app starting: unusable timers and history entries are dropped and the rest kept; broken settings fall back to the defaults; a saved run with impossible times starts again from now.
+Saved data that's broken or unexpected never stops the app starting: unusable timers and history entries are dropped and the rest kept; broken settings fall back to the defaults; a saved run with impossible times starts again from now. A backup file is read the same way.
 
 ## Platform notes
 
-- **iOS:** keeping these same JSON shapes would let a future export/import (or iCloud sync) move timers and history between the web app and the iPhone app. Keep the "drop what's broken, keep the rest" rule when reading.
+- **iOS:** reading and writing the same backup file lets timers and history move between the web app and an iPhone app. Keep the "drop what's broken, keep the rest" rule when reading.

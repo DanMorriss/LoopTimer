@@ -1,6 +1,7 @@
-import { ApplicationRef, Component, computed, DOCUMENT, inject } from '@angular/core';
+import { ApplicationRef, Component, computed, DOCUMENT, inject, signal } from '@angular/core';
 import { WeightUnit } from '../models/weight';
 import { AlarmService } from '../shared/alarms/alarm.service';
+import { BackupService, ImportResult } from '../shared/backup/backup.service';
 import { ToggleSwitchComponent } from '../shared/components/toggle-switch/toggle-switch.component';
 import { injectPrefersReducedMotion } from '../shared/reduced-motion';
 import { KeepAwakeService } from '../shared/run/keep-awake.service';
@@ -26,6 +27,7 @@ export class SettingsComponent {
     protected readonly settings = inject(SettingsStore);
     protected readonly alarms = inject(AlarmService);
     protected readonly keepAwake = inject(KeepAwakeService);
+    private readonly backup = inject(BackupService);
     private readonly appRef = inject(ApplicationRef);
     private readonly document = inject(DOCUMENT);
     private readonly reducedMotion = injectPrefersReducedMotion();
@@ -56,6 +58,23 @@ export class SettingsComponent {
         { kind: 'finish', name: 'Finish', description: 'Three rising notes' },
     ];
 
+    /** What the last export or import did, read out as it changes. */
+    protected readonly backupStatus = signal('');
+
+    protected exportBackup() {
+        this.backupStatus.set(`Backup saved as ${this.backup.export()}.`);
+    }
+
+    protected async importBackup(input: HTMLInputElement) {
+        const file = input.files?.[0];
+        // Cleared so choosing the same file again still counts as a change
+        input.value = '';
+        if (!file) {
+            return;
+        }
+        this.backupStatus.set(importMessage(await this.backup.import(file)));
+    }
+
     /**
      * Saves the theme, fading the whole page from the old colours to the new with a view
      * transition where the browser has them. The picker's highlight slides across as part of
@@ -84,4 +103,37 @@ export class SettingsComponent {
             }
         });
     }
+}
+
+function count(n: number, thing: string): string {
+    return `${n} ${thing}${n === 1 ? '' : 's'}`;
+}
+
+/** e.g. "Added 2 timers and 14 workouts to the history." */
+export function importMessage(result: ImportResult): string {
+    if (!result.ok) {
+        switch (result.problem) {
+            case 'too-new':
+                return 'That backup is from a newer version of LoopTimer. Update the app and try again.';
+            case 'too-big':
+            case 'not-a-backup':
+                return "That file isn't a LoopTimer backup.";
+            case 'unreadable':
+                return "That file couldn't be read. Is it a LoopTimer backup?";
+        }
+    }
+    const added = [
+        ...(result.timersAdded > 0 ? [count(result.timersAdded, 'timer')] : []),
+        ...(result.workoutsAdded > 0
+            ? [`${count(result.workoutsAdded, 'workout')} to the history`]
+            : []),
+    ];
+    const summary =
+        added.length > 0
+            ? `Added ${added.join(' and ')}.`
+            : 'Nothing new: everything in that backup is already here.';
+    if (result.skipped === 0) {
+        return summary;
+    }
+    return `${summary} ${count(result.skipped, 'item')} in it couldn't be read, so ${result.skipped === 1 ? 'it was' : 'they were'} left out.`;
 }

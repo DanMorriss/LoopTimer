@@ -147,5 +147,43 @@
                 }
             </ul>
         </section>
+
+        <section class="settings__section" aria-labelledby="data-heading">
+            <h3 class="settings__heading" id="data-heading">Your data</h3>
+
+            <p class="setting__hint" id="data-hint">
+                Your timers and history are saved on this device only. Export a backup to keep them
+                safe, or to move them to another device.
+            </p>
+            <div class="backup__actions">
+                <button
+                    type="button"
+                    class="btn-pill"
+                    aria-describedby="data-hint"
+                    (click)="exportBackup()"
+                >
+                    Export backup
+                </button>
+                <button
+                    type="button"
+                    class="btn-pill"
+                    aria-describedby="data-hint"
+                    (click)="backupInput.click()"
+                >
+                    Import backup
+                </button>
+                <!-- Opened by Import backup, so it's kept out of the way of the keyboard -->
+                <input
+                    #backupInput
+                    type="file"
+                    accept=".json,application/json"
+                    class="sr-only"
+                    tabindex="-1"
+                    aria-hidden="true"
+                    (change)="importBackup(backupInput)"
+                />
+            </div>
+            <p class="setting__hint backup__status" role="status">{{ backupStatus() }}</p>
+        </section>
     </div>
 </div>
