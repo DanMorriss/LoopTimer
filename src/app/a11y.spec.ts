@@ -13,7 +13,13 @@ import { TimerStore } from './shared/state/timer-store.service';
  */
 
 const sprints = makeTimer({ title: 'Sprints', timerSeconds: 2, restSeconds: 2, repeats: 2 });
-const untitled = makeTimer({ id: 2, title: '', timerSeconds: 30, restSeconds: 2, repeats: 2 });
+const untitled = makeTimer({
+    id: 'timer-2',
+    title: '',
+    timerSeconds: 30,
+    restSeconds: 2,
+    repeats: 2,
+});
 
 // These rules look at the whole document (one <main>, one <h1>, everything inside a
 // landmark). The test page around the app isn't ours, so they're left to the
@@ -138,14 +144,14 @@ for (const theme of ['dark', 'light'] as const) {
             });
 
             it('editing a timer', async () => {
-                store.addTimer(sprints);
-                await open('/setup?editId=1');
+                const saved = store.addTimer(sprints);
+                await open('/setup?editId=' + saved.id);
                 await expectNoViolations();
             });
 
             it('asking before deleting a step', async () => {
-                store.addTimer(sprints);
-                await open('/setup?editId=1');
+                const saved = store.addTimer(sprints);
+                await open('/setup?editId=' + saved.id);
                 click('.step__toggle');
                 await settle();
                 click('.step__action--delete');
@@ -200,7 +206,7 @@ for (const theme of ['dark', 'light'] as const) {
                 ).entries()) {
                     TestBed.inject(HistoryStore).record({
                         id: 'run-' + i,
-                        timerId: 1,
+                        timerId: 'timer-1',
                         title: i === 1 ? '' : 'Sprints',
                         startedAt: now - i * 86_400_000,
                         endedAt: now - i * 86_400_000 + 60_000,

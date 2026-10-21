@@ -4,8 +4,18 @@ import { KeepAwakeService } from '../shared/run/keep-awake.service';
 import { SettingsStore } from '../shared/state/settings-store.service';
 import { FakeAudioContext, provideFakeAudioContext } from '../shared/testing/fake-audio-context';
 import { fakeReducedMotion } from '../shared/testing/fake-reduced-motion';
-import { BackupService } from '../shared/backup/backup.service';
+import { BackupService, ImportCounts } from '../shared/backup/backup.service';
 import { importMessage, SettingsComponent } from './settings.component';
+
+// An import that changed nothing, to build results from
+const NOTHING: ImportCounts = {
+    timersAdded: 0,
+    timersUpdated: 0,
+    workoutsAdded: 0,
+    workoutsUpdated: 0,
+    removed: 0,
+    skipped: 0,
+};
 
 describe('SettingsComponent', () => {
     let fixture: ComponentFixture<SettingsComponent>;
@@ -294,7 +304,7 @@ describe('SettingsComponent', () => {
             create();
             const importSpy = vi
                 .spyOn(TestBed.inject(BackupService), 'import')
-                .mockResolvedValue({ ok: true, timersAdded: 2, workoutsAdded: 14, skipped: 0 });
+                .mockResolvedValue({ ...NOTHING, ok: true, timersAdded: 2, workoutsAdded: 14 });
             const file = new File(['{}'], 'backup.json');
             Object.defineProperty(fileInput(), 'files', { value: [file], configurable: true });
 
@@ -309,12 +319,21 @@ describe('SettingsComponent', () => {
 
     describe('importMessage', () => {
         const added = (timersAdded: number, workoutsAdded: number, skipped = 0) =>
-            importMessage({ ok: true, timersAdded, workoutsAdded, skipped });
+            importMessage({ ...NOTHING, ok: true, timersAdded, workoutsAdded, skipped });
 
         it('says what was added', () => {
             expect(added(1, 0)).toBe('Added 1 timer.');
             expect(added(0, 1)).toBe('Added 1 workout to the history.');
             expect(added(3, 2)).toBe('Added 3 timers and 2 workouts to the history.');
+        });
+
+        it('says what was updated and removed', () => {
+            expect(
+                importMessage({ ...NOTHING, ok: true, timersUpdated: 1, workoutsUpdated: 2 })
+            ).toBe('Updated 1 timer and 2 workouts.');
+            expect(importMessage({ ...NOTHING, ok: true, workoutsAdded: 1, removed: 2 })).toBe(
+                'Added 1 workout to the history. Removed 2 items deleted since on the other device.'
+            );
         });
 
         it('says when there was nothing new', () => {

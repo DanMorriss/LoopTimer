@@ -1,6 +1,6 @@
 # Backup and sync
 
-Export and import (SYN-1, SYN-2) are built. The rest is planned (see [direction](../direction.md)); its rules are a first draft and get firmed up, with acceptance criteria, when it's built.
+Export and import (SYN-1, SYN-2) are built, and the data is ready for sync: random ids, `updatedAt` and deletion markers (see [data](data.md)). The rest is planned (see [direction](../direction.md)); its rules are a first draft and get firmed up, with acceptance criteria, when it's built.
 
 ## Stories
 
@@ -15,15 +15,20 @@ Export and import (SYN-1, SYN-2) are built. The rest is planned (see [direction]
 ### Export and import (SYN-1, SYN-2)
 
 - They're in **Settings → Your data**, under the hint "Your timers and history are saved on this device only. Export a backup to keep them safe, or to move them to another device."
-- **Export backup** downloads one file of the timers, history and settings, e.g. `looptimer-2026-10-21.json` (dated by the device's calendar), and says "Backup saved as looptimer-2026-10-21.json." The file's shape is in [data](data.md#backup-file).
-- **Import backup** opens a file picker. The chosen file is **added to** what's here: nothing already on the device is changed or removed.
-    - **Timers** are matched by what they are (title, steps and rounds), since their ids are only unique per device. One the same as a timer here is skipped; any other is added with a new id. So a timer changed since the backup was made is kept, and the backup's version is added alongside it.
-    - **Workouts in the history** are matched by their run id. One already here is left as it is, note and all; the rest are added. A deleted workout in the file comes back (and then stays, like Undo). The newest 500 are kept, as always.
+- **Export backup** downloads one file of the timers, history, deletions and settings, e.g. `looptimer-2026-10-21.json` (dated by the device's calendar), and says "Backup saved as looptimer-2026-10-21.json." The file's shape is in [data](data.md#backup-file).
+- **Import backup** opens a file picker. The chosen file is **merged** with what's here, by id:
+    - A timer or workout only in the file is **added**.
+    - One in both keeps **the most recent change**: an edit, a note, a change of reps mid-workout. On a tie, this device's stays.
+    - One **deleted where the backup came from** is deleted here too, unless it's changed here since. One **deleted here** doesn't come back, unless it changed there after it was deleted here.
+    - Nothing else here is changed or removed. The newest 500 workouts are kept, as always.
     - **Settings** in the file are left out: theme, sound and so on are a choice for each device.
     - Timers and workouts in the file that aren't usable are left out, the same as when the app loads its own data, and older timer formats convert.
+    - **A version 1 file** (from before ids were random) has no dates or deletions, and its timer ids were only unique on its device. Its timers are matched by what they are instead (title, steps and rounds): one the same as a timer here is skipped, any other is added with a new id. So a timer changed since that backup was made is kept, and the backup's version is added alongside it. Its workouts merge by run id as above.
 - What happened is shown under the buttons, and read out by screen readers:
     - "Added 2 timers and 14 workouts to the history." (or just the part that applies)
-    - "Nothing new: everything in that backup is already here."
+    - "Updated 1 timer and 2 workouts." when newer copies were taken
+    - "Removed 3 items deleted since on the other device."
+    - Those that apply, in that order, or "Nothing new: everything in that backup is already here."
     - Either, followed by "1 item in it couldn't be read, so it was left out." when some were.
     - "That file isn't a LoopTimer backup." (not a backup, or over 10 MB)
     - "That file couldn't be read. Is it a LoopTimer backup?" (not JSON)
@@ -32,29 +37,25 @@ Export and import (SYN-1, SYN-2) are built. The rest is planned (see [direction]
 
 ### Still to come (draft)
 
-- **Export, after exercises:** adds your own exercises, and which built-in ones are hidden.
-- **Import, after the sync groundwork:** merges by id, a record in both keeping the one changed most recently, and a record the file marks deleted is deleted here. That replaces matching timers by what they are.
-- **Ready for sync (groundwork, built with exercises):**
-    - New ids are random (e.g. UUIDs), so two devices can't hand out the same one. Existing timer ids (1, 2, 3…) are converted.
-    - Every workout, exercise and history entry has an `updatedAt` time.
-    - A deleted record is kept as a marker (`deletedAt`) so the deletion can reach other devices. This replaces `history-deleted`.
+- **Export, after exercises:** adds your own exercises (with random ids, `updatedAt` and deletion markers like the rest), your notes on exercises, and which built-in ones are hidden.
 - **Storage (SYN-5):** the history moves out of `localStorage` (about 5 MB, and the 500 cap) into IndexedDB on the web.
 - **Sync (SYN-3, SYN-4):** the device's copy is the one the app works from; changes are sent when online, and the most recent change to a record wins.
 
 ## Acceptance criteria
 
-- Given 2 timers and 5 workouts, when I export, then a file named for today downloads holding all of them and the settings.
-- Given a backup with a timer "Legs" and one the same is already here (with a different id), when I import it, then "Legs" isn't added again.
-- Given a backup whose timer has the same id as a different timer here, when I import it, then it's added with a new id and both are kept.
-- Given a workout here with a note, when I import a backup with the same workout and no note, then the note is kept.
-- Given a workout I deleted, when I import a backup that has it, then it's back, and the run logging itself again updates it.
+- Given 2 timers and 5 workouts, and a deleted timer, when I export, then a file named for today downloads holding all of them, the deletion and the settings.
+- Given a timer here, when I import a backup with a later change to it, then the later one replaces it; with an earlier change, this one stays.
+- Given a workout here with no note, when I import a backup where it was given a note later, then it has the note.
+- Given a backup made after a timer was deleted on that device, when I import it, then the timer goes here too, unless I changed it here after.
+- Given a workout I deleted here, when I import a backup that has it, then it stays deleted.
+- Given a version 1 backup with a timer "Legs" and one the same already here, when I import it, then "Legs" isn't added again; a different timer with the same old id as one here is added with a new id, and both are kept.
 - Given a backup with a light theme and lb, when I import it, then my settings don't change.
 - Given a file that isn't a backup, or is from a newer version, when I import it, then nothing changes and I'm told why.
 - Given a backup with a broken timer and two broken workouts, when I import it, then the rest are added and "3 items in it couldn't be read" is shown.
 
 ## Platform notes
 
-- **Web:** `BackupService` and `backup-file.ts` (`src/app/shared/backup/`); the stores' `importTimers()` and `importEntries()`. The file is downloaded through a link with `download`; on an iPhone, Safari offers to save it to Files. The picker is a file input opened by the Import button, kept out of the keyboard's way.
+- **Web:** `BackupService` and `backup-file.ts` (`src/app/shared/backup/`); the stores' `mergeTimers()` and `mergeEntries()` (and `importTimers()` for version 1 files), using `mergeRecords()` in `models/sync.ts`; deletions are kept by `DeletionStore`, and saved data is converted by `migrate.ts`. The file is downloaded through a link with `download`; on an iPhone, Safari offers to save it to Files. The picker is a file input opened by the Import button, kept out of the keyboard's way.
 - **iOS:** a share sheet for export and a document picker for import, reading and writing the same file.
 
 ## Open questions

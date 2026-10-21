@@ -1,24 +1,19 @@
-import { computed, Service, signal } from '@angular/core';
+import { computed, inject, Service, signal } from '@angular/core';
 import { HistoryEntry, isLoggedSet, MAX_NOTE_LENGTH } from '../../models/history';
+import { Deletion, mergeRecords } from '../../models/sync';
+import { DeletionStore } from './deletion-store.service';
+import { migrateSavedData } from './migrate';
 
 const STORAGE_KEY = 'history';
-const DELETED_KEY = 'history-deleted';
 
 /** Plenty of workouts to look back on, without letting browser storage grow forever. */
 export const MAX_HISTORY = 500;
 
-/**
- * Deleted ids remembered, so a run still going can't log itself back in. Only the latest
- * run's matters, so a few is plenty.
- */
-const MAX_DELETED = 20;
-
 /** Completed and stopped workouts, newest first, saved in the browser. */
 @Service()
 export class HistoryStore {
+    private readonly deletions = inject(DeletionStore);
     private readonly _entries = signal<HistoryEntry[]>(loadHistory());
-    /** Newest last. */
-    private deletedIds = loadDeletedIds();
 
     /** Newest first. */
     readonly entries = computed(() => this._entries());
@@ -30,16 +25,18 @@ export class HistoryStore {
      * The oldest entries go past MAX_HISTORY. A deleted entry isn't recorded again (its run
      * may still be going when it's deleted); restore() puts one back.
      */
-    record(entry: HistoryEntry) {
-        if (this.deletedIds.includes(entry.id)) {
+    record(entry: Omit<HistoryEntry, 'updatedAt'>) {
+        if (this.deletions.deletedAt('history', entry.id) !== undefined) {
             return;
         }
         this._entries.update((entries) => {
             const note = entry.note ?? entries.find((existing) => existing.id === entry.id)?.note;
-            const updated = note === undefined ? entry : { ...entry, note };
-            return [updated, ...entries.filter((existing) => existing.id !== entry.id)]
-                .sort((a, b) => b.startedAt - a.startedAt)
-                .slice(0, MAX_HISTORY);
+            const updated: HistoryEntry = {
+                ...entry,
+                ...(note === undefined ? {} : { note }),
+                updatedAt: Date.now(),
+            };
+            return sortAndCap([updated, ...entries.filter((existing) => existing.id !== entry.id)]);
         });
         this.save();
     }
@@ -55,7 +52,8 @@ export class HistoryStore {
                     return entry;
                 }
                 const { note: _old, ...rest } = entry;
-                return trimmed ? { ...rest, note: trimmed } : rest;
+                const changed = { ...rest, updatedAt: Date.now() };
+                return trimmed ? { ...changed, note: trimmed } : changed;
             })
         );
         this.save();
@@ -63,42 +61,36 @@ export class HistoryStore {
 
     delete(id: string) {
         this._entries.update((entries) => entries.filter((entry) => entry.id !== id));
-        this.setDeletedIds([...this.deletedIds.filter((d) => d !== id), id].slice(-MAX_DELETED));
+        this.deletions.add({ kind: 'history', id, deletedAt: Date.now() });
         this.save();
     }
 
     /**
-     * Adds workouts from a backup. One already here (the same run) is left as it is, and a
-     * deleted one comes back, since importing is asked for. Returns how many were added; the
-     * oldest still go past MAX_HISTORY.
+     * Merges workouts from another copy (a backup), by run id: the most recent change to each
+     * wins, e.g. a note added there. A deletion there removes a workout here that hasn't
+     * changed since, and one deleted here doesn't come back unless it changed there after.
+     * The oldest still go past MAX_HISTORY.
      */
-    importEntries(imported: readonly HistoryEntry[]): number {
-        const existing = new Set(this._entries().map((entry) => entry.id));
-        const added = imported.filter((entry, i) => {
-            const firstOfItsRun = imported.findIndex((other) => other.id === entry.id) === i;
-            return firstOfItsRun && !existing.has(entry.id);
-        });
-        if (added.length === 0) {
-            return 0;
-        }
-        const addedIds = new Set(added.map((entry) => entry.id));
-        this.setDeletedIds(this.deletedIds.filter((id) => !addedIds.has(id)));
-        this._entries.update((entries) =>
-            [...entries, ...added].sort((a, b) => b.startedAt - a.startedAt).slice(0, MAX_HISTORY)
+    mergeEntries(entries: readonly HistoryEntry[], deletedThere: readonly Deletion[]) {
+        const result = mergeRecords(
+            'history',
+            this._entries(),
+            entries,
+            (id) => this.deletions.deletedAt('history', id),
+            deletedThere
         );
-        this.save();
-        return added.length;
+        result.deletions.forEach((deletion) => this.deletions.add(deletion));
+        if (result.added + result.updated + result.removed > 0) {
+            this._entries.set(sortAndCap(result.records));
+            this.save();
+        }
+        return { added: result.added, updated: result.updated, removed: result.removed };
     }
 
     /** Puts a deleted entry back, e.g. on Undo. */
     restore(entry: HistoryEntry) {
-        this.setDeletedIds(this.deletedIds.filter((id) => id !== entry.id));
+        this.deletions.remove('history', entry.id);
         this.record(entry);
-    }
-
-    private setDeletedIds(ids: string[]) {
-        this.deletedIds = ids;
-        localStorage.setItem(DELETED_KEY, JSON.stringify(ids));
     }
 
     private save() {
@@ -106,9 +98,14 @@ export class HistoryStore {
     }
 }
 
+function sortAndCap(entries: HistoryEntry[]): HistoryEntry[] {
+    return [...entries].sort((a, b) => b.startedAt - a.startedAt).slice(0, MAX_HISTORY);
+}
+
 // Corrupted or unexpected data shouldn't stop the app from starting, so drop anything
 // that isn't a usable entry
 function loadHistory(): HistoryEntry[] {
+    migrateSavedData();
     try {
         const parsed: unknown = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]');
         return Array.isArray(parsed)
@@ -122,23 +119,17 @@ function loadHistory(): HistoryEntry[] {
     }
 }
 
-function loadDeletedIds(): string[] {
-    try {
-        const parsed: unknown = JSON.parse(localStorage.getItem(DELETED_KEY) ?? '[]');
-        return Array.isArray(parsed)
-            ? parsed.filter((id): id is string => typeof id === 'string')
-            : [];
-    } catch {
-        return [];
-    }
-}
-
 /**
  * Reads one saved workout, from this device or a backup, or returns null if it isn't usable.
- * A broken set is dropped, keeping the rest of the workout.
+ * A broken set is dropped, keeping the rest of the workout. One with no `updatedAt` is dated
+ * by when it ended.
  */
 export function readHistoryEntry(value: unknown): HistoryEntry | null {
-    return isHistoryEntry(value) ? withUsableSets(value) : null;
+    if (!isHistoryEntry(value)) {
+        return null;
+    }
+    const entry = withUsableSets(value);
+    return isWholeNumber(entry.updatedAt) ? entry : { ...entry, updatedAt: entry.endedAt };
 }
 
 // A broken set is dropped rather than the whole workout; with none left, so are the sets
@@ -159,7 +150,8 @@ function isHistoryEntry(value: unknown): value is HistoryEntry {
     const entry = value as Record<string, unknown>;
     return (
         typeof entry['id'] === 'string' &&
-        isWholeNumber(entry['timerId'], 1) &&
+        typeof entry['timerId'] === 'string' &&
+        entry['timerId'] !== '' &&
         typeof entry['title'] === 'string' &&
         isWholeNumber(entry['startedAt'], 1) &&
         isWholeNumber(entry['endedAt'], 1) &&

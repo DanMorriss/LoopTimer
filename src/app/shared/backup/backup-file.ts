@@ -1,11 +1,16 @@
 import { HistoryEntry } from '../../models/history';
+import { Deletion, isDeletion } from '../../models/sync';
 import { Timer } from '../../models/timer';
 import { readHistoryEntry } from '../state/history-store.service';
+import { upgradeHistoryEntry, upgradeTimer } from '../state/migrate';
 import { Settings } from '../state/settings-store.service';
 import { readTimer } from '../state/timer-store.service';
 
-/** Goes up when the file's shape changes; older files are converted when they're read. */
-export const BACKUP_VERSION = 1;
+/**
+ * Goes up when the file's shape changes; older files are converted when they're read.
+ * 2: random timer ids, `updatedAt` on timers and workouts, and `deleted`.
+ */
+export const BACKUP_VERSION = 2;
 
 /** Far more than years of workouts take, so a bigger file isn't a backup. */
 export const MAX_BACKUP_BYTES = 10 * 1024 * 1024;
@@ -18,6 +23,8 @@ export interface BackupFile {
     exportedAt: number;
     timers: Timer[];
     history: HistoryEntry[];
+    /** Records deleted on the device it came from, so importing deletes them here too. */
+    deleted: Deletion[];
     settings: Settings;
 }
 
@@ -28,13 +35,19 @@ export type ReadBackup =
           ok: true;
           timers: Timer[];
           history: HistoryEntry[];
+          deleted: Deletion[];
+          /**
+           * From version 1, whose timer ids were only unique on their device: its timers have
+           * been given new ids, so they're matched on what they are rather than by id.
+           */
+          fromVersion1: boolean;
           /** Timers and workouts in the file that weren't usable, and were left out. */
           skipped: number;
       }
     | { ok: false; problem: BackupProblem };
 
 export function makeBackup(
-    contents: Pick<BackupFile, 'timers' | 'history' | 'settings'>,
+    contents: Pick<BackupFile, 'timers' | 'history' | 'deleted' | 'settings'>,
     exportedAt: number
 ): BackupFile {
     return { app: 'LoopTimer', version: BACKUP_VERSION, exportedAt, ...contents };
@@ -50,9 +63,9 @@ export function backupFileName(exportedAt: number): string {
 /**
  * Reads a backup file's text. Timers and workouts that aren't usable are left out and
  * counted, as when the app loads its own data; the rest are read the same way, so older
- * timer formats convert.
+ * timer formats convert, and a version 1 file is brought up to version 2 as saved data is.
  */
-export function readBackup(text: string): ReadBackup {
+export function readBackup(text: string, now = Date.now()): ReadBackup {
     let parsed: unknown;
     try {
         parsed = JSON.parse(text);
@@ -76,11 +89,20 @@ export function readBackup(text: string): ReadBackup {
     if ((version as number) > BACKUP_VERSION) {
         return { ok: false, problem: 'too-new' };
     }
-    const timers = file['timers'].map((item) => readTimer(item)).filter((t) => t !== null);
-    const history = file['history']
+    const fromVersion1 = version === 1;
+    const newIds: Record<string, string> = {};
+    const savedTimers: unknown[] = fromVersion1
+        ? file['timers'].map((timer) => upgradeTimer(timer, newIds, now))
+        : file['timers'];
+    const savedHistory: unknown[] = fromVersion1
+        ? file['history'].map((entry) => upgradeHistoryEntry(entry, newIds))
+        : file['history'];
+
+    const timers = savedTimers.map((item) => readTimer(item)).filter((t) => t !== null);
+    const history = savedHistory
         .map((item) => readHistoryEntry(item))
         .filter((entry) => entry !== null);
-    const skipped =
-        file['timers'].length - timers.length + (file['history'].length - history.length);
-    return { ok: true, timers, history, skipped };
+    const deleted = Array.isArray(file['deleted']) ? file['deleted'].filter(isDeletion) : [];
+    const skipped = savedTimers.length - timers.length + (savedHistory.length - history.length);
+    return { ok: true, timers, history, deleted, fromVersion1, skipped };
 }

@@ -16,10 +16,11 @@ function makeEntry(overrides: Partial<HistoryEntry> = {}): HistoryEntry {
     const startedAt = overrides.startedAt ?? NOW - HOUR;
     return {
         id: `${startedAt}-1`,
-        timerId: 1,
+        timerId: 'timer-1',
         title: 'Sprints',
         startedAt,
         endedAt: startedAt + 600_000,
+        updatedAt: startedAt + 600_000,
         activeSeconds: 600,
         roundsCompleted: 3,
         totalRounds: 3,

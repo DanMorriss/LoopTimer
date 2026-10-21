@@ -6,13 +6,12 @@ Open work, highest priority first. Tick items off (or delete them) as they're do
 
 ### Phase 1: Foundations
 
-Do these first: everything after builds on them. Exercises and the sync-ready data are one reshaping of the saved data, so do them together, with one conversion on load.
+Do these first: everything after builds on them. The data is ready for sync (#81: random ids, `updatedAt`, deletion markers, backup version 2). Exercises build on that: your own exercises and notes get the same, steps and logged sets gain an exercise id, and the conversion that links them is the next `data-version` (3) in `migrate.ts`.
 
 - [ ] **Write the built-in exercise list (for EXR-6, EXR-7):** 40 of about 80 written, in `src/app/models/built-in-exercises.ts`. The rules, the voice and the backlog of the other 40 are in `docs/writing-exercises.md`; the `exercise-writer` agent (`.claude/agents/`) writes one batch of 10 per run and raises it as a PR, for Dan to review before the next. Not used by the app until the exercises work below.
 - [ ] **Body map component (for EXR-8):** front and back figures from react-native-body-highlighter's MIT shapes (keep the licence notice), as an Angular component that shades main and supporting muscles from colour tokens, with the muscle labels underneath as its key and text. Male and female figures, picked by a new "Body figure" setting (SET-5). Design: "A + C" in the exercise page options canvas linked from `docs/features/exercises.md`.
 - [ ] **Exercises as things in their own right (EXR-1–4, EXR-9, EXR-10):** built-in and your own exercises, steps and logged sets pointing to an exercise id, a picker in Create (search the list, or type a new name to make one), renaming your own everywhere, your own note on any exercise, and existing step names and history converted on load (matched to built-in exercises where they can be). Add your own exercises to the backup file. Steps can still have no exercise; weights follow the settings unit.
 - [ ] **Exercise pages (EXR-6–8):** browse and search the list, and a page per exercise with its description, how-to steps and the body map shaded for main and supporting muscles. Phase 3's progress goes on the same page.
-- [ ] **Data ready for sync (groundwork for SYN-3):** random ids for workouts, exercises and history (convert the existing 1, 2, 3… timer ids), `updatedAt` on every record, and deletions kept as `deletedAt` markers in place of `history-deleted`. Bump the backup file to version 2 (converting version 1 on import) and merge imports by id and `updatedAt` instead of matching timers by content. Update `docs/features/data.md`.
 - [ ] **More room for history (SYN-5):** move it from `localStorage` to IndexedDB and lift the 500-entry cap, so years of progress fit.
 - [ ] **"Workouts", not "Timers" (EXR-5):** rename in the menu, library, Create, the timer page, history ("Untitled timer") and the docs. The app keeps the name LoopTimer; code names can follow or stay.
 

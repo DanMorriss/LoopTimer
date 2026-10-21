@@ -5,7 +5,7 @@ import { makeTimer, reps, rest, work } from '../../shared/testing/make-timer';
 import { TimerCardComponent } from './timer-card.component';
 
 const sprints = makeTimer({
-    id: 7,
+    id: 'timer-7',
     title: 'Sprints',
     timerMinutes: 1,
     timerSeconds: 5,

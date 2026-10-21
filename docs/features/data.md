@@ -2,6 +2,8 @@
 
 What the app saves, and in what shape. Everything is on the device; there's no account or server.
 
+**Ready for sync:** every timer and history entry has an id that can't clash with another device's (random, not 1, 2, 3) and an `updatedAt`, the time it last changed in ms since 1970. Deleting one leaves a marker in `deleted`. Merging two copies (a backup now, another device later) goes by id: the most recent change to each record wins, and a deletion wins over changes made before it. See [backup-and-sync](backup-and-sync.md).
+
 ## Saved for good (`localStorage` on the web)
 
 ### `timers`: the library
@@ -11,8 +13,9 @@ A JSON list of timers:
 ```json
 [
     {
-        "id": 3,
+        "id": "5f0c2a9e-8b1d-4c3a-9e2f-7a6b5c4d3e21",
         "title": "Circuit",
+        "updatedAt": 1760952000000,
         "repeats": 5,
         "steps": [
             { "kind": "work", "seconds": 45, "name": "Squats" },
@@ -23,7 +26,8 @@ A JSON list of timers:
 ]
 ```
 
-- `id`: a whole number from 1, unique; a new timer gets the highest + 1.
+- `id`: a random UUID, given when the timer is made and never changed.
+- `updatedAt`: when it was made or last changed (edited, or its reps or weight changed mid-workout).
 - `repeats`: 1–30, or **0 for until stopped**.
 - `seconds`: 1–5999 (99:59). `reps`: 1–100. `name`: may be empty.
 - `weight` (rep steps only, optional): in **kg whatever unit is shown**, to the gram, more than 0 and up to 300. Missing for none. A weight picked in lb is converted (1 lb = 0.45359237 kg), so 45 lb saves as 20.412 kg.
@@ -37,11 +41,12 @@ A JSON list of entries, newest first, at most 500:
 ```json
 [
     {
-        "id": "1760952300000-3",
-        "timerId": 3,
+        "id": "1760952300000-5f0c2a9e-8b1d-4c3a-9e2f-7a6b5c4d3e21",
+        "timerId": "5f0c2a9e-8b1d-4c3a-9e2f-7a6b5c4d3e21",
         "title": "Circuit",
         "startedAt": 1760952300000,
         "endedAt": 1760953050000,
+        "updatedAt": 1760953050000,
         "activeSeconds": 750,
         "roundsCompleted": 5,
         "totalRounds": 5,
@@ -56,13 +61,36 @@ A JSON list of entries, newest first, at most 500:
 ```
 
 - Times are ms since 1970 (UTC).
-- `id` is `<startedAt>-<timerId>`: unique per run, so the same run logged again replaces its entry.
+- `id` is `<startedAt>-<timerId>`: unique per run, so the same run logged again replaces its entry, and the same run matches across copies.
+- `updatedAt`: when it was last logged or its note changed.
 - `totalRounds` is 0 for a timer that runs until stopped. `outcome` is `finished` or `stopped`. `note` is missing when there isn't one (up to 120 characters).
 - `sets` (missing when there were none): one per Done on a rep step, in order. `round` and `step` count from 0, `reps` is at least 1, `weight` is in kg (missing for none). A broken set is dropped when loading, keeping the rest of the entry.
 
-### `history-deleted`
+### `deleted`
 
-The ids of the last 20 history entries deleted, oldest first, so a run still going can't log itself back in (see [history](history.md)).
+The last 500 timers and history entries deleted, oldest first, so a deletion reaches other copies and a run still going can't log itself back in (see [history](history.md)):
+
+```json
+[
+    {
+        "kind": "history",
+        "id": "1760952300000-5f0c2a9e-8b1d-4c3a-9e2f-7a6b5c4d3e21",
+        "deletedAt": 1760960000000
+    }
+]
+```
+
+`kind` is `timer` or `history`. Undo in the history takes its marker away.
+
+### `data-version`
+
+Which shape the rest is in: `2`. Missing means 1, from before it was saved. On load, version 1 data is converted once, before anything reads it:
+
+- each timer's number id becomes a new random one, and it gets `updatedAt` (the time of the conversion)
+- each history entry's `timerId` becomes its timer's new id (or, for a timer since deleted, the old number as text), and it gets `updatedAt` (when it ended); its own `id` stays
+- `history-deleted`, version 1's list of deleted history ids, becomes markers in `deleted`
+
+`legacy-timer-ids` keeps each old number and its new id, so a workout in progress when the app updated still finds its timer.
 
 ### `settings`
 
@@ -93,10 +121,11 @@ From these, everything on the timer page is worked out (see [run-a-timer](run-a-
 ```json
 {
     "app": "LoopTimer",
-    "version": 1,
+    "version": 2,
     "exportedAt": 1761055200000,
     "timers": [],
     "history": [],
+    "deleted": [],
     "settings": {
         "theme": "dark",
         "sound": true,
@@ -107,8 +136,9 @@ From these, everything on the timer page is worked out (see [run-a-timer](run-a-
 }
 ```
 
-- `timers`, `history` and `settings` are in the same shapes as above; `exportedAt` is ms since 1970.
+- `timers`, `history`, `deleted` and `settings` are in the same shapes as above; `exportedAt` is ms since 1970.
 - `version` goes up whenever the file's shape changes. A file from an older version is converted when imported; one from a newer version is turned down.
+- **Version 1** files (from before random ids) have number timer ids, no `updatedAt` and no `deleted`. They're converted as saved data is: their timers get new random ids, so they're matched on what they are (title, steps and rounds) rather than by id.
 - A file that isn't JSON, doesn't say `"app": "LoopTimer"`, lacks `timers` or `history` lists, or is over 10 MB isn't a backup.
 
 ## Broken data

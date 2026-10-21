@@ -1,3 +1,5 @@
+import { Synced } from './sync';
+
 export type TimedKind = 'work' | 'rest';
 export type StepKind = TimedKind | 'reps';
 
@@ -35,12 +37,14 @@ export type Step = TimedStep | RepStep;
  * times (or until stopped). Rest steps at the end of the last round are skipped, since
  * the workout is over by then.
  */
-export interface Timer {
-    id: number;
+export interface Timer extends Synced {
     title: string;
     steps: Step[];
     repeats: number;
 }
+
+/** What's set up to make a timer: everything but what the store keeps (its id and dates). */
+export type TimerFields = Omit<Timer, 'id' | 'updatedAt'>;
 
 /** The `repeats` value for a timer that keeps going until it's stopped. */
 export const UNTIL_STOPPED = 0;

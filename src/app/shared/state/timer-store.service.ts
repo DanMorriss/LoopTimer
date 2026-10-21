@@ -1,10 +1,14 @@
-import { computed, Service, signal } from '@angular/core';
-import { hasWork, MAX_REPS, MAX_STEP_SECONDS, Step, Timer } from '../../models/timer';
+import { computed, inject, Service, signal } from '@angular/core';
+import { hasWork, MAX_REPS, MAX_STEP_SECONDS, Step, Timer, TimerFields } from '../../models/timer';
 import { MAX_WEIGHT_KG } from '../../models/weight';
 import { isLoggedSet, LoggedSet } from '../../models/history';
+import { Deletion, mergeRecords, newId } from '../../models/sync';
+import { DeletionStore } from './deletion-store.service';
+import { LEGACY_TIMER_IDS_KEY, migrateSavedData } from './migrate';
 
 @Service()
 export class TimerStore {
+    private readonly deletions = inject(DeletionStore);
     private _timers = signal<Timer[]>([]);
     private _activeTimer = signal<Timer | null>(null);
     private _activeTimerStartedAt = signal<number | null>(null);
@@ -57,6 +61,7 @@ export class TimerStore {
     }
 
     private loadTimers(): Timer[] {
+        migrateSavedData();
         const savedTimers = localStorage.getItem('timers');
         if (!savedTimers) {
             return [];
@@ -77,8 +82,12 @@ export class TimerStore {
     // The active timer and its start time are remembered per tab, so refreshing
     // the timer page carries on where it was
     private loadActiveTimer(): Timer | null {
-        const savedId = Number(sessionStorage.getItem('activeTimerId'));
-        return savedId ? this.findTimerById(savedId) : null;
+        const savedId = sessionStorage.getItem('activeTimerId');
+        if (!savedId) {
+            return null;
+        }
+        // A run started before timers had random ids still has its old number
+        return this.findTimerById(savedId) ?? this.findTimerById(legacyTimerId(savedId) ?? '');
     }
 
     private loadActiveTimerStartedAt(): number {
@@ -97,20 +106,18 @@ export class TimerStore {
         return saved !== null && pausedAt >= startedAt && pausedAt <= Date.now() ? pausedAt : null;
     }
 
-    addTimer(timer: Omit<Timer, 'id'>): Timer {
-        const newTimer: Timer = {
-            ...timer,
-            id: this.generateNextId(),
-        };
+    addTimer(timer: TimerFields): Timer {
+        const newTimer: Timer = { ...timer, id: newId(), updatedAt: Date.now() };
         this._timers.update((timers) => [...timers, newTimer]);
         this.saveTimers();
         return newTimer;
     }
 
     /**
-     * Adds timers from a backup. Ids are only unique per device, so a timer is matched on
-     * what it is instead: one the same as a timer already here (title, steps and rounds) is
-     * skipped, and any other is added with a new id. Returns how many were added.
+     * Adds timers from a version 1 backup, whose ids were only unique on their device, so a
+     * timer is matched on what it is instead: one the same as a timer already here (title,
+     * steps and rounds) is skipped, and any other is added. Their ids are new ones given when
+     * the backup was read (see `upgradeTimer()`). Returns how many were added.
      */
     importTimers(imported: readonly Timer[]): number {
         let added = 0;
@@ -118,7 +125,7 @@ export class TimerStore {
             if (this._timers().some((existing) => sameTimer(existing, timer))) {
                 continue;
             }
-            this._timers.update((timers) => [...timers, { ...timer, id: this.generateNextId() }]);
+            this._timers.update((timers) => [...timers, timer]);
             added++;
         }
         if (added > 0) {
@@ -127,31 +134,45 @@ export class TimerStore {
         return added;
     }
 
-    private generateNextId(): number {
-        const timers = this._timers();
-        return timers.length > 0 ? Math.max(...timers.map((timers) => timers.id)) + 1 : 1;
+    /**
+     * Merges timers from another copy (a version 2 backup), by id: the most recent change to
+     * each wins, and a deletion there removes a timer here that hasn't changed since. A timer
+     * deleted here doesn't come back unless it changed there after.
+     */
+    mergeTimers(timers: readonly Timer[], deletedThere: readonly Deletion[]) {
+        const result = mergeRecords(
+            'timer',
+            this._timers(),
+            timers,
+            (id) => this.deletions.deletedAt('timer', id),
+            deletedThere
+        );
+        result.deletions.forEach((deletion) => this.deletions.add(deletion));
+        if (result.added + result.updated + result.removed > 0) {
+            this._timers.set(result.records);
+            this.saveTimers();
+        }
+        return { added: result.added, updated: result.updated, removed: result.removed };
     }
 
-    deleteTimer(timerId: number) {
+    deleteTimer(timerId: string) {
         const updatedTimerList = this._timers().filter((timer) => timer.id !== timerId);
         this._timers.set(updatedTimerList);
         this.saveTimers();
+        this.deletions.add({ kind: 'timer', id: timerId, deletedAt: Date.now() });
     }
 
-    findTimerById(timerId: number): Timer | null {
+    findTimerById(timerId: string): Timer | null {
         return this._timers().find((timer) => timer.id === timerId) ?? null;
     }
 
-    updateTimer(timerId: number, timerUpdate: Omit<Timer, 'id'>): Timer | null {
+    updateTimer(timerId: string, timerUpdate: TimerFields): Timer | null {
         const existingTimer = this.findTimerById(timerId);
         if (!existingTimer) {
             return null;
         }
 
-        const updatedTimer: Timer = {
-            ...timerUpdate,
-            id: timerId,
-        };
+        const updatedTimer: Timer = { ...timerUpdate, id: timerId, updatedAt: Date.now() };
 
         this._timers.update((timers) =>
             timers.map((timer) => (timer.id === timerId ? updatedTimer : timer))
@@ -220,6 +241,7 @@ export class TimerStore {
         const updated: Timer = {
             ...timer,
             steps: timer.steps.map((existing, i) => (i === stepIndex ? step : existing)),
+            updatedAt: Date.now(),
         };
         this._activeTimer.set(updated);
         if (this.findTimerById(timer.id)) {
@@ -345,7 +367,8 @@ export function readTimer(value: unknown): Timer | null {
     const saved = value as Record<string, unknown>;
     // 0 is UNTIL_STOPPED
     if (
-        !isWholeNumber(saved['id'], 1) ||
+        typeof saved['id'] !== 'string' ||
+        saved['id'] === '' ||
         typeof saved['title'] !== 'string' ||
         !isWholeNumber(saved['repeats'], 0)
     ) {
@@ -356,11 +379,27 @@ export function readTimer(value: unknown): Timer | null {
         return null;
     }
     return {
-        id: saved['id'] as number,
+        id: saved['id'],
         title: saved['title'],
         steps: steps.map(copyStep),
         repeats: saved['repeats'] as number,
+        // Missing only if saved oddly: older than any real change, so any other copy wins
+        updatedAt: isWholeNumber(saved['updatedAt'], 0) ? (saved['updatedAt'] as number) : 0,
     };
+}
+
+/** The new id of a timer saved before ids were random, from its old number. */
+function legacyTimerId(oldId: string): string | undefined {
+    try {
+        const ids: unknown = JSON.parse(localStorage.getItem(LEGACY_TIMER_IDS_KEY) ?? '{}');
+        const id =
+            typeof ids === 'object' && ids !== null
+                ? (ids as Record<string, unknown>)[oldId]
+                : undefined;
+        return typeof id === 'string' ? id : undefined;
+    } catch {
+        return undefined;
+    }
 }
 
 /** The steps for a timer saved in the old format, or null if it isn't one. */

@@ -21,7 +21,15 @@ import {
 } from '@angular/cdk/drag-drop';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
-import { hasWork, MAX_REPS, Step, StepKind, Timer, UNTIL_STOPPED } from '../models/timer';
+import {
+    hasWork,
+    MAX_REPS,
+    Step,
+    StepKind,
+    Timer,
+    TimerFields,
+    UNTIL_STOPPED,
+} from '../models/timer';
 import { WeightUnit, weightIn, weightOptions, weightToKg } from '../models/weight';
 import { InfinitySwitchComponent } from '../shared/components/infinity-switch/infinity-switch.component';
 import { ConfirmDialogComponent } from '../shared/components/confirm-dialog/confirm-dialog.component';
@@ -116,7 +124,7 @@ export class TimerSetupComponent {
 
     protected readonly maxSteps = MAX_STEPS;
     protected readonly kindName = kindName;
-    protected readonly editingTimerId = signal<number | null>(null);
+    protected readonly editingTimerId = signal<string | null>(null);
     protected readonly minuteOptions = pickerOptions(0, 99, padded);
     protected readonly secondOptions = pickerOptions(0, 59, padded);
     protected readonly repOptions = pickerOptions(0, MAX_REPS, String);
@@ -394,17 +402,13 @@ export class TimerSetupComponent {
     }
 
     private findTimerToEdit(params: ParamMap): Timer | null {
-        const rawEditId = params.get('editId');
-        const editId = Number(rawEditId);
-        if (!rawEditId || !Number.isInteger(editId) || editId <= 0) {
-            return null;
-        }
-        return this.timerStore.findTimerById(editId);
+        const editId = params.get('editId');
+        return editId ? this.timerStore.findTimerById(editId) : null;
     }
 
     private async saveAndStart(): Promise<void> {
         const { title, steps, repeats } = this.model();
-        const timer: Omit<Timer, 'id'> = { title, steps: toSteps(steps, this.weightUnit), repeats };
+        const timer: TimerFields = { title, steps: toSteps(steps, this.weightUnit), repeats };
 
         const editingId = this.editingTimerId();
         const savedTimer = editingId

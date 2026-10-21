@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { Timer } from '../../models/timer';
+import { Timer, TimerFields } from '../../models/timer';
 import { LoggedSet } from '../../models/history';
 import { makeTimer as baseTimer, reps, rest, SimpleTimer, work } from '../testing/make-timer';
 import { TimerStore } from './timer-store.service';
@@ -7,9 +7,9 @@ import { TimerStore } from './timer-store.service';
 // What Done logs in the rep step tests: round 1's push-ups
 const SET: LoggedSet = { round: 0, step: 1, name: '', reps: 20 };
 
-// A new timer to add: the shared test timer without its id
-function makeTimer(overrides: Partial<SimpleTimer> = {}): Omit<Timer, 'id'> {
-    const { id: _id, ...timer } = baseTimer(overrides);
+// A new timer to add: the shared test timer without its id and date
+function makeTimer(overrides: Partial<SimpleTimer> = {}): TimerFields {
+    const { id: _id, updatedAt: _updatedAt, ...timer } = baseTimer(overrides);
     return timer;
 }
 
@@ -29,7 +29,9 @@ describe('TimerStore', () => {
         });
 
         it('loads timers saved in localStorage', () => {
-            const saved: Timer[] = [{ ...makeTimer({ title: 'Saved' }), id: 4 }];
+            const saved: Timer[] = [
+                { ...makeTimer({ title: 'Saved' }), id: 'timer-4', updatedAt: 1 },
+            ];
             localStorage.setItem('timers', JSON.stringify(saved));
 
             expect(createStore().timers()).toEqual(saved);
@@ -48,22 +50,32 @@ describe('TimerStore', () => {
         });
 
         it('keeps valid saved timers and drops broken ones', () => {
-            const valid: Timer = { ...makeTimer(), id: 1 };
+            const valid: Timer = { ...makeTimer(), id: 'timer-1', updatedAt: 1 };
             const broken = [
                 null,
                 'text',
-                { id: 2 },
-                { ...makeTimer(), id: 0 },
-                { ...makeTimer(), id: 3, title: 42 },
-                { ...makeTimer(), id: 4, repeats: -1 },
-                { ...makeTimer(), id: 5, steps: 'work' },
-                { ...makeTimer(), id: 6, steps: [] },
-                { ...makeTimer(), id: 7, steps: [rest(10)] },
-                { ...makeTimer(), id: 8, steps: [work(0)] },
-                { ...makeTimer(), id: 9, steps: [work(30.5)] },
-                { ...makeTimer(), id: 10, steps: [work(100 * 60)] },
-                { ...makeTimer(), id: 11, steps: [{ kind: 'jump', seconds: 30, name: '' }] },
-                { ...makeTimer(), id: 12, steps: [{ kind: 'work', seconds: 30 }] },
+                { id: 'timer-2', updatedAt: 1 },
+                { ...makeTimer(), id: '', updatedAt: 1 },
+                { ...makeTimer(), id: 'timer-3', updatedAt: 1, title: 42 },
+                { ...makeTimer(), id: 'timer-4', updatedAt: 1, repeats: -1 },
+                { ...makeTimer(), id: 'timer-5', updatedAt: 1, steps: 'work' },
+                { ...makeTimer(), id: 'timer-6', updatedAt: 1, steps: [] },
+                { ...makeTimer(), id: 'timer-7', updatedAt: 1, steps: [rest(10)] },
+                { ...makeTimer(), id: 'timer-8', updatedAt: 1, steps: [work(0)] },
+                { ...makeTimer(), id: 'timer-9', updatedAt: 1, steps: [work(30.5)] },
+                { ...makeTimer(), id: 'timer-10', updatedAt: 1, steps: [work(100 * 60)] },
+                {
+                    ...makeTimer(),
+                    id: 'timer-11',
+                    updatedAt: 1,
+                    steps: [{ kind: 'jump', seconds: 30, name: '' }],
+                },
+                {
+                    ...makeTimer(),
+                    id: 'timer-12',
+                    updatedAt: 1,
+                    steps: [{ kind: 'work', seconds: 30 }],
+                },
             ];
             localStorage.setItem('timers', JSON.stringify([valid, ...broken]));
 
@@ -73,14 +85,29 @@ describe('TimerStore', () => {
         it('loads rep steps, and drops timers with broken ones', () => {
             const valid: Timer = {
                 ...makeTimer({ steps: [work(30), reps(20, 'Push-ups'), rest(10)] }),
-                id: 1,
+                id: 'timer-1',
+                updatedAt: 1,
             };
-            const allReps: Timer = { ...makeTimer({ steps: [reps(5)] }), id: 2 };
+            const allReps: Timer = {
+                ...makeTimer({ steps: [reps(5)] }),
+                id: 'timer-2',
+                updatedAt: 1,
+            };
             const broken = [
-                { ...makeTimer(), id: 3, steps: [reps(0)] },
-                { ...makeTimer(), id: 4, steps: [reps(101)] },
-                { ...makeTimer(), id: 5, steps: [{ kind: 'reps', seconds: 30, name: '' }] },
-                { ...makeTimer(), id: 6, steps: [{ kind: 'reps', reps: 2.5, name: '' }] },
+                { ...makeTimer(), id: 'timer-3', updatedAt: 1, steps: [reps(0)] },
+                { ...makeTimer(), id: 'timer-4', updatedAt: 1, steps: [reps(101)] },
+                {
+                    ...makeTimer(),
+                    id: 'timer-5',
+                    updatedAt: 1,
+                    steps: [{ kind: 'reps', seconds: 30, name: '' }],
+                },
+                {
+                    ...makeTimer(),
+                    id: 'timer-6',
+                    updatedAt: 1,
+                    steps: [{ kind: 'reps', reps: 2.5, name: '' }],
+                },
             ];
             localStorage.setItem('timers', JSON.stringify([valid, allReps, ...broken]));
 
@@ -92,7 +119,8 @@ describe('TimerStore', () => {
                 ...makeTimer({
                     steps: [{ kind: 'reps', reps: 10, name: 'Squats', weight: 20.412 }, reps(5)],
                 }),
-                id: 1,
+                id: 'timer-1',
+                updatedAt: 1,
             };
             const broken = [0, -5, 300.5, '60'].map((weight, i) => ({
                 ...makeTimer(),
@@ -107,7 +135,8 @@ describe('TimerStore', () => {
         it("keeps each step's kind, length and name, in order", () => {
             const circuit: Timer = {
                 ...makeTimer({ steps: [work(30, 'Squats'), work(45, 'Plank'), rest(20)] }),
-                id: 1,
+                id: 'timer-1',
+                updatedAt: 1,
             };
             localStorage.setItem('timers', JSON.stringify([circuit]));
 
@@ -116,7 +145,8 @@ describe('TimerStore', () => {
 
         describe('timers saved before steps', () => {
             const old = (overrides: Record<string, unknown> = {}) => ({
-                id: 1,
+                id: 'timer-1',
+                updatedAt: 1,
                 title: 'Old',
                 timerMinutes: 1,
                 timerSeconds: 5,
@@ -135,7 +165,13 @@ describe('TimerStore', () => {
 
             it('become a work step and a rest step', () => {
                 expect(load([old()])).toEqual([
-                    { id: 1, title: 'Old', steps: [work(65), rest(20)], repeats: 4 },
+                    {
+                        id: 'timer-1',
+                        updatedAt: 1,
+                        title: 'Old',
+                        steps: [work(65), rest(20)],
+                        repeats: 4,
+                    },
                 ]);
             });
 
@@ -149,7 +185,8 @@ describe('TimerStore', () => {
                 store.addTimer(makeTimer());
 
                 expect(savedTimers()[0]).toEqual({
-                    id: 1,
+                    id: 'timer-1',
+                    updatedAt: 1,
                     title: 'Old',
                     steps: [work(65), rest(20)],
                     repeats: 4,
@@ -170,7 +207,7 @@ describe('TimerStore', () => {
         });
 
         it('keeps a timer that runs until stopped (repeats 0)', () => {
-            const untilStopped: Timer = { ...makeTimer(), id: 1, repeats: 0 };
+            const untilStopped: Timer = { ...makeTimer(), id: 'timer-1', updatedAt: 1, repeats: 0 };
             localStorage.setItem('timers', JSON.stringify([untilStopped]));
 
             expect(createStore().timers()).toEqual([untilStopped]);
@@ -191,15 +228,15 @@ describe('TimerStore', () => {
         });
 
         it('restores the active timer when the app loads', () => {
-            const saved: Timer = { ...makeTimer({ title: 'Saved' }), id: 3 };
+            const saved: Timer = { ...makeTimer({ title: 'Saved' }), id: 'timer-3', updatedAt: 1 };
             localStorage.setItem('timers', JSON.stringify([saved]));
-            sessionStorage.setItem('activeTimerId', '3');
+            sessionStorage.setItem('activeTimerId', 'timer-3');
 
             expect(createStore().activeTimer()).toEqual(saved);
         });
 
         it('has no active timer when the remembered one no longer exists', () => {
-            sessionStorage.setItem('activeTimerId', '3');
+            sessionStorage.setItem('activeTimerId', 'timer-3');
 
             expect(createStore().activeTimer()).toBeNull();
             expect(createStore().activeTimerStartedAt()).toBeNull();
@@ -230,8 +267,11 @@ describe('TimerStore', () => {
         });
 
         it('restores the start time when the app loads', () => {
-            localStorage.setItem('timers', JSON.stringify([{ ...makeTimer(), id: 3 }]));
-            sessionStorage.setItem('activeTimerId', '3');
+            localStorage.setItem(
+                'timers',
+                JSON.stringify([{ ...makeTimer(), id: 'timer-3', updatedAt: 1 }])
+            );
+            sessionStorage.setItem('activeTimerId', 'timer-3');
             sessionStorage.setItem('activeTimerStartedAt', String(Date.now() - 42000));
 
             const startedAt = createStore().activeTimerStartedAt()!;
@@ -247,8 +287,11 @@ describe('TimerStore', () => {
         ] as const) {
             it(`starts the restored timer now when the saved start time is ${label}`, () => {
                 vi.spyOn(Date, 'now').mockReturnValue(2000000000000);
-                localStorage.setItem('timers', JSON.stringify([{ ...makeTimer(), id: 3 }]));
-                sessionStorage.setItem('activeTimerId', '3');
+                localStorage.setItem(
+                    'timers',
+                    JSON.stringify([{ ...makeTimer(), id: 'timer-3', updatedAt: 1 }])
+                );
+                sessionStorage.setItem('activeTimerId', 'timer-3');
                 if (saved !== null) {
                     sessionStorage.setItem('activeTimerStartedAt', saved);
                 }
@@ -259,33 +302,31 @@ describe('TimerStore', () => {
     });
 
     describe('addTimer', () => {
-        it('gives the first timer id 1 and saves it', () => {
+        it('gives a new timer a random id, dates it, and saves it', () => {
+            vi.spyOn(Date, 'now').mockReturnValue(5000);
             const store = createStore();
 
             const timer = store.addTimer(makeTimer());
 
-            expect(timer.id).toBe(1);
+            expect(timer.id).toMatch(/^[0-9a-f-]{36}$/);
+            expect(timer.updatedAt).toBe(5000);
             expect(store.timers()).toEqual([timer]);
             expect(savedTimers()).toEqual([timer]);
         });
 
-        it('gives each new timer the next id after the highest existing one', () => {
+        it('never gives two timers the same id', () => {
             const store = createStore();
-            store.addTimer(makeTimer());
-            const second = store.addTimer(makeTimer());
-            store.deleteTimer(1);
+            const ids = Array.from({ length: 20 }, () => store.addTimer(makeTimer()).id);
 
-            const third = store.addTimer(makeTimer());
-
-            expect(second.id).toBe(2);
-            expect(third.id).toBe(3);
+            expect(new Set(ids).size).toBe(20);
         });
     });
 
     describe('updateTimer', () => {
-        it('replaces the timer, keeps its id, and saves', () => {
+        it('replaces the timer, keeps its id, dates the change, and saves', () => {
             const store = createStore();
             const original = store.addTimer(makeTimer({ title: 'Before' }));
+            vi.spyOn(Date, 'now').mockReturnValue(original.updatedAt + 1000);
 
             const updated = store.updateTimer(
                 original.id,
@@ -295,6 +336,7 @@ describe('TimerStore', () => {
             expect(updated).toEqual({
                 ...makeTimer({ title: 'After', repeats: 8 }),
                 id: original.id,
+                updatedAt: original.updatedAt + 1000,
             });
             expect(store.timers()).toEqual([updated!]);
             expect(savedTimers()).toEqual([updated!]);
@@ -304,7 +346,7 @@ describe('TimerStore', () => {
             const store = createStore();
             const existing = store.addTimer(makeTimer());
 
-            expect(store.updateTimer(99, makeTimer({ title: 'Ghost' }))).toBeNull();
+            expect(store.updateTimer('timer-99', makeTimer({ title: 'Ghost' }))).toBeNull();
             expect(store.timers()).toEqual([existing]);
         });
     });
@@ -320,6 +362,90 @@ describe('TimerStore', () => {
             expect(store.timers()).toEqual([keep]);
             expect(savedTimers()).toEqual([keep]);
         });
+
+        it('leaves a deletion behind, dated, so it can reach other copies', () => {
+            const store = createStore();
+            const timer = store.addTimer(makeTimer());
+            vi.spyOn(Date, 'now').mockReturnValue(9000);
+
+            store.deleteTimer(timer.id);
+
+            expect(JSON.parse(localStorage.getItem('deleted')!)).toEqual([
+                { kind: 'timer', id: timer.id, deletedAt: 9000 },
+            ]);
+        });
+    });
+
+    describe('mergeTimers', () => {
+        const saved = (overrides: Partial<SimpleTimer>) => baseTimer(overrides);
+
+        it('adds new timers, keeps their ids, and takes the newer of the same timer', () => {
+            localStorage.setItem(
+                'timers',
+                JSON.stringify([
+                    saved({ id: 'a', title: 'Old here', updatedAt: 100 }),
+                    saved({ id: 'b', title: 'New here', updatedAt: 300 }),
+                ])
+            );
+            const store = createStore();
+
+            const result = store.mergeTimers(
+                [
+                    saved({ id: 'a', title: 'New there', updatedAt: 200 }),
+                    saved({ id: 'b', title: 'Old there', updatedAt: 200 }),
+                    saved({ id: 'c', title: 'Only there', updatedAt: 200 }),
+                ],
+                []
+            );
+
+            expect(result).toEqual({ added: 1, updated: 1, removed: 0 });
+            expect(store.timers().map((t) => [t.id, t.title])).toEqual([
+                ['a', 'New there'],
+                ['b', 'New here'],
+                ['c', 'Only there'],
+            ]);
+            expect(savedTimers().map((t) => t.id)).toEqual(['a', 'b', 'c']);
+        });
+
+        it('removes a timer deleted there since it changed here, and remembers that', () => {
+            localStorage.setItem(
+                'timers',
+                JSON.stringify([
+                    saved({ id: 'a', updatedAt: 100 }),
+                    saved({ id: 'b', updatedAt: 500 }),
+                ])
+            );
+            const store = createStore();
+
+            const result = store.mergeTimers(
+                [],
+                [
+                    { kind: 'timer', id: 'a', deletedAt: 200 },
+                    { kind: 'timer', id: 'b', deletedAt: 200 },
+                ]
+            );
+
+            expect(result.removed).toBe(1);
+            // b changed here after it was deleted there, so it stays
+            expect(store.timers().map((t) => t.id)).toEqual(['b']);
+            expect(JSON.parse(localStorage.getItem('deleted')!)).toEqual([
+                { kind: 'timer', id: 'a', deletedAt: 200 },
+            ]);
+        });
+
+        it("doesn't bring back a timer deleted here, unless it changed there after", () => {
+            const store = createStore();
+            vi.spyOn(Date, 'now').mockReturnValue(1000);
+            const timer = store.addTimer(makeTimer({ title: 'Gone' }));
+            vi.spyOn(Date, 'now').mockReturnValue(2000);
+            store.deleteTimer(timer.id);
+
+            store.mergeTimers([{ ...timer, updatedAt: 1000 }], []);
+            expect(store.timers()).toEqual([]);
+
+            store.mergeTimers([{ ...timer, title: 'Changed', updatedAt: 3000 }], []);
+            expect(store.timers().map((t) => t.title)).toEqual(['Changed']);
+        });
     });
 
     describe('findTimerById', () => {
@@ -328,7 +454,7 @@ describe('TimerStore', () => {
             const timer = store.addTimer(makeTimer());
 
             expect(store.findTimerById(timer.id)).toEqual(timer);
-            expect(store.findTimerById(42)).toBeNull();
+            expect(store.findTimerById('timer-42')).toBeNull();
         });
     });
 
