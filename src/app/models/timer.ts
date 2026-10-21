@@ -10,6 +10,11 @@ export interface TimedStep {
     seconds: number;
     /** Optional, e.g. "Squats". Empty when not named. */
     name: string;
+    /**
+     * The exercise a named work step is, linked by its name when the timer is saved (see
+     * `linkSteps()`). Missing for a rest or an unnamed step, which isn't tracked.
+     */
+    exerciseId?: string;
 }
 
 /**
@@ -27,6 +32,8 @@ export interface RepStep {
      * MAX_WEIGHT_KG. Missing for none, e.g. bodyweight moves.
      */
     weight?: number;
+    /** The exercise it is, as for a timed step. Missing for an unnamed step. */
+    exerciseId?: string;
 }
 
 /** One step of a round. */

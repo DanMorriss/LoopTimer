@@ -13,7 +13,7 @@ import { BehaviorSubject } from 'rxjs';
 import { Timer, TimerFields, UNTIL_STOPPED } from '../models/timer';
 import { SettingsStore } from '../shared/state/settings-store.service';
 import { TimerStore } from '../shared/state/timer-store.service';
-import { reps, rest, work } from '../shared/testing/make-timer';
+import { reps, rest, unlinked, unlinkedTimer, work } from '../shared/testing/make-timer';
 import { MAX_STEPS, TimerSetupComponent } from './timer-setup.component';
 
 const savedTimer: TimerFields = {
@@ -252,15 +252,16 @@ describe('TimerSetupComponent', () => {
 
             await submit();
 
+            // "Hill sprint" isn't a built-in exercise, so it becomes your own, which takes an id too
             const expected: Timer = {
-                id: 'timer-1',
+                id: expect.any(String),
                 updatedAt: expect.any(Number),
                 title: 'Sprints',
                 steps: [work(90, 'Hill sprint'), rest(20)],
                 repeats: 6,
             };
-            expect(store.timers()).toEqual([expected]);
-            expect(store.activeTimer()).toEqual(expected);
+            expect(store.timers().map(unlinkedTimer)).toEqual([expected]);
+            expect(unlinkedTimer(store.activeTimer())).toEqual(expected);
             expect(navigate).toHaveBeenCalledWith(['/timer']);
         });
 
@@ -269,7 +270,7 @@ describe('TimerSetupComponent', () => {
 
             await submit();
 
-            expect(store.timers()[0].steps).toEqual([work(30)]);
+            expect(unlinked(store.timers()[0].steps)).toEqual([work(30)]);
         });
 
         it('resets the form after saving', async () => {
@@ -325,7 +326,7 @@ describe('TimerSetupComponent', () => {
 
                 await submit();
 
-                expect(store.timers()[0].steps).toEqual([work(30), reps(20, 'Push-ups')]);
+                expect(unlinked(store.timers()[0].steps)).toEqual([work(30), reps(20, 'Push-ups')]);
             });
 
             it('leaves out a rep step left at 0 reps', async () => {
@@ -334,7 +335,7 @@ describe('TimerSetupComponent', () => {
 
                 await submit();
 
-                expect(store.timers()[0].steps).toEqual([work(30)]);
+                expect(unlinked(store.timers()[0].steps)).toEqual([work(30)]);
             });
 
             it('counts reps as work, so a timer of only reps can start', async () => {
@@ -345,7 +346,7 @@ describe('TimerSetupComponent', () => {
 
                 expect(submitButton().disabled).toBe(false);
                 await submit();
-                expect(store.timers()[0].steps).toEqual([reps(10)]);
+                expect(unlinked(store.timers()[0].steps)).toEqual([reps(10)]);
             });
 
             describe('weight', () => {
@@ -376,7 +377,7 @@ describe('TimerSetupComponent', () => {
 
                     await submit();
 
-                    expect(store.timers()[0].steps).toEqual([
+                    expect(unlinked(store.timers()[0].steps)).toEqual([
                         { kind: 'reps', reps: 10, name: 'Squats', weight: 22.5 },
                         reps(20),
                     ]);
@@ -432,7 +433,7 @@ describe('TimerSetupComponent', () => {
 
             await submit();
 
-            expect(store.timers()[0].steps).toEqual([
+            expect(unlinked(store.timers()[0].steps)).toEqual([
                 work(30, 'Squats'),
                 rest(15),
                 work(45, 'Plank'),
@@ -784,7 +785,7 @@ describe('TimerSetupComponent', () => {
 
                 await submit();
 
-                expect(store.timers()[0].steps).toEqual(pressed.steps);
+                expect(unlinked(store.timers()[0].steps)).toEqual(pressed.steps);
             });
 
             it('saves a weight picked in lb in kg', async () => {
@@ -796,7 +797,7 @@ describe('TimerSetupComponent', () => {
 
                 await submit();
 
-                expect(store.timers()[0].steps).toEqual([
+                expect(unlinked(store.timers()[0].steps)).toEqual([
                     { kind: 'reps', reps: 10, name: 'Bench', weight: 61.235 },
                 ]);
             });
@@ -833,7 +834,7 @@ describe('TimerSetupComponent', () => {
             await submit();
 
             expect(store.timers()).toHaveLength(1);
-            expect(store.timers()[0]).toEqual({
+            expect(unlinkedTimer(store.timers()[0])).toEqual({
                 id: 'timer-1',
                 updatedAt: expect.any(Number),
                 title: 'Renamed',

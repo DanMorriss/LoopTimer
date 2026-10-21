@@ -1,6 +1,8 @@
+import { ExerciseNote, OwnExercise } from '../../models/exercise';
 import { HistoryEntry } from '../../models/history';
 import { Deletion, isDeletion } from '../../models/sync';
 import { Timer } from '../../models/timer';
+import { readExerciseNote, readOwnExercise } from '../state/exercise-store.service';
 import { readHistoryEntry } from '../state/history-store.service';
 import { upgradeHistoryEntry, upgradeTimer } from '../state/migrate';
 import { Settings } from '../state/settings-store.service';
@@ -9,8 +11,9 @@ import { readTimer } from '../state/timer-store.service';
 /**
  * Goes up when the file's shape changes; older files are converted when they're read.
  * 2: random timer ids, `updatedAt` on timers and workouts, and `deleted`.
+ * 3: your own exercises and notes on exercises, and steps and sets linked to exercises.
  */
-export const BACKUP_VERSION = 2;
+export const BACKUP_VERSION = 3;
 
 /** Far more than years of workouts take, so a bigger file isn't a backup. */
 export const MAX_BACKUP_BYTES = 10 * 1024 * 1024;
@@ -23,6 +26,9 @@ export interface BackupFile {
     exportedAt: number;
     timers: Timer[];
     history: HistoryEntry[];
+    /** Your own exercises (the built-in ones come with the app). */
+    exercises: OwnExercise[];
+    exerciseNotes: ExerciseNote[];
     /** Records deleted on the device it came from, so importing deletes them here too. */
     deleted: Deletion[];
     settings: Settings;
@@ -35,19 +41,25 @@ export type ReadBackup =
           ok: true;
           timers: Timer[];
           history: HistoryEntry[];
+          /** None before version 3. */
+          exercises: OwnExercise[];
+          exerciseNotes: ExerciseNote[];
           deleted: Deletion[];
           /**
            * From version 1, whose timer ids were only unique on their device: its timers have
            * been given new ids, so they're matched on what they are rather than by id.
            */
           fromVersion1: boolean;
-          /** Timers and workouts in the file that weren't usable, and were left out. */
+          /** Timers, workouts and exercises in the file that weren't usable, and were left out. */
           skipped: number;
       }
     | { ok: false; problem: BackupProblem };
 
 export function makeBackup(
-    contents: Pick<BackupFile, 'timers' | 'history' | 'deleted' | 'settings'>,
+    contents: Pick<
+        BackupFile,
+        'timers' | 'history' | 'exercises' | 'exerciseNotes' | 'deleted' | 'settings'
+    >,
     exportedAt: number
 ): BackupFile {
     return { app: 'LoopTimer', version: BACKUP_VERSION, exportedAt, ...contents };
@@ -103,6 +115,26 @@ export function readBackup(text: string, now = Date.now()): ReadBackup {
         .map((item) => readHistoryEntry(item))
         .filter((entry) => entry !== null);
     const deleted = Array.isArray(file['deleted']) ? file['deleted'].filter(isDeletion) : [];
-    const skipped = savedTimers.length - timers.length + (savedHistory.length - history.length);
-    return { ok: true, timers, history, deleted, fromVersion1, skipped };
+    const savedExercises: unknown[] = Array.isArray(file['exercises']) ? file['exercises'] : [];
+    const exercises = savedExercises
+        .map((item) => readOwnExercise(item))
+        .filter((exercise) => exercise !== null);
+    const exerciseNotes = (Array.isArray(file['exerciseNotes']) ? file['exerciseNotes'] : [])
+        .map((item) => readExerciseNote(item))
+        .filter((note) => note !== null);
+    const skipped =
+        savedTimers.length -
+        timers.length +
+        (savedHistory.length - history.length) +
+        (savedExercises.length - exercises.length);
+    return {
+        ok: true,
+        timers,
+        history,
+        exercises,
+        exerciseNotes,
+        deleted,
+        fromVersion1,
+        skipped,
+    };
 }

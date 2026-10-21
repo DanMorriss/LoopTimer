@@ -43,6 +43,8 @@ export interface LoggedSet {
     reps: number;
     /** In kg, as on the step. Missing for none. */
     weight?: number;
+    /** The exercise it was, so its history can be followed. Missing for an unnamed step. */
+    exerciseId?: string;
 }
 
 /** Whether a saved value is a usable set: whole rounds, steps and reps, and a sane weight. */
@@ -59,6 +61,7 @@ export function isLoggedSet(value: unknown): value is LoggedSet {
         typeof set['name'] === 'string' &&
         whole(set['reps'], 1) &&
         (weight === undefined ||
-            (typeof weight === 'number' && weight > 0 && weight <= MAX_WEIGHT_KG))
+            (typeof weight === 'number' && weight > 0 && weight <= MAX_WEIGHT_KG)) &&
+        (set['exerciseId'] === undefined || typeof set['exerciseId'] === 'string')
     );
 }

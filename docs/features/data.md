@@ -31,6 +31,7 @@ A JSON list of timers:
 - `repeats`: 1–30, or **0 for until stopped**.
 - `seconds`: 1–5999 (99:59). `reps`: 1–100. `name`: may be empty.
 - `weight` (rep steps only, optional): in **kg whatever unit is shown**, to the gram, more than 0 and up to 300. Missing for none. A weight picked in lb is converted (1 lb = 0.45359237 kg), so 45 lb saves as 20.412 kg.
+- `exerciseId` (work and rep steps, optional): the exercise the step is, e.g. `builtin:back-squat`, or one of your own. Every time a timer is saved, each named work step is linked by its name, as the conversion to version 3 does (below), so a renamed step follows its name. Missing for a rest or an unnamed step.
 - A timer with no work (no timed step with time, and no rep step) isn't valid.
 - **Older format:** timers saved before steps existed have `timerMinutes`, `timerSeconds`, `restMinutes`, `restSeconds` in place of `steps`. They're read as a timed step plus a rest step (left out if 0), and saved in the new format the next time anything changes.
 
@@ -64,11 +65,39 @@ A JSON list of entries, newest first, at most 500:
 - `id` is `<startedAt>-<timerId>`: unique per run, so the same run logged again replaces its entry, and the same run matches across copies.
 - `updatedAt`: when it was last logged or its note changed.
 - `totalRounds` is 0 for a timer that runs until stopped. `outcome` is `finished` or `stopped`. `note` is missing when there isn't one (up to 120 characters).
-- `sets` (missing when there were none): one per Done on a rep step, in order. `round` and `step` count from 0, `reps` is at least 1, `weight` is in kg (missing for none). A broken set is dropped when loading, keeping the rest of the entry.
+- `sets` (missing when there were none): one per Done on a rep step, in order. `round` and `step` count from 0, `reps` is at least 1, `weight` is in kg (missing for none). `exerciseId` is the exercise it was, from its step (missing for an unnamed step). A broken set is dropped when loading, keeping the rest of the entry.
+
+### `exercises`: your own exercises
+
+A JSON list of the exercises you've made (EXR-9); the built-in ones come with the app and aren't saved. Each has the built-in ones' fields ([exercises](exercises.md)), most of them empty until you fill them in, plus an `id` (random) and `updatedAt`:
+
+```json
+[
+    {
+        "id": "71652dd3-bf96-4c6b-9ebd-8d9052e2ba0a",
+        "updatedAt": 1761060000000,
+        "name": "Wall sit hold",
+        "otherNames": [],
+        "equipment": [],
+        "measuredBy": "timed",
+        "mainMuscles": [],
+        "supportingMuscles": [],
+        "description": "",
+        "steps": [],
+        "tips": []
+    }
+]
+```
+
+- `measuredBy` is `reps` or `timed`. One needs an `id` (never starting `builtin:`), a `name` and a date; missing or broken lists read as empty, and unknown muscles are dropped.
+
+### `exercise-notes`: your notes on exercises
+
+A JSON list of `{ "id": "<exercise id>", "text": "Pause at the bottom", "updatedAt": … }`, one per exercise with a note (EXR-10), built-in or your own. `text` is up to 200 characters. Removing a note leaves a deletion.
 
 ### `deleted`
 
-The last 500 timers and history entries deleted, oldest first, so a deletion reaches other copies and a run still going can't log itself back in (see [history](history.md)):
+The last 500 timers, history entries, exercises of your own and notes deleted, oldest first, so a deletion reaches other copies and a run still going can't log itself back in (see [history](history.md)):
 
 ```json
 [
@@ -80,11 +109,13 @@ The last 500 timers and history entries deleted, oldest first, so a deletion rea
 ]
 ```
 
-`kind` is `timer` or `history`. Undo in the history takes its marker away.
+`kind` is `timer`, `history`, `exercise` or `exercise-note` (whose `id` is the exercise's). Undo in the history takes its marker away.
 
 ### `data-version`
 
-Which shape the rest is in: `2`. Missing means 1, from before it was saved. On load, version 1 data is converted once, before anything reads it:
+Which shape the rest is in: `3`. Missing means 1, from before it was saved. On load, older data is converted once, a version at a time, before anything reads it.
+
+**1 → 2, ready for sync:**
 
 - each timer's number id becomes a new random one, and it gets `updatedAt` (the time of the conversion)
 - each history entry's `timerId` becomes its timer's new id (or, for a timer since deleted, the old number as text), and it gets `updatedAt` (when it ended); its own `id` stays
@@ -92,13 +123,22 @@ Which shape the rest is in: `2`. Missing means 1, from before it was saved. On l
 
 `legacy-timer-ids` keeps each old number and its new id, so a workout in progress when the app updated still finds its timer.
 
+**2 → 3, exercises (EXR-4):** each named work step in a timer, and each named set in the history, gets the `exerciseId` its name means: a built-in exercise where the name, or one of its other names, matches (ignoring case, spaces and a plural "s"), and otherwise a new exercise of your own, one per name, measured by reps for a rep step and by time for a timed one. Rest and unnamed steps aren't linked.
+
 ### `settings`
 
 ```json
-{ "theme": "dark", "sound": true, "vibration": true, "keepScreenOn": true, "weightUnit": "kg" }
+{
+    "theme": "dark",
+    "sound": true,
+    "vibration": true,
+    "keepScreenOn": true,
+    "weightUnit": "kg",
+    "bodyFigure": "male"
+}
 ```
 
-`theme` is `dark`, `light` or `system`. `weightUnit` is `kg` or `lb`.
+`theme` is `dark`, `light` or `system`. `weightUnit` is `kg` or `lb`. `bodyFigure` is `male` or `female`.
 
 ## Saved for the run in progress (`sessionStorage` on the web, per tab)
 
@@ -121,10 +161,12 @@ From these, everything on the timer page is worked out (see [run-a-timer](run-a-
 ```json
 {
     "app": "LoopTimer",
-    "version": 2,
+    "version": 3,
     "exportedAt": 1761055200000,
     "timers": [],
     "history": [],
+    "exercises": [],
+    "exerciseNotes": [],
     "deleted": [],
     "settings": {
         "theme": "dark",
@@ -136,9 +178,10 @@ From these, everything on the timer page is worked out (see [run-a-timer](run-a-
 }
 ```
 
-- `timers`, `history`, `deleted` and `settings` are in the same shapes as above; `exportedAt` is ms since 1970.
+- `timers`, `history`, `exercises`, `exerciseNotes` (as `exercise-notes`), `deleted` and `settings` are in the same shapes as above; `exportedAt` is ms since 1970.
 - `version` goes up whenever the file's shape changes. A file from an older version is converted when imported; one from a newer version is turned down.
 - **Version 1** files (from before random ids) have number timer ids, no `updatedAt` and no `deleted`. They're converted as saved data is: their timers get new random ids, so they're matched on what they are (title, steps and rounds) rather than by id.
+- **Version 2** files (from before exercises) have no `exercises` or `exerciseNotes`, and their steps and sets aren't linked; they're linked by name as they're imported.
 - A file that isn't JSON, doesn't say `"app": "LoopTimer"`, lacks `timers` or `history` lists, or is over 10 MB isn't a backup.
 
 ## Broken data

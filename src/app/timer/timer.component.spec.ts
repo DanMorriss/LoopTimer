@@ -1572,6 +1572,8 @@ describe('TimerComponent', () => {
                     reps: 15,
                     name: 'Push-ups',
                     weight: 22.5,
+                    // Still the same exercise, linked by its name when it was saved
+                    exerciseId: 'builtin:push-up',
                 });
 
                 // Done closes the wheels; round 2's set starts from the new numbers
@@ -1643,8 +1645,15 @@ describe('TimerComponent', () => {
             pressDone(); // round 2: 15 at 10 kg, then finished
 
             expect(entries()[0].sets).toEqual([
-                { round: 0, step: 1, name: 'Push-ups', reps: 20 },
-                { round: 1, step: 1, name: 'Push-ups', reps: 15, weight: 10 },
+                { round: 0, step: 1, name: 'Push-ups', reps: 20, exerciseId: 'builtin:push-up' },
+                {
+                    round: 1,
+                    step: 1,
+                    name: 'Push-ups',
+                    reps: 15,
+                    weight: 10,
+                    exerciseId: 'builtin:push-up',
+                },
             ]);
             fixture.destroy();
         });

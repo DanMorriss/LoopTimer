@@ -4,11 +4,14 @@ import { MAX_WEIGHT_KG } from '../../models/weight';
 import { isLoggedSet, LoggedSet } from '../../models/history';
 import { Deletion, mergeRecords, newId } from '../../models/sync';
 import { DeletionStore } from './deletion-store.service';
+import { ExerciseStore } from './exercise-store.service';
+import { linkSteps } from '../../models/exercise-links';
 import { LEGACY_TIMER_IDS_KEY, migrateSavedData } from './migrate';
 
 @Service()
 export class TimerStore {
     private readonly deletions = inject(DeletionStore);
+    private readonly exercises = inject(ExerciseStore);
     private _timers = signal<Timer[]>([]);
     private _activeTimer = signal<Timer | null>(null);
     private _activeTimerStartedAt = signal<number | null>(null);
@@ -106,8 +109,14 @@ export class TimerStore {
         return saved !== null && pausedAt >= startedAt && pausedAt <= Date.now() ? pausedAt : null;
     }
 
+    /** Saves a new timer, its named steps linked to exercises (see `linkSteps()`). */
     addTimer(timer: TimerFields): Timer {
-        const newTimer: Timer = { ...timer, id: newId(), updatedAt: Date.now() };
+        const newTimer: Timer = {
+            ...timer,
+            steps: linkSteps(timer.steps, this.exercises.finder),
+            id: newId(),
+            updatedAt: Date.now(),
+        };
         this._timers.update((timers) => [...timers, newTimer]);
         this.saveTimers();
         return newTimer;
@@ -172,7 +181,12 @@ export class TimerStore {
             return null;
         }
 
-        const updatedTimer: Timer = { ...timerUpdate, id: timerId, updatedAt: Date.now() };
+        const updatedTimer: Timer = {
+            ...timerUpdate,
+            steps: linkSteps(timerUpdate.steps, this.exercises.finder),
+            id: timerId,
+            updatedAt: Date.now(),
+        };
 
         this._timers.update((timers) =>
             timers.map((timer) => (timer.id === timerId ? updatedTimer : timer))
@@ -320,7 +334,10 @@ function isStep(value: unknown): value is Step {
         return false;
     }
     const step = value as Record<string, unknown>;
-    if (typeof step['name'] !== 'string') {
+    if (
+        typeof step['name'] !== 'string' ||
+        (step['exerciseId'] !== undefined && typeof step['exerciseId'] !== 'string')
+    ) {
         return false;
     }
     if (step['kind'] === 'reps') {
@@ -339,19 +356,23 @@ function isStep(value: unknown): value is Step {
 
 /** Just the step's own fields, leaving out anything else that was saved with it. */
 function copyStep(step: Step): Step {
+    const link = step.exerciseId === undefined ? {} : { exerciseId: step.exerciseId };
     return step.kind === 'reps'
         ? {
               kind: step.kind,
               reps: step.reps,
               name: step.name,
               ...(step.weight === undefined ? {} : { weight: step.weight }),
+              ...link,
           }
-        : { kind: step.kind, seconds: step.seconds, name: step.name };
+        : { kind: step.kind, seconds: step.seconds, name: step.name, ...link };
 }
 
 /** Whether two timers are the same apart from their ids. */
 function sameTimer(a: Timer, b: Timer): boolean {
-    const steps = (timer: Timer) => JSON.stringify(timer.steps.map(copyStep));
+    // By what the steps are, not the exercises they happen to be linked to
+    const steps = (timer: Timer) =>
+        JSON.stringify(timer.steps.map((step) => ({ ...copyStep(step), exerciseId: undefined })));
     return a.title === b.title && a.repeats === b.repeats && steps(a) === steps(b);
 }
 
