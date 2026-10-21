@@ -6,6 +6,7 @@
 - **SET-2** As a user I want to turn sound, vibration, and keeping the screen on, on or off.
 - **SET-3** As a user I want to hear what each alarm sounds like before a workout.
 - **SET-4** As a user I want to see and pick weights in kg or lb, whichever I lift in.
+- **SET-5** (planned, with the body map) As a user I want the body map to show a male or female figure, whichever I prefer.
 
 ## Rules
 
@@ -19,6 +20,7 @@
 | Alarm sounds | Timed, Rest, Finish | —       | Two short high beeps / One long low tone / Three rising notes | A Play button for each.                                                                    |
 | Your data    | Export, Import      | —       | Your timers and history are saved on this device only…        | Export backup and Import backup buttons; see [backup-and-sync](backup-and-sync.md).        |
 
+- **Planned (SET-5):** an "Appearance → Body figure" choice of Male or Female, in the same style as the theme picker, used by the body map on exercise pages (see [exercises](exercises.md)).
 - Changes are **saved at once** and apply at once, mid-workout too (e.g. turning sound off silences alarms already booked).
 - **Play** plays that alarm straight away, even with Sound turned off (it was asked for), without touching any booked alarms.
 - Switching theme **fades** from one to the other, unless reduced motion is on, when it changes at once.
