@@ -87,11 +87,16 @@ src/styles/
 
 ## Roadmap
 
-Not built yet:
+LoopTimer is becoming a workout helper that shows you how you're improving: see [docs/direction.md](docs/direction.md). Not built yet, in order:
 
-- **Alarm sounds:** proper sound files in place of the generated beeps, and alarms on a locked phone.
-- **Alarm order setting:** choosing the sound for each step.
-- **Where the app goes next:** from an interval timer towards a fitness tracker and planner (exercises, progress over time, planning).
+1. **Foundations:** exercises as things in their own right (a built-in list with descriptions and a muscle body map, plus your own), "Workouts" in place of "Timers", data ready for sync, and export/import.
+2. **Feedback in the workout:** what you did last time, and personal bests.
+3. **Progress pages:** a chart, bests and recent sessions for each exercise.
+4. **Sync:** an account, so every device has the same data.
+5. **Simple planning:** a weekly plan, and what's due today.
+6. **Suggested next weight.**
+
+Also planned: proper alarm sounds, choosing the sound for each step, and alarms on a locked phone.
 
 Work on these, plus design and technical follow-ups, is tracked in [TODO.md](TODO.md).
 
