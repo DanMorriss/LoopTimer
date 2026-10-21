@@ -13,6 +13,7 @@ Planned (see [direction](../direction.md)). Rules are a first draft and get firm
 - **EXR-7** As a user I want to see how to do an exercise: a short description and the steps.
 - **EXR-8** As a user I want to see which muscles an exercise works, shaded on a body map.
 - **EXR-9** As a user I want to make my own exercise, with its own description and the muscles it works.
+- **EXR-10** As a user I want to add my own note to any exercise, built-in ones included (e.g. "Pause at the bottom").
 
 ## Rules (draft)
 
@@ -22,8 +23,10 @@ Planned (see [direction](../direction.md)). Rules are a first draft and get firm
     - an **id** and a **name**
     - how it's **measured**: reps (with an optional weight) or timed
     - **main muscles** and **supporting muscles** (either may be empty)
-    - optional: other names (e.g. "Press-ups" for "Push-ups"), equipment, a short description, and how-to steps
+    - optional: other names (e.g. "Press-ups" for "Push-ups"), equipment, a one-line description, how-to steps, and tips
 - Rest isn't an exercise.
+- A step **doesn't need an exercise**: an unnamed timed or rep step is still allowed, as now. It just isn't tracked (no history or progress of its own).
+- An exercise has **no weight unit of its own**: weights always show in the unit chosen in settings (SET-4).
 - There are two kinds:
     - **Built-in** (EXR-6): shipped with the app. Their names and details are fixed, but each can be **hidden** from the picker.
     - **Your own** (EXR-9): made by you, editable, and saved and synced as your data. Only these can be renamed (EXR-3) or deleted.
@@ -31,17 +34,27 @@ Planned (see [direction](../direction.md)). Rules are a first draft and get firm
 
 ### The built-in list (EXR-6, EXR-7)
 
-- A curated list of about **60–100 common exercises**, not an exhaustive database. Every one has muscles, equipment and a description; how-to steps where they help.
+- A curated list of about **60–100 common exercises**, not an exhaustive database. Every one has muscles, equipment and a description; how-to steps and tips where they help.
+- **Written in our own words**, in the app's voice: a one-line description of what it is and why, 3–5 short how-to steps, and a tip or two. Plain and short enough to read between sets.
+- [free-exercise-db](https://github.com/yuhonas/free-exercise-db) (public domain, Unlicense) is a **reference only**: for which exercises to include, their equipment and their muscles, each checked by hand (it lists glutes as only supporting in a back squat, for one). Its text isn't copied, and its photos aren't used: where they came from isn't stated.
 - Built-in ids are fixed text that never changes (e.g. `builtin:back-squat`), so history keeps pointing to them across app updates. An exercise taken out of the list stays readable by its id for history's sake.
 - The list is part of the app, not the user's data: it updates with the app and isn't synced or exported.
 - Searchable by name and other names, and can be filtered by muscle and equipment.
 
 ### The body map (EXR-8)
 
-- One front and back body diagram, drawn as shapes, one per muscle group. It isn't a picture per exercise: the app shades it from the exercise's muscles, **strong for main, light for supporting**.
-- Muscle groups (draft): chest, front shoulders, side shoulders, rear shoulders, biceps, triceps, forearms, abs, obliques, upper back, lats, lower back, glutes, quads, hamstrings, adductors, calves.
-- Its shades are colour tokens with a contrast check like the others, and it works in light and dark.
-- Screen readers hear it as text, e.g. "Works mainly quads and glutes; also hamstrings and lower back". The same words are shown under it.
+Mocked up in the [exercise page options](https://claude.ai/artifact/3SiP96YThwyL5D4fJAdSdW) canvas: "A + C, in our own words" is the chosen design.
+
+- **An anatomical figure, front and back side by side**, made of muscle-shaped pieces. It isn't a picture per exercise: the app shades it from the exercise's muscles, **bright for main, darker for supporting**, and unworked muscles stay grey.
+- The shapes come from [react-native-body-highlighter](https://github.com/HichamELBSI/react-native-body-highlighter) (MIT; its licence notice is kept with them), drawn as our own Angular component rather than using the React package.
+- **Under the figure, the muscles as labels**: "Main" (e.g. Quads, Glutes) as solid bright chips, "Supporting" as solid darker chips. They're the figure's key, and its text: the figure itself is hidden from screen readers, which read the labels.
+- Muscle groups follow the diagram's shapes: chest, shoulders, biceps, triceps, forearms, abs, obliques, traps, upper back, lower back, glutes, abductors, adductors, quads, hamstrings, calves, shins, neck. (The diagram can't show front, side and rear shoulders, or lats, apart, so they aren't separate groups.)
+- Its shades are colour tokens with a contrast check like the others, and differ in lightness, not just hue; it works in light and dark.
+- **Male or female figure**, chosen in settings (SET-5). The diagram has both, with the same muscle groups, so the choice changes only the drawing.
+
+### The exercise page (EXR-7, EXR-8)
+
+Top to bottom: back to Exercises; the name; "Also called: …"; equipment and how it's measured as chips; the one-line description; **Muscles worked** (the figure and its labels); **How to do it** (numbered steps); **Tips**. Progress (PRG-4) goes below these later.
 
 ### Your own exercises (EXR-2, EXR-9)
 
@@ -59,11 +72,9 @@ On first load, each distinct step name (trimmed, ignoring case):
 
 Past logged sets are linked the same way. Unnamed steps stay unnamed and aren't tracked as an exercise.
 
-## Open questions
+### Your notes on an exercise (EXR-10)
 
-- Should a step be allowed with no exercise (an unnamed "Reps" step), or should every work step need one?
-- Should a weighted exercise remember its own unit, or always follow the setting?
-- Where the built-in list and body diagram come from:
-    - write our own descriptions, or adapt an openly licensed set such as free-exercise-db (licence to check)
-    - draw the body diagram, or use an openly licensed one
-- Should a built-in exercise be copyable into your own, to change its details?
+- **Any exercise**, built-in or your own, can have a note of your own, e.g. "Pause at the bottom" or "Seat on hole 4". It's how you make a built-in exercise your own without changing it: there's no copying a built-in exercise into your own, so its history stays in one place.
+- The note shows on the exercise page under the description, marked as yours, and with the rep step mid-workout.
+- Up to 200 characters, trimmed; saving an empty note removes it. Notes are your data: saved, exported and synced.
+- A built-in exercise keeps its note across app updates, even if its own text changes.

@@ -47,6 +47,7 @@ Status: ✅ done, ◐ partly, — not started. The iOS column fills in as a port
 | SET-2  | Turn sound, vibration and keeping the screen on, on or off             | ✅  | —   | [settings](settings.md)                       |
 | SET-3  | Hear each alarm sound before a workout                                 | ✅  | —   | [settings](settings.md)                       |
 | SET-4  | Choose kg or lb for weights                                            | ✅  | —   | [settings](settings.md)                       |
+| SET-5  | Choose a male or female figure for the body map                        | —   | —   | [settings](settings.md)                       |
 | NAV-1  | Get to any page from anywhere, and back to a workout in progress       | ✅  | —   | [home-and-navigation](home-and-navigation.md) |
 | A11Y-1 | Use every feature with a screen reader, keyboard or reduced motion     | ✅  | —   | [accessibility](accessibility.md)             |
 | EXR-1  | Exercises as things in their own right, used across workouts           | —   | —   | [exercises](exercises.md)                     |
@@ -58,6 +59,7 @@ Status: ✅ done, ◐ partly, — not started. The iOS column fills in as a port
 | EXR-7  | See how to do an exercise: a description and the steps                 | —   | —   | [exercises](exercises.md)                     |
 | EXR-8  | See which muscles an exercise works, on a body map                     | —   | —   | [exercises](exercises.md)                     |
 | EXR-9  | Make my own exercise, with a description and its muscles               | —   | —   | [exercises](exercises.md)                     |
+| EXR-10 | Add my own note to any exercise, built-in ones included                | —   | —   | [exercises](exercises.md)                     |
 | PRG-1  | See what I did last time, mid-workout                                  | —   | —   | [progress](progress.md)                       |
 | PRG-2  | Be told about personal bests when I finish                             | —   | —   | [progress](progress.md)                       |
 | PRG-3  | See a list of my exercises with their latest and best                  | —   | —   | [progress](progress.md)                       |
