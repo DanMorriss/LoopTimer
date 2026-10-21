@@ -49,8 +49,26 @@ Status: ✅ done, ◐ partly, — not started. The iOS column fills in as a port
 | SET-4  | Choose kg or lb for weights                                            | ✅  | —   | [settings](settings.md)                       |
 | NAV-1  | Get to any page from anywhere, and back to a workout in progress       | ✅  | —   | [home-and-navigation](home-and-navigation.md) |
 | A11Y-1 | Use every feature with a screen reader, keyboard or reduced motion     | ✅  | —   | [accessibility](accessibility.md)             |
+| EXR-1  | Exercises as things in their own right, used across workouts           | —   | —   | [exercises](exercises.md)                     |
+| EXR-2  | Pick an exercise I've used before, or make a new one                   | —   | —   | [exercises](exercises.md)                     |
+| EXR-3  | Rename an exercise everywhere, history included                        | —   | —   | [exercises](exercises.md)                     |
+| EXR-4  | Carry existing workouts and history over into exercises                | —   | —   | [exercises](exercises.md)                     |
+| EXR-5  | See "Workouts", not "Timers", throughout the app                       | —   | —   | [exercises](exercises.md)                     |
+| PRG-1  | See what I did last time, mid-workout                                  | —   | —   | [progress](progress.md)                       |
+| PRG-2  | Be told about personal bests when I finish                             | —   | —   | [progress](progress.md)                       |
+| PRG-3  | See a list of my exercises with their latest and best                  | —   | —   | [progress](progress.md)                       |
+| PRG-4  | See an exercise's chart, bests and recent sessions                     | —   | —   | [progress](progress.md)                       |
+| PRG-5  | Get a suggested next weight                                            | —   | —   | [progress](progress.md)                       |
+| SYN-1  | Export all my data to a file                                           | —   | —   | [backup-and-sync](backup-and-sync.md)         |
+| SYN-2  | Import a backup without losing what's there                            | —   | —   | [backup-and-sync](backup-and-sync.md)         |
+| SYN-3  | Sign in and have the same data on every device                         | —   | —   | [backup-and-sync](backup-and-sync.md)         |
+| SYN-4  | Keep working offline, and catch up when back online                    | —   | —   | [backup-and-sync](backup-and-sync.md)         |
+| SYN-5  | Keep years of history, not just the last 500 workouts                  | —   | —   | [backup-and-sync](backup-and-sync.md)         |
+| PLN-1  | Set which workouts I do on which days                                  | —   | —   | [planning](planning.md)                       |
+| PLN-2  | See what's due today on the home page                                  | —   | —   | [planning](planning.md)                       |
+| PLN-3  | See whether I kept to the plan this week                               | —   | —   | [planning](planning.md)                       |
 
-What's saved on the device, and in what shape, is in [data](data.md).
+What's saved on the device, and in what shape, is in [data](data.md). Where the app is heading, and why the planned stories are in the order they are, is in [direction](../direction.md).
 
 ### The original stories
 
