@@ -761,4 +761,213 @@ export const BUILT_IN_EXERCISES: readonly BuiltInExercise[] = [
             'Too easy? Do one leg at a time, or rest a weight across your hips.',
         ],
     },
+
+    // Fifth batch: chest, shoulders and arms
+    {
+        id: 'builtin:dumbbell-bench-press',
+        name: 'Dumbbell bench press',
+        otherNames: ['Flat dumbbell press', 'Dumbbell chest press', 'DB bench press'],
+        equipment: ['dumbbells', 'bench'],
+        measuredBy: 'reps',
+        mainMuscles: ['chest'],
+        supportingMuscles: ['shoulders', 'triceps'],
+        description:
+            'Lying on a flat bench, you press two dumbbells up from your chest. Each arm has to do its own share.',
+        steps: [
+            'Sit on the end of a flat bench with a dumbbell on each thigh.',
+            'Lie back, bringing the dumbbells up beside your chest, palms facing your feet, feet flat on the floor.',
+            'Press them up until your arms are straight, bringing them together over your chest.',
+            'Lower them slowly back to the sides of your chest, elbows angled in a little from your sides.',
+        ],
+        tips: [
+            'Done? Bring the dumbbells to your chest and sit up with them, rather than dropping them out to the sides.',
+        ],
+    },
+    {
+        id: 'builtin:incline-bench-press',
+        name: 'Incline bench press',
+        otherNames: ['Incline barbell press', 'Barbell incline bench press', 'Incline bench'],
+        equipment: ['barbell', 'bench', 'rack'],
+        measuredBy: 'reps',
+        mainMuscles: ['chest'],
+        supportingMuscles: ['shoulders', 'triceps'],
+        description:
+            'A bench press on a bench set at an angle. Works the upper chest, with more help from your shoulders.',
+        steps: [
+            'Set the bench to about 30 degrees and lie back with your eyes just under the bar.',
+            'Grip the bar a little wider than your shoulders, squeeze your shoulder blades together, and lift it off.',
+            'Lower it slowly to the top of your chest, just under your collarbones.',
+            'Press it back up until your arms are straight, over your shoulders.',
+        ],
+        tips: [
+            'Use a spotter, or safety bars, when you go heavy.',
+            'Keep your bottom on the bench; lifting it turns this back into a flat press.',
+        ],
+    },
+    {
+        id: 'builtin:close-grip-bench-press',
+        name: 'Close-grip bench press',
+        otherNames: ['Close grip bench press', 'Close-grip bench', 'CGBP'],
+        equipment: ['barbell', 'bench', 'rack'],
+        measuredBy: 'reps',
+        mainMuscles: ['triceps', 'chest'],
+        supportingMuscles: ['shoulders'],
+        description:
+            'A bench press with your hands about shoulder-width apart. Puts more of the work on the backs of your arms.',
+        steps: [
+            'Lie on the bench with your eyes under the bar and your feet flat on the floor.',
+            'Grip the bar with your hands about shoulder-width apart, and lift it off.',
+            'Lower it slowly to the bottom of your chest, keeping your elbows close to your sides.',
+            'Press it back up until your arms are straight.',
+        ],
+        tips: [
+            "Don't go narrower than your shoulders: it's harder on your wrists without working your triceps more.",
+        ],
+    },
+    {
+        id: 'builtin:dumbbell-fly',
+        name: 'Dumbbell fly',
+        otherNames: ['Dumbbell flye', 'Flat dumbbell fly', 'Dumbbell chest fly'],
+        equipment: ['dumbbells', 'bench'],
+        measuredBy: 'reps',
+        mainMuscles: ['chest'],
+        supportingMuscles: ['shoulders'],
+        description:
+            'Lying on a bench, you open your arms wide with a dumbbell in each hand, then bring them back together.',
+        steps: [
+            'Lie on a flat bench holding a dumbbell in each hand straight up over your chest, palms facing each other.',
+            'With a slight bend in your elbows, lower your arms out to the sides in a wide arc.',
+            'Stop when you feel a stretch across your chest, with your hands about level with the bench.',
+            'Bring them back up over your chest the same way, as if hugging a tree.',
+        ],
+        tips: [
+            'Keep the bend in your elbows the same all the way; bending more turns it into a press.',
+            'Go lighter than for a press, and stop short of where your shoulders feel strained.',
+        ],
+    },
+    {
+        id: 'builtin:cable-crossover',
+        name: 'Cable crossover',
+        otherNames: ['Cable fly', 'Cable chest fly', 'Standing cable fly'],
+        equipment: ['cable'],
+        measuredBy: 'reps',
+        mainMuscles: ['chest'],
+        supportingMuscles: ['shoulders', 'abs'],
+        description:
+            'Standing between two high cables, you pull the handles down and together in front of you. Keeps your chest working throughout.',
+        steps: [
+            'Set both cables high, take a handle in each hand, and step forward to stand between them.',
+            'Stand with one foot in front of the other, leaning forward a little, arms out to the sides, elbows slightly bent.',
+            'Pull the handles down and together in a wide arc until they meet in front of your hips.',
+            'Let them back out slowly until you feel a stretch across your chest.',
+        ],
+        tips: ['Set the cables low and pull up and together to work the upper chest instead.'],
+    },
+    {
+        id: 'builtin:arnold-press',
+        name: 'Arnold press',
+        otherNames: ['Arnold dumbbell press', 'Arnold shoulder press'],
+        equipment: ['dumbbells', 'bench'],
+        measuredBy: 'reps',
+        mainMuscles: ['shoulders'],
+        supportingMuscles: ['triceps', 'traps'],
+        description:
+            'A seated dumbbell shoulder press that starts with your palms facing you and turns them out as you press.',
+        steps: [
+            'Set the bench upright and sit with your back against it, a dumbbell in each hand.',
+            'Hold them in front of your shoulders, palms facing you, elbows bent and in front of your body.',
+            'Press them up, turning your palms to face forward as they rise, until your arms are straight overhead.',
+            'Lower them the same way, turning your palms back towards you as they reach your shoulders.',
+        ],
+        tips: ['Go lighter than for a plain shoulder press, and keep the turn smooth and slow.'],
+    },
+    {
+        id: 'builtin:rear-delt-fly',
+        name: 'Rear delt fly',
+        otherNames: [
+            'Reverse fly',
+            'Rear delt raise',
+            'Bent-over reverse fly',
+            'Reverse dumbbell fly',
+        ],
+        equipment: ['dumbbells'],
+        measuredBy: 'reps',
+        mainMuscles: ['shoulders'],
+        supportingMuscles: ['upper-back', 'traps', 'lower-back'],
+        description:
+            'Leaning forward with light dumbbells, you raise your arms out to the sides. Works the backs of your shoulders.',
+        steps: [
+            'Stand with a dumbbell in each hand, then push your hips back and lean forward until your back is nearly flat.',
+            'Let the dumbbells hang below your shoulders, palms facing each other, elbows slightly bent.',
+            'Raise your arms out to the sides until your hands are level with your shoulders.',
+            'Lower them slowly until they hang below your shoulders again.',
+        ],
+        tips: [
+            "Use light ones and lead with your elbows; if you're swinging your body, they're too heavy.",
+            'Back tired? Do it sitting on the end of a bench, leaning forward over your knees.',
+        ],
+    },
+    {
+        id: 'builtin:shrug',
+        name: 'Shrug',
+        otherNames: ['Dumbbell shrug', 'Barbell shrug', 'Shoulder shrug'],
+        equipment: [['dumbbells', 'barbell']],
+        measuredBy: 'reps',
+        mainMuscles: ['traps'],
+        supportingMuscles: ['forearms', 'neck'],
+        description:
+            'Standing with a heavy weight in your hands, you lift your shoulders up towards your ears. Builds the traps.',
+        steps: [
+            'Stand tall holding a dumbbell in each hand by your sides, or a bar in front of your thighs.',
+            'Keeping your arms straight, lift your shoulders straight up towards your ears as high as you can.',
+            'Hold for a moment at the top, then lower them slowly all the way down.',
+        ],
+        tips: ["Lift straight up; there's no need to roll your shoulders round."],
+    },
+    {
+        id: 'builtin:preacher-curl',
+        name: 'Preacher curl',
+        otherNames: ['Preacher bench curl', 'Scott curl', 'EZ bar preacher curl'],
+        equipment: [['barbell', 'dumbbells'], 'bench'],
+        measuredBy: 'reps',
+        mainMuscles: ['biceps'],
+        supportingMuscles: ['forearms'],
+        description:
+            'A curl with the backs of your arms resting on an angled pad. Stops you swinging, so your biceps do all the work.',
+        steps: [
+            'Sit at a preacher bench with the backs of your upper arms flat on the pad, armpits at its top edge.',
+            'Hold a bar, or a dumbbell in each hand, palms facing up, arms nearly straight.',
+            'Bend your elbows to curl the weight up towards your shoulders, keeping your arms on the pad.',
+            'Lower it slowly until your arms are nearly straight again.',
+        ],
+        tips: [
+            "Don't let the weight drop the last part of the way; go slowly where it's hardest.",
+            'No preacher bench? Kneel behind an incline bench and rest your arm over its back.',
+        ],
+    },
+    {
+        id: 'builtin:overhead-triceps-extension',
+        name: 'Overhead triceps extension',
+        otherNames: [
+            'Overhead tricep extension',
+            'Dumbbell overhead extension',
+            'Overhead dumbbell extension',
+        ],
+        equipment: ['dumbbells'],
+        measuredBy: 'reps',
+        mainMuscles: ['triceps'],
+        supportingMuscles: ['shoulders', 'abs'],
+        description:
+            'Holding one dumbbell overhead in both hands, you lower it behind your head and straighten your arms again.',
+        steps: [
+            'Stand or sit tall, holding one end of a dumbbell in both hands straight up over your head.',
+            'Keeping your upper arms still and close to your head, bend your elbows to lower it behind your head.',
+            'Go down until you feel a stretch in the backs of your arms.',
+            'Straighten your arms to lift it back overhead.',
+        ],
+        tips: [
+            'Keep your elbows pointing forward, not out to the sides.',
+            'Arching your back? Brace your middle, or sit on a bench with a backrest.',
+        ],
+    },
 ];
