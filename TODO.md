@@ -51,3 +51,4 @@ Do these first: everything after builds on them. The data is ready for sync (#81
 ## 3. Known issues
 
 - [ ] **Library cards show a timer's id as a tooltip:** hovering a card's title shows "ID: " and the id, which since #81 is a long random UUID. Drop the tooltip in the "Workouts" rename (EXR-5).
+- [ ] **The body map can't shade abductors:** react-native-body-highlighter has no abductor shapes on either figure, so exercises that work them (side plank, hip abduction) list them without shading. Fix by drawing the shapes ourselves, or swap to a diagram that has them.
