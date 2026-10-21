@@ -379,4 +379,186 @@ export const BUILT_IN_EXERCISES: readonly BuiltInExercise[] = [
         ],
         tips: ["Your hips do the work, not your arms: they're only there to hold on."],
     },
+
+    // Third batch: leg machines, calves, more pulling, dips, shoulders and a hanging core move
+    {
+        id: 'builtin:leg-press',
+        name: 'Leg press',
+        otherNames: ['Machine leg press', 'Seated leg press'],
+        equipment: ['machine'],
+        measuredBy: 'reps',
+        mainMuscles: ['quads', 'glutes'],
+        supportingMuscles: ['hamstrings', 'adductors'],
+        description:
+            'Sitting in a machine, you push a loaded platform away with your feet. Heavy leg work without a bar on your back.',
+        steps: [
+            'Sit with your back flat against the pad and your feet hip-width apart in the middle of the platform.',
+            'Push the platform up and release the safety handles.',
+            'Lower it by bending your knees towards your chest, until they are at about a right angle.',
+            'Push it back up without locking your knees out at the top.',
+        ],
+        tips: [
+            "Don't let your lower back lift off the pad at the bottom; stop a little higher if it does.",
+        ],
+    },
+    {
+        id: 'builtin:leg-curl',
+        name: 'Leg curl',
+        otherNames: ['Hamstring curl', 'Lying leg curl', 'Seated leg curl'],
+        equipment: ['machine'],
+        measuredBy: 'reps',
+        mainMuscles: ['hamstrings'],
+        supportingMuscles: ['calves'],
+        description:
+            'At a machine, you bend your knees against a padded bar. The simplest way to work your hamstrings alone.',
+        steps: [
+            'Set the machine so your knees line up with its pivot and the pad sits just above your heels.',
+            'Bend your knees to curl the pad as far as it will go.',
+            'Squeeze for a moment, then let it back slowly until your legs are nearly straight.',
+        ],
+        tips: ['Keep your hips down on the pad; lifting them takes the work off your hamstrings.'],
+    },
+    {
+        id: 'builtin:leg-extension',
+        name: 'Leg extension',
+        otherNames: ['Machine leg extension', 'Quad extension'],
+        equipment: ['machine'],
+        measuredBy: 'reps',
+        mainMuscles: ['quads'],
+        supportingMuscles: [],
+        description:
+            'Sitting at a machine, you straighten your legs against a padded bar. Works the quads on their own.',
+        steps: [
+            'Set the machine so your knees line up with its pivot and the pad sits on the front of your ankles.',
+            'Hold the handles and straighten your legs until they are nearly locked out.',
+            'Lower the pad slowly until your knees are back at a right angle.',
+        ],
+        tips: ['Go slowly on the way down; that half of the rep counts as much as the lift.'],
+    },
+    {
+        id: 'builtin:calf-raise',
+        name: 'Calf raise',
+        otherNames: ['Standing calf raise', 'Heel raise'],
+        equipment: ['none'],
+        measuredBy: 'reps',
+        mainMuscles: ['calves'],
+        supportingMuscles: [],
+        description:
+            'Standing on the edge of a step, you rise up onto your toes and lower your heels below the step.',
+        steps: [
+            'Stand with the balls of your feet on the edge of a step, holding something for balance.',
+            'Lower your heels below the step until you feel a stretch in your calves.',
+            'Rise up onto your toes as high as you can, and hold for a moment at the top.',
+        ],
+        tips: ['Too easy? Hold a dumbbell in your free hand, or do one leg at a time.'],
+    },
+    {
+        id: 'builtin:dumbbell-row',
+        name: 'Dumbbell row',
+        otherNames: ['One-arm dumbbell row', 'Single-arm row', 'One-arm row'],
+        equipment: ['dumbbells', 'bench'],
+        measuredBy: 'reps',
+        mainMuscles: ['upper-back'],
+        supportingMuscles: ['biceps', 'shoulders', 'forearms'],
+        description:
+            'With one hand and knee on a bench, you pull a dumbbell up to your hip with the other arm.',
+        steps: [
+            'Put your left knee and left hand on a bench, back flat, and hold a dumbbell in your right hand.',
+            'Let it hang with your arm straight, below your shoulder.',
+            'Pull it up towards your hip, elbow close to your side, until your elbow passes your back.',
+            'Lower it slowly, then do all your reps before swapping sides.',
+        ],
+        tips: ['Pull towards your hip, not your shoulder: think of starting a lawnmower.'],
+    },
+    {
+        id: 'builtin:chin-up',
+        name: 'Chin-up',
+        otherNames: ['Chin up', 'Chinup'],
+        equipment: ['pull-up bar'],
+        measuredBy: 'reps',
+        mainMuscles: ['upper-back', 'biceps'],
+        supportingMuscles: ['forearms', 'shoulders'],
+        description:
+            'Like a pull-up, but with your palms facing you. Usually a little easier, and harder on your biceps.',
+        steps: [
+            'Grip the bar shoulder-width apart, palms facing you, and hang with your arms straight.',
+            'Pull your shoulders down, then pull yourself up until your chin is over the bar.',
+            'Lower yourself all the way, under control, until your arms are straight again.',
+        ],
+        tips: ["Don't kick or swing to get up; slow reps you can control count for more."],
+    },
+    {
+        id: 'builtin:dip',
+        name: 'Dip',
+        otherNames: ['Parallel bar dip', 'Triceps dip', 'Chest dip'],
+        equipment: ['parallel bars'],
+        measuredBy: 'reps',
+        mainMuscles: ['triceps', 'chest'],
+        supportingMuscles: ['shoulders'],
+        description:
+            'Holding yourself up on two bars, you lower your body by bending your elbows and press back up.',
+        steps: [
+            'Grip the bars and jump or step up so your arms are straight and your body hangs between them.',
+            'Lean forward slightly and bend your elbows to lower yourself until your upper arms are level with the bars.',
+            'Press back up until your arms are straight.',
+        ],
+        tips: [
+            'Stop lower if your shoulders ache at the bottom.',
+            'Too hard? Use the assisted dip machine, or a band looped over the bars.',
+        ],
+    },
+    {
+        id: 'builtin:lateral-raise',
+        name: 'Lateral raise',
+        otherNames: ['Side raise', 'Dumbbell lateral raise', 'Side lateral raise'],
+        equipment: ['dumbbells'],
+        measuredBy: 'reps',
+        mainMuscles: ['shoulders'],
+        supportingMuscles: ['traps'],
+        description:
+            'Standing with light dumbbells, you raise your arms out to the sides. Builds broader shoulders.',
+        steps: [
+            'Stand tall with a dumbbell in each hand by your sides, elbows slightly bent.',
+            'Raise your arms out to the sides until your hands are level with your shoulders.',
+            'Lower them slowly back to your sides.',
+        ],
+        tips: [
+            'Go lighter than you think; swinging heavy ones up works your traps, not your shoulders.',
+        ],
+    },
+    {
+        id: 'builtin:face-pull',
+        name: 'Face pull',
+        otherNames: ['Cable face pull', 'Rope face pull'],
+        equipment: ['cable'],
+        measuredBy: 'reps',
+        mainMuscles: ['shoulders'],
+        supportingMuscles: ['upper-back', 'traps'],
+        description:
+            'At a high cable, you pull a rope towards your face, hands apart. Good for the backs of your shoulders.',
+        steps: [
+            'Set the cable at head height with a rope, and hold an end in each hand, thumbs towards you.',
+            'Step back until your arms are straight, and stand tall.',
+            'Pull the rope towards your face, pulling the ends apart so your hands finish beside your ears.',
+            'Let it forward slowly until your arms are straight.',
+        ],
+        tips: ['Keep it light and slow: this is about control, not weight.'],
+    },
+    {
+        id: 'builtin:hanging-leg-raise',
+        name: 'Hanging leg raise',
+        otherNames: ['Hanging knee raise', 'Leg raise'],
+        equipment: ['pull-up bar'],
+        measuredBy: 'reps',
+        mainMuscles: ['abs'],
+        supportingMuscles: ['obliques', 'forearms'],
+        description:
+            'Hanging from a bar, you lift your legs up in front of you. One of the hardest moves for your abs.',
+        steps: [
+            'Hang from a bar with your hands shoulder-width apart and your legs straight.',
+            'Lift your legs up in front of you until they are level with the floor, or higher.',
+            'Lower them slowly, without swinging, until they hang straight again.',
+        ],
+        tips: ['Too hard? Bend your knees and lift them to your chest instead.'],
+    },
 ];

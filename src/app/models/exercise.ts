@@ -52,6 +52,7 @@ export type Equipment =
     | 'bench'
     | 'rack'
     | 'pull-up bar'
+    | 'parallel bars'
     | 'cable'
     | 'machine'
     | 'band'
