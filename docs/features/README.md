@@ -64,8 +64,8 @@ Status: ✅ done, ◐ partly, — not started. The iOS column fills in as a port
 | PRG-4  | See an exercise's chart, bests and recent sessions                     | —   | —   | [progress](progress.md)                       |
 | PRG-5  | Get a suggested next weight                                            | —   | —   | [progress](progress.md)                       |
 | PRG-6  | See which muscles I've worked this week, on the body map               | —   | —   | [progress](progress.md)                       |
-| SYN-1  | Export all my data to a file                                           | —   | —   | [backup-and-sync](backup-and-sync.md)         |
-| SYN-2  | Import a backup without losing what's there                            | —   | —   | [backup-and-sync](backup-and-sync.md)         |
+| SYN-1  | Export all my data to a file                                           | ✅  | —   | [backup-and-sync](backup-and-sync.md)         |
+| SYN-2  | Import a backup without losing what's there                            | ✅  | —   | [backup-and-sync](backup-and-sync.md)         |
 | SYN-3  | Sign in and have the same data on every device                         | —   | —   | [backup-and-sync](backup-and-sync.md)         |
 | SYN-4  | Keep working offline, and catch up when back online                    | —   | —   | [backup-and-sync](backup-and-sync.md)         |
 | SYN-5  | Keep years of history, not just the last 500 workouts                  | —   | —   | [backup-and-sync](backup-and-sync.md)         |
