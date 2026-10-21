@@ -89,7 +89,7 @@ src/styles/
 
 LoopTimer is becoming a workout helper that shows you how you're improving: see [docs/direction.md](docs/direction.md). Not built yet, in order:
 
-1. **Foundations:** exercises as things in their own right, "Workouts" in place of "Timers", data ready for sync, and export/import.
+1. **Foundations:** exercises as things in their own right (a built-in list with descriptions and a muscle body map, plus your own), "Workouts" in place of "Timers", data ready for sync, and export/import.
 2. **Feedback in the workout:** what you did last time, and personal bests.
 3. **Progress pages:** a chart, bests and recent sessions for each exercise.
 4. **Sync:** an account, so every device has the same data.

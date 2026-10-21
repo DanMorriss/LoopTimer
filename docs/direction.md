@@ -16,13 +16,14 @@ Agreed October 2026. This sets the direction; the stories are in [features](feat
 
 - **"Timers" become "Workouts"** throughout the app (the library, Create, the history). The app keeps the name **LoopTimer**.
 - **Exercises are things in their own right.** "Squats" is one exercise, used in any number of workouts, and its sets are logged against it, not against a step name that happens to match. Renaming an exercise renames it everywhere; its history stays together.
+- **A built-in list of common exercises** to pick from, each with a description, how to do it, and a **body map** shaded for the muscles it works. You can also **make your own**, with its own description and muscles. See [exercises](features/exercises.md).
 - A step in a workout is an exercise (timed or reps, with a weight) or a rest. Rest isn't an exercise.
 - Existing data moves across on load: step names are matched up (ignoring case and spaces) into exercises, and past logged sets are linked to them.
 
 ### Progress, in the workout and after it
 
 1. **In the workout:** each rep step shows what you did last time ("Last time: 8 × 60 kg"), and the finished screen calls out new personal bests.
-2. **Progress pages:** a list of exercises, and a page per exercise with a chart over time, its bests (heaviest weight, most reps at a weight, estimated one-rep max, and the longest hold for timed exercises), and recent sessions.
+2. **Progress pages:** a body map of the muscles worked this week, a list of exercises, and a page per exercise with a chart over time, its bests (heaviest weight, most reps at a weight, estimated one-rep max, and the longest hold for timed exercises), and recent sessions.
 3. **Suggested next weight** comes later, once there's history to base it on.
 
 ### Data that doesn't get lost, on every device
@@ -37,7 +38,7 @@ Agreed October 2026. This sets the direction; the stories are in [features](feat
 
 ## Order of work
 
-1. **Foundations:** exercises, the data reshaped for sync, Workouts naming, export/import.
+1. **Foundations:** exercises (built-in and your own, with descriptions and the body map), the data reshaped for sync, Workouts naming, export/import.
 2. **Feedback in the workout:** last time and personal bests.
 3. **Progress pages.**
 4. **Sync:** pick a backend, accounts, sync.

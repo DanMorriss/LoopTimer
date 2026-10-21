@@ -12,7 +12,7 @@ Planned (see [direction](../direction.md)). Rules are a first draft and get firm
 
 ## Rules (draft)
 
-- **Export (SYN-1):** one JSON file of workouts, exercises, history and settings, with a format version, named e.g. `looptimer-2026-10-21.json`.
+- **Export (SYN-1):** one JSON file of workouts, your own exercises (and which built-in ones are hidden), history and settings, with a format version, named e.g. `looptimer-2026-10-21.json`.
 - **Import (SYN-2):** merges by id: a record in both keeps the one changed most recently; nothing on the device is removed unless the file marks it deleted. A file from an older format is converted first; a broken file changes nothing and says why.
 - **Ready for sync (groundwork, built with exercises):**
     - New ids are random (e.g. UUIDs), so two devices can't hand out the same one. Existing timer ids (1, 2, 3…) are converted.

@@ -8,7 +8,9 @@ Open work, highest priority first. Tick items off (or delete them) as they're do
 
 Do these first: everything after builds on them. Exercises and the sync-ready data are one reshaping of the saved data, so do them together, with one conversion on load.
 
-- [ ] **Exercises as things in their own right (EXR-1–4):** an exercise list, steps and logged sets pointing to an exercise id, a picker in Create (pick one you've used or type a new name), rename everywhere, and existing step names and history converted on load. Settle the open questions in `docs/features/exercises.md` first.
+- [ ] **Exercise content and body diagram (for EXR-6–8):** decide where they come from: write our own, or adapt an openly licensed set such as free-exercise-db (check the licence). Same for the front/back body diagram, one shape per muscle group. Then put together the built-in list: about 60–100 common exercises, each with muscles, equipment, a description and other names. Can start now, alongside the code below.
+- [ ] **Exercises as things in their own right (EXR-1–4, EXR-9):** built-in and your own exercises, steps and logged sets pointing to an exercise id, a picker in Create (search the list, or type a new name to make one), renaming your own everywhere, and existing step names and history converted on load (matched to built-in exercises where they can be). Settle the open questions in `docs/features/exercises.md` first.
+- [ ] **Exercise pages (EXR-6–8):** browse and search the list, and a page per exercise with its description, how-to steps and the body map shaded for main and supporting muscles. Phase 3's progress goes on the same page.
 - [ ] **Data ready for sync (groundwork for SYN-3):** random ids for workouts, exercises and history (convert the existing 1, 2, 3… timer ids), `updatedAt` on every record, and deletions kept as `deletedAt` markers in place of `history-deleted`. Update `docs/features/data.md`.
 - [ ] **More room for history (SYN-5):** move it from `localStorage` to IndexedDB and lift the 500-entry cap, so years of progress fit.
 - [ ] **"Workouts", not "Timers" (EXR-5):** rename in the menu, library, Create, the timer page, history ("Untitled timer") and the docs. The app keeps the name LoopTimer; code names can follow or stay.
@@ -21,8 +23,9 @@ Do these first: everything after builds on them. Exercises and the sync-ready da
 
 ### Phase 3: Progress pages
 
-- [ ] **Exercises list (PRG-3):** each with its latest and best; reached from the menu.
-- [ ] **Exercise page (PRG-4):** chart over time, bests, recent sessions. History entries' set lines can link here.
+- [ ] **Latest and best on the exercises list (PRG-3).**
+- [ ] **Progress on the exercise page (PRG-4):** chart over time, bests, recent sessions, under the description and body map. History entries' set lines can link here.
+- [ ] **Muscles worked this week (PRG-6):** the body map on the history page, shaded by sets in the last 7 days.
 
 ### Phase 4: Sync
 
