@@ -561,4 +561,204 @@ export const BUILT_IN_EXERCISES: readonly BuiltInExercise[] = [
         ],
         tips: ['Too hard? Bend your knees and lift them to your chest instead.'],
     },
+
+    // Fourth batch: core, carries and variations
+    {
+        id: 'builtin:side-plank',
+        name: 'Side plank',
+        otherNames: ['Side bridge', 'Forearm side plank'],
+        equipment: ['none'],
+        measuredBy: 'timed',
+        mainMuscles: ['obliques'],
+        supportingMuscles: ['abs', 'shoulders', 'abductors'],
+        description:
+            'You hold your body in a straight line on one forearm and the side of one foot. Works the sides of your middle.',
+        steps: [
+            'Lie on your side with your forearm on the floor, elbow under your shoulder, legs straight and stacked.',
+            'Lift your hips until your body makes a straight line from head to feet.',
+            'Brace your middle and hold, breathing steadily, then lower your hips and swap sides.',
+        ],
+        tips: [
+            "Don't let your hips sag towards the floor or push back behind you.",
+            'Too hard? Bend your knees and rest on the side of your bottom knee instead of your foot.',
+        ],
+    },
+    {
+        id: 'builtin:dead-bug',
+        name: 'Dead bug',
+        otherNames: ['Deadbug'],
+        equipment: ['none'],
+        measuredBy: 'reps',
+        mainMuscles: ['abs'],
+        supportingMuscles: ['obliques'],
+        description:
+            'Lying on your back, you lower the opposite arm and leg while keeping your back flat. Teaches your middle to hold still.',
+        steps: [
+            'Lie on your back with your arms pointing at the ceiling and your knees bent at a right angle over your hips.',
+            'Press your lower back into the floor and brace your middle.',
+            'Slowly lower your right arm behind your head and your left leg towards the floor, without touching it.',
+            'Bring them back to the start, then do the same with your left arm and right leg.',
+        ],
+        tips: [
+            'If your lower back lifts off the floor, you have gone too far: stop a little higher.',
+        ],
+    },
+    {
+        id: 'builtin:russian-twist',
+        name: 'Russian twist',
+        otherNames: ['Seated twist', 'Seated Russian twist'],
+        equipment: ['none'],
+        measuredBy: 'reps',
+        mainMuscles: ['obliques', 'abs'],
+        supportingMuscles: ['lower-back'],
+        description:
+            'Sitting leaning back with your feet up, you turn your body from side to side. Works the sides of your middle.',
+        steps: [
+            'Sit on the floor with your knees bent, and lean back until your body is at about 45 degrees.',
+            'Hold your hands together in front of your chest, and lift your feet a little off the floor.',
+            'Turn your shoulders to one side, then the other, keeping your back long.',
+        ],
+        tips: [
+            'Turn your shoulders, not just your arms: your hands follow your chest.',
+            'Too easy? Hold a dumbbell or a plate. Too hard? Keep your heels on the floor.',
+        ],
+    },
+    {
+        id: 'builtin:farmers-carry',
+        name: "Farmer's carry",
+        otherNames: ["Farmer's walk", 'Farmers walk', 'Farmers carry'],
+        equipment: [['dumbbells', 'kettlebell']],
+        measuredBy: 'timed',
+        mainMuscles: ['forearms', 'traps'],
+        supportingMuscles: ['abs', 'obliques', 'upper-back', 'glutes'],
+        description:
+            'You walk holding a heavy weight in each hand, standing tall. Builds a strong grip and a steady middle.',
+        steps: [
+            'Stand between two heavy dumbbells or kettlebells, and squat down to pick them up, back flat.',
+            'Stand tall, shoulders down and back, arms straight by your sides.',
+            'Walk with short, steady steps, keeping your body upright, until the time is up.',
+            'Stop, and squat down to put them back on the floor.',
+        ],
+        tips: ["Don't let the weights pull your shoulders forward or tip you to one side."],
+    },
+    {
+        id: 'builtin:sumo-deadlift',
+        name: 'Sumo deadlift',
+        otherNames: ['Barbell sumo deadlift', 'Sumo pull'],
+        equipment: ['barbell'],
+        measuredBy: 'reps',
+        mainMuscles: ['glutes', 'quads', 'adductors'],
+        supportingMuscles: ['hamstrings', 'lower-back', 'traps', 'forearms'],
+        description:
+            'A deadlift with your feet wide and your hands inside your legs. Keeps you more upright and works your inner thighs.',
+        steps: [
+            'Stand with your feet wide, toes turned out, and the bar over the middle of your feet.',
+            'Bend down and grip the bar inside your legs, hands shoulder-width apart. Shins to the bar, chest up.',
+            'Take a big breath and brace, then push your knees out and the floor away until you stand tall.',
+            'Lower it the same way, keeping the bar close to your legs.',
+        ],
+        tips: [
+            'Push your knees out over your toes the whole way up.',
+            "Don't let your hips shoot up first; your chest and hips rise together.",
+        ],
+    },
+    {
+        id: 'builtin:bulgarian-split-squat',
+        name: 'Bulgarian split squat',
+        otherNames: ['Rear-foot-elevated split squat', 'RFESS', 'Bulgarian squat'],
+        equipment: ['dumbbells', 'bench'],
+        measuredBy: 'reps',
+        mainMuscles: ['quads', 'glutes'],
+        supportingMuscles: ['hamstrings', 'adductors', 'calves'],
+        description:
+            'With your back foot up on a bench, you lower your back knee towards the floor. Hard work for one leg at a time.',
+        steps: [
+            'Stand about a stride in front of a bench with a dumbbell in each hand, and rest the top of one foot on it.',
+            'Bend your front knee to lower your back knee towards the floor, keeping your chest up.',
+            'Go down until your front thigh is about level with the floor.',
+            'Push through your front foot to stand back up. Do all your reps, then swap legs.',
+        ],
+        tips: [
+            'Wobbly? Move your front foot a little further out to the side.',
+            'Learn it with no weight first; it is harder than it looks.',
+        ],
+    },
+    {
+        id: 'builtin:step-up',
+        name: 'Step-up',
+        otherNames: ['Step up', 'Box step-up'],
+        equipment: ['step'],
+        measuredBy: 'reps',
+        mainMuscles: ['quads', 'glutes'],
+        supportingMuscles: ['hamstrings', 'calves'],
+        description:
+            'You step up onto a box or bench with one foot and stand tall on it. Works your legs one at a time.',
+        steps: [
+            'Stand facing a box or bench about knee height, and put one whole foot on top of it.',
+            'Push through that foot to stand up on the box, bringing your other foot up beside it.',
+            'Step back down with the same foot you brought up last, under control.',
+            'Do all your reps on one leg, then swap.',
+        ],
+        tips: [
+            "Push with the leg on the box, not the one on the floor; don't bounce off it.",
+            'Too easy? Hold a dumbbell in each hand.',
+        ],
+    },
+    {
+        id: 'builtin:hammer-curl',
+        name: 'Hammer curl',
+        otherNames: ['Dumbbell hammer curl', 'Neutral-grip curl'],
+        equipment: ['dumbbells'],
+        measuredBy: 'reps',
+        mainMuscles: ['biceps', 'forearms'],
+        supportingMuscles: [],
+        description:
+            'A dumbbell curl with your palms facing each other, like holding a hammer. Works your forearms as well as biceps.',
+        steps: [
+            'Stand tall with a dumbbell in each hand, arms by your sides, palms facing your legs.',
+            'Keeping your elbows by your sides, bend them to lift the dumbbells towards your shoulders.',
+            'Lower them slowly until your arms are straight, palms still facing in.',
+        ],
+        tips: ["Keep your thumbs pointing up the whole time; don't let your wrists turn."],
+    },
+    {
+        id: 'builtin:skull-crusher',
+        name: 'Skull crusher',
+        otherNames: ['Lying triceps extension', 'Skullcrusher', 'Lying tricep extension'],
+        equipment: [['barbell', 'dumbbells'], 'bench'],
+        measuredBy: 'reps',
+        mainMuscles: ['triceps'],
+        supportingMuscles: ['forearms'],
+        description:
+            'Lying on a bench, you lower a bar or dumbbells towards your forehead by bending your elbows, then straighten them.',
+        steps: [
+            'Lie on a bench holding a bar, or a dumbbell in each hand, straight up over your chest.',
+            'Keeping your upper arms still, bend your elbows to lower the weight towards your forehead.',
+            'Stop just above your head, then straighten your arms to press it back up.',
+        ],
+        tips: [
+            'Keep your elbows pointing at the ceiling; letting them flare out takes the work off your triceps.',
+            'A bent EZ bar is kinder on your wrists than a straight one.',
+        ],
+    },
+    {
+        id: 'builtin:glute-bridge',
+        name: 'Glute bridge',
+        otherNames: ['Hip bridge', 'Floor glute bridge'],
+        equipment: ['none'],
+        measuredBy: 'reps',
+        mainMuscles: ['glutes'],
+        supportingMuscles: ['hamstrings', 'abs'],
+        description:
+            'Lying on your back with your knees bent, you lift your hips off the floor. A hip thrust you can do anywhere.',
+        steps: [
+            'Lie on your back with your knees bent, feet flat on the floor hip-width apart, arms by your sides.',
+            'Push through your heels to lift your hips until your body is straight from shoulders to knees.',
+            'Squeeze your glutes at the top for a moment, then lower your hips back to the floor.',
+        ],
+        tips: [
+            "Don't arch your lower back to get higher; stop when your hips are in line.",
+            'Too easy? Do one leg at a time, or rest a weight across your hips.',
+        ],
+    },
 ];
