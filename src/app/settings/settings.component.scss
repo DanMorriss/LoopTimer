@@ -150,3 +150,14 @@
         transition: none;
     }
 }
+
+.backup__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+}
+
+.backup__status:not(:empty) {
+    margin-top: 0.75rem;
+}

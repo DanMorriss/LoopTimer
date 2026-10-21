@@ -17,6 +17,7 @@
 | Alarms       | Vibration           | On      | Buzzes as each phase starts                                   | Disabled, saying "This device can't vibrate", where it can't.                              |
 | Alarms       | Keep screen on      | On      | Stops the phone locking mid-workout                           | Disabled, saying "This browser can't keep the screen on", where it can't.                  |
 | Alarm sounds | Timed, Rest, Finish | —       | Two short high beeps / One long low tone / Three rising notes | A Play button for each.                                                                    |
+| Your data    | Export, Import      | —       | Your timers and history are saved on this device only…        | Export backup and Import backup buttons; see [backup-and-sync](backup-and-sync.md).        |
 
 - Changes are **saved at once** and apply at once, mid-workout too (e.g. turning sound off silences alarms already booked).
 - **Play** plays that alarm straight away, even with Sound turned off (it was asked for), without touching any booked alarms.
@@ -33,5 +34,5 @@
 
 ## Platform notes
 
-- **Web:** `SettingsStore` (`src/app/shared/state/settings-store.service.ts`), `SettingsComponent` (`src/app/settings/`), `ThemeService`.
+- **Web:** `SettingsStore` (`src/app/shared/state/settings-store.service.ts`), `SettingsComponent` (`src/app/settings/`), `ThemeService`. Export and import: `BackupService` (`src/app/shared/backup/`).
 - **iOS:** `@AppStorage` for each setting. The theme maps onto `preferredColorScheme` (nil for System). Vibration would always be available on an iPhone, so its disabled state goes.

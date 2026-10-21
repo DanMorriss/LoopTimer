@@ -67,6 +67,29 @@ export class HistoryStore {
         this.save();
     }
 
+    /**
+     * Adds workouts from a backup. One already here (the same run) is left as it is, and a
+     * deleted one comes back, since importing is asked for. Returns how many were added; the
+     * oldest still go past MAX_HISTORY.
+     */
+    importEntries(imported: readonly HistoryEntry[]): number {
+        const existing = new Set(this._entries().map((entry) => entry.id));
+        const added = imported.filter((entry, i) => {
+            const firstOfItsRun = imported.findIndex((other) => other.id === entry.id) === i;
+            return firstOfItsRun && !existing.has(entry.id);
+        });
+        if (added.length === 0) {
+            return 0;
+        }
+        const addedIds = new Set(added.map((entry) => entry.id));
+        this.setDeletedIds(this.deletedIds.filter((id) => !addedIds.has(id)));
+        this._entries.update((entries) =>
+            [...entries, ...added].sort((a, b) => b.startedAt - a.startedAt).slice(0, MAX_HISTORY)
+        );
+        this.save();
+        return added.length;
+    }
+
     /** Puts a deleted entry back, e.g. on Undo. */
     restore(entry: HistoryEntry) {
         this.setDeletedIds(this.deletedIds.filter((id) => id !== entry.id));
@@ -90,8 +113,8 @@ function loadHistory(): HistoryEntry[] {
         const parsed: unknown = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]');
         return Array.isArray(parsed)
             ? parsed
-                  .filter(isHistoryEntry)
-                  .map(withUsableSets)
+                  .map((item) => readHistoryEntry(item))
+                  .filter((entry) => entry !== null)
                   .sort((a, b) => b.startedAt - a.startedAt)
             : [];
     } catch {
@@ -108,6 +131,14 @@ function loadDeletedIds(): string[] {
     } catch {
         return [];
     }
+}
+
+/**
+ * Reads one saved workout, from this device or a backup, or returns null if it isn't usable.
+ * A broken set is dropped, keeping the rest of the workout.
+ */
+export function readHistoryEntry(value: unknown): HistoryEntry | null {
+    return isHistoryEntry(value) ? withUsableSets(value) : null;
 }
 
 // A broken set is dropped rather than the whole workout; with none left, so are the sets

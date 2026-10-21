@@ -107,6 +107,26 @@ export class TimerStore {
         return newTimer;
     }
 
+    /**
+     * Adds timers from a backup. Ids are only unique per device, so a timer is matched on
+     * what it is instead: one the same as a timer already here (title, steps and rounds) is
+     * skipped, and any other is added with a new id. Returns how many were added.
+     */
+    importTimers(imported: readonly Timer[]): number {
+        let added = 0;
+        for (const timer of imported) {
+            if (this._timers().some((existing) => sameTimer(existing, timer))) {
+                continue;
+            }
+            this._timers.update((timers) => [...timers, { ...timer, id: this.generateNextId() }]);
+            added++;
+        }
+        if (added > 0) {
+            this.saveTimers();
+        }
+        return added;
+    }
+
     private generateNextId(): number {
         const timers = this._timers();
         return timers.length > 0 ? Math.max(...timers.map((timers) => timers.id)) + 1 : 1;
@@ -307,12 +327,18 @@ function copyStep(step: Step): Step {
         : { kind: step.kind, seconds: step.seconds, name: step.name };
 }
 
+/** Whether two timers are the same apart from their ids. */
+function sameTimer(a: Timer, b: Timer): boolean {
+    const steps = (timer: Timer) => JSON.stringify(timer.steps.map(copyStep));
+    return a.title === b.title && a.repeats === b.repeats && steps(a) === steps(b);
+}
+
 /**
- * Reads one saved timer, or returns null if it isn't usable. Timers saved before steps
- * existed (a single work and rest time) become a work step and, if there was any rest,
- * a rest step, which runs exactly as before.
+ * Reads one saved timer, from this device or a backup, or returns null if it isn't usable.
+ * Timers saved before steps existed (a single work and rest time) become a work step and,
+ * if there was any rest, a rest step, which runs exactly as before.
  */
-function readTimer(value: unknown): Timer | null {
+export function readTimer(value: unknown): Timer | null {
     if (typeof value !== 'object' || value === null) {
         return null;
     }
