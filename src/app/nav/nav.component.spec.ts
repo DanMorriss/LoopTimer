@@ -70,6 +70,7 @@ describe('NavComponent', () => {
             ['Home', '/home'],
             ['Create', '/setup'],
             ['Library', '/library'],
+            ['Exercises', '/exercises'],
             ['History', '/history'],
             ['Settings', '/settings'],
         ]);
@@ -121,7 +122,7 @@ describe('NavComponent', () => {
         fixture.detectChanges();
 
         expect(links()[0].getAttribute('href')).toBe('/workout');
-        expect(links()).toHaveLength(6);
+        expect(links()).toHaveLength(7);
     });
 
     it('marks the page you are on', async () => {
@@ -135,7 +136,7 @@ describe('NavComponent', () => {
     it('closes after following a link', async () => {
         await openMenu();
 
-        links()[3].click();
+        links()[4].click();
         fixture.detectChanges();
         await fixture.whenStable();
         fixture.detectChanges();

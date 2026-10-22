@@ -1,5 +1,10 @@
 import { computed, Service, signal } from '@angular/core';
-import { BODY_FIGURE_CHOICES, BodyFigure } from '../../models/exercise';
+import {
+    BODY_FIGURE_CHOICES,
+    BodyFigure,
+    Equipment,
+    EQUIPMENT_CHOICES,
+} from '../../models/exercise';
 import { WEIGHT_UNITS, WeightUnit } from '../../models/weight';
 
 export type Theme = 'dark' | 'light' | 'system';
@@ -18,6 +23,10 @@ export interface Settings {
     weightUnit: WeightUnit;
     /** Which figure the body map draws. */
     bodyFigure: BodyFigure;
+    /** The equipment you have, picked on the Exercises page, in the order it's offered. */
+    myEquipment: Equipment[];
+    /** Show only the exercises you can do with `myEquipment` on the Exercises page. */
+    onlyMyEquipment: boolean;
 }
 
 const DEFAULT_SETTINGS: Settings = {
@@ -27,6 +36,8 @@ const DEFAULT_SETTINGS: Settings = {
     keepScreenOn: true,
     weightUnit: 'kg',
     bodyFigure: 'male',
+    myEquipment: [],
+    onlyMyEquipment: false,
 };
 const STORAGE_KEY = 'settings';
 
@@ -41,6 +52,8 @@ export class SettingsStore {
     readonly keepScreenOn = computed(() => this.settings().keepScreenOn);
     readonly weightUnit = computed(() => this.settings().weightUnit);
     readonly bodyFigure = computed(() => this.settings().bodyFigure);
+    readonly myEquipment = computed(() => this.settings().myEquipment);
+    readonly onlyMyEquipment = computed(() => this.settings().onlyMyEquipment);
 
     update(changes: Partial<Settings>) {
         this.settings.update((settings) => ({ ...settings, ...changes }));
@@ -59,7 +72,7 @@ function loadSettings(): Settings {
     } catch {
         // Corrupted: use the defaults
     }
-    const flag = (key: 'sound' | 'vibration' | 'keepScreenOn') =>
+    const flag = (key: 'sound' | 'vibration' | 'keepScreenOn' | 'onlyMyEquipment') =>
         typeof saved[key] === 'boolean' ? saved[key] : DEFAULT_SETTINGS[key];
     const theme = THEMES.find((t) => t === saved['theme']) ?? DEFAULT_SETTINGS.theme;
     const weightUnit =
@@ -73,5 +86,12 @@ function loadSettings(): Settings {
         bodyFigure:
             BODY_FIGURE_CHOICES.find((f) => f === saved['bodyFigure']) ??
             DEFAULT_SETTINGS.bodyFigure,
+        // Kept in the order it's offered, so it reads the same however it was picked
+        myEquipment: Array.isArray(saved['myEquipment'])
+            ? EQUIPMENT_CHOICES.filter((choice) =>
+                  (saved['myEquipment'] as unknown[]).includes(choice)
+              )
+            : DEFAULT_SETTINGS.myEquipment,
+        onlyMyEquipment: flag('onlyMyEquipment'),
     };
 }

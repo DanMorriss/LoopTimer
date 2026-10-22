@@ -1,6 +1,15 @@
 import { BUILT_IN_EXERCISES } from './built-in-exercises';
 import { Exercise, exerciseKey, MeasuredBy, OwnExercise } from './exercise';
-import { ExerciseFinder, findByName, linkSets, linkSteps, searchExercises } from './exercise-links';
+import {
+    ExerciseFinder,
+    exerciseUsage,
+    findByName,
+    linkSets,
+    linkSteps,
+    searchExercises,
+} from './exercise-links';
+import { HistoryEntry } from './history';
+import { makeWorkout } from '../shared/testing/make-workout';
 import { Step } from './workout';
 
 function own(id: string, name: string, otherNames: string[] = []): OwnExercise {
@@ -200,5 +209,36 @@ describe('linkSets', () => {
             'own-1',
         ]);
         expect(exercises.made).toEqual([['Sled push', 'reps']]);
+    });
+});
+
+describe('exerciseUsage', () => {
+    const legs = makeWorkout({
+        id: 'legs',
+        title: 'Legs',
+        steps: [{ kind: 'reps', reps: 5, name: 'Sled push', exerciseId: 'sled' }],
+    });
+    const arms = makeWorkout({ id: 'arms', title: 'Arms' });
+    const entry = (exerciseId?: string) =>
+        ({
+            id: 'run',
+            sets: [{ round: 0, step: 0, name: 'Sled push', reps: 5, exerciseId }],
+        }) as HistoryEntry;
+
+    it('finds the workouts with a step that is the exercise', () => {
+        expect(exerciseUsage('sled', [legs, arms], []).workouts).toEqual([legs]);
+        expect(exerciseUsage('other', [legs, arms], []).workouts).toEqual([]);
+    });
+
+    it('counts the workout running, once', () => {
+        const running = { ...legs, id: 'unsaved' };
+
+        expect(exerciseUsage('sled', [arms], [], running).workouts).toEqual([running]);
+        expect(exerciseUsage('sled', [legs], [], legs).workouts).toEqual([legs]);
+    });
+
+    it('says whether the history has a set of it', () => {
+        expect(exerciseUsage('sled', [], [entry('sled')]).inHistory).toBe(true);
+        expect(exerciseUsage('sled', [], [entry(undefined)]).inHistory).toBe(false);
     });
 });

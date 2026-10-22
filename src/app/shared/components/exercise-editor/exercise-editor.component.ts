@@ -9,11 +9,16 @@ import {
     Exercise,
     isBuiltIn,
     MAX_EXERCISE_DESCRIPTION_LENGTH,
+    MAX_EXERCISE_LINE_LENGTH,
     MAX_EXERCISE_NAME_LENGTH,
     MAX_EXERCISE_NOTE_LENGTH,
+    MAX_EXERCISE_STEPS,
+    MAX_EXERCISE_TIPS,
     MeasuredBy,
     MUSCLE_LABELS,
     MuscleGroup,
+    OwnExercise,
+    OwnExerciseDetails,
 } from '../../../models/exercise';
 import { ExerciseStore } from '../../state/exercise-store.service';
 import { WorkoutStore } from '../../state/workout-store.service';
@@ -27,6 +32,10 @@ interface ExerciseEditorModel {
     equipment: Equipment[];
     mainMuscles: MuscleGroup[];
     supportingMuscles: MuscleGroup[];
+    /** One how-to step per line. */
+    steps: string;
+    /** One tip per line. */
+    tips: string;
     note: string;
 }
 
@@ -34,9 +43,11 @@ const MUSCLES = Object.keys(MUSCLE_LABELS) as MuscleGroup[];
 
 /**
  * An exercise's details and your note on it, in a dialog. Your own exercise can be renamed
- * (EXR-3) and given a description, equipment and muscles (EXR-9); a renamed one's steps take
- * the new name in every workout. A built-in one can't change, so it shows its description and
- * only the note can be written (EXR-10). Focus is trapped inside while it's open.
+ * (EXR-3) and given a description, equipment, muscles, how-to steps and tips (EXR-9); a
+ * renamed one's steps take the new name in every workout. Muscles are picked from chips, or
+ * by tapping the body map. A built-in one can't change, so it shows its description and only
+ * the note can be written (EXR-10). With `isNew`, the exercise is a blank one of your own,
+ * made when it's saved. Focus is trapped inside while it's open.
  */
 @Component({
     selector: 'app-exercise-editor',
@@ -46,6 +57,8 @@ const MUSCLES = Object.keys(MUSCLE_LABELS) as MuscleGroup[];
 })
 export class ExerciseEditorComponent {
     readonly exercise = input.required<Exercise>();
+    /** The exercise isn't saved yet: saving makes it. */
+    readonly isNew = input(false);
     readonly closed = output<void>();
     /** Saved, with the exercise as it now is. */
     readonly saved = output<Exercise>();
@@ -54,11 +67,19 @@ export class ExerciseEditorComponent {
     private readonly workouts = inject(WorkoutStore);
 
     protected readonly builtIn = computed(() => isBuiltIn(this.exercise()));
+    protected readonly title = computed(() => {
+        if (this.builtIn()) {
+            return this.exercise().name;
+        }
+        return this.isNew() ? 'New exercise' : 'Edit exercise';
+    });
     protected readonly muscles = MUSCLES;
     protected readonly muscleLabels = MUSCLE_LABELS;
     protected readonly equipmentChoices = EQUIPMENT_CHOICES;
     protected readonly equipmentLabel = equipmentLabel;
     protected readonly maxNote = MAX_EXERCISE_NOTE_LENGTH;
+    protected readonly maxSteps = MAX_EXERCISE_STEPS;
+    protected readonly maxTips = MAX_EXERCISE_TIPS;
     protected readonly measuredByChoices: { value: MeasuredBy; label: string }[] = [
         { value: 'reps', label: 'Reps' },
         { value: 'timed', label: 'Time' },
@@ -76,6 +97,8 @@ export class ExerciseEditorComponent {
             ),
             mainMuscles: [...exercise.mainMuscles],
             supportingMuscles: [...exercise.supportingMuscles],
+            steps: exercise.steps.join('\n'),
+            tips: exercise.tips.join('\n'),
             note: this.exercises.noteFor(exercise.id) ?? '',
         };
     });
@@ -83,6 +106,8 @@ export class ExerciseEditorComponent {
     protected readonly editorForm = form(this.model, (editor) => {
         maxLength(editor.description, MAX_EXERCISE_DESCRIPTION_LENGTH);
         maxLength(editor.note, MAX_EXERCISE_NOTE_LENGTH);
+        validate(editor.steps, ({ value }) => linesError(value(), MAX_EXERCISE_STEPS, 'steps'));
+        validate(editor.tips, ({ value }) => linesError(value(), MAX_EXERCISE_TIPS, 'tips'));
         validate(editor.name, ({ value }) => {
             if (this.builtIn()) {
                 return undefined;
@@ -96,7 +121,7 @@ export class ExerciseEditorComponent {
                     message: `Keep it to ${MAX_EXERCISE_NAME_LENGTH} characters`,
                 };
             }
-            return this.exercises.nameTaken(value(), this.exercise().id)
+            return this.exercises.nameTaken(value(), this.exercise().id || undefined)
                 ? {
                       kind: 'taken',
                       message: `There's already an exercise called "${value().trim()}"`,
@@ -106,6 +131,8 @@ export class ExerciseEditorComponent {
     });
 
     protected readonly nameError = computed(() => this.editorForm.name().errors().at(0)?.message);
+    protected readonly stepsError = computed(() => this.editorForm.steps().errors().at(0)?.message);
+    protected readonly tipsError = computed(() => this.editorForm.tips().errors().at(0)?.message);
     protected readonly mainMuscles = computed(() => this.model().mainMuscles);
     protected readonly supportingMuscles = computed(() => this.model().supportingMuscles);
 
@@ -151,6 +178,13 @@ export class ExerciseEditorComponent {
         }));
     }
 
+    /** A tap on the body map moves a muscle along: not worked, main, supporting, not worked. */
+    protected cycleMuscle(muscle: MuscleGroup) {
+        // Toggling supporting moves a main muscle there, and takes a supporting one out
+        const worked = this.isMain(muscle) || this.isSupporting(muscle);
+        this.toggleMuscle(muscle, worked ? 'supporting' : 'main');
+    }
+
     /**
      * Saves and closes. Handled here rather than as a form submission: the dialog closes as
      * it saves, and a form taken away mid-submission stays "submitting".
@@ -158,37 +192,69 @@ export class ExerciseEditorComponent {
     protected save(event: Event) {
         event.preventDefault();
         if (this.editorForm().invalid()) {
-            // Only the name can be wrong; it's at the top, perhaps scrolled out of sight
-            document.getElementById('exercise-editor-name')?.focus();
+            // The first field that's wrong, perhaps scrolled out of sight
+            const wrong = [
+                ['name', this.nameError()],
+                ['steps', this.stepsError()],
+                ['tips', this.tipsError()],
+            ].find(([, error]) => error)?.[0];
+            document.getElementById(`exercise-editor-${wrong}`)?.focus();
             return;
         }
         const exercise = this.exercise();
-        const { note, ...details } = this.model();
-        let result: Exercise = exercise;
-        if (!isBuiltIn(exercise)) {
-            const updated = this.exercises.updateOwn(exercise.id, {
-                ...details,
-                // A choice of pieces from a backup is kept, as it can't be picked here
-                equipment: [
-                    ...exercise.equipment.filter((need) => typeof need !== 'string'),
-                    ...details.equipment,
-                ],
-            });
-            if (!updated) {
-                return;
-            }
-            if (updated.name !== exercise.name) {
-                this.workouts.renameExerciseSteps(updated.id, updated.name);
-            }
-            result = updated;
+        const result = isBuiltIn(exercise) ? exercise : this.saveOwn(exercise);
+        if (!result) {
+            return;
         }
-        if (note.trim() !== (this.exercises.noteFor(exercise.id) ?? '')) {
-            this.exercises.setNote(exercise.id, note);
+        const note = this.model().note;
+        if (note.trim() !== (this.exercises.noteFor(result.id) ?? '')) {
+            this.exercises.setNote(result.id, note);
         }
         this.saved.emit(result);
+    }
+
+    /** Makes or changes your own exercise, or returns null if its name is taken. */
+    private saveOwn(exercise: OwnExercise): OwnExercise | null {
+        const editor = this.model();
+        const details: OwnExerciseDetails = {
+            name: editor.name,
+            measuredBy: editor.measuredBy,
+            description: editor.description,
+            mainMuscles: editor.mainMuscles,
+            supportingMuscles: editor.supportingMuscles,
+            steps: editor.steps.split('\n'),
+            tips: editor.tips.split('\n'),
+            // A choice of pieces from a backup is kept, as it can't be picked here
+            equipment: [
+                ...exercise.equipment.filter((need) => typeof need !== 'string'),
+                ...editor.equipment,
+            ],
+        };
+        if (this.isNew()) {
+            return this.exercises.createOwn(details);
+        }
+        const updated = this.exercises.updateOwn(exercise.id, details);
+        if (updated && updated.name !== exercise.name) {
+            this.workouts.renameExerciseSteps(updated.id, updated.name);
+        }
+        return updated;
     }
 
     protected cancel() {
         this.closed.emit();
     }
+}
+
+/** What's wrong with steps or tips written one per line, if anything. */
+function linesError(text: string, max: number, what: 'steps' | 'tips') {
+    const lines = text.split('\n').filter((line) => line.trim() !== '');
+    if (lines.length > max) {
+        return { kind: 'tooMany', message: `Up to ${max} ${what}, one per line` };
+    }
+    return lines.some((line) => line.trim().length > MAX_EXERCISE_LINE_LENGTH)
+        ? {
+              kind: 'tooLong',
+              message: `Keep each one to ${MAX_EXERCISE_LINE_LENGTH} characters`,
+          }
+        : undefined;
 }

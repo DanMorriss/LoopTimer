@@ -13,6 +13,7 @@ const PAGES = [
     { path: '/home', label: 'Home', icon: 'home' },
     { path: '/setup', label: 'Create', icon: 'add_circle_outline' },
     { path: '/library', label: 'Library', icon: 'view_list' },
+    { path: '/exercises', label: 'Exercises', icon: 'fitness_center' },
     { path: '/history', label: 'History', icon: 'history' },
     { path: '/settings', label: 'Settings', icon: 'settings' },
 ] as const;

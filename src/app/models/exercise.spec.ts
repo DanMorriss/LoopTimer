@@ -1,4 +1,5 @@
-import { canDoWith } from './exercise';
+import { BUILT_IN_EXERCISES } from './built-in-exercises';
+import { canDoWith, capitalise, equipmentPhrases, exercisePath } from './exercise';
 
 describe('canDoWith', () => {
     it('needs every piece of equipment an exercise lists', () => {
@@ -32,5 +33,53 @@ describe('canDoWith', () => {
 
     it('can always do an exercise that needs nothing', () => {
         expect(canDoWith({ equipment: ['none'] }, [])).toBe(true);
+    });
+});
+
+describe('equipmentPhrases', () => {
+    it('names each piece, and a choice as "a or b"', () => {
+        expect(equipmentPhrases(['barbell', 'bench', 'rack'])).toEqual([
+            'barbell',
+            'bench',
+            'rack',
+        ]);
+        expect(equipmentPhrases([['dumbbells', 'kettlebell']])).toEqual([
+            'dumbbells or kettlebell',
+        ]);
+        expect(equipmentPhrases([['barbell', 'dumbbells', 'kettlebell']])).toEqual([
+            'barbell, dumbbells, or kettlebell',
+        ]);
+    });
+
+    it("reads an inverted row's two choices as one", () => {
+        const phrases = equipmentPhrases([
+            ['barbell', 'smith machine', 'rings'],
+            ['rack', 'smith machine', 'rings'],
+        ]);
+
+        expect(phrases.map(capitalise)).toEqual(['Barbell and rack, Smith machine, or rings']);
+    });
+
+    it('keeps two choices apart when they have nothing in common', () => {
+        expect(
+            equipmentPhrases([
+                ['barbell', 'dumbbells'],
+                ['bench', 'step'],
+            ])
+        ).toEqual(['barbell or dumbbells', 'bench or step']);
+    });
+
+    it('says when nothing is needed, and nothing when nothing is listed', () => {
+        expect(equipmentPhrases(['none'])).toEqual(['no equipment']);
+        expect(equipmentPhrases([])).toEqual([]);
+    });
+});
+
+describe('exercisePath', () => {
+    it("is a built-in exercise's name, or your own one's id", () => {
+        const backSquat = BUILT_IN_EXERCISES.find((e) => e.id === 'builtin:back-squat')!;
+
+        expect(exercisePath(backSquat)).toBe('/exercises/back-squat');
+        expect(exercisePath({ ...backSquat, id: 'abc' } as never)).toBe('/exercises/abc');
     });
 });

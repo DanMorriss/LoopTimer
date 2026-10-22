@@ -1,4 +1,4 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { MUSCLE_LABELS, MuscleGroup } from '../../../models/exercise';
 import { SettingsStore } from '../../state/settings-store.service';
 import { BODY_FIGURES } from './body-shapes';
@@ -13,6 +13,9 @@ let nextId = 0;
  * main muscles and darker for supporting ones, with the muscles listed underneath. The list
  * is the figure's key and says the same in words, so screen readers get that, not the drawing.
  * The figure is male or female, as chosen in settings (SET-5).
+ *
+ * With `tappable`, tapping a muscle on the figure says which it was, for picking muscles
+ * with (the editor's chips do the same for keyboards and screen readers).
  */
 @Component({
     selector: 'app-body-map',
@@ -24,6 +27,8 @@ export class BodyMapComponent {
     readonly main = input<readonly MuscleGroup[]>([]);
     /** Muscles that help or hold steady. A muscle in both counts as main. */
     readonly supporting = input<readonly MuscleGroup[]>([]);
+    readonly tappable = input(false);
+    readonly muscleTapped = output<MuscleGroup>();
 
     private readonly settings = inject(SettingsStore);
     protected readonly id = `body-map-${nextId++}`;
@@ -46,7 +51,7 @@ export class BodyMapComponent {
             viewBox: figure[side].viewBox,
             outline: figure[side].outline,
             paths: figure[side].shapes.flatMap((shape) =>
-                shape.paths.map((d) => ({ d, shade: shadeOf(shape.muscle) }))
+                shape.paths.map((d) => ({ d, muscle: shape.muscle, shade: shadeOf(shape.muscle) }))
             ),
         }));
     });

@@ -10,8 +10,14 @@ export interface Synced {
 }
 
 /** The kinds of record that are synced, and so leave a deletion behind. */
-export type SyncedKind = 'workout' | 'history' | 'exercise' | 'exercise-note';
-const SYNCED_KINDS: readonly SyncedKind[] = ['workout', 'history', 'exercise', 'exercise-note'];
+export type SyncedKind = 'workout' | 'history' | 'exercise' | 'exercise-note' | 'hidden-exercise';
+const SYNCED_KINDS: readonly SyncedKind[] = [
+    'workout',
+    'history',
+    'exercise',
+    'exercise-note',
+    'hidden-exercise',
+];
 
 /** A record that was deleted, kept so the deletion can reach other copies too. */
 export interface Deletion {

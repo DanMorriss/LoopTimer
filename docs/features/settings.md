@@ -21,6 +21,7 @@
 | Alarm sounds | Timed, Rest, Finish | —       | Two short high beeps / One long low tone / Three rising notes | A Play button for each.                                                                    |
 | Your data    | Export, Import      | —       | Your workouts and history are saved on this device only…      | Export backup and Import backup buttons; see [backup-and-sync](backup-and-sync.md).        |
 
+- **Your equipment** and **Only what I have** are saved with the settings too, but set on the Exercises page (see [exercises](exercises.md#the-exercises-list-exr-6)), not here.
 - Changes are **saved at once** and apply at once, mid-workout too (e.g. turning sound off silences alarms already booked).
 - **Play** plays that alarm straight away, even with Sound turned off (it was asked for), without touching any booked alarms.
 - Switching theme **fades** from one to the other, unless reduced motion is on, when it changes at once.

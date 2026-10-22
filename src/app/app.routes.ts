@@ -19,6 +19,18 @@ export const routes: Routes = [
             ),
     },
     {
+        path: 'exercises',
+        loadComponent: () =>
+            import('./exercises/exercise-list.component').then((m) => m.ExerciseListComponent),
+    },
+    {
+        path: 'exercises/:id',
+        loadComponent: () =>
+            import('./exercises/exercise-page/exercise-page.component').then(
+                (m) => m.ExercisePageComponent
+            ),
+    },
+    {
         path: 'history',
         loadComponent: () => import('./history/history.component').then((m) => m.HistoryComponent),
     },

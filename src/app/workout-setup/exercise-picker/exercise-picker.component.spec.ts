@@ -77,6 +77,16 @@ describe('ExercisePickerComponent', () => {
         expect(host.name()).toBe('press-up');
     });
 
+    it('leaves out hidden exercises, unless their whole name is typed', async () => {
+        TestBed.inject(ExerciseStore).setHidden('builtin:front-squat', true);
+
+        await type('front sq');
+        expect(optionText()).not.toContain('Front squat');
+
+        await type('front squats');
+        expect(optionText()).toEqual(['Front squat']);
+    });
+
     it('offers to make an exercise when none has the name typed', async () => {
         await type('  Sled   drag');
 

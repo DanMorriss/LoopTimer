@@ -7,6 +7,8 @@
                     <path
                         [attr.d]="path.d"
                         [class]="'body-map__shape body-map__shape--' + path.shade"
+                        [class.body-map__shape--tappable]="tappable() && path.muscle"
+                        (click)="tappable() && path.muscle && muscleTapped.emit(path.muscle)"
                     />
                 }
                 <path class="body-map__outline" [attr.d]="side.outline" />

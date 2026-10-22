@@ -4,7 +4,11 @@ import {
     EquipmentNeed,
     Exercise,
     ExerciseNote,
+    HiddenExercise,
+    MAX_EXERCISE_LINE_LENGTH,
     MAX_EXERCISE_NOTE_LENGTH,
+    MAX_EXERCISE_STEPS,
+    MAX_EXERCISE_TIPS,
     MeasuredBy,
     MUSCLE_LABELS,
     MuscleGroup,
@@ -18,10 +22,11 @@ import { migrateSavedData } from './migrate';
 
 export const EXERCISES_KEY = 'exercises';
 export const EXERCISE_NOTES_KEY = 'exercise-notes';
+export const HIDDEN_EXERCISES_KEY = 'hidden-exercises';
 
 /**
- * Every exercise: the built-in ones (EXR-6) and your own (EXR-9), saved in the browser, and
- * your notes on any of them (EXR-10).
+ * Every exercise: the built-in ones (EXR-6) and your own (EXR-9), saved in the browser, your
+ * notes on any of them (EXR-10), and which are hidden from the picker.
  */
 @Service()
 export class ExerciseStore {
@@ -39,6 +44,11 @@ export class ExerciseStore {
         ...this._own(),
     ]);
     readonly notes = computed(() => this._notes());
+    private readonly _hidden = signal<HiddenExercise[]>(
+        loadList(HIDDEN_EXERCISES_KEY, readHiddenExercise)
+    );
+    readonly hidden = computed(() => this._hidden());
+    private readonly hiddenIds = computed(() => new Set(this._hidden().map((h) => h.id)));
 
     /** For linking steps and sets by name: finds an exercise, or makes one of your own. */
     readonly finder: ExerciseFinder = {
@@ -67,22 +77,11 @@ export class ExerciseStore {
      */
     updateOwn(id: string, details: OwnExerciseDetails): OwnExercise | null {
         const existing = this._own().find((exercise) => exercise.id === id);
-        const name = details.name.trim().replace(/\s+/g, ' ');
+        const name = tidyName(details.name);
         if (!existing || name === '' || this.nameTaken(name, id)) {
             return null;
         }
-        const updated: OwnExercise = {
-            ...existing,
-            name,
-            measuredBy: details.measuredBy,
-            equipment: [...details.equipment],
-            mainMuscles: [...details.mainMuscles],
-            supportingMuscles: details.supportingMuscles.filter(
-                (muscle) => !details.mainMuscles.includes(muscle)
-            ),
-            description: details.description.trim(),
-            updatedAt: Date.now(),
-        };
+        const updated: OwnExercise = { ...existing, ...tidied(details), updatedAt: Date.now() };
         this._own.update((own) => own.map((exercise) => (exercise.id === id ? updated : exercise)));
         this.saveOwn();
         return updated;
@@ -91,21 +90,73 @@ export class ExerciseStore {
     /** Makes an exercise of your own with just a name and how it's measured, and saves it. */
     addOwn(name: string, measuredBy: MeasuredBy): OwnExercise {
         const exercise: OwnExercise = {
+            ...blankOwnExercise(tidyName(name), measuredBy),
             id: newId(),
             updatedAt: Date.now(),
-            name: name.trim().replace(/\s+/g, ' '),
-            otherNames: [],
-            equipment: [],
-            measuredBy,
-            mainMuscles: [],
-            supportingMuscles: [],
-            description: '',
-            steps: [],
-            tips: [],
         };
         this._own.update((own) => [...own, exercise]);
         this.saveOwn();
         return exercise;
+    }
+
+    /**
+     * Makes an exercise of your own with all its details, tidied as `updateOwn()` does, e.g.
+     * from the Exercises page. Returns null if its name is empty or taken.
+     */
+    createOwn(details: OwnExerciseDetails): OwnExercise | null {
+        const name = tidyName(details.name);
+        if (name === '' || this.nameTaken(name)) {
+            return null;
+        }
+        const exercise: OwnExercise = {
+            ...blankOwnExercise(name, details.measuredBy),
+            ...tidied(details),
+            id: newId(),
+            updatedAt: Date.now(),
+        };
+        this._own.update((own) => [...own, exercise]);
+        this.saveOwn();
+        return exercise;
+    }
+
+    /**
+     * Deletes an exercise of your own, with your note on it and its place in the hidden
+     * list, leaving deletions so they reach other copies too. Whether it may be deleted (no
+     * workout uses it, and it has no history) is for the caller to check: see
+     * `exerciseUsage()`.
+     */
+    deleteOwn(id: string) {
+        if (!this._own().some((exercise) => exercise.id === id)) {
+            return;
+        }
+        this._own.update((own) => own.filter((exercise) => exercise.id !== id));
+        this.deletions.add({ kind: 'exercise', id, deletedAt: Date.now() });
+        this.saveOwn();
+        this.setNote(id, '');
+        this.setHidden(id, false);
+    }
+
+    /** Whether an exercise is hidden from the picker in Create. */
+    isHidden(exerciseId: string): boolean {
+        return this.hiddenIds().has(exerciseId);
+    }
+
+    /**
+     * Hides an exercise from the picker, or shows it again. Showing it removes it from the
+     * list, leaving a deletion so that reaches other copies too.
+     */
+    setHidden(exerciseId: string, hidden: boolean) {
+        if (hidden === this.isHidden(exerciseId)) {
+            return;
+        }
+        if (hidden) {
+            this._hidden.update((list) => [...list, { id: exerciseId, updatedAt: Date.now() }]);
+            this.deletions.remove('hidden-exercise', exerciseId);
+        } else {
+            this._hidden.update((list) => list.filter((h) => h.id !== exerciseId));
+            this.deletions.add({ kind: 'hidden-exercise', id: exerciseId, deletedAt: Date.now() });
+        }
+        localStorage.setItem(HIDDEN_EXERCISES_KEY, JSON.stringify(this._hidden()));
     }
 
     /** Your note on an exercise, or undefined if there isn't one. */
@@ -147,6 +198,22 @@ export class ExerciseStore {
         return { added: result.added, updated: result.updated, removed: result.removed };
     }
 
+    /** Merges which exercises are hidden from another copy, as notes merge. */
+    mergeHidden(hidden: readonly HiddenExercise[], deletedThere: readonly Deletion[]) {
+        const result = mergeRecords(
+            'hidden-exercise',
+            this._hidden(),
+            hidden,
+            (id) => this.deletions.deletedAt('hidden-exercise', id),
+            deletedThere
+        );
+        result.deletions.forEach((deletion) => this.deletions.add(deletion));
+        if (result.added + result.updated + result.removed > 0) {
+            this._hidden.set(result.records);
+            localStorage.setItem(HIDDEN_EXERCISES_KEY, JSON.stringify(this._hidden()));
+        }
+    }
+
     /** Merges notes from another copy, by exercise: the most recent change to each wins. */
     mergeNotes(notes: readonly ExerciseNote[], deletedThere: readonly Deletion[]) {
         const result = mergeRecords(
@@ -171,6 +238,51 @@ export class ExerciseStore {
     private saveNotes() {
         localStorage.setItem(EXERCISE_NOTES_KEY, JSON.stringify(this._notes()));
     }
+}
+
+const tidyName = (name: string) => name.trim().replace(/\s+/g, ' ');
+
+/** An exercise of your own with nothing but a name and how it's measured, not yet saved. */
+export function blankOwnExercise(name = '', measuredBy: MeasuredBy = 'reps'): OwnExercise {
+    return {
+        id: '',
+        updatedAt: 0,
+        name,
+        otherNames: [],
+        equipment: [],
+        measuredBy,
+        mainMuscles: [],
+        supportingMuscles: [],
+        description: '',
+        steps: [],
+        tips: [],
+    };
+}
+
+/**
+ * Details as they're saved: the name's spaces and the text trimmed, empty lines of steps and
+ * tips dropped and their counts and lengths capped, and a muscle in both lists kept as main
+ * only.
+ */
+function tidied(details: OwnExerciseDetails): OwnExerciseDetails {
+    const lines = (list: readonly string[], max: number) =>
+        list
+            .map((line) => line.trim())
+            .filter((line) => line !== '')
+            .slice(0, max)
+            .map((line) => line.slice(0, MAX_EXERCISE_LINE_LENGTH));
+    return {
+        name: tidyName(details.name),
+        measuredBy: details.measuredBy,
+        equipment: [...details.equipment],
+        mainMuscles: [...details.mainMuscles],
+        supportingMuscles: details.supportingMuscles.filter(
+            (muscle) => !details.mainMuscles.includes(muscle)
+        ),
+        description: details.description.trim(),
+        steps: lines(details.steps, MAX_EXERCISE_STEPS),
+        tips: lines(details.tips, MAX_EXERCISE_TIPS),
+    };
 }
 
 // Corrupted or unexpected data shouldn't stop the app from starting, so drop what isn't usable
@@ -250,5 +362,16 @@ export function readExerciseNote(value: unknown): ExerciseNote | null {
         text.trim() !== '' &&
         Number.isInteger(updatedAt)
         ? { id, text: text.slice(0, MAX_EXERCISE_NOTE_LENGTH), updatedAt: updatedAt as number }
+        : null;
+}
+
+/** Reads one exercise's place in the hidden list, or returns null if it isn't usable. */
+export function readHiddenExercise(value: unknown): HiddenExercise | null {
+    if (typeof value !== 'object' || value === null) {
+        return null;
+    }
+    const { id, updatedAt } = value as Record<string, unknown>;
+    return isText(id) && id !== '' && Number.isInteger(updatedAt)
+        ? { id, updatedAt: updatedAt as number }
         : null;
 }

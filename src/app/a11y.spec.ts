@@ -4,6 +4,7 @@ import axe from 'axe-core';
 import { AppComponent } from './app.component';
 import { routes } from './app.routes';
 import { makeWorkout, reps, rest, work } from './shared/testing/make-workout';
+import { ExerciseStore } from './shared/state/exercise-store.service';
 import { HistoryStore } from './shared/state/history-store.service';
 import { WorkoutStore } from './shared/state/workout-store.service';
 
@@ -189,6 +190,80 @@ for (const theme of ['dark', 'light'] as const) {
                 await settle();
                 click('.workout-card__menu-item--danger');
                 await settle();
+                await expectNoViolations();
+            });
+        });
+
+        describe('exercises', () => {
+            it('the list, with the equipment open, one hidden and one of your own', async () => {
+                const exercises = TestBed.inject(ExerciseStore);
+                exercises.addOwn('Sled push', 'reps');
+                exercises.setHidden('builtin:plank', true);
+                await open('/exercises');
+                click('.exercises__kit-edit');
+                click('.exercises__hidden-toggle');
+                await settle();
+                await expectNoViolations();
+            });
+
+            it('the list, with nothing matching', async () => {
+                await open('/exercises');
+                const box = fixture.nativeElement.querySelector('#exercise-search');
+                box.value = 'zzz';
+                box.dispatchEvent(new Event('input'));
+                await settle();
+                await expectNoViolations();
+            });
+
+            it('making a new exercise', async () => {
+                await open('/exercises');
+                click('#exercise-list-new');
+                await settle();
+                await expectNoViolations();
+            });
+
+            it('a built-in exercise, with your note, hidden', async () => {
+                const exercises = TestBed.inject(ExerciseStore);
+                exercises.setNote('builtin:inverted-row', 'Feet on a box');
+                exercises.setHidden('builtin:inverted-row', true);
+                await open('/exercises/inverted-row');
+                await expectNoViolations();
+            });
+
+            it('your own exercise, being edited with errors', async () => {
+                const mine = TestBed.inject(ExerciseStore).addOwn('Sled push', 'reps');
+                await open(`/exercises/${mine.id}`);
+                click('#exercise-page-edit');
+                await settle();
+                const name = fixture.nativeElement.querySelector('#exercise-editor-name');
+                name.value = '';
+                name.dispatchEvent(new Event('input'));
+                const steps = fixture.nativeElement.querySelector('#exercise-editor-steps');
+                steps.value = Array.from({ length: 20 }, () => 'Step').join('\n');
+                steps.dispatchEvent(new Event('input'));
+                await settle();
+                await expectNoViolations();
+            });
+
+            it('your own exercise, asking before deleting it, and in use', async () => {
+                const mine = TestBed.inject(ExerciseStore).addOwn('Sled push', 'reps');
+                await open(`/exercises/${mine.id}`);
+                click('#exercise-page-delete');
+                await settle();
+                await expectNoViolations();
+                click('.confirm-dialog__button--cancel');
+                store.addWorkout(
+                    makeWorkout({
+                        steps: [{ kind: 'reps', reps: 5, name: 'Sled push', exerciseId: mine.id }],
+                    })
+                );
+                click('#exercise-page-delete');
+                await settle();
+                await expectNoViolations();
+            });
+
+            it('an exercise that is not there', async () => {
+                await open('/exercises/not-one');
                 await expectNoViolations();
             });
         });

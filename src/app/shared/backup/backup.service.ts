@@ -54,6 +54,7 @@ export class BackupService {
                 history: this.history.entries(),
                 exercises: this.exercises.own(),
                 exerciseNotes: this.exercises.notes(),
+                hiddenExercises: this.exercises.hidden(),
                 deleted: [...this.deletions.all()],
                 settings: {
                     theme: this.settings.theme(),
@@ -62,6 +63,8 @@ export class BackupService {
                     keepScreenOn: this.settings.keepScreenOn(),
                     weightUnit: this.settings.weightUnit(),
                     bodyFigure: this.settings.bodyFigure(),
+                    myEquipment: this.settings.myEquipment(),
+                    onlyMyEquipment: this.settings.onlyMyEquipment(),
                 },
             },
             exportedAt
@@ -81,7 +84,7 @@ export class BackupService {
 
     /**
      * Merges a backup file in: the most recent change to each workout, history entry, exercise of your
-     * own and note wins, and what was deleted where the backup came from is deleted here,
+     * own, note and hidden exercise wins, and what was deleted where the backup came from is deleted here,
      * unless it's changed here since. Exercises come first, so the workouts and history entries can be
      * linked to them: steps and sets that aren't linked yet (from a file before version 3, or
      * to an exercise that isn't here) are linked by name, as saved data is. Settings in the
@@ -103,6 +106,7 @@ export class BackupService {
         }
         const exercises = this.exercises.mergeOwn(backup.exercises, backup.deleted);
         this.exercises.mergeNotes(backup.exerciseNotes, backup.deleted);
+        this.exercises.mergeHidden(backup.hiddenExercises, backup.deleted);
         const linkedWorkouts = backup.workouts.map((workout) => this.linked(workout));
         const linkedHistory = backup.history.map((entry) => this.linkedSets(entry));
         const workouts = backup.fromVersion1

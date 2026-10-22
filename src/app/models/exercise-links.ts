@@ -1,6 +1,6 @@
 import { Exercise, exerciseKey, MeasuredBy } from './exercise';
-import { LoggedSet } from './history';
-import { Step } from './workout';
+import { HistoryEntry, LoggedSet } from './history';
+import { Step, Workout } from './workout';
 
 /** Finds an exercise by name, or makes one of your own, for linking steps and sets to. */
 export interface ExerciseFinder {
@@ -115,4 +115,27 @@ export function linkSets(sets: readonly LoggedSet[], exercises: ExerciseFinder):
         const exercise = exercises.find(set.name) ?? exercises.create(set.name, 'reps');
         return { ...set, exerciseId: exercise.id };
     });
+}
+
+/** Where an exercise is used, which decides whether it can be deleted. */
+export interface ExerciseUsage {
+    /** Saved workouts with a step that's the exercise, and the one running if it has one. */
+    workouts: Workout[];
+    /** Whether any set in the history is of it. */
+    inHistory: boolean;
+}
+
+export function exerciseUsage(
+    exerciseId: string,
+    workouts: readonly Workout[],
+    history: readonly HistoryEntry[],
+    active: Workout | null = null
+): ExerciseUsage {
+    const usesIt = (workout: Workout) => workout.steps.some((s) => s.exerciseId === exerciseId);
+    const saved = workouts.filter(usesIt);
+    const running = active && usesIt(active) && !saved.some((w) => w.id === active.id);
+    return {
+        workouts: running ? [...saved, active] : saved,
+        inHistory: history.some((entry) => entry.sets?.some((s) => s.exerciseId === exerciseId)),
+    };
 }

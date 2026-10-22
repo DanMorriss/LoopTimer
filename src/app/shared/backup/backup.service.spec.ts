@@ -94,7 +94,7 @@ describe('BackupService', () => {
             expect(link.href).toBe('blob:backup');
             const file: BackupFile = JSON.parse(await blob!.text());
             expect(file.app).toBe('LoopTimer');
-            expect(file.version).toBe(4);
+            expect(file.version).toBe(5);
             expect(file.workouts).toEqual(workouts().workouts());
             expect(file.history).toEqual(history().entries());
             expect(file.deleted).toEqual([
@@ -317,22 +317,25 @@ describe('BackupService', () => {
             new Blob([
                 JSON.stringify({
                     app: 'LoopTimer',
-                    version: 4,
+                    version: 5,
                     exportedAt: 1,
                     workouts: [],
                     history: [],
                     exercises: [],
                     exerciseNotes: [],
+                    hiddenExercises: [],
                     deleted: [],
                     ...contents,
                 }),
             ]);
 
-        it('exports your own exercises and your notes', async () => {
+        it('exports your own exercises, your notes, what is hidden and your equipment', async () => {
             start();
             const exercises = TestBed.inject(ExerciseStore);
             const mine = exercises.addOwn('Sled push', 'reps');
             exercises.setNote('builtin:back-squat', 'Pause at the bottom');
+            exercises.setHidden('builtin:plank', true);
+            TestBed.inject(SettingsStore).update({ myEquipment: ['band'] });
             let blob: Blob | undefined;
             vi.spyOn(URL, 'createObjectURL').mockImplementation((b) => {
                 blob = b as Blob;
@@ -351,6 +354,20 @@ describe('BackupService', () => {
                     updatedAt: expect.any(Number),
                 },
             ]);
+            expect(file.hiddenExercises).toEqual([
+                { id: 'builtin:plank', updatedAt: expect.any(Number) },
+            ]);
+            expect(file.settings.myEquipment).toEqual(['band']);
+        });
+
+        it('hides the exercises hidden in the file', async () => {
+            start();
+
+            await backup.import(
+                fileOf({ hiddenExercises: [{ id: 'builtin:plank', updatedAt: 1 }] })
+            );
+
+            expect(TestBed.inject(ExerciseStore).isHidden('builtin:plank')).toBe(true);
         });
 
         it('adds your own exercises and notes, and links workouts to them', async () => {
