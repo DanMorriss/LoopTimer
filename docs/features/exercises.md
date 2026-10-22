@@ -75,8 +75,8 @@ Top to bottom: back to Exercises; the name; "Also called: …"; equipment and ho
 - When no exercise has the name typed, the list ends with **Make "Sled drag"** ("A new exercise of your own").
 - Up and Down move through the list (wrapping round), Enter or a click picks, Escape closes it, and leaving the box closes it. Enter with nothing chosen submits the form as usual.
 - **Picking** an exercise fills in its name and links the step to it. **Typing** over the name drops the link, and the step goes by its name again, as before there was a picker.
-- **Making** one keeps the name typed (tidied); the exercise is made when the timer is saved, so a timer that's never saved leaves nothing behind. It's measured as its step is: reps for a rep step, time for a timed one. That can be changed when editing it.
-- Under the box, a line says which exercise the step is: "Built-in exercise" or "Your own exercise" (with your note under it, if any), or "A new exercise of your own, made when the timer is saved". Beside it, **Edit** (your own) or **Add note** / **Edit note** (built-in) opens the exercise in a dialog. Focus goes back to that button when the dialog closes.
+- **Making** one keeps the name typed (tidied); the exercise is made when the workout is saved, so a workout that's never saved leaves nothing behind. It's measured as its step is: reps for a rep step, time for a timed one. That can be changed when editing it.
+- Under the box, a line says which exercise the step is: "Built-in exercise" or "Your own exercise" (with your note under it, if any), or "A new exercise of your own, made when the workout is saved". Beside it, **Edit** (your own) or **Add note** / **Edit note** (built-in) opens the exercise in a dialog. Focus goes back to that button when the dialog closes.
 - A step is still allowed **no exercise**: leave the box empty.
 
 ### Your own exercises (EXR-3, EXR-9)
@@ -85,7 +85,7 @@ Top to bottom: back to Exercises; the name; "Also called: …"; equipment and ho
 - **Editing** one (the dialog from its step in setup; later, its exercise page) changes its **name**, how it's **measured** (Reps or Time), a **description** (up to 300 characters), its **equipment** (single pieces; a choice of pieces from a backup is kept as it is) and its **main and supporting muscles**, picked from a list of chips, with the body map shading them as they're picked. A muscle is main or supporting, not both: picking it in one takes it out of the other.
     - The name is needed, up to 40 characters, and can't be another exercise's: "There's already an exercise called "Bench press"". Saving with a problem puts the cursor in the name box.
     - How-to steps and tips for your own exercises, and picking muscles by tapping the body map, are still to come.
-- **Renaming** one (EXR-3) renames it everywhere: the steps linked to it in every saved timer (and the one running) take the new name, and the history shows it by its new name (see [history](history.md)).
+- **Renaming** one (EXR-3) renames it everywhere: the steps linked to it in every saved workout (and the one running) take the new name, and the history shows it by its new name (see [history](history.md)).
 - Deleting one of your own exercises that a workout uses isn't allowed; one with only history can be hidden. (Not built yet.)
 
 ### Carrying over (EXR-4)
@@ -101,16 +101,16 @@ Past logged sets are linked the same way. Unnamed steps stay unnamed and aren't 
 
 - **Any exercise**, built-in or your own, can have a note of your own, e.g. "Pause at the bottom" or "Seat on hole 4". It's how you make a built-in exercise your own without changing it: there's no copying a built-in exercise into your own, so its history stays in one place.
 - It's written in the exercise's dialog, opened from its step in setup: **Your note (optional)**, "Shown with this exercise mid-workout."
-- The note shows under its step in setup, and mid-workout with any work or rep step linked to the exercise (see [run-a-timer](run-a-timer.md)); later, on the exercise page under the description, marked as yours.
+- The note shows under its step in setup, and mid-workout with any work or rep step linked to the exercise (see [run-a-workout](run-a-workout.md)); later, on the exercise page under the description, marked as yours.
 - Up to 200 characters, trimmed; saving an empty note removes it. Notes are your data: saved, exported and synced.
 - A built-in exercise keeps its note across app updates, even if its own text changes.
 
 ## Acceptance criteria
 
 - Given a rep step, when I type "front sq" and pick Front squat, then the step is named "Front squat" and saved linked to `builtin:front-squat`.
-- Given "Sled drag", which no exercise has, then the list offers `Make "Sled drag"`, and saving the timer makes it an exercise of my own.
+- Given "Sled drag", which no exercise has, then the list offers `Make "Sled drag"`, and saving the workout makes it an exercise of my own.
 - Given a step linked to Push-up, when I type over its name, then it's linked by the new name when saved.
-- Given my own exercise "Sled push" in a saved timer, when I rename it "Sled drag", then the timer's step and the history's sets of it say "Sled drag".
+- Given my own exercise "Sled push" in a saved workout, when I rename it "Sled drag", then the workout's step and the history's sets of it say "Sled drag".
 - Given my own exercise, when I rename it "bench press", then it isn't saved and I'm told there's already an exercise called that.
 - Given my note "Elbows in" on Push-up, when a step linked to Push-up is running, then the note shows under the ring and is read out with the step.
 
@@ -121,5 +121,5 @@ Past logged sets are linked the same way. Unnamed steps stay unnamed and aren't 
 
 ## Platform notes
 
-- **Web:** the picker is `ExercisePickerComponent` (`src/app/timer-setup/exercise-picker/`), an ARIA 1.2 combobox with `aria-activedescendant`, searching with `searchExercises()` in `models/exercise-links.ts`. The dialog is `ExerciseEditorComponent` (`src/app/shared/components/exercise-editor/`); `ExerciseStore.updateOwn()` saves your own exercise and `TimerStore.renameExerciseSteps()` renames its steps. The body map is `BodyMapComponent` (`src/app/shared/components/body-map/`). Its shapes, `body-shapes.ts`, are generated by `node tools/build-body-shapes.mjs` from a pinned commit of react-native-body-highlighter; don't edit them by hand. The built-in exercises are `src/app/models/built-in-exercises.ts`, written as in [writing-exercises](../writing-exercises.md).
+- **Web:** the picker is `ExercisePickerComponent` (`src/app/workout-setup/exercise-picker/`), an ARIA 1.2 combobox with `aria-activedescendant`, searching with `searchExercises()` in `models/exercise-links.ts`. The dialog is `ExerciseEditorComponent` (`src/app/shared/components/exercise-editor/`); `ExerciseStore.updateOwn()` saves your own exercise and `WorkoutStore.renameExerciseSteps()` renames its steps. The body map is `BodyMapComponent` (`src/app/shared/components/body-map/`). Its shapes, `body-shapes.ts`, are generated by `node tools/build-body-shapes.mjs` from a pinned commit of react-native-body-highlighter; don't edit them by hand. The built-in exercises are `src/app/models/built-in-exercises.ts`, written as in [writing-exercises](../writing-exercises.md).
 - **iOS:** the same paths work as SwiftUI `Path`s from SVG data, or through react-native-body-highlighter itself in a React Native app. The picker maps onto a `TextField` with a list of suggestions under it (or `.searchable` with `searchSuggestions`), and the exercise dialog onto a sheet.

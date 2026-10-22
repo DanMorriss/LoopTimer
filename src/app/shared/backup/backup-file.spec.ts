@@ -1,7 +1,7 @@
 import { HistoryEntry } from '../../models/history';
 import { Deletion } from '../../models/sync';
 import { Settings } from '../state/settings-store.service';
-import { makeTimer } from '../testing/make-timer';
+import { makeWorkout } from '../testing/make-workout';
 import { BACKUP_VERSION, backupFileName, makeBackup, readBackup } from './backup-file';
 
 const SETTINGS: Settings = {
@@ -14,8 +14,8 @@ const SETTINGS: Settings = {
 };
 
 const ENTRY: HistoryEntry = {
-    id: '1000000-timer-1',
-    timerId: 'timer-1',
+    id: '1000000-workout-1',
+    workoutId: 'workout-1',
     title: 'Sprints',
     startedAt: 1_000_000,
     endedAt: 1_060_000,
@@ -32,23 +32,29 @@ const DELETION: Deletion = { kind: 'history', id: 'gone', deletedAt: 2_000_000 }
 const fileWith = (contents: Record<string, unknown>) =>
     JSON.stringify({
         app: 'LoopTimer',
-        version: 2,
+        version: BACKUP_VERSION,
         exportedAt: 1,
-        timers: [],
+        workouts: [],
         history: [],
         deleted: [],
         ...contents,
     });
 
+/** A history entry as saved before version 4, with no `workoutId` (it was `timerId`). */
+function withoutWorkoutId(entry: Omit<HistoryEntry, 'updatedAt'> & { updatedAt?: number }) {
+    const { workoutId: _id, ...rest } = entry;
+    return rest;
+}
+
 describe('backup file', () => {
     it('holds everything, marked as a LoopTimer backup with its version', () => {
-        const timer = makeTimer({
+        const workout = makeWorkout({
             steps: [{ kind: 'reps', reps: 10, name: 'Squats', weight: 60 }],
         });
 
         const backup = makeBackup(
             {
-                timers: [timer],
+                workouts: [workout],
                 history: [ENTRY],
                 exercises: [],
                 exerciseNotes: [],
@@ -60,9 +66,9 @@ describe('backup file', () => {
 
         expect(backup).toEqual({
             app: 'LoopTimer',
-            version: 3,
+            version: BACKUP_VERSION,
             exportedAt: 5,
-            timers: [timer],
+            workouts: [workout],
             history: [ENTRY],
             exercises: [],
             exerciseNotes: [],
@@ -72,11 +78,11 @@ describe('backup file', () => {
     });
 
     it('reads back what was saved', () => {
-        const timer = makeTimer({ title: 'Legs' });
+        const workout = makeWorkout({ title: 'Legs' });
         const text = JSON.stringify(
             makeBackup(
                 {
-                    timers: [timer],
+                    workouts: [workout],
                     history: [ENTRY],
                     exercises: [],
                     exerciseNotes: [],
@@ -89,7 +95,7 @@ describe('backup file', () => {
 
         expect(readBackup(text)).toEqual({
             ok: true,
-            timers: [timer],
+            workouts: [workout],
             history: [ENTRY],
             exercises: [],
             exerciseNotes: [],
@@ -117,7 +123,7 @@ describe('backup file', () => {
             fileWith({ app: 'Other' }),
             fileWith({ version: 0 }),
             fileWith({ version: '1' }),
-            fileWith({ timers: undefined }),
+            fileWith({ workouts: undefined }),
             fileWith({ history: {} }),
         ]) {
             expect(readBackup(text)).toEqual({ ok: false, problem: 'not-a-backup' });
@@ -131,11 +137,11 @@ describe('backup file', () => {
         });
     });
 
-    it('leaves out broken timers, workouts and deletions, and counts the first two', () => {
-        const timer = makeTimer();
+    it('leaves out broken workouts, history entries and deletions, and counts the first two', () => {
+        const workout = makeWorkout();
         const result = readBackup(
             fileWith({
-                timers: [timer, { id: 'x', title: 'No steps', repeats: 3, steps: [] }],
+                workouts: [workout, { id: 'x', title: 'No steps', repeats: 3, steps: [] }],
                 history: [ENTRY, { id: 'broken' }, 'nonsense'],
                 deleted: [DELETION, { kind: 'other', id: 'x', deletedAt: 1 }],
             })
@@ -143,7 +149,7 @@ describe('backup file', () => {
 
         expect(result).toEqual({
             ok: true,
-            timers: [timer],
+            workouts: [workout],
             history: [ENTRY],
             exercises: [],
             exerciseNotes: [],
@@ -153,20 +159,44 @@ describe('backup file', () => {
         });
     });
 
-    describe('from version 1', () => {
-        const v1 = (contents: Record<string, unknown>) =>
-            fileWith({ version: 1, deleted: undefined, ...contents });
+    it('reads a file from before version 4, when workouts were called timers', () => {
+        const workout = makeWorkout();
+        const result = readBackup(
+            fileWith({
+                version: 3,
+                workouts: undefined,
+                timers: [workout],
+                history: [{ ...withoutWorkoutId(ENTRY), timerId: ENTRY.workoutId }],
+                deleted: [{ kind: 'timer', id: 'gone', deletedAt: 1 }],
+            })
+        );
 
-        it('gives its timers new random ids, and points its workouts to them', () => {
-            const { id: _id, updatedAt: _at, ...timer } = makeTimer({ title: 'Legs' });
+        expect(result).toEqual(
+            expect.objectContaining({
+                ok: true,
+                workouts: [workout],
+                history: [ENTRY],
+                deleted: [{ kind: 'workout', id: 'gone', deletedAt: 1 }],
+                skipped: 0,
+            })
+        );
+    });
+
+    describe('from version 1', () => {
+        // Workouts were called timers then
+        const v1 = (contents: Record<string, unknown>) =>
+            fileWith({ version: 1, workouts: undefined, deleted: undefined, ...contents });
+
+        it('gives its workouts new random ids, and points its workouts to them', () => {
+            const { id: _id, updatedAt: _at, ...workout } = makeWorkout({ title: 'Legs' });
             const { updatedAt: _u, ...entry } = ENTRY;
 
             const result = readBackup(
                 v1({
-                    timers: [{ ...timer, id: 7 }],
+                    timers: [{ ...workout, id: 7 }],
                     history: [
-                        { ...entry, timerId: 7 },
-                        { ...entry, id: 'other', timerId: 3 },
+                        { ...withoutWorkoutId(entry), timerId: 7 },
+                        { ...withoutWorkoutId(entry), id: 'other', timerId: 3 },
                     ],
                 }),
                 4000
@@ -177,18 +207,18 @@ describe('backup file', () => {
                 return;
             }
             expect(result.fromVersion1).toBe(true);
-            const [legs] = result.timers;
-            expect(legs).toEqual({ ...timer, id: expect.any(String), updatedAt: 4000 });
+            const [legs] = result.workouts;
+            expect(legs).toEqual({ ...workout, id: expect.any(String), updatedAt: 4000 });
             expect(legs.id).not.toBe('7');
-            // Dated by when they ended; a timer not in the file keeps its old number, as text
-            expect(result.history.map((e) => [e.timerId, e.updatedAt])).toEqual([
+            // Dated by when they ended; a workout not in the file keeps its old number, as text
+            expect(result.history.map((e) => [e.workoutId, e.updatedAt])).toEqual([
                 [legs.id, ENTRY.endedAt],
                 ['3', ENTRY.endedAt],
             ]);
             expect(result.deleted).toEqual([]);
         });
 
-        it('converts timers saved before steps, as the app does', () => {
+        it('converts workouts saved before steps, as the app does', () => {
             const old = {
                 id: 1,
                 title: 'Old',
@@ -201,9 +231,9 @@ describe('backup file', () => {
 
             const result = readBackup(v1({ timers: [old] }), 4000);
 
-            expect(result.ok && result.timers).toEqual([
+            expect(result.ok && result.workouts).toEqual([
                 {
-                    ...makeTimer({ title: 'Old', repeats: 2, timerSeconds: 30, restSeconds: 10 }),
+                    ...makeWorkout({ title: 'Old', repeats: 2, workSeconds: 30, restSeconds: 10 }),
                     id: expect.any(String),
                     updatedAt: 4000,
                 },

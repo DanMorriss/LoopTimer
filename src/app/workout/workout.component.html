@@ -1,0 +1,241 @@
+<div class="workout-page flex flex-col items-center justify-center">
+    @if (workout()) {
+        <!-- On a phone the header shows the title instead, leaving more room for the ring -->
+        <p class="workout-title text-center text-4xl text-(--text-strong)">
+            {{ workout()?.title }}
+        </p>
+        <!-- Fixed-height slot, so the ring doesn't jump when this line changes -->
+        <!-- Read out by screen readers when the phase changes; the countdown itself stays quiet -->
+        <div class="sr-only" aria-live="polite" aria-atomic="true">{{ announcement() }}</div>
+        <div class="workout-status text-(--text-strong)">
+            @if (isComplete() === false) {
+                @if (untilStopped()) {
+                    <p class="text-2xl">
+                        round {{ roundNumber() }} of
+                        <span class="symbol-infinity" aria-hidden="true">∞</span>
+                        <span class="sr-only">until stopped</span>
+                    </p>
+                } @else if (totalRounds() > 1) {
+                    @if (repeats() === 1) {
+                        <p class="workout-status__last text-2xl">Last one!</p>
+                    } @else {
+                        <p class="text-2xl">round {{ roundNumber() }} of {{ totalRounds() }}</p>
+                    }
+                    <!-- The same count as the line above, as a picture: rounds done, this one, and those to go -->
+                    @if (roundDots().length) {
+                        <div class="round-dots" aria-hidden="true">
+                            @for (dot of roundDots(); track $index) {
+                                <span class="round-dot" [class]="'round-dot--' + dot"></span>
+                            }
+                        </div>
+                    }
+                }
+            }
+        </div>
+
+        <div
+            class="workout-ring"
+            [class.workout-ring--work]="isWorkActive()"
+            [class.workout-ring--rest]="isRestActive()"
+            [class.workout-ring--reps]="isRepsActive()"
+            [class.workout-ring--paused]="isPaused()"
+            role="progressbar"
+            aria-label="Progress through this phase"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            [attr.aria-valuenow]="progressPercent()"
+            [attr.aria-valuetext]="isRepsActive() ? 'Waiting for Done' : null"
+        >
+            @for (sweep of ringSweeps(); track sweep.key) {
+                <!-- Two rotating half-circles; transforms animate without repainting -->
+                <div
+                    class="workout-ring__sweep"
+                    [style.--half-duration]="sweep.halfDuration"
+                    [style.--first-half-delay]="sweep.firstHalfDelay"
+                    [style.--second-half-delay]="sweep.secondHalfDelay"
+                    aria-hidden="true"
+                >
+                    <div class="workout-ring__half workout-ring__half--right">
+                        <div class="workout-ring__fill"></div>
+                    </div>
+                    <div class="workout-ring__half workout-ring__half--left">
+                        <div class="workout-ring__fill"></div>
+                    </div>
+                </div>
+            }
+            <div class="workout-inner">
+                <div
+                    class="workout-face flex items-center justify-center rounded-full text-center text-4xl text-black"
+                    [class]="{
+                        'flash-fade': isWorkActive(),
+                        'flash-fade-blue': isRestActive(),
+                        'bg-sky-50/50': isComplete(),
+                        'workout-face--reps': isRepsActive(),
+                        'workout-face--paused': isPaused(),
+                    }"
+                >
+                    @if (isComplete() === false) {
+                        <div>
+                            <!-- Unnamed work shows just the time; the empty line keeps it centred -->
+                            <p
+                                class="workout-face__label"
+                                [class.text-transparent]="!stepLabel()"
+                                [attr.aria-hidden]="!stepLabel() || null"
+                            >
+                                {{ stepLabel() || 'Timed' }}
+                            </p>
+                            @if (isRepsActive()) {
+                                <p>
+                                    {{ reps() }}
+                                    <span class="workout-face__reps">reps</span>
+                                </p>
+                                @if (weight()) {
+                                    <p class="workout-face__weight">{{ weight() }}</p>
+                                }
+                            } @else {
+                                <p>{{ isWorkActive() ? workTime() : restTime() }}</p>
+                            }
+                            @if (showStepCount()) {
+                                <p class="workout-face__step">
+                                    step {{ stepNumber() }} of {{ stepCount() }}
+                                </p>
+                            }
+
+                            @if (isPaused()) {
+                                <p class="workout-face__paused">Paused</p>
+                            }
+                        </div>
+                    }
+
+                    @if (isComplete() === true) {
+                        <div>
+                            <p>You're finished!</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Your note on this exercise, e.g. a cue or a machine setting -->
+        @if (exerciseNote() && isComplete() === false) {
+            <p class="workout-note">
+                <mat-icon class="workout-note__icon" aria-hidden="true">sticky_note_2</mat-icon>
+                <span><span class="sr-only">Your note: </span>{{ exerciseNote() }}</span>
+            </p>
+        }
+
+        @if (upNext()) {
+            <p class="workout-next">Next: {{ upNext() }}</p>
+        }
+
+        @if (isComplete() === false) {
+            <!-- Media-player controls: a big Pause/Resume in the middle, a smaller Stop to one
+                 side so it's hard to hit by mistake. On a rep step there's nothing to pause,
+                 so the big button is Done (one button throughout, so focus stays on it).
+                 The captions repeat the buttons' names for sighted users, so screen readers
+                 skip them. -->
+            @let mainLabel = isRepsActive() ? 'Done' : isPaused() ? 'Resume' : 'Pause';
+            @let mainIcon = isRepsActive() ? 'check' : isPaused() ? 'play_arrow' : 'pause';
+            <div class="workout-controls">
+                <div class="workout-control workout-control--main">
+                    <button
+                        type="button"
+                        class="btn-main btn-main--round"
+                        [attr.aria-label]="mainLabel"
+                        aria-keyshortcuts="Space"
+                        (click)="isRepsActive() ? finishReps() : togglePause()"
+                    >
+                        <mat-icon aria-hidden="true">{{ mainIcon }}</mat-icon>
+                    </button>
+                    <span class="workout-control__caption" aria-hidden="true">{{ mainLabel }}</span>
+                    <!-- Shown where there's likely a keyboard; screen readers get aria-keyshortcuts -->
+                    <kbd class="workout-control__key" aria-hidden="true">Space</kbd>
+                </div>
+                <div class="workout-control workout-control--side">
+                    <button
+                        type="button"
+                        class="btn-icon workout-control__stop"
+                        aria-label="Stop"
+                        (click)="stop()"
+                    >
+                        <mat-icon aria-hidden="true">stop</mat-icon>
+                    </button>
+                    <span class="workout-control__caption" aria-hidden="true">Stop</span>
+                </div>
+            </div>
+
+            <!-- Going up a weight, or doing fewer reps: for this set, the rest of the
+                 workout, and next time. Under the controls, so opening it never moves Done -->
+            @if (isRepsActive()) {
+                <button
+                    type="button"
+                    class="btn-pill workout-change"
+                    aria-controls="workout-change-panel"
+                    [attr.aria-expanded]="changingReps()"
+                    (click)="toggleChangingReps()"
+                >
+                    <mat-icon aria-hidden="true">tune</mat-icon>
+                    Change reps or weight
+                </button>
+                @if (changingReps()) {
+                    <div id="workout-change-panel" class="picker-row workout-change__panel">
+                        <div class="picker-field">
+                            <span class="picker-field__label" id="workout-change-reps">Reps</span>
+                            <app-wheel-picker
+                                [value]="reps()"
+                                (valueChange)="setReps($event)"
+                                [options]="repOptions"
+                                labelledBy="workout-change-reps"
+                            />
+                        </div>
+                        <div class="picker-field">
+                            <span class="picker-field__label" id="workout-change-weight">
+                                Weight ({{ weightUnit() }})
+                            </span>
+                            <app-wheel-picker
+                                [value]="weightValue()"
+                                (valueChange)="setWeight($event)"
+                                [options]="weightOptions()"
+                                labelledBy="workout-change-weight"
+                            />
+                        </div>
+                    </div>
+                }
+            }
+
+            <!-- After a refresh the browser blocks sound until the page is tapped again -->
+            @if (soundLocked()) {
+                <button type="button" class="btn-pill sound-prompt" (click)="alarms.unlock()">
+                    Tap to turn on sound
+                </button>
+            }
+        } @else {
+            <!-- Done: straight on to a note about how it went, or just a look at the history -->
+            <div class="workout-finish mt-6 flex flex-col items-center gap-4">
+                <button
+                    type="button"
+                    class="btn-main workout-finish__note"
+                    (click)="openHistory(true)"
+                >
+                    <mat-icon aria-hidden="true">edit_note</mat-icon>
+                    Add a note
+                </button>
+                <div class="flex gap-3">
+                    <button type="button" class="btn-pill" (click)="openHistory(false)">
+                        View history
+                    </button>
+                    <a routerLink="/library" class="btn-pill">Library</a>
+                </div>
+            </div>
+        }
+    } @else {
+        <div
+            class="no-workout flex flex-col items-center gap-6 p-8 text-center text-(--text-strong)"
+        >
+            <p class="text-2xl">No workout selected.</p>
+            <a routerLink="/library" class="btn-pill no-workout__link"
+                >Choose one from the library</a
+            >
+        </div>
+    }
+</div>

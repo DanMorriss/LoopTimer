@@ -2,8 +2,8 @@ import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 
-import { TimerStore } from '../shared/state/timer-store.service';
-import { makeTimer } from '../shared/testing/make-timer';
+import { WorkoutStore } from '../shared/state/workout-store.service';
+import { makeWorkout } from '../shared/testing/make-workout';
 import { NavComponent } from './nav.component';
 
 @Component({ template: '' })
@@ -75,52 +75,52 @@ describe('NavComponent', () => {
         ]);
     });
 
-    describe("the timer's title", () => {
+    describe("the workout's title", () => {
         const title = () => element.querySelector('h1') as HTMLElement;
-        const timerTitle = () => title().querySelector('.site-title__timer');
+        const workoutTitle = () => title().querySelector('.site-title__workout');
 
-        function runTimer(name: string) {
-            const store = TestBed.inject(TimerStore);
-            store.setActiveTimer(store.addTimer(makeTimer({ title: name })));
+        function runWorkout(name: string) {
+            const store = TestBed.inject(WorkoutStore);
+            store.setActiveWorkout(store.addWorkout(makeWorkout({ title: name })));
         }
 
-        it('is in the heading on the timer page, for phones to show in place of LoopTimer', async () => {
-            runTimer('  Sprints ');
-            await TestBed.inject(Router).navigateByUrl('/timer');
+        it('is in the heading on the workout page, for phones to show in place of LoopTimer', async () => {
+            runWorkout('  Sprints ');
+            await TestBed.inject(Router).navigateByUrl('/workout');
             fixture.detectChanges();
 
-            expect(title().classList).toContain('site-title--timer');
-            expect(timerTitle()?.textContent).toBe('Sprints');
+            expect(title().classList).toContain('site-title--workout');
+            expect(workoutTitle()?.textContent).toBe('Sprints');
         });
 
         it('is left out on other pages', async () => {
-            runTimer('Sprints');
+            runWorkout('Sprints');
             await TestBed.inject(Router).navigateByUrl('/library');
             fixture.detectChanges();
 
-            expect(title().classList).not.toContain('site-title--timer');
-            expect(timerTitle()).toBeNull();
+            expect(title().classList).not.toContain('site-title--workout');
+            expect(workoutTitle()).toBeNull();
             expect(title().textContent!.trim()).toBe('LoopTimer');
         });
 
-        it('is left out for an untitled timer, which keeps LoopTimer', async () => {
-            runTimer('');
-            await TestBed.inject(Router).navigateByUrl('/timer');
+        it('is left out for an untitled workout, which keeps LoopTimer', async () => {
+            runWorkout('');
+            await TestBed.inject(Router).navigateByUrl('/workout');
             fixture.detectChanges();
 
-            expect(timerTitle()).toBeNull();
+            expect(workoutTitle()).toBeNull();
         });
     });
 
-    it('links back to the timer first while a workout is going', async () => {
+    it('links back to the workout first while a workout is going', async () => {
         await openMenu();
         expect(links()[0].getAttribute('href')).toBe('/home');
 
-        const store = TestBed.inject(TimerStore);
-        store.setActiveTimer(store.addTimer(makeTimer()));
+        const store = TestBed.inject(WorkoutStore);
+        store.setActiveWorkout(store.addWorkout(makeWorkout()));
         fixture.detectChanges();
 
-        expect(links()[0].getAttribute('href')).toBe('/timer');
+        expect(links()[0].getAttribute('href')).toBe('/workout');
         expect(links()).toHaveLength(6);
     });
 

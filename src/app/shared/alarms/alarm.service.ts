@@ -1,5 +1,5 @@
 import { DestroyRef, inject, InjectionToken, Service, signal } from '@angular/core';
-import { AlarmEvent, AlarmKind } from '../../timer/alarm-schedule';
+import { AlarmEvent, AlarmKind } from '../../workout/alarm-schedule';
 import { SettingsStore } from '../state/settings-store.service';
 
 /** Makes the audio context, or returns null where the browser has no Web Audio. */
@@ -80,7 +80,7 @@ export class AlarmService {
 
     constructor() {
         // Any interaction anywhere in the app unlocks sound, e.g. pressing Start in the
-        // library, so it's ready before the timer page opens
+        // library, so it's ready before the workout page opens
         const unlock = () => this.unlock();
         for (const type of UNLOCK_EVENTS) {
             document.addEventListener(type, unlock, { capture: true, passive: true });

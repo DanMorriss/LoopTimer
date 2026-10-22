@@ -1,12 +1,12 @@
 import { DOCUMENT, inject, Service } from '@angular/core';
 import { linkSets, linkSteps } from '../../models/exercise-links';
 import { HistoryEntry } from '../../models/history';
-import { Timer } from '../../models/timer';
+import { Workout } from '../../models/workout';
 import { DeletionStore } from '../state/deletion-store.service';
 import { ExerciseStore } from '../state/exercise-store.service';
 import { HistoryStore } from '../state/history-store.service';
 import { SettingsStore } from '../state/settings-store.service';
-import { TimerStore } from '../state/timer-store.service';
+import { WorkoutStore } from '../state/workout-store.service';
 import {
     BackupProblem,
     backupFileName,
@@ -17,14 +17,15 @@ import {
 
 /** What an import changed, counted by kind. */
 export interface ImportCounts {
-    timersAdded: number;
-    timersUpdated: number;
     workoutsAdded: number;
     workoutsUpdated: number;
+    /** History entries: workouts done. */
+    entriesAdded: number;
+    entriesUpdated: number;
     /** Your own exercises. */
     exercisesAdded: number;
     exercisesUpdated: number;
-    /** Timers, workouts and exercises removed because they'd been deleted where the backup came from. */
+    /** Workouts, history entries and exercises removed because they'd been deleted where the backup came from. */
     removed: number;
     /** Items in the file that couldn't be read. */
     skipped: number;
@@ -37,7 +38,7 @@ export type ImportResult =
 /** Saves everything to a file, and merges a saved file back in. */
 @Service()
 export class BackupService {
-    private readonly timers = inject(TimerStore);
+    private readonly workouts = inject(WorkoutStore);
     private readonly history = inject(HistoryStore);
     private readonly exercises = inject(ExerciseStore);
     private readonly deletions = inject(DeletionStore);
@@ -49,7 +50,7 @@ export class BackupService {
         const exportedAt = Date.now();
         const backup = makeBackup(
             {
-                timers: this.timers.timers(),
+                workouts: this.workouts.workouts(),
                 history: this.history.entries(),
                 exercises: this.exercises.own(),
                 exerciseNotes: this.exercises.notes(),
@@ -79,9 +80,9 @@ export class BackupService {
     }
 
     /**
-     * Merges a backup file in: the most recent change to each timer, workout, exercise of your
+     * Merges a backup file in: the most recent change to each workout, history entry, exercise of your
      * own and note wins, and what was deleted where the backup came from is deleted here,
-     * unless it's changed here since. Exercises come first, so the timers and workouts can be
+     * unless it's changed here since. Exercises come first, so the workouts and history entries can be
      * linked to them: steps and sets that aren't linked yet (from a file before version 3, or
      * to an exercise that isn't here) are linked by name, as saved data is. Settings in the
      * file are left out, since they're a choice for each device.
@@ -102,28 +103,28 @@ export class BackupService {
         }
         const exercises = this.exercises.mergeOwn(backup.exercises, backup.deleted);
         this.exercises.mergeNotes(backup.exerciseNotes, backup.deleted);
-        const linkedTimers = backup.timers.map((timer) => this.linked(timer));
+        const linkedWorkouts = backup.workouts.map((workout) => this.linked(workout));
         const linkedHistory = backup.history.map((entry) => this.linkedSets(entry));
-        const timers = backup.fromVersion1
-            ? { added: this.timers.importTimers(linkedTimers), updated: 0, removed: 0 }
-            : this.timers.mergeTimers(linkedTimers, backup.deleted);
-        const workouts = this.history.mergeEntries(linkedHistory, backup.deleted);
+        const workouts = backup.fromVersion1
+            ? { added: this.workouts.importWorkouts(linkedWorkouts), updated: 0, removed: 0 }
+            : this.workouts.mergeWorkouts(linkedWorkouts, backup.deleted);
+        const entries = this.history.mergeEntries(linkedHistory, backup.deleted);
         return {
             ok: true,
-            timersAdded: timers.added,
-            timersUpdated: timers.updated,
             workoutsAdded: workouts.added,
             workoutsUpdated: workouts.updated,
+            entriesAdded: entries.added,
+            entriesUpdated: entries.updated,
             exercisesAdded: exercises.added,
             exercisesUpdated: exercises.updated,
-            removed: timers.removed + workouts.removed + exercises.removed,
+            removed: workouts.removed + entries.removed + exercises.removed,
             skipped: backup.skipped,
         };
     }
 
-    /** A timer with each step linked to an exercise that's here, linking by name if not. */
-    private linked(timer: Timer): Timer {
-        return { ...timer, steps: linkSteps(timer.steps, this.exercises.finder) };
+    /** A workout with each step linked to an exercise that's here, linking by name if not. */
+    private linked(workout: Workout): Workout {
+        return { ...workout, steps: linkSteps(workout.steps, this.exercises.finder) };
     }
 
     private linkedSets(entry: HistoryEntry): HistoryEntry {

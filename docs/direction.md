@@ -6,7 +6,7 @@ Agreed October 2026. This sets the direction; the stories are in [features](feat
 
 **A workout helper that shows you how you're improving.** You run a workout, it logs what you did, and next time it tells you what to beat.
 
-- **Running a workout** is the everyday job: the timer, rep steps, Done, changing the weight mid-set. That stays the heart of the app.
+- **Running a workout** is the everyday job: the countdown, rep steps, Done, changing the weight mid-set. That stays the heart of the app.
 - **Tracking progress** is the payoff: each exercise has a history, personal bests and a trend.
 - **Planning** comes later and stays simple: which workout on which day, and what's due today. No multi-week programmes.
 
@@ -14,7 +14,7 @@ Agreed October 2026. This sets the direction; the stories are in [features](feat
 
 ### Workouts, made of exercises
 
-- **"Timers" become "Workouts"** throughout the app (the library, Create, the history). The app keeps the name **LoopTimer**.
+- **"Workouts" become "Workouts"** throughout the app (the library, Create, the history). The app keeps the name **LoopTimer**.
 - **Exercises are things in their own right.** "Squats" is one exercise, used in any number of workouts, and its sets are logged against it, not against a step name that happens to match. Renaming an exercise renames it everywhere; its history stays together.
 - **A built-in list of common exercises** to pick from, each with a description, how to do it, and a **body map** shaded for the muscles it works. You can also **make your own**, with its own description and muscles. See [exercises](features/exercises.md).
 - A step in a workout is an exercise (timed or reps, with a weight) or a rest. Rest isn't an exercise.

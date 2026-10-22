@@ -19,7 +19,7 @@
 | Alarms       | Vibration           | On      | Buzzes as each phase starts                                   | Disabled, saying "This device can't vibrate", where it can't.                              |
 | Alarms       | Keep screen on      | On      | Stops the phone locking mid-workout                           | Disabled, saying "This browser can't keep the screen on", where it can't.                  |
 | Alarm sounds | Timed, Rest, Finish | —       | Two short high beeps / One long low tone / Three rising notes | A Play button for each.                                                                    |
-| Your data    | Export, Import      | —       | Your timers and history are saved on this device only…        | Export backup and Import backup buttons; see [backup-and-sync](backup-and-sync.md).        |
+| Your data    | Export, Import      | —       | Your workouts and history are saved on this device only…      | Export backup and Import backup buttons; see [backup-and-sync](backup-and-sync.md).        |
 
 - Changes are **saved at once** and apply at once, mid-workout too (e.g. turning sound off silences alarms already booked).
 - **Play** plays that alarm straight away, even with Sound turned off (it was asked for), without touching any booked alarms.
@@ -32,7 +32,7 @@
 - Given System is chosen and the device switches to dark, then the app does too.
 - Given Sound is off, when I press Play on Rest, then the rest alarm plays.
 - Given saved settings are broken, then the defaults are used.
-- Given weights in kg, when I choose Pounds, then a step saved at 61.235 kg shows as 135 lb on the timer and in setup.
+- Given weights in kg, when I choose Pounds, then a step saved at 61.235 kg shows as 135 lb on the workout and in setup.
 - Given a first visit, then the body figure is Male; given I choose Female and reload, then Female is still chosen.
 
 ## Platform notes

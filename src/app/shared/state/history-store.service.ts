@@ -150,8 +150,8 @@ function isHistoryEntry(value: unknown): value is HistoryEntry {
     const entry = value as Record<string, unknown>;
     return (
         typeof entry['id'] === 'string' &&
-        typeof entry['timerId'] === 'string' &&
-        entry['timerId'] !== '' &&
+        typeof entry['workoutId'] === 'string' &&
+        entry['workoutId'] !== '' &&
         typeof entry['title'] === 'string' &&
         isWholeNumber(entry['startedAt'], 1) &&
         isWholeNumber(entry['endedAt'], 1) &&

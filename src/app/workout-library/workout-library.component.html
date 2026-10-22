@@ -1,0 +1,58 @@
+<div class="library-screen p-4 text-(--text-strong)" (click)="clearActiveWorkoutCard()">
+    @let existingWorkouts = isExistingWorkouts();
+    @if (!existingWorkouts) {
+        <div class="flex flex-col items-center justify-center">
+            <p>Nothing in the library yet, best go make a workout.</p>
+            <button
+                type="button"
+                class="btn-main library-create-button mt-12"
+                (click)="navigateToCreateWorkout()"
+            >
+                <mat-icon aria-hidden="true">add</mat-icon>
+                Create a workout
+            </button>
+        </div>
+    }
+    <ul class="library-list">
+        @for (workout of workoutStore.workouts(); track workout.id) {
+            <li
+                appWorkoutCard
+                [workout]="workout"
+                [active]="activeWorkoutCardId() === workout.id"
+                [menuOpen]="openWorkoutMenuId() === workout.id"
+                (selected)="setActiveWorkoutCard(workout.id)"
+                (started)="startWorkout(workout)"
+                (menuToggled)="toggleWorkoutMenu(workout.id)"
+                (menuClosed)="closeWorkoutMenu(workout.id)"
+                (editRequested)="navigateToEditWorkout(workout.id)"
+                (deleteRequested)="requestDelete(workout)"
+            ></li>
+        }
+    </ul>
+
+    <!-- One main button per screen: an empty library has "Create a workout" instead -->
+    @if (existingWorkouts) {
+        <button
+            type="button"
+            class="btn-main library-add-button"
+            (click)="$event.stopPropagation(); navigateToCreateWorkout()"
+        >
+            <mat-icon aria-hidden="true">add</mat-icon>
+            Add workout
+        </button>
+    }
+
+    @if (workoutPendingDelete(); as pendingWorkout) {
+        <app-confirm-dialog
+            title="Delete workout?"
+            (cancelled)="cancelDelete()"
+            (confirmed)="confirmDelete()"
+        >
+            @if (pendingWorkout.title.trim()) {
+                This will remove "{{ pendingWorkout.title }}" from your workout library.
+            } @else {
+                This will remove this workout from your workout library.
+            }
+        </app-confirm-dialog>
+    }
+</div>

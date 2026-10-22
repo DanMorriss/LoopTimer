@@ -3,14 +3,14 @@ import { Exercise, MeasuredBy, OwnExercise } from '../../models/exercise';
 import { ExerciseFinder, findByName, linkSets, linkSteps } from '../../models/exercise-links';
 import { isLoggedSet } from '../../models/history';
 import { Deletion, newId } from '../../models/sync';
-import { Step } from '../../models/timer';
+import { Step } from '../../models/workout';
 
 /** Which shape the saved data is in. Missing means 1, from before this was saved. */
 const VERSION_KEY = 'data-version';
-export const DATA_VERSION = 3;
+export const DATA_VERSION = 4;
 
-/** Each old timer id and the new one it was given, so a run in progress can still find it. */
-export const LEGACY_TIMER_IDS_KEY = 'legacy-timer-ids';
+/** Each old workout id and the new one it was given, so a run in progress can still find it. */
+export const LEGACY_WORKOUT_IDS_KEY = 'legacy-workout-ids';
 
 /**
  * Brings data saved by an older version of the app up to date, once, before anything reads
@@ -22,6 +22,10 @@ export function migrateSavedData(now = Date.now()) {
     if (version >= DATA_VERSION) {
         return;
     }
+    // Only names change in version 4, so it goes first and the other steps use the new ones
+    if (version < 4) {
+        toVersion4();
+    }
     if (version < 2) {
         toVersion2(now);
     }
@@ -32,18 +36,75 @@ export function migrateSavedData(now = Date.now()) {
 }
 
 /**
- * Version 3: exercises (EXR-4). Each named work step in a timer, and each named set in the
+ * Version 4: timers are called workouts (EXR-5). The saved timers move to `workouts`, a
+ * history entry's `timerId` becomes `workoutId`, and a timer's deletion is a workout's.
+ */
+function toVersion4() {
+    for (const [from, to] of [
+        ['timers', 'workouts'],
+        ['legacy-timer-ids', LEGACY_WORKOUT_IDS_KEY],
+    ]) {
+        const saved = localStorage.getItem(from);
+        if (saved !== null) {
+            localStorage.setItem(to, saved);
+            localStorage.removeItem(from);
+        }
+    }
+    const history = readList('history');
+    if (history) {
+        localStorage.setItem('history', JSON.stringify(history.map(renameTimerId)));
+    }
+    const deleted = readList('deleted');
+    if (deleted) {
+        localStorage.setItem('deleted', JSON.stringify(deleted.map(renameTimerDeletion)));
+    }
+}
+
+/** A history entry from before version 4 with `workoutId` in place of `timerId`. */
+export function renameTimerId(value: unknown): unknown {
+    if (typeof value !== 'object' || value === null || !('timerId' in value)) {
+        return value;
+    }
+    const { timerId, ...entry } = value as Record<string, unknown>;
+    return { ...entry, workoutId: timerId };
+}
+
+/** A deletion from before version 4, a timer's becoming a workout's. */
+export function renameTimerDeletion(value: unknown): unknown {
+    return typeof value === 'object' &&
+        value !== null &&
+        (value as Record<string, unknown>)['kind'] === 'timer'
+        ? { ...value, kind: 'workout' }
+        : value;
+}
+
+/**
+ * The run in progress in this tab, saved before version 4 under the timer's names, moved to
+ * the workout's. Kept per tab, so it's done whenever a tab loads, not once with the rest.
+ */
+export function renameActiveRunKeys() {
+    for (const name of ['Id', 'StartedAt', 'PausedAt']) {
+        const saved = sessionStorage.getItem(`activeTimer${name}`);
+        if (saved !== null) {
+            sessionStorage.setItem(`activeWorkout${name}`, saved);
+            sessionStorage.removeItem(`activeTimer${name}`);
+        }
+    }
+}
+
+/**
+ * Version 3: exercises (EXR-4). Each named work step in a workout, and each named set in the
  * history, is linked to the exercise its name means, built-in where one matches and
  * otherwise a new one of your own, one per name.
  */
 function toVersion3(now: number) {
     const own = (readList('exercises') ?? []).filter(isOwnExercise);
     const finder = listFinder(own, now);
-    const timers = readList('timers');
-    if (timers) {
+    const workouts = readList('workouts');
+    if (workouts) {
         localStorage.setItem(
-            'timers',
-            JSON.stringify(timers.map((timer) => withLinkedSteps(timer, finder)))
+            'workouts',
+            JSON.stringify(workouts.map((workout) => withLinkedSteps(workout, finder)))
         );
     }
     const history = readList('history');
@@ -106,17 +167,17 @@ const isNamedStep = (value: unknown): value is Step =>
     typeof (value as Record<string, unknown>)['name'] === 'string' &&
     typeof (value as Record<string, unknown>)['kind'] === 'string';
 
-/** A timer with its steps linked to exercises; a broken step is left for the store to drop. */
+/** A workout with its steps linked to exercises; a broken step is left for the store to drop. */
 export function withLinkedSteps(value: unknown, finder: ExerciseFinder) {
     if (typeof value !== 'object' || value === null) {
         return value;
     }
-    const timer = value as Record<string, unknown>;
-    const steps = timer['steps'];
+    const workout = value as Record<string, unknown>;
+    const steps = workout['steps'];
     if (!Array.isArray(steps) || !steps.every(isNamedStep)) {
         return value;
     }
-    return { ...timer, steps: linkSteps(steps, finder) };
+    return { ...workout, steps: linkSteps(steps, finder) };
 }
 
 /** A history entry with its sets linked to exercises; a broken set is left for the store. */
@@ -137,17 +198,17 @@ export function withLinkedSets(value: unknown, finder: ExerciseFinder) {
 /**
  * Version 2: ready for sync.
  *
- * - timers get random string ids in place of 1, 2, 3…, and an `updatedAt`
+ * - workouts get random string ids in place of 1, 2, 3…, and an `updatedAt`
  * - history entries point to the new ids, and get an `updatedAt` (when they ended)
  * - `history-deleted` becomes deletion markers in `deleted`
  */
 function toVersion2(now: number) {
     const newIds: Record<string, string> = {};
-    const timers = readList('timers');
-    if (timers) {
-        const upgraded = timers.map((timer) => upgradeTimer(timer, newIds, now));
-        localStorage.setItem('timers', JSON.stringify(upgraded));
-        localStorage.setItem(LEGACY_TIMER_IDS_KEY, JSON.stringify(newIds));
+    const workouts = readList('workouts');
+    if (workouts) {
+        const upgraded = workouts.map((workout) => upgradeWorkout(workout, newIds, now));
+        localStorage.setItem('workouts', JSON.stringify(upgraded));
+        localStorage.setItem(LEGACY_WORKOUT_IDS_KEY, JSON.stringify(newIds));
     }
     const history = readList('history');
     if (history) {
@@ -168,30 +229,30 @@ function toVersion2(now: number) {
 }
 
 /**
- * A timer from version 1 (saved, or in a backup) in version 2's shape: a number id gets a new
+ * A workout from version 1 (saved, or in a backup) in version 2's shape: a number id gets a new
  * random one, noted in `newIds` against the old, and it gets an `updatedAt` if it has none.
  * Anything else about it is left for the store to check.
  */
-export function upgradeTimer(value: unknown, newIds: Record<string, string>, now: number) {
+export function upgradeWorkout(value: unknown, newIds: Record<string, string>, now: number) {
     if (typeof value !== 'object' || value === null) {
         return value;
     }
-    const timer = value as Record<string, unknown>;
-    const upgraded = { ...timer };
-    if (typeof timer['id'] === 'number') {
-        const id = newIds[String(timer['id'])] ?? newId();
-        newIds[String(timer['id'])] = id;
+    const workout = value as Record<string, unknown>;
+    const upgraded = { ...workout };
+    if (typeof workout['id'] === 'number') {
+        const id = newIds[String(workout['id'])] ?? newId();
+        newIds[String(workout['id'])] = id;
         upgraded['id'] = id;
     }
-    if (typeof timer['updatedAt'] !== 'number') {
+    if (typeof workout['updatedAt'] !== 'number') {
         upgraded['updatedAt'] = now;
     }
     return upgraded;
 }
 
 /**
- * A history entry from version 1 in version 2's shape: its timer's id becomes the timer's new
- * one (or, for a timer since deleted, the old number as text), and it's dated by when it
+ * A history entry from version 1 in version 2's shape: its workout's id becomes the workout's new
+ * one (or, for a workout since deleted, the old number as text), and it's dated by when it
  * ended. Its own id stays, so the same run still matches across copies.
  */
 export function upgradeHistoryEntry(value: unknown, newIds: Readonly<Record<string, string>>) {
@@ -200,8 +261,8 @@ export function upgradeHistoryEntry(value: unknown, newIds: Readonly<Record<stri
     }
     const entry = value as Record<string, unknown>;
     const upgraded = { ...entry };
-    if (typeof entry['timerId'] === 'number') {
-        upgraded['timerId'] = newIds[String(entry['timerId'])] ?? String(entry['timerId']);
+    if (typeof entry['workoutId'] === 'number') {
+        upgraded['workoutId'] = newIds[String(entry['workoutId'])] ?? String(entry['workoutId']);
     }
     if (typeof entry['updatedAt'] !== 'number' && typeof entry['endedAt'] === 'number') {
         upgraded['updatedAt'] = entry['endedAt'];

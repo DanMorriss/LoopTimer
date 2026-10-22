@@ -14,15 +14,15 @@
 ### Menu
 
 - The header has the **LoopTimer** title and a **menu button** (top left) listing: Home, Create, Library, History, Settings.
-- While a workout is going, **Timer** is listed first, to get back to it.
+- While a workout is going, **Workout** is listed first, to get back to it.
 - The page you're on is marked. The menu closes on following a link (including to the page you're on), Escape, a tap outside it, or tabbing out of it.
-- On the timer page on a phone, the timer's title takes the place of "LoopTimer" in the header. An untitled timer keeps "LoopTimer".
+- On the workout page on a phone, the workout's title takes the place of "LoopTimer" in the header. An untitled workout keeps "LoopTimer".
 
 ## Acceptance criteria
 
 - Given the home page, then Create goes to setup and Library to the library.
 - Given no workout going, then the menu lists Home, Create, Library, History, Settings.
-- Given a workout going, then Timer is listed first.
+- Given a workout going, then Workout is listed first.
 - Given the menu is open, when I press Escape, then it closes and focus goes back to the menu button.
 
 ## Platform notes

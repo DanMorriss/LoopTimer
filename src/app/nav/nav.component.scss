@@ -6,23 +6,23 @@
     margin: 0 0 12px;
 }
 
-// The sides only ever hold the 44px menu button, so a long timer title gets the middle
+// The sides only ever hold the 44px menu button, so a long workout title gets the middle
 .nav {
     grid-template-columns: 44px minmax(0, 1fr) 44px;
 }
 
-.site-title__timer {
+.site-title__workout {
     display: none;
 }
 
-// Matches the timer page, which hides its own title at this width
+// Matches the workout page, which hides its own title at this width
 @media (max-width: 639px) {
-    .site-title--timer {
+    .site-title--workout {
         .site-title__app {
             display: none;
         }
 
-        .site-title__timer {
+        .site-title__workout {
             display: block;
             overflow: hidden;
             text-overflow: ellipsis;

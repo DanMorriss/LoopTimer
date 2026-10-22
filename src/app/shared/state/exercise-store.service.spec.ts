@@ -15,7 +15,7 @@ const saved = (key: string) => JSON.parse(localStorage.getItem(key) ?? 'null');
 describe('ExerciseStore', () => {
     beforeEach(() => {
         localStorage.clear();
-        localStorage.setItem('data-version', '3');
+        localStorage.setItem('data-version', '4');
         vi.spyOn(Date, 'now').mockReturnValue(NOW);
     });
     afterEach(() => localStorage.clear());

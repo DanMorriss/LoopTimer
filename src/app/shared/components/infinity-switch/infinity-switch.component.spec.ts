@@ -111,7 +111,7 @@ describe('InfinitySwitchComponent', () => {
             expect(racing()).toBe(true);
         });
 
-        it('starts racing if the switch starts on, e.g. editing a timer that runs until stopped', () => {
+        it('starts racing if the switch starts on, e.g. editing a workout that runs until stopped', () => {
             fixture.destroy();
             fixture = TestBed.createComponent(HostComponent);
             fixture.componentInstance.on.set(true);

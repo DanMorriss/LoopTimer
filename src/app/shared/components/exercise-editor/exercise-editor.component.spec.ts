@@ -2,9 +2,9 @@ import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BUILT_IN_EXERCISES } from '../../../models/built-in-exercises';
 import { Exercise } from '../../../models/exercise';
-import { reps } from '../../testing/make-timer';
+import { reps } from '../../testing/make-workout';
 import { ExerciseStore } from '../../state/exercise-store.service';
-import { TimerStore } from '../../state/timer-store.service';
+import { WorkoutStore } from '../../state/workout-store.service';
 import { ExerciseEditorComponent } from './exercise-editor.component';
 
 @Component({
@@ -30,7 +30,7 @@ describe('ExerciseEditorComponent', () => {
 
     beforeEach(() => {
         localStorage.clear();
-        localStorage.setItem('data-version', '3');
+        localStorage.setItem('data-version', '4');
         exercises = TestBed.inject(ExerciseStore);
     });
     afterEach(() => localStorage.clear());
@@ -114,8 +114,8 @@ describe('ExerciseEditorComponent', () => {
     describe('your own exercise', () => {
         it('saves its new name and details, and renames the steps that are it', async () => {
             const mine = exercises.addOwn('Sled push', 'reps');
-            const timers = TestBed.inject(TimerStore);
-            timers.addTimer({ title: '', steps: [reps(10, 'Sled push')], repeats: 1 });
+            const workouts = TestBed.inject(WorkoutStore);
+            workouts.addWorkout({ title: '', steps: [reps(10, 'Sled push')], repeats: 1 });
             await open(mine);
 
             await fill('#exercise-editor-name', 'Sled drag');
@@ -140,7 +140,7 @@ describe('ExerciseEditorComponent', () => {
                 })
             );
             expect(host.saved).toEqual([saved]);
-            expect(timers.timers()[0].steps[0].name).toBe('Sled drag');
+            expect(workouts.workouts()[0].steps[0].name).toBe('Sled drag');
         });
 
         it('marks the muscles picked, main or supporting but not both, and shades them', async () => {

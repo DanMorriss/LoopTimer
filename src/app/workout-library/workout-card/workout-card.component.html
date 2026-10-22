@@ -1,0 +1,74 @@
+<div class="workout-card__content" [class.workout-card__content--muted]="showPlay()">
+    <p class="workout-card__title" [class.workout-card__title--placeholder]="!title()">
+        {{ title() || 'Untitled workout' }}
+    </p>
+
+    <div class="workout-card__row">
+        <div class="workout-card__spacer" aria-hidden="true"></div>
+
+        <p
+            class="workout-card__summary"
+            [attr.aria-label]="summary().spoken + ', ' + spokenRounds()"
+        >
+            {{ summary().text }} x {{ rounds() }}
+        </p>
+
+        <div class="workout-card__spacer" aria-hidden="true"></div>
+    </div>
+</div>
+
+<!-- Always in the tab order so keyboard users can start a workout; shown when the card is selected or the button has focus -->
+<button
+    type="button"
+    class="workout-card__overlay-play"
+    [class.workout-card__overlay-play--visible]="showPlay()"
+    [attr.aria-label]="'Start ' + name()"
+    (focus)="selected.emit()"
+    (click)="$event.stopPropagation(); started.emit()"
+>
+    <mat-icon class="workout-card__overlay-icon" aria-hidden="true">play_circle</mat-icon>
+</button>
+
+<div
+    class="workout-card__menu-wrap"
+    (click)="$event.stopPropagation()"
+    (keydown.escape)="menuClosed.emit()"
+>
+    <button
+        type="button"
+        class="btn-icon workout-card__action workout-card__action--menu"
+        [attr.data-menu-for]="workout().id"
+        [attr.aria-label]="'Open options for ' + name()"
+        [attr.aria-expanded]="menuOpen()"
+        [attr.aria-controls]="'workout-options-' + workout().id"
+        (click)="menuToggled.emit()"
+    >
+        <mat-icon class="workout-card__action-icon" aria-hidden="true">more_vert</mat-icon>
+    </button>
+
+    @if (menuOpen()) {
+        <div
+            class="menu workout-card__menu"
+            [id]="'workout-options-' + workout().id"
+            role="group"
+            [attr.aria-label]="'Options for ' + name()"
+        >
+            <button
+                type="button"
+                class="menu__item workout-card__menu-item--edit"
+                (click)="editRequested.emit()"
+            >
+                <mat-icon aria-hidden="true">edit</mat-icon>
+                Edit
+            </button>
+            <button
+                type="button"
+                class="menu__item menu__item--danger workout-card__menu-item--danger"
+                (click)="deleteRequested.emit()"
+            >
+                <mat-icon aria-hidden="true">delete</mat-icon>
+                Delete
+            </button>
+        </div>
+    }
+</div>

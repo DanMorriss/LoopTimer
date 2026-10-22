@@ -140,7 +140,7 @@ export type OwnExerciseDetails = Pick<
     'name' | 'measuredBy' | 'equipment' | 'mainMuscles' | 'supportingMuscles' | 'description'
 >;
 
-/** The longest an exercise's name can be: the same as a step's, as it's shown on the timer. */
+/** The longest an exercise's name can be: the same as a step's, as it's shown on the workout. */
 export const MAX_EXERCISE_NAME_LENGTH = 40;
 
 /** A couple of sentences, like a built-in one's. */

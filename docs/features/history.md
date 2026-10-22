@@ -12,9 +12,9 @@
 
 ### What's logged
 
-- Every **finished** workout, and every **stopped** one where at least one step was done (see [pause-and-stop](pause-and-stop.md)). That includes one ended by starting another timer, or by closing the app.
+- Every **finished** workout, and every **stopped** one where at least one step was done (see [pause-and-stop](pause-and-stop.md)). That includes one ended by starting another workout, or by closing the app.
 - Each entry keeps:
-    - the timer's title **as it ran** (renaming or deleting the timer later doesn't change it)
+    - the workout's title **as it ran** (renaming or deleting the workout later doesn't change it)
     - when it started, and when it ended
     - the **time spent**, in whole seconds: pauses don't count, time on rep steps does. A finished workout counts its full length plus rep time.
     - the full **rounds done**, and the rounds it was set to (or "until stopped")
@@ -28,9 +28,9 @@
 
 - Newest first, grouped by the day they started: "**Today**", "**Yesterday**", then the date, e.g. "Saturday 17 October".
 - At the top: "**Last 7 days:** 4 workouts · 1:15:30": the count and total time spent of workouts started in the last 7 × 24 hours.
-- Each entry shows its title (or "Untitled timer") and a line: start time · time spent · rounds, e.g. "9:05 AM · 12:30 · 3 rounds".
+- Each entry shows its title (or "Untitled workout") and a line: start time · time spent · rounds, e.g. "9:05 AM · 12:30 · 3 rounds".
     - Time spent is m:ss, or h:mm:ss over an hour.
-    - Rounds: "3 rounds" when finished, "2 of 5 rounds · stopped" when stopped, "12 rounds · until stopped" for a timer that runs until stopped.
+    - Rounds: "3 rounds" when finished, "2 of 5 rounds · stopped" when stopped, "12 rounds · until stopped" for a workout that runs until stopped.
 - **Sets**, one line per rep step, under the entry, in the unit chosen in settings, e.g.:
     - "Squats: 3 × 10 @ 60 kg": the same every set
     - "Squats: 10, 10, 8 @ 60 kg": the reps changed

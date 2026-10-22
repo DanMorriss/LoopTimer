@@ -1,7 +1,7 @@
 import { BUILT_IN_EXERCISES } from './built-in-exercises';
 import { Exercise, exerciseKey, MeasuredBy, OwnExercise } from './exercise';
 import { ExerciseFinder, findByName, linkSets, linkSteps, searchExercises } from './exercise-links';
-import { Step } from './timer';
+import { Step } from './workout';
 
 function own(id: string, name: string, otherNames: string[] = []): OwnExercise {
     return {

@@ -10,13 +10,13 @@ import {
     untracked,
 } from '@angular/core';
 import { HistoryEntry, historyId } from '../../models/history';
-import { RepStep, Timer, workoutSeconds } from '../../models/timer';
-import { alarmEvents } from '../../timer/alarm-schedule';
-import { timerStateAt } from '../../timer/timer-state';
+import { RepStep, Workout, workoutSeconds } from '../../models/workout';
+import { alarmEvents } from '../../workout/alarm-schedule';
+import { workoutStateAt } from '../../workout/workout-state';
 import { AlarmService } from '../alarms/alarm.service';
 import { HistoryStore } from '../state/history-store.service';
 import { SettingsStore } from '../state/settings-store.service';
-import { TimerStore } from '../state/timer-store.service';
+import { WorkoutStore } from '../state/workout-store.service';
 import { KeepAwakeService } from './keep-awake.service';
 
 // How many rounds of alarms to book at a time
@@ -27,65 +27,65 @@ const VIBRATE_LATE_LIMIT_MS = 1000;
 
 /**
  * The workout in progress, wherever in the app the user is. It keeps the clock, books the
- * alarms, vibrates, keeps the screen on, and logs the run to the history; the timer page
+ * alarms, vibrates, keeps the screen on, and logs the run to the history; the workout page
  * shows it and sends it the user's presses. Started at app start, so a refreshed page
  * picks the run up again on any page.
  *
- * A run ends when it's stopped, when another timer is started in its place, or when the
+ * A run ends when it's stopped, when another workout is started in its place, or when the
  * tab closes, and is logged then (and when it finishes).
  */
 @Service()
 export class ActiveRunService {
-    private readonly store = inject(TimerStore);
+    private readonly store = inject(WorkoutStore);
     private readonly history = inject(HistoryStore);
     private readonly alarms = inject(AlarmService);
     private readonly settings = inject(SettingsStore);
     private readonly keepAwake = inject(KeepAwakeService);
 
-    readonly timer = this.store.activeTimer;
+    readonly workout = this.store.activeWorkout;
     readonly isPaused = this.store.isPaused;
 
     // Everything below is worked out from the clock rather than counted tick by tick,
-    // so the timer stays correct even when ticks arrive late or not at all
+    // so the workout stays correct even when ticks arrive late or not at all
     private readonly now = signal(Date.now());
 
-    /** How long the timer has run, in ms, or null if there's no timer. */
+    /** How long the workout has run, in ms, or null if there's no workout. */
     readonly elapsedMs = computed(() => {
-        const startedAt = this.store.activeTimerStartedAt();
+        const startedAt = this.store.activeWorkoutStartedAt();
         // While paused, time stands still at the moment of the pause
-        const at = this.store.activeTimerPausedAt() ?? this.now();
-        return this.timer() && startedAt !== null ? at - startedAt : null;
+        const at = this.store.activeWorkoutPausedAt() ?? this.now();
+        return this.workout() && startedAt !== null ? at - startedAt : null;
     });
 
     readonly state = computed(() => {
-        const timer = this.timer();
+        const workout = this.workout();
         const elapsedMs = this.elapsedMs();
-        return timer && elapsedMs !== null
-            ? timerStateAt(timer, elapsedMs, this.store.activeRepStepsDone())
+        return workout && elapsedMs !== null
+            ? workoutStateAt(workout, elapsedMs, this.store.activeRepStepsDone())
             : null;
     });
 
     /** What comes after the current step: the state at the moment it ends. */
     readonly nextState = computed(() => {
-        const timer = this.timer();
+        const workout = this.workout();
         const state = this.state();
         const elapsedMs = this.elapsedMs();
-        if (!timer || !state || elapsedMs === null || state.phase === 'complete') {
+        if (!workout || !state || elapsedMs === null || state.phase === 'complete') {
             return null;
         }
         const stepEndMs = elapsedMs - state.phaseElapsedMs + state.phaseSeconds * 1000;
         // A rep step ends with Done, which adds one to the rep steps done
         const repStepsDone = this.store.activeRepStepsDone() + (state.phase === 'reps' ? 1 : 0);
-        return timerStateAt(timer, stepEndMs, repStepsDone);
+        return workoutStateAt(workout, stepEndMs, repStepsDone);
     });
 
     readonly isComplete = computed(() => this.state()?.phase === 'complete');
     /** A run is going, and not paused: the clock ticks, alarms sound, the screen stays on. */
-    readonly isRunning = computed(() => !!this.timer() && !this.isPaused() && !this.isComplete());
+    readonly isRunning = computed(() => !!this.workout() && !this.isPaused() && !this.isComplete());
 
     // Alarms are booked ALARM_WINDOW rounds at a time, starting from a multiple of half that,
-    // so a timer that runs until stopped is topped up halfway through each batch.
-    // Finite timers (30 rounds at most) fit in the first batch.
+    // so a workout that runs until stopped is topped up halfway through each batch.
+    // Finite workouts (30 rounds at most) fit in the first batch.
     private readonly alarmBatch = computed(() =>
         Math.floor((this.state()?.round ?? 0) / (ALARM_WINDOW / 2))
     );
@@ -97,15 +97,15 @@ export class ActiveRunService {
      */
     private readonly resumedAt = signal(0);
 
-    // Changes when the timer starts, pauses, resumes or needs its next batch, not every tick
+    // Changes when the workout starts, pauses, resumes or needs its next batch, not every tick
     private readonly alarmEvents = computed(() => {
-        const timer = this.timer();
-        const startedAt = this.store.activeTimerStartedAt();
+        const workout = this.workout();
+        const startedAt = this.store.activeWorkoutStartedAt();
         const fromRound = (this.alarmBatch() * ALARM_WINDOW) / 2;
         const resumedAt = this.resumedAt();
-        return timer && startedAt !== null && !this.isPaused()
+        return workout && startedAt !== null && !this.isPaused()
             ? alarmEvents(
-                  timer,
+                  workout,
                   startedAt,
                   fromRound,
                   ALARM_WINDOW,
@@ -136,7 +136,7 @@ export class ActiveRunService {
         });
 
         // Hand the whole workout's alarms to the audio clock up front, and again whenever
-        // the timer pauses, resumes, or sound is unlocked or turned on or off
+        // the workout pauses, resumes, or sound is unlocked or turned on or off
         effect(() => {
             const events = this.alarmEvents();
             // Reading sound() here reschedules (or silences) when it's changed in settings
@@ -182,15 +182,15 @@ export class ActiveRunService {
     }
 
     /**
-     * Starts `timer` from the beginning. A run already going is logged as stopped first,
+     * Starts `workout` from the beginning. A run already going is logged as stopped first,
      * as starting another one ends it.
      */
-    start(timer: Timer) {
+    start(workout: Workout) {
         if (!this.isComplete()) {
             this.sync();
             this.recordRun('stopped');
         }
-        this.store.setActiveTimer(timer);
+        this.store.setActiveWorkout(workout);
         this.resumedAt.set(0);
         this.sync();
     }
@@ -229,7 +229,7 @@ export class ActiveRunService {
 
     /**
      * Changes the reps or weight of the rep step being waited on, e.g. going up a weight:
-     * for this set, the rest of this run, and the saved timer, so next time starts there.
+     * for this set, the rest of this run, and the saved workout, so next time starts there.
      * A weight of undefined is none.
      */
     changeReps(change: { reps: number } | { weight: number | undefined }) {
@@ -263,9 +263,9 @@ export class ActiveRunService {
 
     /** The run's id in the history, or null with no run. */
     runId(): string | null {
-        const timer = this.timer();
+        const workout = this.workout();
         const runStartedAt = this.store.activeRunStartedAt();
-        return timer && runStartedAt !== null ? historyId(runStartedAt, timer.id) : null;
+        return workout && runStartedAt !== null ? historyId(runStartedAt, workout.id) : null;
     }
 
     sync() {
@@ -274,15 +274,15 @@ export class ActiveRunService {
 
     /**
      * Adds this run to the history. A stopped run is only logged once at least one step
-     * has been done, so starting a timer by mistake and stopping it leaves no trace.
+     * has been done, so starting a workout by mistake and stopping it leaves no trace.
      */
     private recordRun(outcome: HistoryEntry['outcome']) {
-        const timer = this.timer();
+        const workout = this.workout();
         const state = this.state();
         const id = this.runId();
-        const startedAt = this.store.activeTimerStartedAt();
+        const startedAt = this.store.activeWorkoutStartedAt();
         const elapsedMs = this.elapsedMs();
-        if (!timer || !state || !id || startedAt === null || elapsedMs === null) {
+        if (!workout || !state || !id || startedAt === null || elapsedMs === null) {
             return;
         }
         const finished = outcome === 'finished';
@@ -292,18 +292,18 @@ export class ActiveRunService {
         // A finish is dated when the workout actually ended, even if the page only notices
         // later (e.g. it was in the background); startedAt has moved on by any pauses and by
         // the time spent on rep steps, which the clock leaves out
-        const countdownMs = finished ? workoutSeconds(timer) * 1000 : elapsedMs;
+        const countdownMs = finished ? workoutSeconds(workout) * 1000 : elapsedMs;
         const activeSeconds = Math.floor((countdownMs + this.store.activeRepMs()) / 1000);
         const sets = this.store.activeSets();
         this.history.record({
             id,
-            timerId: timer.id,
-            title: timer.title,
+            workoutId: workout.id,
+            title: workout.title,
             startedAt: this.store.activeRunStartedAt()!,
             endedAt: finished ? startedAt + countdownMs : Date.now(),
             activeSeconds,
-            roundsCompleted: finished ? timer.repeats : state.round,
-            totalRounds: timer.repeats,
+            roundsCompleted: finished ? workout.repeats : state.round,
+            totalRounds: workout.repeats,
             outcome,
             ...(sets.length > 0 ? { sets } : {}),
         });

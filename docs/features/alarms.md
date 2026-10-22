@@ -19,7 +19,7 @@
 
 - Notes are triangle waves at 30% volume, faded in over 10 ms and out over 30 ms so they don't click. They're placeholders until proper sound files arrive.
 - A **rep step** sounds the work alarm as it starts.
-- No rest alarm at the end of the last round (that rest is skipped), and no finish alarm for a timer that runs until stopped.
+- No rest alarm at the end of the last round (that rest is skipped), and no finish alarm for a workout that runs until stopped.
 
 ### Timing
 
@@ -32,7 +32,7 @@
 
 ### Turning sound on
 
-- The web only allows sound after the user has tapped or pressed a key. Any tap anywhere in the app turns sound on, so it's ready by the time a timer starts. After a reload, the timer page shows a **Tap to turn on sound** button until it is.
+- The web only allows sound after the user has tapped or pressed a key. Any tap anywhere in the app turns sound on, so it's ready by the time a workout starts. After a reload, the workout page shows a **Tap to turn on sound** button until it is.
 - The Sound, Vibration and Keep screen on settings apply at once, mid-workout too (see [settings](settings.md)).
 
 ### The screen locking
@@ -52,11 +52,11 @@
 
 ## Platform notes
 
-- **Web:** `AlarmService` (`src/app/shared/alarms/alarm.service.ts`) books notes on the Web Audio clock, which keeps time in background tabs where JS timers don't. The list of alarm times is pure: `alarmEvents()` in `src/app/timer/alarm-schedule.ts`. Keep screen on is the Screen Wake Lock API (`KeepAwakeService`).
+- **Web:** `AlarmService` (`src/app/shared/alarms/alarm.service.ts`) books notes on the Web Audio clock, which keeps time in background tabs where JS timers don't. The list of alarm times is pure: `alarmEvents()` in `src/app/workout/alarm-schedule.ts`. Keep screen on is the Screen Wake Lock API (`KeepAwakeService`).
 - **Web limits:**
     - **ALM-2:** iPhones suspend web audio when the phone locks, so alarms stop if it's locked by hand. Scheduled notifications aren't possible on iOS web (no Notification Triggers). Playing the alarms as an `<audio>` track was tried in PR #64 and was silent once locked in Safari, so it was taken out (#65).
     - **ALM-3:** iPhones don't support web vibration at all.
 - **iOS:** this is where a native app does better than the web.
     - **ALM-2** should be possible: schedule a **local notification** (`UNUserNotificationCenter`) with a custom sound for each upcoming alarm. They fire when locked, and must be cancelled and re-booked on pause, resume, Done and Stop, as the web app does. iOS allows 64 pending at a time, so book in batches. An alternative is background audio (`AVAudioSession` playback category), which keeps playing when locked but ducks other music.
     - **ALM-3:** haptics with `UIImpactFeedbackGenerator` or Core Haptics while the app is open; a notification's own vibration when locked.
-    - Keep screen on: `UIApplication.shared.isIdleTimerDisabled = true` while running.
+    - Keep screen on: `UIApplication.shared.isIdleWorkoutDisabled = true` while running.

@@ -16,7 +16,7 @@ import {
     MuscleGroup,
 } from '../../../models/exercise';
 import { ExerciseStore } from '../../state/exercise-store.service';
-import { TimerStore } from '../../state/timer-store.service';
+import { WorkoutStore } from '../../state/workout-store.service';
 import { BodyMapComponent } from '../body-map/body-map.component';
 
 /** What the editor holds: an exercise's details (used only for your own) and your note. */
@@ -35,7 +35,7 @@ const MUSCLES = Object.keys(MUSCLE_LABELS) as MuscleGroup[];
 /**
  * An exercise's details and your note on it, in a dialog. Your own exercise can be renamed
  * (EXR-3) and given a description, equipment and muscles (EXR-9); a renamed one's steps take
- * the new name in every timer. A built-in one can't change, so it shows its description and
+ * the new name in every workout. A built-in one can't change, so it shows its description and
  * only the note can be written (EXR-10). Focus is trapped inside while it's open.
  */
 @Component({
@@ -51,7 +51,7 @@ export class ExerciseEditorComponent {
     readonly saved = output<Exercise>();
 
     private readonly exercises = inject(ExerciseStore);
-    private readonly timers = inject(TimerStore);
+    private readonly workouts = inject(WorkoutStore);
 
     protected readonly builtIn = computed(() => isBuiltIn(this.exercise()));
     protected readonly muscles = MUSCLES;
@@ -178,7 +178,7 @@ export class ExerciseEditorComponent {
                 return;
             }
             if (updated.name !== exercise.name) {
-                this.timers.renameExerciseSteps(updated.id, updated.name);
+                this.workouts.renameExerciseSteps(updated.id, updated.name);
             }
             result = updated;
         }

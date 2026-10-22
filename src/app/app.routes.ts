@@ -9,12 +9,14 @@ export const routes: Routes = [
     {
         path: 'setup',
         loadComponent: () =>
-            import('./timer-setup/timer-setup.component').then((m) => m.TimerSetupComponent),
+            import('./workout-setup/workout-setup.component').then((m) => m.WorkoutSetupComponent),
     },
     {
         path: 'library',
         loadComponent: () =>
-            import('./timer-library/timer-library.component').then((m) => m.TimerLibraryComponent),
+            import('./workout-library/workout-library.component').then(
+                (m) => m.WorkoutLibraryComponent
+            ),
     },
     {
         path: 'history',
@@ -26,7 +28,9 @@ export const routes: Routes = [
             import('./settings/settings.component').then((m) => m.SettingsComponent),
     },
     {
-        path: 'timer',
-        loadComponent: () => import('./timer/timer.component').then((m) => m.TimerComponent),
+        path: 'workout',
+        loadComponent: () => import('./workout/workout.component').then((m) => m.WorkoutComponent),
     },
+    // The workout page was /timer until October 2026, so links and bookmarks to it still work
+    { path: 'timer', redirectTo: 'workout' },
 ];
