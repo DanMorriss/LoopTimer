@@ -64,7 +64,7 @@
 
 // A new step glides in from below as the last one glides off the top, like the number
 // wheels; a new round goes right to left instead. With reduced motion, a short crossfade.
-$glide: 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+$glide: 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 
 @keyframes in-from-below {
     from {
