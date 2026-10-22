@@ -1865,6 +1865,101 @@ describe('WorkoutComponent', () => {
         });
     });
 
+    describe('motion', () => {
+        const next = () => fixture.nativeElement.querySelector('.workout-next') as HTMLElement;
+        const pulsing = () => next().classList.contains('workout-next--soon');
+        const faceContent = () =>
+            fixture.nativeElement.querySelector('.workout-face__content') as HTMLElement;
+        const roundLine = () =>
+            fixture.nativeElement.querySelector('.workout-status__round') as HTMLElement;
+        const face = () => fixture.nativeElement.querySelector('.workout-face') as HTMLElement;
+
+        it('pulses "Next:" in the last 5 seconds of a step, in the next step\'s colour', () => {
+            start(makeWorkout({ workSeconds: 20, restSeconds: 30 }));
+
+            advance(14_000);
+            expect(pulsing()).toBe(false);
+
+            advance(1000);
+            expect(pulsing()).toBe(true);
+            expect(next().dataset['next']).toBe('rest');
+
+            // Rest's own last 5 seconds come long after its first
+            advance(5000);
+            expect(pulsing()).toBe(false);
+            fixture.destroy();
+        });
+
+        it('pulses for only the last 3 seconds of a step under 15 seconds', () => {
+            start(makeWorkout({ workSeconds: 10, restSeconds: 10 }));
+
+            advance(6000);
+            expect(pulsing()).toBe(false);
+
+            advance(1000);
+            expect(pulsing()).toBe(true);
+            fixture.destroy();
+        });
+
+        it('stops pulsing while paused', () => {
+            start(makeWorkout({ workSeconds: 10, restSeconds: 10 }));
+            advance(8000);
+
+            component.togglePause();
+            fixture.detectChanges();
+
+            expect(pulsing()).toBe(false);
+            fixture.destroy();
+        });
+
+        it('does not pulse on a rep step, where Done is the cue', () => {
+            start(makeWorkout({ steps: [reps(10, 'Squats'), work(30)] }));
+
+            advance(60_000);
+
+            expect(pulsing()).toBe(false);
+            fixture.destroy();
+        });
+
+        it('pulses in the finish colour before the last step', () => {
+            start(makeWorkout({ workSeconds: 10, restSeconds: 0, repeats: 1 }));
+
+            advance(8000);
+
+            expect(pulsing()).toBe(true);
+            expect(next().dataset['next']).toBe('finish');
+            fixture.destroy();
+        });
+
+        it("swaps the face's text for each step, not each second, sliding up within a round", () => {
+            start(makeWorkout({ workSeconds: 3, restSeconds: 2, repeats: 2 }));
+            const work1 = faceContent();
+            const round1 = roundLine();
+
+            advance(1000);
+            expect(faceContent()).toBe(work1);
+
+            advance(2000); // on to rest
+            expect(faceContent()).not.toBe(work1);
+            expect(face().classList).not.toContain('workout-face--new-round');
+            expect(roundLine()).toBe(round1);
+            fixture.destroy();
+        });
+
+        it('slides sideways, round line and all, when a new round starts', () => {
+            start(makeWorkout({ workSeconds: 3, restSeconds: 2, repeats: 3 }));
+            const round1 = roundLine();
+            expect(face().classList).not.toContain('workout-face--new-round');
+
+            advance(5000); // round 2's work
+
+            expect(face().classList).toContain('workout-face--new-round');
+            expect(roundLine()).not.toBe(round1);
+            expect(roundLine().textContent).toContain('round 2 of 3');
+            fixture.destroy();
+        });
+    });
+
     describe('the summary', () => {
         beforeEach(() => localStorage.clear());
         afterEach(() => localStorage.clear());

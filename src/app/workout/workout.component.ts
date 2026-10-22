@@ -41,7 +41,7 @@ const MAX_ROUND_DOTS = 15;
     selector: 'app-workout',
     imports: [RouterLink, MatIconModule, WheelPickerComponent, WorkoutSummaryComponent],
     templateUrl: './workout.component.html',
-    styleUrls: ['./workout.component.scss'],
+    styleUrls: ['./workout.component.scss', './workout-motion.scss'],
     host: {
         '(document:keydown.space)': 'onSpace($event)',
         '(document:keydown.escape)': 'onEscape()',
@@ -156,12 +156,63 @@ export class WorkoutComponent {
         return `${name} · ${formatTime(Math.floor(step.seconds / 60), step.seconds % 60)}`;
     });
 
+    /**
+     * A timed step is nearly over, so "Next:" pulses to get ready: its last 5 seconds, or
+     * its last 3 for a step under 15 seconds. Not on a rep step (Done is the cue) or paused.
+     */
+    nextSoon = computed(() => {
+        const state = this.state();
+        if (!state || this.isPaused() || (state.phase !== 'work' && state.phase !== 'rest')) {
+            return false;
+        }
+        return state.remainingSeconds <= (state.phaseSeconds < 15 ? 3 : 5);
+    });
+    /** What comes next, for the colour of the "Next:" pulse: a step's kind, or finish. */
+    nextKind = computed(() => this.nextState()?.step?.kind ?? 'finish');
+
+    // The face's text is keyed by step, so a new step's text slides in as the last one's
+    // slides out; a new round slides right to left, with the round line, rather than up.
+    // Each is a snapshot of what it shows, so the text sliding out keeps its last values
+    // rather than showing the new step's.
+    faceSlides = computed(() => {
+        const state = this.state();
+        const complete = !state || state.phase === 'complete';
+        return [
+            {
+                key: complete
+                    ? 'complete'
+                    : `${this.workoutStore.activeRunStartedAt()}-${state.round}-${state.stepIndex}`,
+                complete,
+                label: this.stepLabel(),
+                reps: this.isRepsActive() ? this.reps() : null,
+                weight: this.weight(),
+                time: this.time(),
+                step: this.showStepCount()
+                    ? `step ${this.stepNumber()} of ${this.stepCount()}`
+                    : '',
+            },
+        ];
+    });
+    roundSlides = computed(() => [
+        {
+            key: `${this.workoutStore.activeRunStartedAt()}-${this.roundNumber()}`,
+            round: this.roundNumber(),
+            untilStopped: this.untilStopped(),
+            totalRounds: this.totalRounds(),
+            last: this.repeats() === 1,
+            dots: this.roundDots(),
+        },
+    ]);
+    /** The step in progress began a new round, so it slides in sideways. */
+    newRound = computed(() => {
+        const state = this.state();
+        return !!state && state.phase !== 'complete' && state.stepIndex === 0 && state.round > 0;
+    });
+
     private readonly remaining = computed(() => this.state()?.remainingSeconds ?? 0);
     private readonly time = computed(() =>
         formatTime(Math.floor(this.remaining() / 60), this.remaining() % 60)
     );
-    workTime = computed(() => (this.isWorkActive() ? this.time() : ''));
-    restTime = computed(() => (this.isRestActive() ? this.time() : ''));
 
     /** How many rounds the workout runs for (0 when it runs until stopped). */
     totalRounds = computed(() => (this.untilStopped() ? 0 : (this.workout()?.repeats ?? 0)));
