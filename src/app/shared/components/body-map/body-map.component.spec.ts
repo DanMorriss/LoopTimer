@@ -139,4 +139,26 @@ describe('BodyMapComponent', () => {
             ].sort()
         );
     });
+
+    it('says which muscle was tapped, when tappable', () => {
+        create([]);
+        const tapped: MuscleGroup[] = [];
+        fixture.componentInstance.muscleTapped.subscribe((m) => tapped.push(m));
+        const quads = () => {
+            const index = BODY_FIGURES.male.front.shapes.findIndex((s) => s.muscle === 'quads');
+            const before = BODY_FIGURES.male.front.shapes
+                .slice(0, index)
+                .reduce((total, shape) => total + shape.paths.length, 0);
+            return el().querySelectorAll('.body-map__shape')[before] as SVGPathElement;
+        };
+
+        quads().dispatchEvent(new MouseEvent('click'));
+        expect(tapped).toEqual([]);
+
+        fixture.componentRef.setInput('tappable', true);
+        fixture.detectChanges();
+        quads().dispatchEvent(new MouseEvent('click'));
+        expect(tapped).toEqual(['quads']);
+        expect(quads().classList).toContain('body-map__shape--tappable');
+    });
 });

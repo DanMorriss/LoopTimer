@@ -14,7 +14,8 @@ let nextId = 0;
 
 /**
  * A step's name box that finds exercises as you type (EXR-2): a combobox whose list holds
- * the built-in exercises and your own that match, and "Make '…'" when no exercise has the
+ * the built-in exercises and your own that match (not hidden ones, unless their whole name
+ * is typed), and "Make '…'" when no exercise has the
  * name typed. Picking an exercise fills in its name and links the step to it; typing drops
  * the link, so the step goes by its name again. Making one keeps the name, and the
  * exercise is made when the workout is saved (see `linkSteps()`), so nothing is left behind
@@ -47,10 +48,16 @@ export class ExercisePickerComponent implements FormValueControl<string> {
 
     protected readonly options = computed((): PickerOption[] => {
         const typed = this.value().trim();
-        const found: PickerOption[] = searchExercises(typed, this.exercises.exercises()).map(
-            (match) => ({ kind: 'exercise', ...match })
-        );
-        return typed && !findByName(typed, this.exercises.exercises())
+        // Hidden ones are left out, unless their name is typed in full
+        const named = findByName(typed, this.exercises.exercises());
+        const shown = this.exercises
+            .exercises()
+            .filter((exercise) => !this.exercises.isHidden(exercise.id) || exercise === named);
+        const found: PickerOption[] = searchExercises(typed, shown).map((match) => ({
+            kind: 'exercise',
+            ...match,
+        }));
+        return typed && !named
             ? [...found, { kind: 'make', name: typed.replace(/\s+/g, ' ') }]
             : found;
     });

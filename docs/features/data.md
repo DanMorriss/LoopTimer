@@ -95,9 +95,13 @@ A JSON list of the exercises you've made (EXR-9); the built-in ones come with th
 
 A JSON list of `{ "id": "<exercise id>", "text": "Pause at the bottom", "updatedAt": … }`, one per exercise with a note (EXR-10), built-in or your own. `text` is up to 200 characters. Removing a note leaves a deletion.
 
+### `hidden-exercises`: exercises hidden from the picker
+
+A JSON list of `{ "id": "<exercise id>", "updatedAt": … }`, one per exercise hidden from the picker in Create, built-in or your own. Showing one again removes it and leaves a deletion.
+
 ### `deleted`
 
-The last 500 workouts, history entries, exercises of your own and notes deleted, oldest first, so a deletion reaches other copies and a run still going can't log itself back in (see [history](history.md)):
+The last 500 workouts, history entries, exercises of your own, notes and hidden exercises deleted (shown again), oldest first, so a deletion reaches other copies and a run still going can't log itself back in (see [history](history.md)):
 
 ```json
 [
@@ -109,7 +113,7 @@ The last 500 workouts, history entries, exercises of your own and notes deleted,
 ]
 ```
 
-`kind` is `workout`, `history`, `exercise` or `exercise-note` (whose `id` is the exercise's). Undo in the history takes its marker away.
+`kind` is `workout`, `history`, `exercise`, `exercise-note` or `hidden-exercise` (whose `id`s are the exercise's). Undo in the history takes its marker away.
 
 ### `data-version`
 
@@ -142,11 +146,13 @@ The run in progress in a tab moves too (`activeTimerId`, `activeTimerStartedAt` 
     "vibration": true,
     "keepScreenOn": true,
     "weightUnit": "kg",
-    "bodyFigure": "male"
+    "bodyFigure": "male",
+    "myEquipment": ["barbell", "rack"],
+    "onlyMyEquipment": false
 }
 ```
 
-`theme` is `dark`, `light` or `system`. `weightUnit` is `kg` or `lb`. `bodyFigure` is `male` or `female`.
+`theme` is `dark`, `light` or `system`. `weightUnit` is `kg` or `lb`. `bodyFigure` is `male` or `female`. `myEquipment` is the equipment you have, picked on the Exercises page, in the order it's offered there (unknown pieces are dropped); `onlyMyEquipment` is its Only what I have switch.
 
 ## Saved for the run in progress (`sessionStorage` on the web, per tab)
 
@@ -169,27 +175,32 @@ From these, everything on the workout page is worked out (see [run-a-workout](ru
 ```json
 {
     "app": "LoopTimer",
-    "version": 4,
+    "version": 5,
     "exportedAt": 1761055200000,
     "workouts": [],
     "history": [],
     "exercises": [],
     "exerciseNotes": [],
+    "hiddenExercises": [],
     "deleted": [],
     "settings": {
         "theme": "dark",
         "sound": true,
         "vibration": true,
         "keepScreenOn": true,
-        "weightUnit": "kg"
+        "weightUnit": "kg",
+        "bodyFigure": "male",
+        "myEquipment": [],
+        "onlyMyEquipment": false
     }
 }
 ```
 
-- `workouts`, `history`, `exercises`, `exerciseNotes` (as `exercise-notes`), `deleted` and `settings` are in the same shapes as above; `exportedAt` is ms since 1970.
+- `workouts`, `history`, `exercises`, `exerciseNotes` (as `exercise-notes`), `hiddenExercises` (as `hidden-exercises`), `deleted` and `settings` are in the same shapes as above; `exportedAt` is ms since 1970.
 - `version` goes up whenever the file's shape changes. A file from an older version is converted when imported; one from a newer version is turned down.
 - **Version 1** files (from before random ids) have number workout ids, no `updatedAt` and no `deleted`. They're converted as saved data is: their workouts get new random ids, so they're matched on what they are (title, steps and rounds) rather than by id.
 - **Version 3 and older** files call workouts timers: a `timers` list in place of `workouts`, `timerId` in the history and the kind `timer` in `deleted`. They're renamed as they're read.
+- **Version 4 and older** files have no `hiddenExercises`, so nothing in them is hidden.
 - **Version 2** files (from before exercises) have no `exercises` or `exerciseNotes`, and their steps and sets aren't linked; they're linked by name as they're imported.
 - A file that isn't JSON, doesn't say `"app": "LoopTimer"`, lacks `workouts` or `history` lists, or is over 10 MB isn't a backup.
 

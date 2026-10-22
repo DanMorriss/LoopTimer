@@ -46,6 +46,14 @@
     &--other {
         fill: var(--muscle-other);
     }
+
+    &--tappable {
+        cursor: pointer;
+
+        &:hover {
+            stroke: var(--accent);
+        }
+    }
 }
 
 .body-map__outline {

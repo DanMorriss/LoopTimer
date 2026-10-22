@@ -1,0 +1,194 @@
+<div class="flex justify-center">
+    <div
+        class="m-4 w-full max-w-md rounded-xl border border-(--panel-border) bg-(--panel) p-5 shadow-xl shadow-(color:--shadow) backdrop-blur-sm"
+    >
+        <div class="exercises__top">
+            <h2 class="exercises__title">Exercises</h2>
+            <button
+                type="button"
+                id="exercise-list-new"
+                class="btn-pill"
+                aria-label="New exercise"
+                (click)="drafting.set(true)"
+            >
+                <mat-icon aria-hidden="true">add</mat-icon>
+                New
+            </button>
+        </div>
+
+        <label class="picker-field exercises__search" for="exercise-search">
+            <span class="picker-field__label">Search</span>
+            <span class="exercises__search-box">
+                <mat-icon class="exercises__search-icon" aria-hidden="true">search</mat-icon>
+                <input
+                    id="exercise-search"
+                    class="picker-field__input exercises__search-input"
+                    type="search"
+                    autocomplete="off"
+                    placeholder="Name, e.g. squat"
+                    [value]="query()"
+                    (input)="onSearch($event)"
+                />
+            </span>
+        </label>
+
+        <div class="exercises__kit">
+            <div class="exercises__kit-row">
+                <div class="exercises__kit-text">
+                    <span id="exercise-list-only-mine" class="exercises__kit-label"
+                        >Only what I have</span
+                    >
+                    <button
+                        type="button"
+                        class="exercises__kit-edit"
+                        aria-controls="exercise-list-kit"
+                        [attr.aria-expanded]="kitOpen()"
+                        (click)="kitOpen.set(!kitOpen())"
+                    >
+                        My equipment: {{ kitSummary() }}
+                        <mat-icon aria-hidden="true">{{
+                            kitOpen() ? 'expand_less' : 'expand_more'
+                        }}</mat-icon>
+                    </button>
+                </div>
+                <app-toggle-switch
+                    labelledBy="exercise-list-only-mine"
+                    [checked]="onlyMyEquipment()"
+                    (checkedChange)="setOnlyMine($event)"
+                />
+            </div>
+            @if (kitOpen()) {
+                <fieldset id="exercise-list-kit" class="exercises__kit-pick">
+                    <legend class="exercises__kit-legend">
+                        What you have. Exercises that need nothing always show.
+                    </legend>
+                    <div class="exercises__chips exercises__chips--wrap">
+                        @for (equipment of equipmentChoices; track equipment) {
+                            <button
+                                type="button"
+                                class="exercises__chip"
+                                [attr.aria-pressed]="hasEquipment(equipment)"
+                                (click)="toggleEquipment(equipment)"
+                            >
+                                @if (hasEquipment(equipment)) {
+                                    <mat-icon class="exercises__chip-icon" aria-hidden="true"
+                                        >check</mat-icon
+                                    >
+                                }
+                                {{ equipmentLabel(equipment) }}
+                            </button>
+                        }
+                    </div>
+                </fieldset>
+            }
+        </div>
+
+        <div
+            class="exercises__chips exercises__chips--scroll"
+            role="group"
+            aria-label="Main muscle"
+        >
+            <button
+                type="button"
+                class="exercises__chip"
+                [attr.aria-pressed]="muscle() === null"
+                (click)="pickMuscle(null)"
+            >
+                All muscles
+            </button>
+            @for (m of muscles; track m) {
+                <button
+                    type="button"
+                    class="exercises__chip"
+                    [attr.aria-pressed]="muscle() === m"
+                    (click)="pickMuscle(m)"
+                >
+                    {{ muscleLabels[m] }}
+                </button>
+            }
+        </div>
+
+        <p class="exercises__count" role="status">
+            {{ shown().length }} {{ shown().length === 1 ? 'exercise' : 'exercises' }}
+        </p>
+
+        @if (shown().length === 0) {
+            <div class="exercises__empty">
+                <p>No exercises match.</p>
+                @if (filtered()) {
+                    <button type="button" class="btn-pill" (click)="clearFilters()">
+                        Clear search and filters
+                    </button>
+                }
+            </div>
+        }
+
+        <ul class="exercises__list">
+            @for (item of shown(); track item.exercise.id) {
+                <ng-container
+                    *ngTemplateOutlet="cardTemplate; context: { $implicit: item }"
+                ></ng-container>
+            }
+        </ul>
+
+        @if (hidden().length > 0) {
+            <button
+                type="button"
+                class="exercises__hidden-toggle"
+                aria-controls="exercise-list-hidden"
+                [attr.aria-expanded]="hiddenOpen()"
+                (click)="hiddenOpen.set(!hiddenOpen())"
+            >
+                Hidden from the picker ({{ hidden().length }})
+                <mat-icon aria-hidden="true">{{
+                    hiddenOpen() ? 'expand_less' : 'expand_more'
+                }}</mat-icon>
+            </button>
+            @if (hiddenOpen()) {
+                <ul id="exercise-list-hidden" class="exercises__list">
+                    @for (item of hidden(); track item.exercise.id) {
+                        <ng-container
+                            *ngTemplateOutlet="cardTemplate; context: { $implicit: item }"
+                        ></ng-container>
+                    }
+                </ul>
+            }
+        }
+    </div>
+</div>
+
+<ng-template #cardTemplate let-item>
+    <li>
+        <a class="exercise-card" [routerLink]="item.path">
+            <span class="exercise-card__text">
+                <span class="exercise-card__name">
+                    {{ item.exercise.name }}
+                    @if (item.own) {
+                        <span class="exercise-card__tag">Your own</span>
+                    }
+                </span>
+                @if (item.otherName) {
+                    <span class="exercise-card__also">Also called {{ item.otherName }}</span>
+                }
+                <span class="exercise-card__details">
+                    @for (label of item.mainMuscles; track label) {
+                        <span class="exercise-card__muscle">{{ label }}</span>
+                    }
+                    @if (item.equipment) {
+                        <span class="exercise-card__equipment">{{ item.equipment }}</span>
+                    }
+                </span>
+            </span>
+            <mat-icon class="exercise-card__chevron" aria-hidden="true">chevron_right</mat-icon>
+        </a>
+    </li>
+</ng-template>
+
+@if (drafting()) {
+    <app-exercise-editor
+        [exercise]="draft"
+        [isNew]="true"
+        (closed)="closeDraft()"
+        (saved)="made($event)"
+    />
+}

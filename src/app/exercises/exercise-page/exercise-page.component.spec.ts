@@ -1,0 +1,187 @@
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter, Router } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
+import { BUILT_IN_EXERCISES } from '../../models/built-in-exercises';
+import { ExerciseStore } from '../../shared/state/exercise-store.service';
+import { HistoryStore } from '../../shared/state/history-store.service';
+import { WorkoutStore } from '../../shared/state/workout-store.service';
+import { makeWorkout } from '../../shared/testing/make-workout';
+import { ExercisePageComponent } from './exercise-page.component';
+
+describe('ExercisePageComponent', () => {
+    let harness: RouterTestingHarness;
+    let fixture: ComponentFixture<unknown>;
+    let exercises: ExerciseStore;
+
+    beforeEach(() => {
+        localStorage.clear();
+        localStorage.setItem('data-version', '4');
+        TestBed.configureTestingModule({
+            providers: [
+                provideRouter([
+                    { path: 'exercises', children: [] },
+                    { path: 'exercises/:id', component: ExercisePageComponent },
+                ]),
+            ],
+        });
+        exercises = TestBed.inject(ExerciseStore);
+    });
+    afterEach(() => localStorage.clear());
+
+    async function open(url: string) {
+        harness = await RouterTestingHarness.create();
+        await harness.navigateByUrl(url);
+        fixture = harness.fixture;
+        await render();
+    }
+
+    async function render() {
+        fixture.detectChanges();
+        await fixture.whenStable();
+    }
+
+    const el = (): HTMLElement => fixture.nativeElement;
+    const text = (selector: string) => el().querySelector(selector)?.textContent!.trim();
+    const all = (selector: string) =>
+        Array.from(el().querySelectorAll(selector)).map((e) => e.textContent!.trim());
+    const click = async (selector: string) => {
+        el().querySelector<HTMLElement>(selector)!.click();
+        await render();
+    };
+
+    describe('a built-in exercise', () => {
+        const backSquat = BUILT_IN_EXERCISES.find((e) => e.id === 'builtin:back-squat')!;
+
+        it('shows its name, other names, equipment, description, steps and tips', async () => {
+            await open('/exercises/back-squat');
+
+            expect(text('.exercise__name')).toBe('Back squat');
+            expect(text('.exercise__also')).toBe(`Also called: ${backSquat.otherNames.join(', ')}`);
+            expect(all('.exercise__chip')).toEqual(['Barbell', 'Rack', 'Reps']);
+            expect(text('.exercise__description')).toBe(backSquat.description);
+            expect(all('.exercise__steps li')).toEqual(backSquat.steps);
+            expect(all('.exercise__tips li')).toEqual(backSquat.tips);
+            expect(all('.body-map__label--main')).toEqual(['Quads', 'Glutes']);
+            expect(el().querySelector('#exercise-page-delete')).toBeNull();
+        });
+
+        it('reads a choice across two needs as one', async () => {
+            await open('/exercises/inverted-row');
+
+            expect(all('.exercise__chip')[0]).toBe('Barbell and rack, Smith machine, or rings');
+        });
+
+        it('shows your note on it, and takes one', async () => {
+            await open('/exercises/back-squat');
+            expect(text('#exercise-page-edit')).toContain('Add note');
+
+            await click('#exercise-page-edit');
+            const note = el().querySelector('#exercise-editor-note') as HTMLTextAreaElement;
+            note.value = 'Pause at the bottom';
+            note.dispatchEvent(new Event('input'));
+            el()
+                .querySelector('.editor form')!
+                .dispatchEvent(new Event('submit', { cancelable: true }));
+            await render();
+
+            expect(el().querySelector('app-exercise-editor')).toBeNull();
+            expect(text('.exercise__note-label')).toBe('Your note');
+            expect(text('.exercise__note-text')).toBe('Pause at the bottom');
+            expect(text('#exercise-page-edit')).toContain('Edit note');
+            expect(document.activeElement).toBe(el().querySelector('#exercise-page-edit'));
+        });
+
+        it('hides it from the picker, and shows it again', async () => {
+            await open('/exercises/back-squat');
+
+            await click('#exercise-page-hide');
+            expect(exercises.isHidden('builtin:back-squat')).toBe(true);
+            expect(text('.exercise__hidden')).toBe('Hidden from the picker in Create.');
+            expect(text('#exercise-page-hide')).toContain('Show in the picker');
+
+            await click('#exercise-page-hide');
+            expect(exercises.isHidden('builtin:back-squat')).toBe(false);
+        });
+    });
+
+    describe('your own exercise', () => {
+        it('is found by its id, and says how to add steps and tips', async () => {
+            const mine = exercises.addOwn('Sled push', 'timed');
+            await open(`/exercises/${mine.id}`);
+
+            expect(text('.exercise__name')).toBe('Sled push');
+            expect(all('.exercise__chip')).toEqual(['Timed', 'Your own']);
+            expect(text('.exercise__empty')).toBe(
+                'No how-to steps or tips yet. Add them with Edit.'
+            );
+            expect(text('.body-map__none')).toBe('No muscles listed.');
+        });
+
+        it('deletes it, once asked, and goes back to the list', async () => {
+            const mine = exercises.addOwn('Sled push', 'reps');
+            await open(`/exercises/${mine.id}`);
+
+            await click('#exercise-page-delete');
+            expect(text('#confirm-dialog-title')).toBe('Delete Sled push?');
+            await click('.confirm-dialog__button--delete');
+
+            expect(exercises.byId(mine.id)).toBeUndefined();
+            expect(TestBed.inject(Router).url).toBe('/exercises');
+        });
+
+        it("won't delete one a workout uses, and says which", async () => {
+            const mine = exercises.addOwn('Sled push', 'reps');
+            TestBed.inject(WorkoutStore).addWorkout(
+                makeWorkout({
+                    title: 'Legs',
+                    steps: [{ kind: 'reps', reps: 5, name: 'Sled push', exerciseId: mine.id }],
+                })
+            );
+            await open(`/exercises/${mine.id}`);
+
+            await click('#exercise-page-delete');
+
+            expect(el().querySelector('app-confirm-dialog')).toBeNull();
+            expect(text('[role="status"]')).toBe(
+                "Sled push is in Legs, so it can't be deleted. Take it out of that workout first, or hide it from the picker."
+            );
+            expect(exercises.byId(mine.id)).toBeDefined();
+        });
+
+        it('hides one with history instead of deleting it', async () => {
+            const mine = exercises.addOwn('Sled push', 'reps');
+            TestBed.inject(HistoryStore).record({
+                id: 'run',
+                workoutId: 'gone',
+                title: 'Legs',
+                startedAt: 1,
+                endedAt: 2,
+                activeSeconds: 1,
+                roundsCompleted: 1,
+                totalRounds: 1,
+                outcome: 'finished',
+                sets: [{ round: 0, step: 0, name: 'Sled push', reps: 5, exerciseId: mine.id }],
+            });
+            await open(`/exercises/${mine.id}`);
+
+            await click('#exercise-page-delete');
+            expect(text('#confirm-dialog-title')).toBe('Hide Sled push?');
+            await click('.confirm-dialog__button--delete');
+
+            expect(exercises.byId(mine.id)).toBeDefined();
+            expect(exercises.isHidden(mine.id)).toBe(true);
+        });
+    });
+
+    it("says when there's no such exercise", async () => {
+        await open('/exercises/not-one');
+
+        expect(text('.exercise__name')).toBe('Exercise not found');
+    });
+
+    it("doesn't take a built-in exercise's whole id in the link", async () => {
+        await open('/exercises/builtin:back-squat');
+
+        expect(text('.exercise__name')).toBe('Exercise not found');
+    });
+});

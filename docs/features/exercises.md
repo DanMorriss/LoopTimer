@@ -1,6 +1,6 @@
 # Exercises
 
-Partly built: exercises are in the data (#86), with the built-in list, your own exercises and notes, and existing data carried over (EXR-4). In the app: the picker in Create (EXR-2), renaming and editing your own exercises (EXR-3, EXR-9), and your notes, shown mid-workout (EXR-10). The body map is built too. Still to come: the exercise pages (EXR-6–8), hiding built-in exercises from the picker, and deleting your own. Rules not yet built are a first draft (see [direction](../direction.md)).
+Built: exercises are in the data (#86), with the built-in list, your own exercises and notes, and existing data carried over (EXR-4). In the app: the Exercises list and a page per exercise (EXR-6–8), the picker in Create (EXR-2), making, renaming and editing your own exercises (EXR-3, EXR-9), your notes, shown on the exercise's page and mid-workout (EXR-10), hiding any exercise from the picker, and deleting your own. Progress on the exercise page (PRG-4) is still to come (see [progress](progress.md)).
 
 ## Stories
 
@@ -39,7 +39,7 @@ Partly built: exercises are in the data (#86), with the built-in list, your own 
 - [free-exercise-db](https://github.com/yuhonas/free-exercise-db) (public domain, Unlicense) is a **reference only**: for which exercises to include, their equipment and their muscles, each checked by hand (it lists glutes as only supporting in a back squat, for one). Its text isn't copied, and its photos aren't used: where they came from isn't stated.
 - Built-in ids are fixed text that never changes (e.g. `builtin:back-squat`), so history keeps pointing to them across app updates. An exercise taken out of the list stays readable by its id for history's sake.
 - The list is part of the app, not the user's data: it updates with the app and isn't synced or exported.
-- Searchable by name and other names, and can be filtered by muscle and equipment.
+- Searchable by name and other names, and can be filtered by main muscle and by the equipment you have (see [the Exercises list](#the-exercises-list-exr-6)).
 - **Equipment** lists everything an exercise needs, all of it, so the list can be filtered by **what you have**: an exercise shows if you have every piece it lists. Where any one of a few things will do, it's a choice (a goblet squat needs a dumbbell _or_ a kettlebell). "None" means nothing at all. Plates and a floor are taken for granted.
     - Where a pair of things will do, or one thing that does the job of both, the choice is in two needs: an inverted row needs a barbell _or_ a Smith machine _or_ rings, and a rack _or_ a Smith machine _or_ rings. When the exercise page shows equipment, it should read that as "Barbell and rack, Smith machine, or rings".
 - The equipment: barbell, dumbbells, kettlebell, bench, preacher bench (a bench with an angled arm pad), rack, Smith machine, pull-up bar, parallel bars, rings (gymnastic rings or suspension straps), cable, machine (a dedicated gym machine, e.g. a leg press), band, step (a box, step or stair), ab wheel, none. All but none can be picked for an exercise of your own.
@@ -58,9 +58,45 @@ The component is built (`BodyMapComponent`); it goes on the exercise pages when 
 - Its shades are colour tokens with a contrast check like the others, in both themes: each label's text is at least 4.5:1 on its shade; main stands out 3:1 from unworked and from the page; and the three shades are at least 2:1 apart in lightness, not just hue (the labels carry the meaning, so the figure needn't be 3:1 throughout). In the dark theme main is the brightest; in light, the darkest.
 - **Male or female figure**, chosen in settings (SET-5). The diagram has both, with the same muscle groups, so the choice changes only the drawing. Every side is drawn in the same 1:2 box, so front and back match in size whatever the drawing's own canvas.
 
+### The Exercises list (EXR-6)
+
+In the menu as **Exercises**, after Library. Top to bottom:
+
+- **Exercises** and a **New** button, which opens the exercise dialog for a new exercise of your own (see below). Saving it makes it and goes to its page; Cancel makes nothing.
+- **Search**: finds by name and other names, as the picker does (case, spaces and a plural "s" don't count), best match first. A match on another name says so on its card ("Also called Press-up").
+- **Only what I have**, a switch, with **My equipment: 3 pieces** ("none" to begin with, "1 piece") under it, which opens the equipment as chips to pick from (every piece but "none"). On, the list shows only exercises you can do with what's picked: every piece an exercise lists, where a choice is met by any one of it; one that needs nothing always shows, and so does one of your own that lists none. Both the switch and the equipment are **remembered** (saved with the settings), so they're set once. Off to begin with, and nothing picked.
+- **Muscles**: one row of chips, scrolling sideways: **All muscles**, then each muscle group. Picking one shows only exercises with it as a **main** muscle.
+- How many exercises are shown ("42 exercises"), read out as it changes.
+- The exercises, **A to Z** (best match first while searching), as cards: the name, **Your own** on your own ones, the main muscles as chips in the body map's main shade, and the equipment in a line ("Barbell, rack"; "Dumbbells or kettlebell"; "No equipment"; nothing when your own lists none). A card goes to the exercise's page.
+- When nothing matches: "No exercises match.", and **Clear search and filters** when there's a search or filter to clear.
+- **Hidden from the picker (2)**, after the list when any of those shown are hidden: it opens them, as cards in the same way. They're left out of the list above.
+
 ### The exercise page (EXR-7, EXR-8)
 
-Top to bottom: back to Exercises; the name; "Also called: …"; equipment and how it's measured as chips; the one-line description; **Muscles worked** (the figure and its labels); **How to do it** (numbered steps); **Tips**. Progress (PRG-4) goes below these later.
+At `/exercises/<name>` for a built-in exercise (e.g. `/exercises/back-squat`, its id without `builtin:`) and `/exercises/<id>` for your own. Top to bottom:
+
+- **‹ Exercises**, back to the list.
+- The name; "Also called: …" when it has other names.
+- Chips: what it needs (one chip per need, a choice as "Dumbbells or kettlebell", the inverted row's as "Barbell and rack, Smith machine, or rings", and "No equipment" for none), how it's measured (**Reps** or **Timed**), and **Your own** on yours.
+- "Hidden from the picker in Create." when it's hidden.
+- The one-line description, when it has one.
+- **Your note**, set apart, when you've written one (EXR-10).
+- **Add note** / **Edit note** (built-in) or **Edit** (your own), opening the exercise dialog. Focus goes back to it when the dialog closes.
+- **Muscles worked**: the body map.
+- **How to do it** (numbered steps) and **Tips**, each when it has any. Your own with neither says "No how-to steps or tips yet. Add them with Edit."
+- **Hide from the picker** / **Show in the picker**, and **Delete** on your own (see below).
+- Progress (PRG-4) goes above the hide and delete buttons later.
+
+A link to an exercise that isn't there (deleted, or mistyped) says "Exercise not found", with a link to all exercises.
+
+### Hiding and deleting
+
+- **Any exercise can be hidden from the picker** in Create, built-in or your own, from its page. A hidden one isn't offered as you type, unless its whole name (or other name) is typed, so typing "Front squat" still finds it; a step already linked to it stays linked, and it still shows mid-workout and in the history. It's kept apart at the end of the Exercises list. Showing it again puts it back.
+- Which are hidden is your data: saved, exported and synced. Showing one again leaves a deletion, so that reaches other copies too.
+- **Deleting** is for your own exercises only:
+    - one a saved workout (or the one running) uses can't be deleted: "Sled push is in Legs, so it can't be deleted. Take it out of that workout first, or hide it from the picker." (with every such workout named, an untitled one as "an untitled workout")
+    - one in the history (a set of it was logged) is **hidden instead**, so the history keeps its name: "Hide Sled push?", "It's in your history, so it's kept for that. Hiding it takes it out of the picker in Create."
+    - otherwise it asks "Delete Sled push?" ("It goes for good, with your note on it."), and deleting it takes away your note on it too, and goes back to the list. Deletions are left behind for each.
 
 ### Picking an exercise (EXR-2)
 
@@ -83,11 +119,13 @@ Top to bottom: back to Exercises; the name; "Also called: …"; equipment and ho
 ### Your own exercises (EXR-3, EXR-9)
 
 - Names are unique among what you can see, ignoring case, spaces and a plural "s": typing "squats " finds "Squats", whether that's built-in or your own. A built-in exercise's other names count as a match too.
-- **Editing** one (the dialog from its step in setup; later, its exercise page) changes its **name**, how it's **measured** (Reps or Time), a **description** (up to 300 characters), its **equipment** (single pieces; a choice of pieces from a backup is kept as it is) and its **main and supporting muscles**, picked from a list of chips, with the body map shading them as they're picked. A muscle is main or supporting, not both: picking it in one takes it out of the other.
-    - The name is needed, up to 40 characters, and can't be another exercise's: "There's already an exercise called "Bench press"". Saving with a problem puts the cursor in the name box.
-    - How-to steps and tips for your own exercises, and picking muscles by tapping the body map, are still to come.
+- **Editing** one (the dialog from its step in setup, or from its exercise page) changes its **name**, how it's **measured** (Reps or Time), a **description** (up to 300 characters), its **equipment** (single pieces; a choice of pieces from a backup is kept as it is), its **main and supporting muscles**, **How to do it** and **Tips**.
+    - Muscles are picked from two lists of chips, Main and Supporting, with the body map shading them as they're picked. A muscle is main or supporting, not both: picking it in one takes it out of the other. **Tapping a muscle on the body map** moves it along: not worked → main → supporting → not worked, and the chips follow. (The chips do the same for keyboards and screen readers, so the figure stays hidden from them.)
+    - How-to steps and tips are written **one per line**: up to 8 steps and 4 tips, each up to 200 characters ("Up to 8 steps, one per line", "Keep each one to 200 characters"). Empty lines are dropped and each line trimmed.
+    - The name is needed, up to 40 characters, and can't be another exercise's: "There's already an exercise called "Bench press"". Saving with a problem puts the cursor in the first box that's wrong.
+- **Making** one: by typing a name in the picker (see above), or with **New** on the Exercises list, which opens the same dialog, titled **New exercise**, empty and measured by reps. It's made when saved, with your note if one was written.
 - **Renaming** one (EXR-3) renames it everywhere: the steps linked to it in every saved workout (and the one running) take the new name, and the history shows it by its new name (see [history](history.md)).
-- Deleting one of your own exercises that a workout uses isn't allowed; one with only history can be hidden. (Not built yet.)
+- Deleting one: see [Hiding and deleting](#hiding-and-deleting).
 
 ### Carrying over (EXR-4)
 
@@ -101,8 +139,8 @@ Past logged sets are linked the same way. Unnamed steps stay unnamed and aren't 
 ### Your notes on an exercise (EXR-10)
 
 - **Any exercise**, built-in or your own, can have a note of your own, e.g. "Pause at the bottom" or "Seat on hole 4". It's how you make a built-in exercise your own without changing it: there's no copying a built-in exercise into your own, so its history stays in one place.
-- It's written in the exercise's dialog, opened from its step in setup: **Your note (optional)**, "Shown with this exercise mid-workout."
-- The note shows under its step in setup, and mid-workout with any work or rep step linked to the exercise (see [run-a-workout](run-a-workout.md)); later, on the exercise page under the description, marked as yours.
+- It's written in the exercise's dialog, opened from its step in setup or from its exercise page: **Your note (optional)**, "Shown with this exercise mid-workout."
+- The note shows under its step in setup, mid-workout with any work or rep step linked to the exercise (see [run-a-workout](run-a-workout.md)), and on the exercise page under the description, marked **Your note**.
 - Up to 200 characters, trimmed; saving an empty note removes it. Notes are your data: saved, exported and synced.
 - A built-in exercise keeps its note across app updates, even if its own text changes.
 
@@ -120,7 +158,21 @@ Past logged sets are linked the same way. Unnamed steps stay unnamed and aren't 
 - Given an exercise with no muscles, then the body map says "No muscles listed."
 - Given an exercise that works the abductors, then they're listed, though not shaded.
 
+- Given the Exercises list, then every exercise is listed A to Z with how many there are, and Back squat's card shows Quads and Glutes and "Barbell, rack", and goes to `/exercises/back-squat`.
+- Given I search "press-up", then Push-up comes first, saying "Also called Press-up".
+- Given I pick Calves, then only exercises with calves as a main muscle are listed.
+- Given I pick a pull-up bar as my equipment and turn on Only what I have, then Pull-up and Push-up are listed and Back squat isn't, and after a reload it's still so.
+- Given Plank is hidden, then it's left out of the list and shown under "Hidden from the picker (1)", and the picker in Create doesn't offer it for "plan" but does for "plank".
+- Given New on the Exercises list, when I name it "Sled drag" and save, then it's made and its page opens.
+- Given the inverted row's page, then its equipment reads "Barbell and rack, Smith machine, or rings".
+- Given Back squat's page, when I add the note "Pause at the bottom", then it shows under the description as Your note, and the button says Edit note.
+- Given my own exercise, when I write two steps on separate lines in the dialog, then its page lists them as How to do it, in order.
+- Given my own exercise's dialog, when I tap the quads on the figure three times, then they're main, then supporting, then not worked.
+- Given my own exercise in the workout "Legs", when I press Delete, then it isn't deleted and I'm told it's in Legs.
+- Given my own exercise with a set in the history and in no workout, when I press Delete, then I'm asked to hide it instead.
+- Given my own exercise in no workout and not in the history, when I delete it, then it's gone, with my note on it, and the list shows.
+
 ## Platform notes
 
-- **Web:** the picker is `ExercisePickerComponent` (`src/app/workout-setup/exercise-picker/`), an ARIA 1.2 combobox with `aria-activedescendant`, searching with `searchExercises()` in `models/exercise-links.ts`. The dialog is `ExerciseEditorComponent` (`src/app/shared/components/exercise-editor/`); `ExerciseStore.updateOwn()` saves your own exercise and `WorkoutStore.renameExerciseSteps()` renames its steps. The body map is `BodyMapComponent` (`src/app/shared/components/body-map/`). Its shapes, `body-shapes.ts`, are generated by `node tools/build-body-shapes.mjs` from a pinned commit of react-native-body-highlighter; don't edit them by hand. The built-in exercises are `src/app/models/built-in-exercises.ts`, written as in [writing-exercises](../writing-exercises.md).
-- **iOS:** the same paths work as SwiftUI `Path`s from SVG data, or through react-native-body-highlighter itself in a React Native app. The picker maps onto a `TextField` with a list of suggestions under it (or `.searchable` with `searchSuggestions`), and the exercise dialog onto a sheet.
+- **Web:** the Exercises list is `ExerciseListComponent` (`src/app/exercises/`) and the page `ExercisePageComponent` (`src/app/exercises/exercise-page/`), routed at `/exercises` and `/exercises/:id`. Equipment reads as `equipmentPhrases()` in `models/exercise.ts`, and `exerciseUsage()` in `models/exercise-links.ts` says whether one can be deleted. `ExerciseStore` keeps which are hidden (`setHidden()`) and makes (`createOwn()`) and deletes (`deleteOwn()`) your own; your equipment is in `SettingsStore`. The picker is `ExercisePickerComponent` (`src/app/workout-setup/exercise-picker/`), an ARIA 1.2 combobox with `aria-activedescendant`, searching with `searchExercises()` in `models/exercise-links.ts`. The dialog is `ExerciseEditorComponent` (`src/app/shared/components/exercise-editor/`); `ExerciseStore.updateOwn()` saves your own exercise and `WorkoutStore.renameExerciseSteps()` renames its steps. The body map is `BodyMapComponent` (`src/app/shared/components/body-map/`). Its shapes, `body-shapes.ts`, are generated by `node tools/build-body-shapes.mjs` from a pinned commit of react-native-body-highlighter; don't edit them by hand. The built-in exercises are `src/app/models/built-in-exercises.ts`, written as in [writing-exercises](../writing-exercises.md).
+- **iOS:** the list maps onto a `List` with `.searchable`, and the muscle chips onto a horizontal `ScrollView`; each card is a `NavigationLink` to the exercise's page. Tapping the body map needs hit-testing each `Path` (`contentShape`). The same paths work as SwiftUI `Path`s from SVG data, or through react-native-body-highlighter itself in a React Native app. The picker maps onto a `TextField` with a list of suggestions under it (or `.searchable` with `searchSuggestions`), and the exercise dialog onto a sheet.

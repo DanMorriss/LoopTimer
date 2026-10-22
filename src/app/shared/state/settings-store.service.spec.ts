@@ -23,6 +23,8 @@ describe('SettingsStore', () => {
             keepScreenOn: true,
             weightUnit: 'kg',
             bodyFigure: 'male',
+            myEquipment: [],
+            onlyMyEquipment: false,
         });
 
         TestBed.resetTestingModule();
@@ -63,6 +65,21 @@ describe('SettingsStore', () => {
         TestBed.resetTestingModule();
         localStorage.setItem('settings', '{"bodyFigure": "female"}');
         expect(createStore().bodyFigure()).toBe('female');
+    });
+
+    it('has no equipment to begin with, and keeps only equipment it knows, in order', () => {
+        expect(createStore().myEquipment()).toEqual([]);
+        expect(createStore().onlyMyEquipment()).toBe(false);
+
+        TestBed.resetTestingModule();
+        localStorage.setItem(
+            'settings',
+            '{"myEquipment": ["rack", "jetpack", "barbell", "none"], "onlyMyEquipment": true}'
+        );
+        const store = createStore();
+
+        expect(store.myEquipment()).toEqual(['barbell', 'rack']);
+        expect(store.onlyMyEquipment()).toBe(true);
     });
 
     for (const [label, saved] of [

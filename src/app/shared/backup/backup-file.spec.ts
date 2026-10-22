@@ -11,6 +11,8 @@ const SETTINGS: Settings = {
     keepScreenOn: true,
     weightUnit: 'kg',
     bodyFigure: 'male',
+    myEquipment: ['barbell', 'rack'],
+    onlyMyEquipment: true,
 };
 
 const ENTRY: HistoryEntry = {
@@ -58,6 +60,7 @@ describe('backup file', () => {
                 history: [ENTRY],
                 exercises: [],
                 exerciseNotes: [],
+                hiddenExercises: [],
                 deleted: [DELETION],
                 settings: SETTINGS,
             },
@@ -72,6 +75,7 @@ describe('backup file', () => {
             history: [ENTRY],
             exercises: [],
             exerciseNotes: [],
+            hiddenExercises: [],
             deleted: [DELETION],
             settings: SETTINGS,
         });
@@ -86,6 +90,7 @@ describe('backup file', () => {
                     history: [ENTRY],
                     exercises: [],
                     exerciseNotes: [],
+                    hiddenExercises: [],
                     deleted: [DELETION],
                     settings: SETTINGS,
                 },
@@ -99,6 +104,7 @@ describe('backup file', () => {
             history: [ENTRY],
             exercises: [],
             exerciseNotes: [],
+            hiddenExercises: [],
             deleted: [DELETION],
             fromVersion1: false,
             skipped: 0,
@@ -153,6 +159,7 @@ describe('backup file', () => {
             history: [ENTRY],
             exercises: [],
             exerciseNotes: [],
+            hiddenExercises: [],
             deleted: [DELETION],
             fromVersion1: false,
             skipped: 3,

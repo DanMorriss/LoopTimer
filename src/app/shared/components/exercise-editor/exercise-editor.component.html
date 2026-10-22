@@ -10,7 +10,7 @@
     >
         <form class="editor__form" novalidate (submit)="save($event)">
             <h2 id="exercise-editor-title" class="editor__title">
-                {{ builtIn() ? exercise().name : 'Edit exercise' }}
+                {{ title() }}
             </h2>
 
             @if (builtIn()) {
@@ -31,9 +31,11 @@
                 @if (nameError(); as error) {
                     <p id="exercise-editor-name-error" class="editor__error">{{ error }}</p>
                 }
-                <p class="editor__hint">
-                    Renaming it renames it everywhere: your workouts and history.
-                </p>
+                @if (!isNew()) {
+                    <p class="editor__hint">
+                        Renaming it renames it everywhere: your workouts and history.
+                    </p>
+                }
 
                 <fieldset class="editor__group">
                     <legend class="picker-field__label">Measured by</legend>
@@ -127,11 +129,62 @@
                     </div>
                 </fieldset>
 
+                <p class="editor__hint editor__hint--alone" aria-hidden="true">
+                    Or tap the figure: once for main, again for supporting, again to clear.
+                </p>
                 <app-body-map
                     class="editor__body-map"
                     [main]="mainMuscles()"
                     [supporting]="supportingMuscles()"
+                    [tappable]="true"
+                    (muscleTapped)="cycleMuscle($event)"
                 />
+
+                <label class="picker-field" for="exercise-editor-steps">
+                    <span class="picker-field__label">How to do it (optional)</span>
+                    <textarea
+                        class="picker-field__input editor__textarea"
+                        id="exercise-editor-steps"
+                        rows="4"
+                        [formField]="editorForm.steps"
+                        placeholder="e.g. Lean into the sled, arms straight."
+                        [attr.aria-invalid]="!!stepsError()"
+                        [attr.aria-describedby]="
+                            stepsError()
+                                ? 'exercise-editor-steps-hint exercise-editor-steps-error'
+                                : 'exercise-editor-steps-hint'
+                        "
+                    ></textarea>
+                </label>
+                <p id="exercise-editor-steps-hint" class="editor__hint">
+                    One step per line, in order. Up to {{ maxSteps }}.
+                </p>
+                @if (stepsError(); as error) {
+                    <p id="exercise-editor-steps-error" class="editor__error">{{ error }}</p>
+                }
+
+                <label class="picker-field" for="exercise-editor-tips">
+                    <span class="picker-field__label">Tips (optional)</span>
+                    <textarea
+                        class="picker-field__input editor__textarea"
+                        id="exercise-editor-tips"
+                        rows="2"
+                        [formField]="editorForm.tips"
+                        placeholder="e.g. Short, quick steps."
+                        [attr.aria-invalid]="!!tipsError()"
+                        [attr.aria-describedby]="
+                            tipsError()
+                                ? 'exercise-editor-tips-hint exercise-editor-tips-error'
+                                : 'exercise-editor-tips-hint'
+                        "
+                    ></textarea>
+                </label>
+                <p id="exercise-editor-tips-hint" class="editor__hint">
+                    One tip per line. Up to {{ maxTips }}.
+                </p>
+                @if (tipsError(); as error) {
+                    <p id="exercise-editor-tips-error" class="editor__error">{{ error }}</p>
+                }
             }
 
             <label class="picker-field" for="exercise-editor-note">

@@ -1,8 +1,12 @@
-import { ExerciseNote, OwnExercise } from '../../models/exercise';
+import { ExerciseNote, HiddenExercise, OwnExercise } from '../../models/exercise';
 import { HistoryEntry } from '../../models/history';
 import { Deletion, isDeletion } from '../../models/sync';
 import { Workout } from '../../models/workout';
-import { readExerciseNote, readOwnExercise } from '../state/exercise-store.service';
+import {
+    readExerciseNote,
+    readHiddenExercise,
+    readOwnExercise,
+} from '../state/exercise-store.service';
 import { readHistoryEntry } from '../state/history-store.service';
 import {
     renameTimerDeletion,
@@ -19,8 +23,10 @@ import { readWorkout } from '../state/workout-store.service';
  * 3: your own exercises and notes on exercises, and steps and sets linked to exercises.
  * 4: timers are called workouts: `workouts` in place of `timers`, and `workoutId` in place
  *    of `timerId` in the history and of the kind `timer` in `deleted`.
+ * 5: `hiddenExercises`, the exercises hidden from the picker, and your equipment in
+ *    `settings`.
  */
-export const BACKUP_VERSION = 4;
+export const BACKUP_VERSION = 5;
 
 /** Far more than years of workouts take, so a bigger file isn't a backup. */
 export const MAX_BACKUP_BYTES = 10 * 1024 * 1024;
@@ -36,6 +42,8 @@ export interface BackupFile {
     /** Your own exercises (the built-in ones come with the app). */
     exercises: OwnExercise[];
     exerciseNotes: ExerciseNote[];
+    /** Exercises hidden from the picker, built-in or your own. */
+    hiddenExercises: HiddenExercise[];
     /** Records deleted on the device it came from, so importing deletes them here too. */
     deleted: Deletion[];
     settings: Settings;
@@ -51,6 +59,8 @@ export type ReadBackup =
           /** None before version 3. */
           exercises: OwnExercise[];
           exerciseNotes: ExerciseNote[];
+          /** None before version 5. */
+          hiddenExercises: HiddenExercise[];
           deleted: Deletion[];
           /**
            * From version 1, whose workout ids were only unique on their device: its workouts have
@@ -65,7 +75,13 @@ export type ReadBackup =
 export function makeBackup(
     contents: Pick<
         BackupFile,
-        'workouts' | 'history' | 'exercises' | 'exerciseNotes' | 'deleted' | 'settings'
+        | 'workouts'
+        | 'history'
+        | 'exercises'
+        | 'exerciseNotes'
+        | 'hiddenExercises'
+        | 'deleted'
+        | 'settings'
     >,
     exportedAt: number
 ): BackupFile {
@@ -130,6 +146,9 @@ export function readBackup(text: string, now = Date.now()): ReadBackup {
     const exerciseNotes = (Array.isArray(file['exerciseNotes']) ? file['exerciseNotes'] : [])
         .map((item) => readExerciseNote(item))
         .filter((note) => note !== null);
+    const hiddenExercises = (Array.isArray(file['hiddenExercises']) ? file['hiddenExercises'] : [])
+        .map((item) => readHiddenExercise(item))
+        .filter((hidden) => hidden !== null);
     const skipped =
         savedWorkouts.length -
         workouts.length +
@@ -141,6 +160,7 @@ export function readBackup(text: string, now = Date.now()): ReadBackup {
         history,
         exercises,
         exerciseNotes,
+        hiddenExercises,
         deleted,
         fromVersion1,
         skipped,

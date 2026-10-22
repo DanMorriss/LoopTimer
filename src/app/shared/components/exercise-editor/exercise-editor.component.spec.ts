@@ -1,17 +1,22 @@
 import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BUILT_IN_EXERCISES } from '../../../models/built-in-exercises';
-import { Exercise } from '../../../models/exercise';
+import { Exercise, MAX_EXERCISE_STEPS } from '../../../models/exercise';
 import { reps } from '../../testing/make-workout';
-import { ExerciseStore } from '../../state/exercise-store.service';
+import { blankOwnExercise, ExerciseStore } from '../../state/exercise-store.service';
 import { WorkoutStore } from '../../state/workout-store.service';
+import { BODY_FIGURES } from '../body-map/body-shapes';
 import { ExerciseEditorComponent } from './exercise-editor.component';
+
+const quadsPath = () =>
+    BODY_FIGURES.male.front.shapes.find((shape) => shape.muscle === 'quads')!.paths[0];
 
 @Component({
     imports: [ExerciseEditorComponent],
     template: `
         <app-exercise-editor
             [exercise]="exercise()"
+            [isNew]="isNew()"
             (closed)="closed = closed + 1"
             (saved)="saved.push($event)"
         />
@@ -19,6 +24,7 @@ import { ExerciseEditorComponent } from './exercise-editor.component';
 })
 class HostComponent {
     readonly exercise = signal<Exercise>(BUILT_IN_EXERCISES[0]);
+    readonly isNew = signal(false);
     closed = 0;
     saved: Exercise[] = [];
 }
@@ -35,10 +41,11 @@ describe('ExerciseEditorComponent', () => {
     });
     afterEach(() => localStorage.clear());
 
-    async function open(exercise: Exercise) {
+    async function open(exercise: Exercise, isNew = false) {
         fixture = TestBed.createComponent(HostComponent);
         host = fixture.componentInstance;
         host.exercise.set(exercise);
+        host.isNew.set(isNew);
         fixture.detectChanges();
         await fixture.whenStable();
     }
@@ -177,12 +184,104 @@ describe('ExerciseEditorComponent', () => {
             expect(host.saved).toEqual([]);
         });
 
+        it('saves its how-to steps and tips, one per line', async () => {
+            const mine = exercises.addOwn('Sled push', 'reps');
+            await open(mine);
+
+            await fill('#exercise-editor-steps', 'Lean in.\n\n  Drive with your legs. ');
+            await fill('#exercise-editor-tips', 'Short steps.');
+            await save();
+
+            expect(exercises.byId(mine.id)).toEqual(
+                expect.objectContaining({
+                    steps: ['Lean in.', 'Drive with your legs.'],
+                    tips: ['Short steps.'],
+                })
+            );
+        });
+
+        it('starts from its steps and tips, one per line', async () => {
+            const mine = exercises.addOwn('Sled push', 'reps');
+            exercises.updateOwn(mine.id, { ...mine, steps: ['One.', 'Two.'], tips: ['Tip.'] });
+            await open(exercises.byId(mine.id)!);
+
+            expect(el<HTMLTextAreaElement>('#exercise-editor-steps').value).toBe('One.\nTwo.');
+            expect(el<HTMLTextAreaElement>('#exercise-editor-tips').value).toBe('Tip.');
+        });
+
+        it('says when there are too many steps, and puts the cursor there', async () => {
+            const mine = exercises.addOwn('Sled push', 'reps');
+            await open(mine);
+
+            const lines = Array.from({ length: MAX_EXERCISE_STEPS + 1 }, (_, i) => `Step ${i}`);
+            await fill('#exercise-editor-steps', lines.join('\n'));
+            await save();
+
+            expect(el('#exercise-editor-steps-error').textContent!.trim()).toBe(
+                `Up to ${MAX_EXERCISE_STEPS} steps, one per line`
+            );
+            expect(document.activeElement).toBe(el('#exercise-editor-steps'));
+            expect(host.saved).toEqual([]);
+        });
+
+        it('moves a tapped muscle along: main, supporting, then not worked', async () => {
+            await open(exercises.addOwn('Sled push', 'reps'));
+            const quads = () => {
+                const shapes = Array.from(
+                    fixture.nativeElement.querySelectorAll('.body-map__shape--tappable')
+                ) as SVGPathElement[];
+                // The front figure's shapes come first, and its quads are the first quads
+                return shapes.find((shape) => shape.getAttribute('d')!.startsWith(quadsPath()))!;
+            };
+            const tap = async () => {
+                quads().dispatchEvent(new MouseEvent('click'));
+                fixture.detectChanges();
+                await fixture.whenStable();
+            };
+
+            await tap();
+            expect(button('Quads').getAttribute('aria-pressed')).toBe('true');
+            await tap();
+            expect(button('Quads').getAttribute('aria-pressed')).toBe('false');
+            expect(button('Quads', 1).getAttribute('aria-pressed')).toBe('true');
+            await tap();
+            expect(button('Quads', 1).getAttribute('aria-pressed')).toBe('false');
+        });
+
         it('needs a name', async () => {
             await open(exercises.addOwn('Sled push', 'reps'));
 
             await fill('#exercise-editor-name', '   ');
 
             expect(el('#exercise-editor-name-error').textContent!.trim()).toBe('Give it a name');
+        });
+    });
+
+    describe('a new exercise', () => {
+        it('is made when saved, with its details and your note', async () => {
+            await open(blankOwnExercise(), true);
+            expect(el('#exercise-editor-title').textContent!.trim()).toBe('New exercise');
+
+            await fill('#exercise-editor-name', 'Sled drag');
+            button('Machine').click();
+            await fill('#exercise-editor-note', 'Lane 2');
+            await save();
+
+            const made = exercises.own()[0];
+            expect(made).toEqual(
+                expect.objectContaining({ name: 'Sled drag', equipment: ['machine'] })
+            );
+            expect(exercises.noteFor(made.id)).toBe('Lane 2');
+            expect(host.saved).toEqual([made]);
+        });
+
+        it("isn't made without a name", async () => {
+            await open(blankOwnExercise(), true);
+
+            await save();
+
+            expect(el('#exercise-editor-name-error').textContent!.trim()).toBe('Give it a name');
+            expect(exercises.own()).toEqual([]);
         });
     });
 

@@ -1,0 +1,165 @@
+<div class="flex justify-center">
+    <div
+        class="m-4 w-full max-w-md rounded-xl border border-(--panel-border) bg-(--panel) p-5 shadow-xl shadow-(color:--shadow) backdrop-blur-sm"
+    >
+        <a routerLink="/exercises" class="exercise__back">
+            <mat-icon aria-hidden="true">chevron_left</mat-icon>
+            Exercises
+        </a>
+
+        @if (exercise(); as exercise) {
+            <div class="exercise__head">
+                <h2 class="exercise__name">{{ exercise.name }}</h2>
+                @if (exercise.otherNames.length > 0) {
+                    <p class="exercise__also">Also called: {{ exercise.otherNames.join(', ') }}</p>
+                }
+                <ul class="exercise__chips" aria-label="Equipment and how it's measured">
+                    @for (phrase of equipment(); track phrase) {
+                        <li class="exercise__chip">{{ phrase }}</li>
+                    }
+                    <li class="exercise__chip exercise__chip--measured">
+                        {{ exercise.measuredBy === 'reps' ? 'Reps' : 'Timed' }}
+                    </li>
+                    @if (!builtIn()) {
+                        <li class="exercise__chip exercise__chip--own">Your own</li>
+                    }
+                </ul>
+                @if (hidden()) {
+                    <p class="exercise__hidden">Hidden from the picker in Create.</p>
+                }
+            </div>
+
+            @if (exercise.description) {
+                <p class="exercise__description">{{ exercise.description }}</p>
+            }
+
+            @if (note(); as note) {
+                <div class="exercise__note">
+                    <p class="exercise__note-label">Your note</p>
+                    <p class="exercise__note-text">{{ note }}</p>
+                </div>
+            }
+
+            <div class="exercise__actions">
+                <button
+                    type="button"
+                    id="exercise-page-edit"
+                    class="btn-pill"
+                    (click)="openEditor()"
+                >
+                    <mat-icon aria-hidden="true">{{ builtIn() ? 'edit_note' : 'edit' }}</mat-icon>
+                    @if (!builtIn()) {
+                        Edit
+                    } @else if (note()) {
+                        Edit note
+                    } @else {
+                        Add note
+                    }
+                </button>
+            </div>
+
+            <section class="exercise__section" aria-labelledby="exercise-muscles">
+                <h3 id="exercise-muscles" class="exercise__heading">Muscles worked</h3>
+                <app-body-map
+                    [main]="exercise.mainMuscles"
+                    [supporting]="exercise.supportingMuscles"
+                />
+            </section>
+
+            @if (exercise.steps.length > 0) {
+                <section class="exercise__section" aria-labelledby="exercise-how">
+                    <h3 id="exercise-how" class="exercise__heading">How to do it</h3>
+                    <ol class="exercise__steps">
+                        @for (step of exercise.steps; track $index) {
+                            <li>{{ step }}</li>
+                        }
+                    </ol>
+                </section>
+            }
+
+            @if (exercise.tips.length > 0) {
+                <section class="exercise__section" aria-labelledby="exercise-tips">
+                    <h3 id="exercise-tips" class="exercise__heading">Tips</h3>
+                    <ul class="exercise__tips">
+                        @for (tip of exercise.tips; track $index) {
+                            <li>{{ tip }}</li>
+                        }
+                    </ul>
+                </section>
+            }
+
+            @if (!builtIn() && exercise.steps.length === 0 && exercise.tips.length === 0) {
+                <p class="exercise__empty">No how-to steps or tips yet. Add them with Edit.</p>
+            }
+
+            <div class="exercise__manage">
+                <button
+                    type="button"
+                    id="exercise-page-hide"
+                    class="btn-pill"
+                    (click)="toggleHidden()"
+                >
+                    <mat-icon aria-hidden="true">{{
+                        hidden() ? 'visibility' : 'visibility_off'
+                    }}</mat-icon>
+                    {{ hidden() ? 'Show in the picker' : 'Hide from the picker' }}
+                </button>
+                @if (!builtIn()) {
+                    <button
+                        type="button"
+                        id="exercise-page-delete"
+                        class="btn-pill btn-pill--danger"
+                        (click)="askToDelete()"
+                    >
+                        <mat-icon aria-hidden="true">delete</mat-icon>
+                        Delete
+                    </button>
+                }
+            </div>
+            <div class="exercise__status" role="status">
+                @if (deleteStep() === 'in-use') {
+                    <p class="exercise__in-use">
+                        {{ exercise.name }} is in {{ usedIn() }}, so it can't be deleted. Take it
+                        out of {{ usage().workouts.length === 1 ? 'that workout' : 'those' }}
+                        first, or hide it from the picker.
+                    </p>
+                }
+            </div>
+
+            @if (editing()) {
+                <app-exercise-editor
+                    [exercise]="exercise"
+                    (closed)="closeEditor()"
+                    (saved)="closeEditor()"
+                />
+            }
+
+            @if (deleteStep() === 'confirm-delete') {
+                <app-confirm-dialog
+                    [title]="'Delete ' + exercise.name + '?'"
+                    (cancelled)="cancelDelete()"
+                    (confirmed)="confirmDelete()"
+                >
+                    It goes for good, with your note on it.
+                </app-confirm-dialog>
+            }
+            @if (deleteStep() === 'confirm-hide') {
+                <app-confirm-dialog
+                    [title]="'Hide ' + exercise.name + '?'"
+                    confirmLabel="Hide"
+                    (cancelled)="cancelDelete()"
+                    (confirmed)="confirmHide()"
+                >
+                    It's in your history, so it's kept for that. Hiding it takes it out of the
+                    picker in Create.
+                </app-confirm-dialog>
+            }
+        } @else {
+            <div class="exercise__missing">
+                <h2 class="exercise__name">Exercise not found</h2>
+                <p>It may have been deleted, or the link is wrong.</p>
+                <a routerLink="/exercises" class="btn-pill">All exercises</a>
+            </div>
+        }
+    </div>
+</div>

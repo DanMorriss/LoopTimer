@@ -1,0 +1,287 @@
+:host {
+    display: block;
+}
+
+.exercises__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+// body.mat-typography gives headings Material's Roboto and margins; keep the app's font
+.exercises__title {
+    margin: 0;
+    font-family: 'Audiowide', sans-serif;
+    font-size: 1.5rem;
+    color: var(--text-strong);
+}
+
+.exercises__search {
+    margin-bottom: 0.9rem;
+}
+
+.exercises__search-box {
+    position: relative;
+    display: block;
+}
+
+.exercises__search-icon {
+    position: absolute;
+    top: 50%;
+    left: 0.8rem;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    pointer-events: none;
+}
+
+.exercises__search-input {
+    padding-left: 2.6rem;
+}
+
+.exercises__kit {
+    margin-bottom: 0.9rem;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--border-soft);
+    border-radius: 0.75rem;
+    background: var(--card);
+}
+
+.exercises__kit-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.exercises__kit-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 0;
+}
+
+.exercises__kit-label {
+    color: var(--text-strong);
+    font-size: 0.9rem;
+}
+
+// A link-like disclosure: the equipment you have, opening the chips to change it
+.exercises__kit-edit,
+.exercises__hidden-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    min-height: 44px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--glow-text);
+    font: inherit;
+    font-size: 0.8rem;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover {
+        text-decoration: underline;
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+    }
+
+    .mat-icon {
+        width: 1.2rem;
+        height: 1.2rem;
+        font-size: 1.2rem;
+    }
+}
+
+.exercises__kit-pick {
+    margin: 0.4rem 0 0.2rem;
+    padding: 0;
+    border: 0;
+}
+
+.exercises__kit-legend {
+    margin-bottom: 0.5rem;
+    padding: 0;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.exercises__chips {
+    display: flex;
+    gap: 0.4rem;
+
+    &--wrap {
+        flex-wrap: wrap;
+    }
+
+    // One row that scrolls sideways, so the list starts high on a phone
+    &--scroll {
+        margin: 0 -0.25rem 0.5rem;
+        padding: 0.25rem;
+        overflow-x: auto;
+        scrollbar-width: thin;
+    }
+}
+
+// A toggle: picked ones are outlined in the accent and filled, so it isn't colour alone
+.exercises__chip {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 0.2rem;
+    min-height: 36px;
+    padding: 0 0.8rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--control);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:hover {
+        background: var(--control-hover);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+    }
+
+    &[aria-pressed='true'] {
+        border-color: var(--glow-text);
+        background: var(--accent-soft);
+        color: var(--text-strong);
+        box-shadow: inset 0 0 0 1px var(--glow-text);
+    }
+}
+
+.exercises__chip-icon {
+    width: 1rem;
+    height: 1rem;
+    font-size: 1rem;
+}
+
+.exercises__count {
+    margin: 0 0 0.6rem;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.exercises__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 1rem 0;
+    color: var(--text-muted);
+    text-align: center;
+
+    p {
+        margin: 0;
+    }
+}
+
+.exercises__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.exercises__hidden-toggle {
+    margin-top: 0.75rem;
+}
+
+.exercise-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 0.85rem;
+    border: 1px solid var(--border);
+    border-radius: 0.9rem;
+    background: var(--card);
+    color: var(--text);
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+        background: var(--control-hover);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+    }
+}
+
+.exercise-card__text {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
+}
+
+.exercise-card__name {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-strong);
+    font-size: 0.95rem;
+}
+
+.exercise-card__tag {
+    padding: 0.1rem 0.5rem;
+    border: 1px solid var(--reps);
+    border-radius: 999px;
+    color: var(--text);
+    font-size: 0.65rem;
+}
+
+.exercise-card__also {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+.exercise-card__details {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+// The body map's main shade, so the card matches the exercise's page
+.exercise-card__muscle {
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    background: var(--muscle-main);
+    color: var(--muscle-main-ink);
+    font-size: 0.7rem;
+}
+
+.exercise-card__equipment {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+.exercise-card__chevron {
+    flex: none;
+    color: var(--text-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .exercise-card {
+        transition: none;
+    }
+}

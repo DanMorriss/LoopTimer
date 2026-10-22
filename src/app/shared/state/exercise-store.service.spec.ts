@@ -1,11 +1,17 @@
 import { TestBed } from '@angular/core/testing';
 import { BUILT_IN_EXERCISES } from '../../models/built-in-exercises';
-import { MAX_EXERCISE_NOTE_LENGTH } from '../../models/exercise';
+import {
+    MAX_EXERCISE_LINE_LENGTH,
+    MAX_EXERCISE_NOTE_LENGTH,
+    MAX_EXERCISE_STEPS,
+} from '../../models/exercise';
 import {
     EXERCISE_NOTES_KEY,
     EXERCISES_KEY,
     ExerciseStore,
+    HIDDEN_EXERCISES_KEY,
     readExerciseNote,
+    readHiddenExercise,
     readOwnExercise,
 } from './exercise-store.service';
 
@@ -84,6 +90,8 @@ describe('ExerciseStore', () => {
             mainMuscles: [],
             supportingMuscles: [],
             description: '',
+            steps: [],
+            tips: [],
         };
 
         it('renames it and saves its details, tidied and dated', () => {
@@ -99,6 +107,8 @@ describe('ExerciseStore', () => {
                 // A muscle in both counts as main
                 supportingMuscles: ['glutes', 'calves'],
                 description: '  Pulled backwards.  ',
+                steps: [' Lean in. ', '', 'Drive with your legs.'],
+                tips: ['  Short steps.'],
             });
 
             expect(updated).toEqual({
@@ -109,6 +119,8 @@ describe('ExerciseStore', () => {
                 mainMuscles: ['quads', 'glutes'],
                 supportingMuscles: ['calves'],
                 description: 'Pulled backwards.',
+                steps: ['Lean in.', 'Drive with your legs.'],
+                tips: ['Short steps.'],
                 updatedAt: NOW + 1,
             });
             expect(store.byId(mine.id)).toEqual(updated);
@@ -142,6 +154,20 @@ describe('ExerciseStore', () => {
             expect(store.updateOwn('gone', details)).toBeNull();
         });
 
+        it('caps how many steps and tips there are, and how long each is', () => {
+            const store = createStore();
+            const mine = store.addOwn('Sled push', 'reps');
+
+            const updated = store.updateOwn(mine.id, {
+                ...details,
+                steps: Array.from({ length: MAX_EXERCISE_STEPS + 2 }, (_, i) => `Step ${i}`),
+                tips: ['x'.repeat(MAX_EXERCISE_LINE_LENGTH + 5)],
+            });
+
+            expect(updated?.steps).toHaveLength(MAX_EXERCISE_STEPS);
+            expect(updated?.tips[0]).toHaveLength(MAX_EXERCISE_LINE_LENGTH);
+        });
+
         it('says whether a name is taken by another exercise', () => {
             const store = createStore();
             const mine = store.addOwn('Sled push', 'reps');
@@ -150,6 +176,122 @@ describe('ExerciseStore', () => {
             expect(store.nameTaken('SLED  push ', mine.id)).toBe(false);
             expect(store.nameTaken('Squat', mine.id)).toBe(true);
             expect(store.nameTaken('Zercher squat')).toBe(false);
+        });
+    });
+
+    describe('making one with its details', () => {
+        it('makes and saves it, tidied', () => {
+            const store = createStore();
+
+            const made = store.createOwn({
+                name: ' Sled  drag ',
+                measuredBy: 'timed',
+                equipment: ['machine'],
+                mainMuscles: ['quads'],
+                supportingMuscles: ['quads', 'glutes'],
+                description: ' Pulled backwards. ',
+                steps: ['Lean in.'],
+                tips: [],
+            });
+
+            expect(made).toEqual(
+                expect.objectContaining({
+                    id: expect.stringMatching(/^[0-9a-f-]{36}$/),
+                    updatedAt: NOW,
+                    name: 'Sled drag',
+                    otherNames: [],
+                    supportingMuscles: ['glutes'],
+                    description: 'Pulled backwards.',
+                    steps: ['Lean in.'],
+                })
+            );
+            expect(saved(EXERCISES_KEY)).toEqual([made]);
+        });
+
+        it("won't make one with no name, or a name that's taken", () => {
+            const store = createStore();
+            const blank = {
+                measuredBy: 'reps' as const,
+                equipment: [],
+                mainMuscles: [],
+                supportingMuscles: [],
+                description: '',
+                steps: [],
+                tips: [],
+            };
+
+            expect(store.createOwn({ ...blank, name: '  ' })).toBeNull();
+            expect(store.createOwn({ ...blank, name: 'squats' })).toBeNull();
+            expect(store.own()).toEqual([]);
+        });
+    });
+
+    describe('deleting your own exercise', () => {
+        it('deletes it, its note and its place in the hidden list, leaving deletions', () => {
+            const store = createStore();
+            const mine = store.addOwn('Sled push', 'reps');
+            store.setNote(mine.id, 'Heavy');
+            store.setHidden(mine.id, true);
+
+            store.deleteOwn(mine.id);
+
+            expect(store.byId(mine.id)).toBeUndefined();
+            expect(store.noteFor(mine.id)).toBeUndefined();
+            expect(store.isHidden(mine.id)).toBe(false);
+            expect(saved(EXERCISES_KEY)).toEqual([]);
+            expect(saved('deleted')).toEqual(
+                expect.arrayContaining([
+                    { kind: 'exercise', id: mine.id, deletedAt: NOW },
+                    { kind: 'exercise-note', id: mine.id, deletedAt: NOW },
+                    { kind: 'hidden-exercise', id: mine.id, deletedAt: NOW },
+                ])
+            );
+        });
+
+        it("can't delete a built-in exercise", () => {
+            const store = createStore();
+
+            store.deleteOwn('builtin:plank');
+
+            expect(store.byId('builtin:plank')).toBeDefined();
+            expect(saved('deleted')).toBeNull();
+        });
+    });
+
+    describe('hiding from the picker', () => {
+        it('hides any exercise, saved, and shows it again leaving a deletion', () => {
+            const store = createStore();
+
+            store.setHidden('builtin:plank', true);
+            expect(store.isHidden('builtin:plank')).toBe(true);
+            expect(saved(HIDDEN_EXERCISES_KEY)).toEqual([{ id: 'builtin:plank', updatedAt: NOW }]);
+
+            store.setHidden('builtin:plank', false);
+            expect(store.isHidden('builtin:plank')).toBe(false);
+            expect(saved(HIDDEN_EXERCISES_KEY)).toEqual([]);
+            expect(saved('deleted')).toEqual([
+                { kind: 'hidden-exercise', id: 'builtin:plank', deletedAt: NOW },
+            ]);
+        });
+
+        it('keeps what is hidden across a reload', () => {
+            createStore().setHidden('builtin:plank', true);
+            TestBed.resetTestingModule();
+
+            expect(createStore().isHidden('builtin:plank')).toBe(true);
+        });
+
+        it('merges hidden exercises from another copy, and ones shown again there', () => {
+            const store = createStore();
+            store.setHidden('builtin:plank', true);
+
+            store.mergeHidden(
+                [{ id: 'builtin:crunch', updatedAt: NOW }],
+                [{ kind: 'hidden-exercise', id: 'builtin:plank', deletedAt: NOW + 1 }]
+            );
+
+            expect(store.isHidden('builtin:crunch')).toBe(true);
+            expect(store.isHidden('builtin:plank')).toBe(false);
         });
     });
 
@@ -253,5 +395,14 @@ describe('reading saved exercises', () => {
         });
         expect(readExerciseNote({ id: 'a', text: '', updatedAt: 1 })).toBeNull();
         expect(readExerciseNote({ id: '', text: 'Hi', updatedAt: 1 })).toBeNull();
+    });
+
+    it('reads a hidden exercise only with an id and a date', () => {
+        expect(readHiddenExercise({ id: 'a', updatedAt: 1, extra: true })).toEqual({
+            id: 'a',
+            updatedAt: 1,
+        });
+        expect(readHiddenExercise({ id: '', updatedAt: 1 })).toBeNull();
+        expect(readHiddenExercise({ id: 'a' })).toBeNull();
     });
 });

@@ -143,7 +143,14 @@ export type Exercise = BuiltInExercise | OwnExercise;
 /** What you can change on an exercise of your own (EXR-3, EXR-9). */
 export type OwnExerciseDetails = Pick<
     OwnExercise,
-    'name' | 'measuredBy' | 'equipment' | 'mainMuscles' | 'supportingMuscles' | 'description'
+    | 'name'
+    | 'measuredBy'
+    | 'equipment'
+    | 'mainMuscles'
+    | 'supportingMuscles'
+    | 'description'
+    | 'steps'
+    | 'tips'
 >;
 
 /** The longest an exercise's name can be: the same as a step's, as it's shown on the workout. */
@@ -151,6 +158,12 @@ export const MAX_EXERCISE_NAME_LENGTH = 40;
 
 /** A couple of sentences, like a built-in one's. */
 export const MAX_EXERCISE_DESCRIPTION_LENGTH = 300;
+
+/** How-to steps on an exercise of your own: a few more than a built-in one has. */
+export const MAX_EXERCISE_STEPS = 8;
+export const MAX_EXERCISE_TIPS = 4;
+/** The longest a how-to step or a tip can be: a sentence or two, readable between sets. */
+export const MAX_EXERCISE_LINE_LENGTH = 200;
 
 /** The equipment that can be picked for an exercise of your own, in the order it's offered. */
 export const EQUIPMENT_CHOICES: readonly Exclude<Equipment, 'none'>[] = [
@@ -175,6 +188,84 @@ export const EQUIPMENT_CHOICES: readonly Exclude<Equipment, 'none'>[] = [
 export function equipmentLabel(equipment: Equipment): string {
     return equipment.charAt(0).toUpperCase() + equipment.slice(1);
 }
+
+/**
+ * What an exercise needs, as phrases to show as chips or run together in a line, e.g.
+ * "barbell", "dumbbells or kettlebell", "no equipment". A pair of choices that differ by one
+ * piece each reads as one, so an inverted row's (a barbell, Smith machine or rings, and a
+ * rack, Smith machine or rings) is "barbell and rack, Smith machine, or rings". Lower case
+ * apart from names, to go mid-sentence: `capitalise()` one to start a chip or a line.
+ */
+export function equipmentPhrases(needs: readonly EquipmentNeed[]): string[] {
+    const choices = needs.map((need): readonly Equipment[] =>
+        typeof need === 'string' ? [need] : need
+    );
+    const used = new Set<number>();
+    const phrases: string[] = [];
+    choices.forEach((options, i) => {
+        if (used.has(i)) {
+            return;
+        }
+        used.add(i);
+        const j = choices.findIndex(
+            (other, k) => k > i && !used.has(k) && pairedChoice(options, other) !== null
+        );
+        if (j === -1) {
+            phrases.push(
+                options.includes('none') ? 'no equipment' : listOf(options.map(equipmentName))
+            );
+            return;
+        }
+        used.add(j);
+        phrases.push(listOf(pairedChoice(options, choices[j])!));
+    });
+    return phrases;
+}
+
+/**
+ * Two choices with some pieces in common and one each besides, read as one: the two that
+ * differ go together ("barbell and rack"), then the pieces that do for both. Null if they
+ * aren't like that.
+ */
+function pairedChoice(a: readonly Equipment[], b: readonly Equipment[]): string[] | null {
+    const shared = a.filter((piece) => b.includes(piece));
+    const onlyA = a.filter((piece) => !b.includes(piece));
+    const onlyB = b.filter((piece) => !a.includes(piece));
+    if (shared.length === 0 || onlyA.length !== 1 || onlyB.length !== 1) {
+        return null;
+    }
+    return [
+        `${equipmentName(onlyA[0])} and ${equipmentName(onlyB[0])}`,
+        ...shared.map(equipmentName),
+    ];
+}
+
+/** "a", "a or b", "a, b, or c". */
+function listOf(items: readonly string[]): string {
+    return items.length <= 2
+        ? items.join(' or ')
+        : `${items.slice(0, -1).join(', ')}, or ${items.at(-1)}`;
+}
+
+/** A piece of equipment mid-sentence: lower case, apart from the Smith machine's name. */
+function equipmentName(equipment: Equipment): string {
+    return equipment === 'smith machine' ? 'Smith machine' : equipment;
+}
+
+export function capitalise(text: string): string {
+    return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/** Where an exercise's page is: /exercises/back-squat for a built-in one, by id for your own. */
+export function exercisePath(exercise: Exercise): string {
+    return `/exercises/${isBuiltIn(exercise) ? exercise.id.slice('builtin:'.length) : exercise.id}`;
+}
+
+/**
+ * An exercise hidden from the picker in Create, built-in or your own. Its id is the
+ * exercise's; showing it again deletes it, leaving a deletion so that reaches other copies.
+ */
+export type HiddenExercise = Synced;
 
 export function isBuiltIn(exercise: Exercise): exercise is BuiltInExercise {
     return exercise.id.startsWith('builtin:');
