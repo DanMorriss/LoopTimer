@@ -7,7 +7,7 @@ import { ToggleSwitchComponent } from '../shared/components/toggle-switch/toggle
 import { injectPrefersReducedMotion } from '../shared/reduced-motion';
 import { KeepAwakeService } from '../shared/run/keep-awake.service';
 import { SettingsStore, Theme } from '../shared/state/settings-store.service';
-import { AlarmKind } from '../timer/alarm-schedule';
+import { AlarmKind } from '../workout/alarm-schedule';
 
 interface AlarmPreview {
     kind: AlarmKind;
@@ -114,23 +114,23 @@ export class SettingsComponent {
     }
 }
 
-function count(n: number, thing: string): string {
-    return `${n} ${thing}${n === 1 ? '' : 's'}`;
+function count(n: number, thing: string, things = `${thing}s`): string {
+    return `${n} ${n === 1 ? thing : things}`;
 }
 
-/** "2 timers, 3 exercises and 14 workouts", leaving out any there are none of. */
-function listOf(timers: number, exercises: number, workouts: number): string {
+/** "2 workouts, 3 exercises and 14 history entries", leaving out any there are none of. */
+function listOf(workouts: number, exercises: number, entries: number): string {
     const items = [
-        ...(timers > 0 ? [count(timers, 'timer')] : []),
-        ...(exercises > 0 ? [count(exercises, 'exercise')] : []),
         ...(workouts > 0 ? [count(workouts, 'workout')] : []),
+        ...(exercises > 0 ? [count(exercises, 'exercise')] : []),
+        ...(entries > 0 ? [count(entries, 'history entry', 'history entries')] : []),
     ];
     return items.length > 1
         ? `${items.slice(0, -1).join(', ')} and ${items.at(-1)}`
         : (items[0] ?? '');
 }
 
-/** e.g. "Added 2 timers and 14 workouts to the history. Updated 1 workout." */
+/** e.g. "Added 2 workouts and 14 history entries. Updated 1 workout." */
 export function importMessage(result: ImportResult): string {
     if (!result.ok) {
         switch (result.problem) {
@@ -143,10 +143,10 @@ export function importMessage(result: ImportResult): string {
                 return "That file couldn't be read. Is it a LoopTimer backup?";
         }
     }
-    const added = listOf(result.timersAdded, result.exercisesAdded, result.workoutsAdded);
-    const updated = listOf(result.timersUpdated, result.exercisesUpdated, result.workoutsUpdated);
+    const added = listOf(result.workoutsAdded, result.exercisesAdded, result.entriesAdded);
+    const updated = listOf(result.workoutsUpdated, result.exercisesUpdated, result.entriesUpdated);
     const parts = [
-        ...(added ? [`Added ${added}${result.workoutsAdded > 0 ? ' to the history' : ''}.`] : []),
+        ...(added ? [`Added ${added}.`] : []),
         ...(updated ? [`Updated ${updated}.`] : []),
         ...(result.removed > 0
             ? [`Removed ${count(result.removed, 'item')} deleted since on the other device.`]

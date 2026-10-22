@@ -1,0 +1,314 @@
+// body.mat-typography gives headings Material's Roboto and margins; keep the app's font
+.setup-heading {
+    margin: 1.5rem 0 0.25rem;
+    font-family: 'Audiowide', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-strong);
+    text-align: center;
+}
+
+.setup-hint {
+    margin: 0 0 0.75rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+// Steps: one card each, edged in the phase colour, like the workout itself
+.steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.step {
+    --step-color: var(--work);
+    display: flex;
+    flex-direction: column;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--step-color);
+    border-radius: 0.75rem;
+    background: var(--card);
+
+    &--rest {
+        --step-color: var(--rest);
+    }
+
+    &--reps {
+        --step-color: var(--reps);
+    }
+}
+
+// The open/close chevron is always the rightmost thing in the header. Where everything fits
+// on one line the move and delete buttons sit before it; where it doesn't, they drop onto a
+// line of their own underneath, rather than push the chevron into the middle.
+.step__header {
+    container-type: inline-size;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.step__badge {
+    padding: 0.15rem 0.6rem;
+    border: 1px solid var(--step-color);
+    border-radius: 999px;
+    color: var(--step-color);
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.step__number {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+// A one-row grid, so opening and closing can animate its height from 0fr to 1fr
+.step__body {
+    display: grid;
+    grid-template-rows: 1fr;
+}
+
+.step__body-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-height: 0;
+    // In here rather than a gap on the step, so it opens and shuts with the rest
+    padding-top: 0.75rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .step__body--opening {
+        animation: step-body-open 0.2s ease-out;
+    }
+
+    .step__body--closing {
+        animation: step-body-open 0.15s ease-in reverse;
+    }
+
+    // Clipped only while moving, so focus outlines aren't cut off the rest of the time
+    .step__body--opening > .step__body-inner,
+    .step__body--closing > .step__body-inner {
+        overflow: hidden;
+    }
+}
+
+@keyframes step-body-open {
+    from {
+        grid-template-rows: 0fr;
+        opacity: 0;
+    }
+    to {
+        grid-template-rows: 1fr;
+        opacity: 1;
+    }
+}
+
+// Fills the space between the step number and its buttons, so it's an easy target
+.step__toggle {
+    display: flex;
+    order: 1;
+    flex: 1 1 44px;
+    align-items: center;
+    gap: 0.4rem;
+    min-width: 0;
+    min-height: 44px;
+    padding: 0 0.25rem 0 0.5rem;
+    border: 1px solid transparent;
+    border-radius: 0.6rem;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover {
+        border-color: var(--border);
+        background: var(--control);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+    }
+}
+
+// Name over time, so the name has the row's width on a phone
+.step__summary {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.25;
+}
+
+.step__summary-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &:empty {
+        display: none;
+    }
+}
+
+.step__summary-time {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.step__chevron {
+    flex-shrink: 0;
+    margin-left: auto;
+    color: var(--text-muted);
+    transform: rotate(180deg);
+    transition: transform 0.2s ease;
+
+    .step--collapsed & {
+        transform: none;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        transition: none;
+    }
+}
+
+.steps-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 0.5rem;
+}
+
+// On a line of their own unless the header is wide enough (see .step__header)
+.step__actions {
+    display: flex;
+    order: 2;
+    flex-basis: 100%;
+    justify-content: flex-end;
+    gap: 0.25rem;
+}
+
+// Wide enough for one line: buttons first, chevron last. (After the rules above, so it wins.)
+@container (min-width: 21rem) {
+    .step__toggle {
+        order: 2;
+    }
+
+    .step__actions {
+        order: 1;
+        flex-basis: auto;
+    }
+}
+
+.add-steps {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin: 0.75rem 0;
+}
+
+// Drag and drop (Angular CDK)
+
+// A filled square with no border, so it reads as something to grab without looking like
+// the round buttons, as it's dragged rather than pressed
+.step__handle {
+    display: inline-grid;
+    flex-shrink: 0;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 0.6rem;
+    background: var(--control);
+    color: var(--text);
+    cursor: grab;
+    touch-action: none;
+
+    &:hover {
+        background: var(--control-hover);
+    }
+
+    .cdk-drop-list-dragging & {
+        cursor: grabbing;
+    }
+}
+
+// The card that follows the pointer (added to <body>, but still styled from here)
+.step-preview {
+    --step-color: var(--work);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    box-sizing: border-box;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-strong);
+    border-left: 4px solid var(--step-color);
+    border-radius: 0.75rem;
+    background: var(--raised);
+    box-shadow: 0 12px 28px var(--shadow);
+    color: var(--text);
+    font-family: 'Audiowide', sans-serif;
+
+    &.step--rest {
+        --step-color: var(--rest);
+    }
+
+    &.step--reps {
+        --step-color: var(--reps);
+    }
+}
+
+.step-preview__time {
+    margin-left: auto;
+    font-variant-numeric: tabular-nums;
+}
+
+// The gap the step will drop into
+.step-placeholder {
+    min-height: 4rem;
+    border: 2px dashed var(--border-strong);
+    border-radius: 0.75rem;
+    background: var(--accent-soft);
+}
+
+// The other steps slide aside to make room, and the dropped one settles into place
+.cdk-drop-list-dragging .step:not(.cdk-drag-placeholder),
+.step.cdk-drag-animating {
+    transition: transform 0.25s cubic-bezier(0, 0, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cdk-drop-list-dragging .step:not(.cdk-drag-placeholder),
+    .step.cdk-drag-animating {
+        transition: none;
+    }
+}
+
+// Which exercise the step is, under its name, with a button to edit it or add a note
+.step__exercise {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: -0.35rem;
+}
+
+.step__exercise-status {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.step__exercise-note {
+    display: block;
+    margin-top: 0.15rem;
+    color: var(--text);
+}

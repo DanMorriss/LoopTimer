@@ -1,6 +1,6 @@
 import { Exercise, exerciseKey, MeasuredBy } from './exercise';
 import { LoggedSet } from './history';
-import { Step } from './timer';
+import { Step } from './workout';
 
 /** Finds an exercise by name, or makes one of your own, for linking steps and sets to. */
 export interface ExerciseFinder {

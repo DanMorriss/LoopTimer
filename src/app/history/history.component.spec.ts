@@ -17,7 +17,7 @@ function makeEntry(overrides: Partial<HistoryEntry> = {}): HistoryEntry {
     const startedAt = overrides.startedAt ?? NOW - HOUR;
     return {
         id: `${startedAt}-1`,
-        timerId: 'timer-1',
+        workoutId: 'workout-1',
         title: 'Sprints',
         startedAt,
         endedAt: startedAt + 600_000,
@@ -154,10 +154,10 @@ describe('HistoryComponent', () => {
         ]);
     });
 
-    it('names an untitled timer', () => {
+    it('names an untitled workout', () => {
         create(makeEntry({ title: '  ' }));
 
-        expect(text('.entry__title')).toEqual(['Untitled timer']);
+        expect(text('.entry__title')).toEqual(['Untitled workout']);
     });
 
     it('sums up the last seven days', () => {

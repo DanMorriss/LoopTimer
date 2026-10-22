@@ -51,7 +51,7 @@ import { Component, input, output } from '@angular/core';
     `,
 })
 export class ConfirmDialogComponent {
-    /** The question, e.g. "Delete timer?". */
+    /** The question, e.g. "Delete workout?". */
     readonly title = input.required<string>();
     readonly confirmLabel = input('Delete');
     readonly cancelled = output<void>();

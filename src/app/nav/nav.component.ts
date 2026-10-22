@@ -3,10 +3,10 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { MatIconModule } from '@angular/material/icon';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { filter, map } from 'rxjs';
-import { TimerStore } from '../shared/state/timer-store.service';
+import { WorkoutStore } from '../shared/state/workout-store.service';
 
 /** The workout in progress, listed first while there is one. */
-const TIMER_PAGE = { path: '/timer', label: 'Timer', icon: 'timer' } as const;
+const WORKOUT_PAGE = { path: '/workout', label: 'Workout', icon: 'workout' } as const;
 
 /** The pages the menu always links to, in the order they're listed. */
 const PAGES = [
@@ -36,7 +36,7 @@ export class NavComponent {
     private readonly menuButton = viewChild.required<ElementRef<HTMLButtonElement>>('menuButton');
 
     private readonly router = inject(Router);
-    private readonly activeTimer = inject(TimerStore).activeTimer;
+    private readonly activeWorkout = inject(WorkoutStore).activeWorkout;
     private readonly url = toSignal(
         this.router.events.pipe(
             filter((event) => event instanceof NavigationEnd),
@@ -45,14 +45,14 @@ export class NavComponent {
         { initialValue: this.router.url }
     );
 
-    /** With a Timer link first while a workout is going, so it's easy to get back to. */
+    /** With a Workout link first while a workout is going, so it's easy to get back to. */
     protected readonly pages = computed(() =>
-        this.activeTimer() ? [TIMER_PAGE, ...PAGES] : PAGES
+        this.activeWorkout() ? [WORKOUT_PAGE, ...PAGES] : PAGES
     );
     protected readonly open = signal(false);
-    /** On the timer page, the running timer's title (if it has one); otherwise empty. */
-    protected readonly timerTitle = computed(() =>
-        this.url().startsWith('/timer') ? (this.activeTimer()?.title.trim() ?? '') : ''
+    /** On the workout page, the running workout's title (if it has one); otherwise empty. */
+    protected readonly workoutTitle = computed(() =>
+        this.url().startsWith('/workout') ? (this.activeWorkout()?.title.trim() ?? '') : ''
     );
 
     constructor() {

@@ -6,7 +6,7 @@ Open work, highest priority first. Tick items off (or delete them) as they're do
 
 ### Phase 1: Foundations
 
-Do these first: everything after builds on them. The data is ready for sync (#81) and has exercises in it (#86: your own exercises and notes, steps and sets linked to exercises, `data-version` 3, backup version 3). All 80 built-in exercises are written (#79–#88; more can be added at the end of the backlog in `docs/writing-exercises.md`, by the `exercise-writer` agent). Create picks exercises, your own can be renamed and edited, and your notes show mid-workout (EXR-1–3, EXR-9, EXR-10).
+Do these first: everything after builds on them. The data is ready for sync (#81) and has exercises in it (#86: your own exercises and notes, steps and sets linked to exercises, `data-version` 4, backup version 4). All 80 built-in exercises are written (#79–#88; more can be added at the end of the backlog in `docs/writing-exercises.md`, by the `exercise-writer` agent). Create picks exercises, your own can be renamed and edited, and your notes show mid-workout (EXR-1–3, EXR-9, EXR-10). Timers are called workouts throughout, in the code and saved data too (EXR-5).
 
 - [ ] **Fill the equipment gaps found in review:** a preacher bench for the preacher curl (#84 lists it as a `bench`), and rings or a Smith machine as choices for the inverted row (#87 lists `barbell` and `rack`). Add the new items to `Equipment` and `EQUIPMENT_CHOICES` (what the exercise editor offers) in `exercise.ts`, and to the list in `docs/features/exercises.md`, then update those exercises.
 - [ ] **Exercise pages (EXR-6–8):** browse and search the list, and a page per exercise with its description, how-to steps and the body map (`<app-body-map [main] [supporting]>`, built in #83). Phase 3's progress goes on the same page. Also:
@@ -14,7 +14,6 @@ Do these first: everything after builds on them. The data is ready for sync (#81
     - How-to steps and tips for your own exercises, which the editor doesn't offer yet, and picking muscles by tapping the body map as well as from the chips.
     - Hiding a built-in exercise from the picker, and deleting your own (not while a workout uses it; one with only history is hidden instead), as drafted in `docs/features/exercises.md`.
 - [ ] **More room for history (SYN-5):** move it from `localStorage` to IndexedDB and lift the 500-entry cap, so years of progress fit.
-- [ ] **"Workouts", not "Timers" (EXR-5):** rename in the menu, library, Create, the timer page, history ("Untitled timer") and the docs. The app keeps the name LoopTimer; code names can follow or stay.
 
 ### Phase 2: Feedback in the workout
 
@@ -48,10 +47,9 @@ Do these first: everything after builds on them. The data is ready for sync (#81
 
 ## 2. Design
 
-- [ ] **Weights on library cards:** a card sums up a round (e.g. "4 steps · 01:30 + reps") rather than listing steps. Revisit with the "Workouts" rename in Phase 1: a workout card could list its exercises (e.g. "Squats, Bench press + 1 more"), which would make weights on cards unnecessary.
+- [ ] **Weights on library cards:** a card sums up a round (e.g. "4 steps · 01:30 + reps") rather than listing steps. Now that they're workouts (EXR-5), a workout card could list its exercises (e.g. "Squats, Bench press + 1 more"), which would make weights on cards unnecessary.
 
 ## 3. Known issues
 
-- [ ] **Library cards show a timer's id as a tooltip:** hovering a card's title shows "ID: " and the id, which since #81 is a long random UUID. Drop the tooltip in the "Workouts" rename (EXR-5).
 - [ ] **The body map can't shade abductors:** react-native-body-highlighter has no abductor shapes on either figure, so exercises that work them (side plank, hip abduction) list them without shading. Fix by drawing the shapes ourselves, or swap to a diagram that has them.
 - [ ] **Two devices can each make the same exercise of their own:** typing "Sled push" on a phone and on a laptop makes two exercises with different ids, and importing one device's backup on the other keeps both (steps link to whichever was there first). Merge exercises of your own that share a name when importing, or before sync (SYN-3).

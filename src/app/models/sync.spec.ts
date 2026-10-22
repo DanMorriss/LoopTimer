@@ -61,7 +61,7 @@ describe('mergeRecords', () => {
         const deletions: Deletion[] = [
             { kind: 'history', id: 'a', deletedAt: 5 },
             { kind: 'history', id: 'b', deletedAt: 5 },
-            { kind: 'timer', id: 'c', deletedAt: 5 },
+            { kind: 'workout', id: 'c', deletedAt: 5 },
         ];
 
         const result = mergeRecords(
@@ -72,7 +72,7 @@ describe('mergeRecords', () => {
             deletions
         );
 
-        // b changed after; c's deletion is for a timer, not this kind
+        // b changed after; c's deletion is for a workout, not this kind
         expect(result.records.map((n) => n.id)).toEqual(['b', 'c']);
         expect(result.removed).toBe(1);
         expect(result.deletions).toEqual([deletions[0]]);
@@ -93,14 +93,14 @@ describe('mergeRecords', () => {
 
 describe('isDeletion', () => {
     it('accepts a deletion, and nothing else', () => {
-        expect(isDeletion({ kind: 'timer', id: 'a', deletedAt: 1 })).toBe(true);
+        expect(isDeletion({ kind: 'workout', id: 'a', deletedAt: 1 })).toBe(true);
         for (const value of [
             null,
             'a',
             { kind: 'note', id: 'a', deletedAt: 1 },
-            { kind: 'timer', id: '', deletedAt: 1 },
-            { kind: 'timer', id: 'a', deletedAt: 0 },
-            { kind: 'timer', id: 'a', deletedAt: 1.5 },
+            { kind: 'workout', id: '', deletedAt: 1 },
+            { kind: 'workout', id: 'a', deletedAt: 0 },
+            { kind: 'workout', id: 'a', deletedAt: 1.5 },
         ]) {
             expect(isDeletion(value)).toBe(false);
         }

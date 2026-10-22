@@ -13,7 +13,7 @@ bootstrapApplication(AppComponent, {
         provideRouter(routes),
         provideAppInitializer(() => {
             // Start listening for the first tap straight away, so sound is unlocked by the
-            // time a timer starts (browsers only allow sound after an interaction)
+            // time a workout starts (browsers only allow sound after an interaction)
             inject(AlarmService);
             // Apply the theme setting, and keep following it
             inject(ThemeService);

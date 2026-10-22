@@ -1,12 +1,12 @@
 import { Synced } from './sync';
 import { MAX_WEIGHT_KG } from './weight';
 
-/** One workout in the history: a timer run that finished, or was stopped part-way. */
+/** One workout in the history: a workout run that finished, or was stopped part-way. */
 export interface HistoryEntry extends Synced {
-    /** Unique per run: the run's start time and the timer's id. */
+    /** Unique per run: the run's start time and the workout's id. */
     id: string;
-    timerId: string;
-    /** The timer's title when it ran (it may be renamed or deleted later). */
+    workoutId: string;
+    /** The workout's title when it ran (it may be renamed or deleted later). */
     title: string;
     /** When the run began, in ms since the epoch. */
     startedAt: number;
@@ -16,7 +16,7 @@ export interface HistoryEntry extends Synced {
     activeSeconds: number;
     /** Full rounds done. */
     roundsCompleted: number;
-    /** Rounds the timer was set to, or 0 for one that runs until stopped. */
+    /** Rounds the workout was set to, or 0 for one that runs until stopped. */
     totalRounds: number;
     outcome: 'finished' | 'stopped';
     /** A short line of the user's own, e.g. "felt strong". Missing when there isn't one. */
@@ -28,8 +28,8 @@ export interface HistoryEntry extends Synced {
 /** Long enough for a line about how it went, short enough to sit under the entry. */
 export const MAX_NOTE_LENGTH = 120;
 
-export function historyId(startedAt: number, timerId: string): string {
-    return `${startedAt}-${timerId}`;
+export function historyId(startedAt: number, workoutId: string): string {
+    return `${startedAt}-${workoutId}`;
 }
 
 /** One set of a rep step, logged when Done is pressed. */

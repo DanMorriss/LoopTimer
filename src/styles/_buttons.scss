@@ -1,8 +1,8 @@
 // The app's buttons, in one place so every page uses the same few. Pick by role:
 //
-// .btn-main   The one main action on a screen (Start timer, Add timer, Create a timer):
+// .btn-main   The one main action on a screen (Start workout, Add workout, Create a workout):
 //             a raised glowing pill that a band of light crosses every few seconds.
-//             .btn-main--round makes it a circle for an icon (the timer's Pause/Resume).
+//             .btn-main--round makes it a circle for an icon (the workout's Pause/Resume).
 // .btn-pill   Any smaller action (Play, Collapse all, Cancel, links that act like buttons).
 //             Add .btn-pill--danger for Delete.
 // .btn-icon   An icon on its own: a 44px outlined circle. Add .btn-icon--danger for delete
@@ -99,7 +99,7 @@
     }
 }
 
-// The round version, for an icon on its own (the timer's Pause/Resume)
+// The round version, for an icon on its own (the workout's Pause/Resume)
 .btn-main--round {
     width: 80px;
     min-height: 0;

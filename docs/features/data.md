@@ -2,13 +2,13 @@
 
 What the app saves, and in what shape. Everything is on the device; there's no account or server.
 
-**Ready for sync:** every timer and history entry has an id that can't clash with another device's (random, not 1, 2, 3) and an `updatedAt`, the time it last changed in ms since 1970. Deleting one leaves a marker in `deleted`. Merging two copies (a backup now, another device later) goes by id: the most recent change to each record wins, and a deletion wins over changes made before it. See [backup-and-sync](backup-and-sync.md).
+**Ready for sync:** every workout and history entry has an id that can't clash with another device's (random, not 1, 2, 3) and an `updatedAt`, the time it last changed in ms since 1970. Deleting one leaves a marker in `deleted`. Merging two copies (a backup now, another device later) goes by id: the most recent change to each record wins, and a deletion wins over changes made before it. See [backup-and-sync](backup-and-sync.md).
 
 ## Saved for good (`localStorage` on the web)
 
-### `timers`: the library
+### `workouts`: the library
 
-A JSON list of timers:
+A JSON list of workouts:
 
 ```json
 [
@@ -26,14 +26,14 @@ A JSON list of timers:
 ]
 ```
 
-- `id`: a random UUID, given when the timer is made and never changed.
+- `id`: a random UUID, given when the workout is made and never changed.
 - `updatedAt`: when it was made or last changed (edited, or its reps or weight changed mid-workout).
 - `repeats`: 1–30, or **0 for until stopped**.
 - `seconds`: 1–5999 (99:59). `reps`: 1–100. `name`: may be empty.
 - `weight` (rep steps only, optional): in **kg whatever unit is shown**, to the gram, more than 0 and up to 300. Missing for none. A weight picked in lb is converted (1 lb = 0.45359237 kg), so 45 lb saves as 20.412 kg.
-- `exerciseId` (work and rep steps, optional): the exercise the step is, e.g. `builtin:back-squat`, or one of your own. Set by picking an exercise in setup (EXR-2). When a timer is saved, a step keeps its exercise while that exercise is still there; any other named work step is linked by its name, as the conversion to version 3 does (below). Typing over a step's name in setup drops its link, so a renamed step follows its name. Missing for a rest or an unnamed step.
-- A timer with no work (no timed step with time, and no rep step) isn't valid.
-- **Older format:** timers saved before steps existed have `timerMinutes`, `timerSeconds`, `restMinutes`, `restSeconds` in place of `steps`. They're read as a timed step plus a rest step (left out if 0), and saved in the new format the next time anything changes.
+- `exerciseId` (work and rep steps, optional): the exercise the step is, e.g. `builtin:back-squat`, or one of your own. Set by picking an exercise in setup (EXR-2). When a workout is saved, a step keeps its exercise while that exercise is still there; any other named work step is linked by its name, as the conversion to version 3 does (below). Typing over a step's name in setup drops its link, so a renamed step follows its name. Missing for a rest or an unnamed step.
+- A workout with no work (no timed step with time, and no rep step) isn't valid.
+- **Older format:** workouts saved before steps existed (when they were timers of one work and one rest time) have `timerMinutes`, `timerSeconds`, `restMinutes`, `restSeconds` in place of `steps`. They're read as a timed step plus a rest step (left out if 0), and saved in the new format the next time anything changes.
 
 ### `history`: the history
 
@@ -43,7 +43,7 @@ A JSON list of entries, newest first, at most 500:
 [
     {
         "id": "1760952300000-5f0c2a9e-8b1d-4c3a-9e2f-7a6b5c4d3e21",
-        "timerId": "5f0c2a9e-8b1d-4c3a-9e2f-7a6b5c4d3e21",
+        "workoutId": "5f0c2a9e-8b1d-4c3a-9e2f-7a6b5c4d3e21",
         "title": "Circuit",
         "startedAt": 1760952300000,
         "endedAt": 1760953050000,
@@ -62,9 +62,9 @@ A JSON list of entries, newest first, at most 500:
 ```
 
 - Times are ms since 1970 (UTC).
-- `id` is `<startedAt>-<timerId>`: unique per run, so the same run logged again replaces its entry, and the same run matches across copies.
+- `id` is `<startedAt>-<workoutId>`: unique per run, so the same run logged again replaces its entry, and the same run matches across copies.
 - `updatedAt`: when it was last logged or its note changed.
-- `totalRounds` is 0 for a timer that runs until stopped. `outcome` is `finished` or `stopped`. `note` is missing when there isn't one (up to 120 characters).
+- `totalRounds` is 0 for a workout that runs until stopped. `outcome` is `finished` or `stopped`. `note` is missing when there isn't one (up to 120 characters).
 - `sets` (missing when there were none): one per Done on a rep step, in order. `round` and `step` count from 0, `reps` is at least 1, `weight` is in kg (missing for none). `exerciseId` is the exercise it was, from its step (missing for an unnamed step). A broken set is dropped when loading, keeping the rest of the entry.
 
 ### `exercises`: your own exercises
@@ -97,7 +97,7 @@ A JSON list of `{ "id": "<exercise id>", "text": "Pause at the bottom", "updated
 
 ### `deleted`
 
-The last 500 timers, history entries, exercises of your own and notes deleted, oldest first, so a deletion reaches other copies and a run still going can't log itself back in (see [history](history.md)):
+The last 500 workouts, history entries, exercises of your own and notes deleted, oldest first, so a deletion reaches other copies and a run still going can't log itself back in (see [history](history.md)):
 
 ```json
 [
@@ -109,21 +109,29 @@ The last 500 timers, history entries, exercises of your own and notes deleted, o
 ]
 ```
 
-`kind` is `timer`, `history`, `exercise` or `exercise-note` (whose `id` is the exercise's). Undo in the history takes its marker away.
+`kind` is `workout`, `history`, `exercise` or `exercise-note` (whose `id` is the exercise's). Undo in the history takes its marker away.
 
 ### `data-version`
 
-Which shape the rest is in: `3`. Missing means 1, from before it was saved. On load, older data is converted once, a version at a time, before anything reads it.
+Which shape the rest is in: `4`. Missing means 1, from before it was saved. On load, older data is converted once, a version at a time, before anything reads it. The step to version 4 only changes names, so it goes first, and the steps below are described with the names as they are now.
 
 **1 → 2, ready for sync:**
 
-- each timer's number id becomes a new random one, and it gets `updatedAt` (the time of the conversion)
-- each history entry's `timerId` becomes its timer's new id (or, for a timer since deleted, the old number as text), and it gets `updatedAt` (when it ended); its own `id` stays
+- each workout's number id becomes a new random one, and it gets `updatedAt` (the time of the conversion)
+- each history entry's `workoutId` becomes its workout's new id (or, for a workout since deleted, the old number as text), and it gets `updatedAt` (when it ended); its own `id` stays
 - `history-deleted`, version 1's list of deleted history ids, becomes markers in `deleted`
 
-`legacy-timer-ids` keeps each old number and its new id, so a workout in progress when the app updated still finds its timer.
+`legacy-workout-ids` keeps each old number and its new id, so a workout in progress when the app updated still finds its workout.
 
-**2 → 3, exercises (EXR-4):** each named work step in a timer, and each named set in the history, gets the `exerciseId` its name means: a built-in exercise where the name, or one of its other names, matches (ignoring case, spaces and a plural "s"), and otherwise a new exercise of your own, one per name, measured by reps for a rep step and by time for a timed one. Rest and unnamed steps aren't linked.
+**3 → 4, workouts, not timers (EXR-5):** what were called timers are called workouts, in the saved data too:
+
+- `timers` moves to `workouts`, and `legacy-timer-ids` to `legacy-workout-ids`
+- each history entry's `timerId` becomes `workoutId`
+- a deletion of kind `timer` becomes kind `workout`
+
+The run in progress in a tab moves too (`activeTimerId`, `activeTimerStartedAt` and `activeTimerPausedAt` become the `activeWorkout…` keys below). That's done whenever a tab loads rather than once, since each tab has its own.
+
+**2 → 3, exercises (EXR-4):** each named work step in a workout, and each named set in the history, gets the `exerciseId` its name means: a built-in exercise where the name, or one of its other names, matches (ignoring case, spaces and a plural "s"), and otherwise a new exercise of your own, one per name, measured by reps for a rep step and by time for a timed one. Rest and unnamed steps aren't linked.
 
 ### `settings`
 
@@ -142,17 +150,17 @@ Which shape the rest is in: `3`. Missing means 1, from before it was saved. On l
 
 ## Saved for the run in progress (`sessionStorage` on the web, per tab)
 
-| Key                    | What                                                                                                                               |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `activeTimerId`        | The timer being run.                                                                                                               |
-| `activeRunStartedAt`   | When the run really began. Never moves; it dates the run and makes its history id.                                                 |
-| `activeTimerStartedAt` | When the run began on the countdown's clock: moved on by every pause and every rep step, so elapsed time is simply now minus this. |
-| `activeTimerPausedAt`  | When it was paused, if it is.                                                                                                      |
-| `activeRepStepsDone`   | How many rep steps have been done, counting across rounds.                                                                         |
-| `activeRepMs`          | Time spent on rep steps so far, which counts as time spent in the history.                                                         |
-| `activeSets`           | The sets done so far, as they'll go in the history entry.                                                                          |
+| Key                      | What                                                                                                                               |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `activeWorkoutId`        | The workout being run.                                                                                                             |
+| `activeRunStartedAt`     | When the run really began. Never moves; it dates the run and makes its history id.                                                 |
+| `activeWorkoutStartedAt` | When the run began on the countdown's clock: moved on by every pause and every rep step, so elapsed time is simply now minus this. |
+| `activeWorkoutPausedAt`  | When it was paused, if it is.                                                                                                      |
+| `activeRepStepsDone`     | How many rep steps have been done, counting across rounds.                                                                         |
+| `activeRepMs`            | Time spent on rep steps so far, which counts as time spent in the history.                                                         |
+| `activeSets`             | The sets done so far, as they'll go in the history entry.                                                                          |
 
-From these, everything on the timer page is worked out (see [run-a-timer](run-a-timer.md)).
+From these, everything on the workout page is worked out (see [run-a-workout](run-a-workout.md)).
 
 ## Backup file
 
@@ -161,9 +169,9 @@ From these, everything on the timer page is worked out (see [run-a-timer](run-a-
 ```json
 {
     "app": "LoopTimer",
-    "version": 3,
+    "version": 4,
     "exportedAt": 1761055200000,
-    "timers": [],
+    "workouts": [],
     "history": [],
     "exercises": [],
     "exerciseNotes": [],
@@ -178,16 +186,17 @@ From these, everything on the timer page is worked out (see [run-a-timer](run-a-
 }
 ```
 
-- `timers`, `history`, `exercises`, `exerciseNotes` (as `exercise-notes`), `deleted` and `settings` are in the same shapes as above; `exportedAt` is ms since 1970.
+- `workouts`, `history`, `exercises`, `exerciseNotes` (as `exercise-notes`), `deleted` and `settings` are in the same shapes as above; `exportedAt` is ms since 1970.
 - `version` goes up whenever the file's shape changes. A file from an older version is converted when imported; one from a newer version is turned down.
-- **Version 1** files (from before random ids) have number timer ids, no `updatedAt` and no `deleted`. They're converted as saved data is: their timers get new random ids, so they're matched on what they are (title, steps and rounds) rather than by id.
+- **Version 1** files (from before random ids) have number workout ids, no `updatedAt` and no `deleted`. They're converted as saved data is: their workouts get new random ids, so they're matched on what they are (title, steps and rounds) rather than by id.
+- **Version 3 and older** files call workouts timers: a `timers` list in place of `workouts`, `timerId` in the history and the kind `timer` in `deleted`. They're renamed as they're read.
 - **Version 2** files (from before exercises) have no `exercises` or `exerciseNotes`, and their steps and sets aren't linked; they're linked by name as they're imported.
-- A file that isn't JSON, doesn't say `"app": "LoopTimer"`, lacks `timers` or `history` lists, or is over 10 MB isn't a backup.
+- A file that isn't JSON, doesn't say `"app": "LoopTimer"`, lacks `workouts` or `history` lists, or is over 10 MB isn't a backup.
 
 ## Broken data
 
-Saved data that's broken or unexpected never stops the app starting: unusable timers and history entries are dropped and the rest kept; broken settings fall back to the defaults; a saved run with impossible times starts again from now. A backup file is read the same way.
+Saved data that's broken or unexpected never stops the app starting: unusable workouts and history entries are dropped and the rest kept; broken settings fall back to the defaults; a saved run with impossible times starts again from now. A backup file is read the same way.
 
 ## Platform notes
 
-- **iOS:** reading and writing the same backup file lets timers and history move between the web app and an iPhone app. Keep the "drop what's broken, keep the rest" rule when reading.
+- **iOS:** reading and writing the same backup file lets workouts and history move between the web app and an iPhone app. Keep the "drop what's broken, keep the rest" rule when reading.

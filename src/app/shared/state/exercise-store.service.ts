@@ -130,7 +130,7 @@ export class ExerciseStore {
         this.saveNotes();
     }
 
-    /** Merges your own exercises from another copy (a backup), as timers merge. */
+    /** Merges your own exercises from another copy (a backup), as workouts merge. */
     mergeOwn(exercises: readonly OwnExercise[], deletedThere: readonly Deletion[]) {
         const result = mergeRecords(
             'exercise',

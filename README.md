@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/DanMorriss/LoopTimer/actions/workflows/ci.yml/badge.svg)](https://github.com/DanMorriss/LoopTimer/actions/workflows/ci.yml)
 
-LoopTimer is an interval timer for anything done in timed repetitions: workouts, study sessions, or other structured activities. You build a round from work and rest steps, choose how many rounds (or until stopped), save the timer to a library, and run it whenever you need it.
+LoopTimer is an interval timer for anything done in timed repetitions: workouts, study sessions, or other structured activities. You build a round from work and rest steps, choose how many rounds (or until stopped), save the workout to a library, and run it whenever you need it.
 
 **Try it:** https://loop-timer-eight.vercel.app
 
@@ -10,17 +10,17 @@ Built with Angular 22 (standalone components, signals and Signal Forms), Angular
 
 ## What it does today
 
-- **Create a timer** from a list of timed, rest and rep steps in any order (up to 20), each optionally named, e.g. "Squats". Timed and rest steps are up to 99:59; a rep step is a count instead, up to 100, e.g. "20 push-ups", with an optional weight, e.g. "10 squats @ 60 kg". Add steps, drag them into order (or use the up and down buttons), or delete them. Then pick 1–30 rounds or ∞ (until stopped). Times are picked on iPhone-style wheels: swipe, scroll or drag a wheel, click a number, or type one, and the one in the middle is selected. Give it a title, or leave it untitled. For ∞, scroll the rounds wheel past 30, or flip the ∞ switch beside it: the dot races round the loop and the wheel spins to ∞. Turning the switch off spins back to the rounds you had.
-- **Run it.** A ring fills as each phase goes by. Timed steps fill clockwise in pink, rest fills anticlockwise in blue, and the face flashes in the phase colour. The face shows the step's name and, when a round has several work or rep steps, which step it is; underneath, what's up next. The page shows "round 2 of 5" with a dot for each round, and "Last one!" for the final round. On a phone, the timer's title takes the place of the LoopTimer name at the top, leaving more room for the ring. Rest at the end of the last round is skipped. A rep step has no countdown: the ring turns violet and the face shows the reps, and the timer waits, however long it takes, until you press Done (or Space). The next step then starts from its full time, and the time spent on reps still counts in the history. "Change reps or weight" under the controls changes them mid-workout, e.g. going up a weight, for this set, the rest of the workout and next time.
-- **Hear each phase start.** Two short high beeps for timed steps, a long low tone for rest, and three rising notes at the finish, with matching vibrations on phones that support them (not iPhones). The beeps are scheduled ahead on the audio clock, so they stay on time in a background tab. They keep going on any page of the app, not just the timer, and by default the screen is kept on during a workout (Screen Wake Lock) so the phone doesn't lock and silence them. Browsers only allow sound after a tap, so after a refresh the timer page shows a "Tap to turn on sound" button.
+- **Create a workout** from a list of timed, rest and rep steps in any order (up to 20), each optionally named, e.g. "Squats". Timed and rest steps are up to 99:59; a rep step is a count instead, up to 100, e.g. "20 push-ups", with an optional weight, e.g. "10 squats @ 60 kg". Add steps, drag them into order (or use the up and down buttons), or delete them. Then pick 1–30 rounds or ∞ (until stopped). Times are picked on iPhone-style wheels: swipe, scroll or drag a wheel, click a number, or type one, and the one in the middle is selected. Give it a title, or leave it untitled. For ∞, scroll the rounds wheel past 30, or flip the ∞ switch beside it: the dot races round the loop and the wheel spins to ∞. Turning the switch off spins back to the rounds you had.
+- **Run it.** A ring fills as each phase goes by. Timed steps fill clockwise in pink, rest fills anticlockwise in blue, and the face flashes in the phase colour. The face shows the step's name and, when a round has several work or rep steps, which step it is; underneath, what's up next. The page shows "round 2 of 5" with a dot for each round, and "Last one!" for the final round. On a phone, the workout's title takes the place of the LoopTimer name at the top, leaving more room for the ring. Rest at the end of the last round is skipped. A rep step has no countdown: the ring turns violet and the face shows the reps, and the workout waits, however long it takes, until you press Done (or Space). The next step then starts from its full time, and the time spent on reps still counts in the history. "Change reps or weight" under the controls changes them mid-workout, e.g. going up a weight, for this set, the rest of the workout and next time.
+- **Hear each phase start.** Two short high beeps for timed steps, a long low tone for rest, and three rising notes at the finish, with matching vibrations on phones that support them (not iPhones). The beeps are scheduled ahead on the audio clock, so they stay on time in a background tab. They keep going on any page of the app, not just the workout, and by default the screen is kept on during a workout (Screen Wake Lock) so the phone doesn't lock and silence them. Browsers only allow sound after a tap, so after a refresh the workout page shows a "Tap to turn on sound" button.
 - **Pause, resume or stop** while it runs, or press Space to pause and resume (a "Space" key under Pause shows this on computers). Pausing freezes the countdown and the ring where they are; stopping ends the workout and goes back to the library.
 - **Keep accurate time.** The countdown is worked out from the clock, not by counting ticks. It stays correct if the tab is in the background or the phone is locked, and catches up as soon as you come back. Refreshing the page carries on where you were, paused or not.
-- **Get anywhere from the menu** (top left): Home, Create, Library, History and Settings, with Timer at the top while a workout is going.
-- **Settings**: a dark, light or match-system theme, which fades from one to the other as you switch; show weights in kg or lb; turn sound, vibration or keeping the screen on off; and play each alarm sound to hear what it is. Saved in the browser, like timers.
-- **History**: every finished workout, and any stopped after at least one step (including one ended by starting another timer, or by closing the tab: it's logged as stopped then, and updated if a refresh carries it on), grouped by day with its start time, time spent (not counting pauses) and rounds, plus a total for the last seven days. Each entry lists the sets of its rep steps, e.g. "Squats: 10, 10, 8 @ 60 kg". Each entry's ⋮ menu adds, edits or removes a short note (e.g. "felt strong"), or deletes it, with Undo. When a workout finishes, "Add a note" goes straight to it in the history with the note box open; "View history" just shows it. Saved in the browser.
-- **Save and reuse timers** in the library: start, edit or delete any of them. Timers are saved in the browser (`localStorage`), so they stay on that device.
+- **Get anywhere from the menu** (top left): Home, Create, Library, History and Settings, with Workout at the top while a workout is going.
+- **Settings**: a dark, light or match-system theme, which fades from one to the other as you switch; show weights in kg or lb; turn sound, vibration or keeping the screen on off; and play each alarm sound to hear what it is. Saved in the browser, like workouts.
+- **History**: every finished workout, and any stopped after at least one step (including one ended by starting another workout, or by closing the tab: it's logged as stopped then, and updated if a refresh carries it on), grouped by day with its start time, time spent (not counting pauses) and rounds, plus a total for the last seven days. Each entry lists the sets of its rep steps, e.g. "Squats: 10, 10, 8 @ 60 kg". Each entry's ⋮ menu adds, edits or removes a short note (e.g. "felt strong"), or deletes it, with Undo. When a workout finishes, "Add a note" goes straight to it in the history with the note box open; "View history" just shows it. Saved in the browser.
+- **Save and reuse workouts** in the library: start, edit or delete any of them. Workouts are saved in the browser (`localStorage`), so they stay on that device.
 - **Accessible:**
-    - Everything works with a keyboard, and Space pauses and resumes the timer.
+    - Everything works with a keyboard, and Space pauses and resumes the workout.
     - Screen readers hear "Timed, round 1 of 3", "Rest" and "Finished" as each phase starts, and "Paused" when paused.
     - Looping animations stop when the system's reduced-motion setting is on.
     - Every page passes automated axe checks (WCAG 2.1 AA) in both themes, and every text and control colour is checked for contrast against the surfaces it sits on.
@@ -49,36 +49,36 @@ Other commands:
 
 Every pull request runs the format check, these tests and the production build in GitHub Actions (`.github/workflows/ci.yml`).
 
-There are around 140 unit tests, run with [Vitest](https://vitest.dev) in browser mode: a real headless Chromium via Playwright, so layout and colour contrast are checked as a browser renders them. Timer tests use Vitest's fake clock (`vi.useFakeTimers()`). As well as the usual component and service tests, they include:
+There are around 140 unit tests, run with [Vitest](https://vitest.dev) in browser mode: a real headless Chromium via Playwright, so layout and colour contrast are checked as a browser renders them. Workout tests use Vitest's fake clock (`vi.useFakeTimers()`). As well as the usual component and service tests, they include:
 
-- **Timer logic** (`src/app/timer/timer-state.ts`): phase changes on exact seconds, no rest after the last round, zero rest skipped, and catching up after delayed ticks.
-- **Accessibility** (`src/app/a11y.spec.ts`): renders the whole app and runs [axe-core](https://github.com/dequelabs/axe-core) over every page and state, including the delete dialog and the timer mid-workout. Any WCAG 2.1 A/AA or best-practice violation fails the test.
+- **Workout logic** (`src/app/workout/workout-state.ts`): phase changes on exact seconds, no rest after the last round, zero rest skipped, and catching up after delayed ticks.
+- **Accessibility** (`src/app/a11y.spec.ts`): renders the whole app and runs [axe-core](https://github.com/dequelabs/axe-core) over every page and state, including the delete dialog and the workout mid-workout. Any WCAG 2.1 A/AA or best-practice violation fails the test.
 
 ## Project layout
 
 ```
 src/app/
-  home/              Landing page with the infinity logo (Create / Library)
-  nav/               Header: settings, site title, history and home buttons
-  history/           Past workouts by day, with delete and undo
-  settings/          Sound and vibration switches, and alarm previews
-  timer-setup/       Create or edit a timer (Signal Forms)
-  timer-library/     Saved timers
-    timer-card/        One timer in the list: start, edit, delete
-  timer/             The running timer: ring, countdown, announcements
-    timer-state.ts     Works out phase, time left and round from elapsed time
+  home/                Landing page with the infinity logo (Create / Library)
+  nav/                 Header: settings, site title, history and home buttons
+  history/             Past workouts by day, with delete and undo
+  settings/            Sound and vibration switches, and alarm previews
+  workout-setup/       Create or edit a workout (Signal Forms)
+  workout-library/     Saved workouts
+    workout-card/      One workout in the list: start, edit, delete
+  workout/             The running workout: ring, countdown, announcements
+    workout-state.ts   Works out phase, time left and round from elapsed time
     alarm-schedule.ts  When each alarm is due
   shared/
-    state/timer-store.service.ts   Saved timers and the active timer
+    state/workout-store.service.ts  Saved workouts and the active workout
     state/settings-store.service.ts Saved settings
     state/history-store.service.ts  Saved workout history
-    theme/theme.service.ts         Applies the theme (colour tokens are in src/styles.scss)
-    alarms/alarm.service.ts        Plays alarms on the audio clock, and vibrates
-    components/wheel-picker/       iPhone-style number wheel (a Signal Forms control)
-    components/infinity-switch/    The ∞ (until stopped) switch in setup
-    components/toggle-switch/      On/off switch used in settings
-    components/confirm-dialog/     "Delete …?" dialog (library timers, setup steps)
-    reduced-motion.ts              Follows the system reduced-motion setting
+    theme/theme.service.ts          Applies the theme (colour tokens are in src/styles.scss)
+    alarms/alarm.service.ts         Plays alarms on the audio clock, and vibrates
+    components/wheel-picker/        iPhone-style number wheel (a Signal Forms control)
+    components/infinity-switch/     The ∞ (until stopped) switch in setup
+    components/toggle-switch/       On/off switch used in settings
+    components/confirm-dialog/      "Delete …?" dialog (library workouts, setup steps)
+    reduced-motion.ts               Follows the system reduced-motion setting
   a11y.spec.ts       axe checks across the whole app
 src/styles/
   _buttons.scss      The shared buttons: .btn-main, .btn-pill, .btn-icon, .btn-add
@@ -89,7 +89,7 @@ src/styles/
 
 LoopTimer is becoming a workout helper that shows you how you're improving: see [docs/direction.md](docs/direction.md). Not built yet, in order:
 
-1. **Foundations:** exercises as things in their own right (a built-in list with descriptions and a muscle body map, plus your own), "Workouts" in place of "Timers", and data ready for sync. (Export and import are done: Settings → Your data.)
+1. **Foundations:** exercises as things in their own right (a built-in list with descriptions and a muscle body map, plus your own), and data ready for sync. (Export and import are done: Settings → Your data.)
 2. **Feedback in the workout:** what you did last time, and personal bests.
 3. **Progress pages:** a chart, bests and recent sessions for each exercise.
 4. **Sync:** an account, so every device has the same data.

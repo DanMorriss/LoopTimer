@@ -17,7 +17,7 @@ import { ConfirmDialogComponent } from './confirm-dialog.component';
     `,
 })
 class HostComponent {
-    readonly title = signal('Delete timer?');
+    readonly title = signal('Delete workout?');
     readonly confirmLabel = signal('Delete');
     cancelled: Mock = vi.fn().mockName('cancelled');
     confirmed: Mock = vi.fn().mockName('confirmed');
@@ -39,7 +39,7 @@ describe('ConfirmDialogComponent', () => {
         const dialog = el('[role="dialog"]');
         expect(dialog.getAttribute('aria-modal')).toBe('true');
         expect(el('#' + dialog.getAttribute('aria-labelledby')).textContent).toContain(
-            'Delete timer?'
+            'Delete workout?'
         );
         expect(el('#' + dialog.getAttribute('aria-describedby')).textContent).toContain(
             'This will remove "Sprints".'

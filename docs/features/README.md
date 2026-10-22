@@ -13,67 +13,67 @@ Each file has the same sections:
 
 Status: ✅ done, ◐ partly, — not started. The iOS column fills in as a port happens.
 
-| ID     | Story                                                                  | Web | iOS | File                                          |
-| ------ | ---------------------------------------------------------------------- | --- | --- | --------------------------------------------- |
-| BLD-1  | Build a timer from work and rest steps that repeats a number of rounds | ✅  | —   | [build-a-timer](build-a-timer.md)             |
-| BLD-2  | Run a timer until I stop it                                            | ✅  | —   | [build-a-timer](build-a-timer.md)             |
-| BLD-3  | Name each step                                                         | ✅  | —   | [build-a-timer](build-a-timer.md)             |
-| BLD-4  | Count reps instead of a time                                           | ✅  | —   | [build-a-timer](build-a-timer.md)             |
-| BLD-5  | Reorder and delete steps                                               | ✅  | —   | [build-a-timer](build-a-timer.md)             |
-| BLD-6  | Edit a saved timer                                                     | ✅  | —   | [build-a-timer](build-a-timer.md)             |
-| BLD-7  | Add a weight to a rep step, in kg or lb                                | ✅  | —   | [build-a-timer](build-a-timer.md)             |
-| RUN-1  | See where I am in the workout at a glance                              | ✅  | —   | [run-a-timer](run-a-timer.md)                 |
-| RUN-2  | See what's next                                                        | ✅  | —   | [run-a-timer](run-a-timer.md)                 |
-| RUN-3  | Tap Done when a set of reps is finished                                | ✅  | —   | [run-a-timer](run-a-timer.md)                 |
-| RUN-4  | Know when I've finished, and note how it went                          | ✅  | —   | [run-a-timer](run-a-timer.md)                 |
-| RUN-5  | Keep accurate time whatever the device does                            | ✅  | —   | [run-a-timer](run-a-timer.md)                 |
-| RUN-6  | Change the reps or weight mid-workout, e.g. going up a weight          | ✅  | —   | [run-a-timer](run-a-timer.md)                 |
-| CTL-1  | Pause and resume                                                       | ✅  | —   | [pause-and-stop](pause-and-stop.md)           |
-| CTL-2  | Stop a workout early                                                   | ✅  | —   | [pause-and-stop](pause-and-stop.md)           |
-| CTL-3  | Pick up where I was if the app is closed or reloaded                   | ✅  | —   | [pause-and-stop](pause-and-stop.md)           |
-| CTL-4  | Keep the workout going while I look at other pages                     | ✅  | —   | [pause-and-stop](pause-and-stop.md)           |
-| ALM-1  | Hear each step start, with a different sound for each kind             | ✅  | —   | [alarms](alarms.md)                           |
-| ALM-2  | Hear alarms with my phone locked, in my pocket                         | ◐   | —   | [alarms](alarms.md)                           |
-| ALM-3  | Feel each step start (vibration)                                       | ◐   | —   | [alarms](alarms.md)                           |
-| ALM-4  | Choose the sound for each step                                         | —   | —   | [alarms](alarms.md)                           |
-| LIB-1  | See my saved timers and start one                                      | ✅  | —   | [library](library.md)                         |
-| LIB-2  | Edit or delete a saved timer                                           | ✅  | —   | [library](library.md)                         |
-| HIS-1  | See the workouts I've done, by day                                     | ✅  | —   | [history](history.md)                         |
-| HIS-2  | See how much I've done this week                                       | ✅  | —   | [history](history.md)                         |
-| HIS-3  | Add a note to a workout                                                | ✅  | —   | [history](history.md)                         |
-| HIS-4  | Delete a workout from the history, with Undo                           | ✅  | —   | [history](history.md)                         |
-| HIS-5  | See the sets I did: reps and weight for each rep step                  | ✅  | —   | [history](history.md)                         |
-| SET-1  | Choose a dark, light or system theme                                   | ✅  | —   | [settings](settings.md)                       |
-| SET-2  | Turn sound, vibration and keeping the screen on, on or off             | ✅  | —   | [settings](settings.md)                       |
-| SET-3  | Hear each alarm sound before a workout                                 | ✅  | —   | [settings](settings.md)                       |
-| SET-4  | Choose kg or lb for weights                                            | ✅  | —   | [settings](settings.md)                       |
-| SET-5  | Choose a male or female figure for the body map                        | ✅  | —   | [settings](settings.md)                       |
-| NAV-1  | Get to any page from anywhere, and back to a workout in progress       | ✅  | —   | [home-and-navigation](home-and-navigation.md) |
-| A11Y-1 | Use every feature with a screen reader, keyboard or reduced motion     | ✅  | —   | [accessibility](accessibility.md)             |
-| EXR-1  | Exercises as things in their own right, used across workouts           | ✅  | —   | [exercises](exercises.md)                     |
-| EXR-2  | Pick an exercise, built-in or my own, or make a new one                | ✅  | —   | [exercises](exercises.md)                     |
-| EXR-3  | Rename my own exercise everywhere, history included                    | ✅  | —   | [exercises](exercises.md)                     |
-| EXR-4  | Carry existing workouts and history over into exercises                | ✅  | —   | [exercises](exercises.md)                     |
-| EXR-5  | See "Workouts", not "Timers", throughout the app                       | —   | —   | [exercises](exercises.md)                     |
-| EXR-6  | Browse and search a built-in list of common exercises                  | —   | —   | [exercises](exercises.md)                     |
-| EXR-7  | See how to do an exercise: a description and the steps                 | —   | —   | [exercises](exercises.md)                     |
-| EXR-8  | See which muscles an exercise works, on a body map                     | ◐   | —   | [exercises](exercises.md)                     |
-| EXR-9  | Make my own exercise, with a description and its muscles               | ✅  | —   | [exercises](exercises.md)                     |
-| EXR-10 | Add my own note to any exercise, built-in ones included                | ◐   | —   | [exercises](exercises.md)                     |
-| PRG-1  | See what I did last time, mid-workout                                  | —   | —   | [progress](progress.md)                       |
-| PRG-2  | Be told about personal bests when I finish                             | —   | —   | [progress](progress.md)                       |
-| PRG-3  | See a list of my exercises with their latest and best                  | —   | —   | [progress](progress.md)                       |
-| PRG-4  | See an exercise's chart, bests and recent sessions                     | —   | —   | [progress](progress.md)                       |
-| PRG-5  | Get a suggested next weight                                            | —   | —   | [progress](progress.md)                       |
-| PRG-6  | See which muscles I've worked this week, on the body map               | —   | —   | [progress](progress.md)                       |
-| SYN-1  | Export all my data to a file                                           | ✅  | —   | [backup-and-sync](backup-and-sync.md)         |
-| SYN-2  | Import a backup without losing what's there                            | ✅  | —   | [backup-and-sync](backup-and-sync.md)         |
-| SYN-3  | Sign in and have the same data on every device                         | —   | —   | [backup-and-sync](backup-and-sync.md)         |
-| SYN-4  | Keep working offline, and catch up when back online                    | —   | —   | [backup-and-sync](backup-and-sync.md)         |
-| SYN-5  | Keep years of history, not just the last 500 workouts                  | —   | —   | [backup-and-sync](backup-and-sync.md)         |
-| PLN-1  | Set which workouts I do on which days                                  | —   | —   | [planning](planning.md)                       |
-| PLN-2  | See what's due today on the home page                                  | —   | —   | [planning](planning.md)                       |
-| PLN-3  | See whether I kept to the plan this week                               | —   | —   | [planning](planning.md)                       |
+| ID     | Story                                                                    | Web | iOS | File                                          |
+| ------ | ------------------------------------------------------------------------ | --- | --- | --------------------------------------------- |
+| BLD-1  | Build a workout from work and rest steps that repeats a number of rounds | ✅  | —   | [build-a-workout](build-a-workout.md)         |
+| BLD-2  | Run a workout until I stop it                                            | ✅  | —   | [build-a-workout](build-a-workout.md)         |
+| BLD-3  | Name each step                                                           | ✅  | —   | [build-a-workout](build-a-workout.md)         |
+| BLD-4  | Count reps instead of a time                                             | ✅  | —   | [build-a-workout](build-a-workout.md)         |
+| BLD-5  | Reorder and delete steps                                                 | ✅  | —   | [build-a-workout](build-a-workout.md)         |
+| BLD-6  | Edit a saved workout                                                     | ✅  | —   | [build-a-workout](build-a-workout.md)         |
+| BLD-7  | Add a weight to a rep step, in kg or lb                                  | ✅  | —   | [build-a-workout](build-a-workout.md)         |
+| RUN-1  | See where I am in the workout at a glance                                | ✅  | —   | [run-a-workout](run-a-workout.md)             |
+| RUN-2  | See what's next                                                          | ✅  | —   | [run-a-workout](run-a-workout.md)             |
+| RUN-3  | Tap Done when a set of reps is finished                                  | ✅  | —   | [run-a-workout](run-a-workout.md)             |
+| RUN-4  | Know when I've finished, and note how it went                            | ✅  | —   | [run-a-workout](run-a-workout.md)             |
+| RUN-5  | Keep accurate time whatever the device does                              | ✅  | —   | [run-a-workout](run-a-workout.md)             |
+| RUN-6  | Change the reps or weight mid-workout, e.g. going up a weight            | ✅  | —   | [run-a-workout](run-a-workout.md)             |
+| CTL-1  | Pause and resume                                                         | ✅  | —   | [pause-and-stop](pause-and-stop.md)           |
+| CTL-2  | Stop a workout early                                                     | ✅  | —   | [pause-and-stop](pause-and-stop.md)           |
+| CTL-3  | Pick up where I was if the app is closed or reloaded                     | ✅  | —   | [pause-and-stop](pause-and-stop.md)           |
+| CTL-4  | Keep the workout going while I look at other pages                       | ✅  | —   | [pause-and-stop](pause-and-stop.md)           |
+| ALM-1  | Hear each step start, with a different sound for each kind               | ✅  | —   | [alarms](alarms.md)                           |
+| ALM-2  | Hear alarms with my phone locked, in my pocket                           | ◐   | —   | [alarms](alarms.md)                           |
+| ALM-3  | Feel each step start (vibration)                                         | ◐   | —   | [alarms](alarms.md)                           |
+| ALM-4  | Choose the sound for each step                                           | —   | —   | [alarms](alarms.md)                           |
+| LIB-1  | See my saved workouts and start one                                      | ✅  | —   | [library](library.md)                         |
+| LIB-2  | Edit or delete a saved workout                                           | ✅  | —   | [library](library.md)                         |
+| HIS-1  | See the workouts I've done, by day                                       | ✅  | —   | [history](history.md)                         |
+| HIS-2  | See how much I've done this week                                         | ✅  | —   | [history](history.md)                         |
+| HIS-3  | Add a note to a workout                                                  | ✅  | —   | [history](history.md)                         |
+| HIS-4  | Delete a workout from the history, with Undo                             | ✅  | —   | [history](history.md)                         |
+| HIS-5  | See the sets I did: reps and weight for each rep step                    | ✅  | —   | [history](history.md)                         |
+| SET-1  | Choose a dark, light or system theme                                     | ✅  | —   | [settings](settings.md)                       |
+| SET-2  | Turn sound, vibration and keeping the screen on, on or off               | ✅  | —   | [settings](settings.md)                       |
+| SET-3  | Hear each alarm sound before a workout                                   | ✅  | —   | [settings](settings.md)                       |
+| SET-4  | Choose kg or lb for weights                                              | ✅  | —   | [settings](settings.md)                       |
+| SET-5  | Choose a male or female figure for the body map                          | ✅  | —   | [settings](settings.md)                       |
+| NAV-1  | Get to any page from anywhere, and back to a workout in progress         | ✅  | —   | [home-and-navigation](home-and-navigation.md) |
+| A11Y-1 | Use every feature with a screen reader, keyboard or reduced motion       | ✅  | —   | [accessibility](accessibility.md)             |
+| EXR-1  | Exercises as things in their own right, used across workouts             | ✅  | —   | [exercises](exercises.md)                     |
+| EXR-2  | Pick an exercise, built-in or my own, or make a new one                  | ✅  | —   | [exercises](exercises.md)                     |
+| EXR-3  | Rename my own exercise everywhere, history included                      | ✅  | —   | [exercises](exercises.md)                     |
+| EXR-4  | Carry existing workouts and history over into exercises                  | ✅  | —   | [exercises](exercises.md)                     |
+| EXR-5  | See "Workouts", not "Timers", throughout the app                         | ✅  | —   | [exercises](exercises.md)                     |
+| EXR-6  | Browse and search a built-in list of common exercises                    | —   | —   | [exercises](exercises.md)                     |
+| EXR-7  | See how to do an exercise: a description and the steps                   | —   | —   | [exercises](exercises.md)                     |
+| EXR-8  | See which muscles an exercise works, on a body map                       | ◐   | —   | [exercises](exercises.md)                     |
+| EXR-9  | Make my own exercise, with a description and its muscles                 | ✅  | —   | [exercises](exercises.md)                     |
+| EXR-10 | Add my own note to any exercise, built-in ones included                  | ◐   | —   | [exercises](exercises.md)                     |
+| PRG-1  | See what I did last time, mid-workout                                    | —   | —   | [progress](progress.md)                       |
+| PRG-2  | Be told about personal bests when I finish                               | —   | —   | [progress](progress.md)                       |
+| PRG-3  | See a list of my exercises with their latest and best                    | —   | —   | [progress](progress.md)                       |
+| PRG-4  | See an exercise's chart, bests and recent sessions                       | —   | —   | [progress](progress.md)                       |
+| PRG-5  | Get a suggested next weight                                              | —   | —   | [progress](progress.md)                       |
+| PRG-6  | See which muscles I've worked this week, on the body map                 | —   | —   | [progress](progress.md)                       |
+| SYN-1  | Export all my data to a file                                             | ✅  | —   | [backup-and-sync](backup-and-sync.md)         |
+| SYN-2  | Import a backup without losing what's there                              | ✅  | —   | [backup-and-sync](backup-and-sync.md)         |
+| SYN-3  | Sign in and have the same data on every device                           | —   | —   | [backup-and-sync](backup-and-sync.md)         |
+| SYN-4  | Keep working offline, and catch up when back online                      | —   | —   | [backup-and-sync](backup-and-sync.md)         |
+| SYN-5  | Keep years of history, not just the last 500 workouts                    | —   | —   | [backup-and-sync](backup-and-sync.md)         |
+| PLN-1  | Set which workouts I do on which days                                    | —   | —   | [planning](planning.md)                       |
+| PLN-2  | See what's due today on the home page                                    | —   | —   | [planning](planning.md)                       |
+| PLN-3  | See whether I kept to the plan this week                                 | —   | —   | [planning](planning.md)                       |
 
 What's saved on the device, and in what shape, is in [data](data.md). Where the app is heading, and why the planned stories are in the order they are, is in [direction](../direction.md).
 

@@ -6,7 +6,7 @@ function makeEntry(overrides: Partial<HistoryEntry> = {}): HistoryEntry {
     const startedAt = overrides.startedAt ?? 1_000_000;
     return {
         id: `${startedAt}-1`,
-        timerId: 'timer-1',
+        workoutId: 'workout-1',
         title: 'Sprints',
         startedAt,
         endedAt: startedAt + 60_000,
@@ -27,7 +27,7 @@ const NOW = 5_000_000;
 describe('HistoryStore', () => {
     beforeEach(() => {
         localStorage.clear();
-        localStorage.setItem('data-version', '3');
+        localStorage.setItem('data-version', '4');
         vi.spyOn(Date, 'now').mockReturnValue(NOW);
     });
     afterEach(() => localStorage.clear());
@@ -254,7 +254,7 @@ describe('HistoryStore', () => {
             null,
             'text',
             { ...makeEntry(), id: 7 },
-            { ...makeEntry(), timerId: '' },
+            { ...makeEntry(), workoutId: '' },
             { ...makeEntry(), title: null },
             { ...makeEntry(), endedAt: 0 },
             { ...makeEntry(), activeSeconds: -1 },

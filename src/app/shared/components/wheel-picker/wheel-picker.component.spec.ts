@@ -73,7 +73,7 @@ describe('WheelPickerComponent', () => {
 
     /**
      * Press and let go, as the start of a tap or click. Not followed by settle(): whenStable
-     * waits for every timer, so it would sit out the second until the wheel closes again.
+     * waits for every workout, so it would sit out the second until the wheel closes again.
      */
     async function openByPress() {
         pointer('pointerdown');

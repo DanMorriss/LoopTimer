@@ -21,9 +21,9 @@ export function describeRounds(entry: HistoryEntry): string {
     return rounds(entry.roundsCompleted);
 }
 
-/** The timer's title as it ran, or "Untitled timer". */
+/** The workout's title as it ran, or "Untitled workout". */
 export function entryName(entry: HistoryEntry): string {
-    return entry.title.trim() || 'Untitled timer';
+    return entry.title.trim() || 'Untitled workout';
 }
 
 /** One rep step's sets, summed up: e.g. "3 × 10 @ 60 kg", with what screen readers say. */

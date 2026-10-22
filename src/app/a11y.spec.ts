@@ -3,20 +3,20 @@ import { provideRouter, Router } from '@angular/router';
 import axe from 'axe-core';
 import { AppComponent } from './app.component';
 import { routes } from './app.routes';
-import { makeTimer, reps, rest, work } from './shared/testing/make-timer';
+import { makeWorkout, reps, rest, work } from './shared/testing/make-workout';
 import { HistoryStore } from './shared/state/history-store.service';
-import { TimerStore } from './shared/state/timer-store.service';
+import { WorkoutStore } from './shared/state/workout-store.service';
 
 /**
  * Runs axe (WCAG 2.1 A/AA plus best practices) over every page and state of the app,
  * rendered inside the real app shell, so accessibility regressions fail the tests.
  */
 
-const sprints = makeTimer({ title: 'Sprints', timerSeconds: 2, restSeconds: 2, repeats: 2 });
-const untitled = makeTimer({
-    id: 'timer-2',
+const sprints = makeWorkout({ title: 'Sprints', workSeconds: 2, restSeconds: 2, repeats: 2 });
+const untitled = makeWorkout({
+    id: 'workout-2',
     title: '',
-    timerSeconds: 30,
+    workSeconds: 30,
     restSeconds: 2,
     repeats: 2,
 });
@@ -37,7 +37,7 @@ for (const theme of ['dark', 'light'] as const) {
     describe(`Accessibility (axe), ${theme} theme`, () => {
         let fixture: ComponentFixture<AppComponent>;
         let router: Router;
-        let store: TimerStore;
+        let store: WorkoutStore;
 
         beforeEach(() => {
             document.documentElement.dataset['theme'] = theme;
@@ -45,7 +45,7 @@ for (const theme of ['dark', 'light'] as const) {
             sessionStorage.clear();
             TestBed.configureTestingModule({ providers: [provideRouter(routes)] });
             router = TestBed.inject(Router);
-            store = TestBed.inject(TimerStore);
+            store = TestBed.inject(WorkoutStore);
             fixture = TestBed.createComponent(AppComponent);
         });
 
@@ -61,7 +61,7 @@ for (const theme of ['dark', 'light'] as const) {
             await settle();
         }
 
-        // Not fixture.whenStable(): the timer page's clock interval means it never settles
+        // Not fixture.whenStable(): the workout page's clock interval means it never settles
         async function settle(ms = 50) {
             fixture.detectChanges();
             await new Promise((resolve) => setTimeout(resolve, ms));
@@ -104,7 +104,7 @@ for (const theme of ['dark', 'light'] as const) {
         });
 
         describe('setup', () => {
-            it('new timer, with no steps', async () => {
+            it('new workout, with no steps', async () => {
                 await open('/setup');
                 await expectNoViolations();
             });
@@ -143,14 +143,14 @@ for (const theme of ['dark', 'light'] as const) {
                 await expectNoViolations();
             });
 
-            it('editing a timer', async () => {
-                const saved = store.addTimer(sprints);
+            it('editing a workout', async () => {
+                const saved = store.addWorkout(sprints);
                 await open('/setup?editId=' + saved.id);
                 await expectNoViolations();
             });
 
             it('asking before deleting a step', async () => {
-                const saved = store.addTimer(sprints);
+                const saved = store.addWorkout(sprints);
                 await open('/setup?editId=' + saved.id);
                 click('.step__toggle');
                 await settle();
@@ -166,28 +166,28 @@ for (const theme of ['dark', 'light'] as const) {
                 await expectNoViolations();
             });
 
-            it('with timers, including an untitled one', async () => {
-                store.addTimer(sprints);
-                store.addTimer(untitled);
+            it('with workouts, including an untitled one', async () => {
+                store.addWorkout(sprints);
+                store.addWorkout(untitled);
                 await open('/library');
                 await expectNoViolations();
             });
 
             it('with a card selected and its options open', async () => {
-                store.addTimer(sprints);
+                store.addWorkout(sprints);
                 await open('/library');
-                click('.timer-card');
-                click('.timer-card__action--menu');
+                click('.workout-card');
+                click('.workout-card__action--menu');
                 await settle();
                 await expectNoViolations();
             });
 
             it('with the delete dialog open', async () => {
-                store.addTimer(sprints);
+                store.addWorkout(sprints);
                 await open('/library');
-                click('.timer-card__action--menu');
+                click('.workout-card__action--menu');
                 await settle();
-                click('.timer-card__menu-item--danger');
+                click('.workout-card__menu-item--danger');
                 await settle();
                 await expectNoViolations();
             });
@@ -206,7 +206,7 @@ for (const theme of ['dark', 'light'] as const) {
                 ).entries()) {
                     TestBed.inject(HistoryStore).record({
                         id: 'run-' + i,
-                        timerId: 'timer-1',
+                        workoutId: 'workout-1',
                         title: i === 1 ? '' : 'Sprints',
                         startedAt: now - i * 86_400_000,
                         endedAt: now - i * 86_400_000 + 60_000,
@@ -256,15 +256,15 @@ for (const theme of ['dark', 'light'] as const) {
             });
         });
 
-        describe('timer', () => {
-            it('with no timer selected', async () => {
-                await open('/timer');
+        describe('workout', () => {
+            it('with no workout selected', async () => {
+                await open('/workout');
                 await expectNoViolations();
             });
 
             it('during work, rest and once finished', async () => {
-                store.setActiveTimer(store.addTimer(sprints)); // 2s work, 2s rest, 2 rounds
-                await open('/timer');
+                store.setActiveWorkout(store.addWorkout(sprints)); // 2s work, 2s rest, 2 rounds
+                await open('/workout');
                 await expectNoViolations();
 
                 await settle(2300);
@@ -277,52 +277,52 @@ for (const theme of ['dark', 'light'] as const) {
             }, 15000);
 
             it('running a round of several named steps', async () => {
-                store.setActiveTimer(
-                    store.addTimer(
-                        makeTimer({ steps: [work(30, 'Squats'), work(45, 'Plank'), rest(20)] })
+                store.setActiveWorkout(
+                    store.addWorkout(
+                        makeWorkout({ steps: [work(30, 'Squats'), work(45, 'Plank'), rest(20)] })
                     )
                 );
-                await open('/timer');
+                await open('/workout');
                 expect(fixture.nativeElement.textContent).toContain('step 1 of 3');
                 await expectNoViolations();
             });
 
             it('waiting on a rep step', async () => {
-                store.setActiveTimer(
-                    store.addTimer(makeTimer({ steps: [reps(20, 'Push-ups'), work(30)] }))
+                store.setActiveWorkout(
+                    store.addWorkout(makeWorkout({ steps: [reps(20, 'Push-ups'), work(30)] }))
                 );
-                await open('/timer');
+                await open('/workout');
                 expect(fixture.nativeElement.textContent).toContain('20');
                 expect(fixture.nativeElement.textContent).toContain('Done');
                 await expectNoViolations();
             });
 
             it('changing the reps or weight of a rep step', async () => {
-                store.setActiveTimer(
-                    store.addTimer(
-                        makeTimer({
+                store.setActiveWorkout(
+                    store.addWorkout(
+                        makeWorkout({
                             steps: [{ kind: 'reps', reps: 10, name: 'Squats', weight: 60 }],
                         })
                     )
                 );
-                await open('/timer');
-                click('.timer-change');
+                await open('/workout');
+                click('.workout-change');
                 await settle();
-                expect(fixture.nativeElement.querySelector('#timer-change-panel')).not.toBeNull();
+                expect(fixture.nativeElement.querySelector('#workout-change-panel')).not.toBeNull();
                 await expectNoViolations();
             });
 
             it('running until stopped', async () => {
-                store.setActiveTimer(store.addTimer({ ...sprints, repeats: 0 }));
-                await open('/timer');
+                store.setActiveWorkout(store.addWorkout({ ...sprints, repeats: 0 }));
+                await open('/workout');
                 expect(fixture.nativeElement.textContent).toContain('round 1 of ∞');
                 await expectNoViolations();
             });
 
             it('paused', async () => {
-                store.setActiveTimer(store.addTimer(sprints));
+                store.setActiveWorkout(store.addWorkout(sprints));
                 store.pause();
-                await open('/timer');
+                await open('/workout');
                 expect(fixture.nativeElement.textContent).toContain('Paused');
                 await expectNoViolations();
             });

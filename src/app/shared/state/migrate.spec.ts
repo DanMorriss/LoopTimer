@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
-import { makeTimer } from '../testing/make-timer';
+import { makeWorkout } from '../testing/make-workout';
 import { HistoryStore } from './history-store.service';
 import { DATA_VERSION, migrateSavedData } from './migrate';
-import { TimerStore } from './timer-store.service';
+import { WorkoutStore } from './workout-store.service';
 
-// Data as version 1 of the app saved it: number ids, no dates
-function v1Timer(id: number, title: string) {
-    const { id: _id, updatedAt: _at, ...timer } = makeTimer({ title });
-    return { ...timer, id };
+// Data as version 1 of the app saved it: number ids, no dates, and called timers
+function v1Workout(id: number, title: string) {
+    const { id: _id, updatedAt: _at, ...workout } = makeWorkout({ title });
+    return { ...workout, id };
 }
 
 const v1Entry = (startedAt: number, timerId: number) => ({
@@ -35,7 +35,10 @@ describe('migrating saved data', () => {
     });
 
     function saveVersion1() {
-        localStorage.setItem('timers', JSON.stringify([v1Timer(1, 'Legs'), v1Timer(2, 'Arms')]));
+        localStorage.setItem(
+            'timers',
+            JSON.stringify([v1Workout(1, 'Legs'), v1Workout(2, 'Arms')])
+        );
         localStorage.setItem(
             'history',
             JSON.stringify([v1Entry(1_000_000, 1), v1Entry(2_000_000, 2), v1Entry(3_000_000, 9)])
@@ -43,25 +46,25 @@ describe('migrating saved data', () => {
         localStorage.setItem('history-deleted', JSON.stringify(['500-1']));
     }
 
-    it('gives timers random ids and a date, and points the history to them', () => {
+    it('gives workouts random ids and a date, and points the history to them', () => {
         saveVersion1();
 
         migrateSavedData(7000);
 
-        const [legs, arms] = saved('timers');
+        const [legs, arms] = saved('workouts');
         expect(legs.id).toMatch(/^[0-9a-f-]{36}$/);
         expect(arms.id).toMatch(/^[0-9a-f-]{36}$/);
         expect(legs.id).not.toBe(arms.id);
         expect([legs.updatedAt, arms.updatedAt]).toEqual([7000, 7000]);
         expect(
-            saved('history').map((e: { timerId: string; updatedAt: number }) => [
-                e.timerId,
+            saved('history').map((e: { workoutId: string; updatedAt: number }) => [
+                e.workoutId,
                 e.updatedAt,
             ])
         ).toEqual([
             [legs.id, 1_060_000],
             [arms.id, 2_060_000],
-            // Its timer was deleted: the old number, as text
+            // Its workout was deleted: the old number, as text
             ['9', 3_060_000],
         ]);
     });
@@ -92,10 +95,10 @@ describe('migrating saved data', () => {
         migrateSavedData(7000);
         expect(localStorage.getItem('data-version')).toBe(String(DATA_VERSION));
 
-        localStorage.setItem('timers', JSON.stringify([v1Timer(5, 'New old')]));
+        localStorage.setItem('workouts', JSON.stringify([v1Workout(5, 'New old')]));
         migrateSavedData(8000);
 
-        expect(saved('timers')[0].id).toBe(5);
+        expect(saved('workouts')[0].id).toBe(5);
     });
 
     it("leaves data it can't read for the stores to drop", () => {
@@ -104,7 +107,7 @@ describe('migrating saved data', () => {
 
         migrateSavedData(7000);
 
-        expect(localStorage.getItem('timers')).toBe('{broken');
+        expect(localStorage.getItem('workouts')).toBe('{broken');
         expect(localStorage.getItem('history')).toBe('"not a list"');
         expect(localStorage.getItem('data-version')).toBe(String(DATA_VERSION));
     });
@@ -112,11 +115,11 @@ describe('migrating saved data', () => {
     it('happens before the stores load, so they see the new ids', () => {
         saveVersion1();
 
-        const timers = TestBed.inject(TimerStore).timers();
+        const workouts = TestBed.inject(WorkoutStore).workouts();
         const history = TestBed.inject(HistoryStore).entries();
 
-        expect(timers.map((t) => t.title)).toEqual(['Legs', 'Arms']);
-        expect(history.find((e) => e.id === '1000000-1')?.timerId).toBe(timers[0].id);
+        expect(workouts.map((t) => t.title)).toEqual(['Legs', 'Arms']);
+        expect(history.find((e) => e.id === '1000000-1')?.workoutId).toBe(workouts[0].id);
     });
 
     it('still finds a workout in progress by its old number', () => {
@@ -124,7 +127,7 @@ describe('migrating saved data', () => {
         sessionStorage.setItem('activeTimerId', '2');
         sessionStorage.setItem('activeTimerStartedAt', String(Date.now() - 1000));
 
-        expect(TestBed.inject(TimerStore).activeTimer()?.title).toBe('Arms');
+        expect(TestBed.inject(WorkoutStore).activeWorkout()?.title).toBe('Arms');
     });
 });
 
@@ -139,7 +142,7 @@ describe('migrating saved data to version 3: exercises', () => {
         localStorage.setItem(
             'timers',
             JSON.stringify([
-                makeTimer({
+                makeWorkout({
                     id: 'legs',
                     steps: [
                         { kind: 'reps', reps: 10, name: 'Squats', weight: 60 },
@@ -175,13 +178,10 @@ describe('migrating saved data to version 3: exercises', () => {
         const own = saved('exercises');
         const wallSit = own.find((e: { name: string }) => e.name === 'Wall sit hold');
         expect(wallSit).toEqual(expect.objectContaining({ measuredBy: 'timed', updatedAt: 7000 }));
-        expect(saved('timers')[0].steps.map((s: { exerciseId?: string }) => s.exerciseId)).toEqual([
-            'builtin:back-squat',
-            undefined,
-            wallSit.id,
-            undefined,
-        ]);
-        expect(localStorage.getItem('data-version')).toBe('3');
+        expect(
+            saved('workouts')[0].steps.map((s: { exerciseId?: string }) => s.exerciseId)
+        ).toEqual(['builtin:back-squat', undefined, wallSit.id, undefined]);
+        expect(localStorage.getItem('data-version')).toBe(String(DATA_VERSION));
     });
 
     it('links named sets in the history the same way, one exercise per name', () => {
@@ -203,24 +203,83 @@ describe('migrating saved data to version 3: exercises', () => {
         const {
             id: _id,
             updatedAt: _at,
-            ...timer
-        } = makeTimer({
+            ...workout
+        } = makeWorkout({
             steps: [{ kind: 'reps', reps: 20, name: 'Push-ups' }],
         });
-        localStorage.setItem('timers', JSON.stringify([{ ...timer, id: 1 }]));
+        localStorage.setItem('timers', JSON.stringify([{ ...workout, id: 1 }]));
 
         migrateSavedData(7000);
 
-        const [saved1] = saved('timers');
+        const [saved1] = saved('workouts');
         expect(saved1.id).toMatch(/^[0-9a-f-]{36}$/);
         expect(saved1.steps[0].exerciseId).toBe('builtin:push-up');
     });
 
-    it('leaves a timer with a broken step for the store to drop', () => {
+    it('leaves a workout with a broken step for the store to drop', () => {
         localStorage.setItem('timers', JSON.stringify([{ id: 'x', steps: [{ kind: 'reps' }] }]));
 
         migrateSavedData(7000);
 
-        expect(saved('timers')).toEqual([{ id: 'x', steps: [{ kind: 'reps' }] }]);
+        expect(saved('workouts')).toEqual([{ id: 'x', steps: [{ kind: 'reps' }] }]);
+    });
+});
+
+describe('migrating saved data to version 4: workouts, not timers', () => {
+    beforeEach(() => {
+        localStorage.clear();
+        sessionStorage.clear();
+        localStorage.setItem('data-version', '3');
+    });
+    afterEach(() => {
+        localStorage.clear();
+        sessionStorage.clear();
+    });
+
+    it('moves the timers to workouts, and points the history and deletions at them', () => {
+        const legs = makeWorkout({ id: 'legs', title: 'Legs' });
+        localStorage.setItem('timers', JSON.stringify([legs]));
+        localStorage.setItem('legacy-timer-ids', JSON.stringify({ 1: 'legs' }));
+        localStorage.setItem(
+            'history',
+            JSON.stringify([{ ...v1Entry(1_000_000, 1), timerId: 'legs', updatedAt: 1 }])
+        );
+        localStorage.setItem(
+            'deleted',
+            JSON.stringify([
+                { kind: 'timer', id: 'arms', deletedAt: 5 },
+                { kind: 'history', id: 'run', deletedAt: 6 },
+            ])
+        );
+
+        migrateSavedData(7000);
+
+        expect(saved('workouts')).toEqual([legs]);
+        expect(localStorage.getItem('timers')).toBeNull();
+        expect(saved('legacy-workout-ids')).toEqual({ 1: 'legs' });
+        expect(localStorage.getItem('legacy-timer-ids')).toBeNull();
+        const [entry] = saved('history');
+        expect(entry.workoutId).toBe('legs');
+        expect('timerId' in entry).toBe(false);
+        expect(saved('deleted')).toEqual([
+            { kind: 'workout', id: 'arms', deletedAt: 5 },
+            { kind: 'history', id: 'run', deletedAt: 6 },
+        ]);
+        expect(localStorage.getItem('data-version')).toBe('4');
+    });
+
+    it("carries on a tab's workout in progress, saved under the timer's names", () => {
+        localStorage.setItem(
+            'timers',
+            JSON.stringify([makeWorkout({ id: 'legs', title: 'Legs' })])
+        );
+        sessionStorage.setItem('activeTimerId', 'legs');
+        sessionStorage.setItem('activeTimerStartedAt', String(Date.now() - 1000));
+
+        const store = TestBed.inject(WorkoutStore);
+
+        expect(store.activeWorkout()?.title).toBe('Legs');
+        expect(sessionStorage.getItem('activeWorkoutId')).toBe('legs');
+        expect(sessionStorage.getItem('activeTimerId')).toBeNull();
     });
 });
