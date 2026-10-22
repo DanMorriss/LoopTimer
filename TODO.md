@@ -6,12 +6,11 @@ Open work, highest priority first. Tick items off (or delete them) as they're do
 
 ### Phase 1: Foundations
 
-Do these first: everything after builds on them. The data is ready for sync (#81) and has exercises in it (#86: your own exercises and notes, steps and sets linked to exercises, `data-version` 4, backup version 4). All 80 built-in exercises are written (#79–#88; more can be added at the end of the backlog in `docs/writing-exercises.md`, by the `exercise-writer` agent). Create picks exercises, your own can be renamed and edited, and your notes show mid-workout (EXR-1–3, EXR-9, EXR-10). Timers are called workouts throughout, in the code and saved data too (EXR-5). The Exercises list and a page per exercise are built (EXR-6–8), and Create shows an exercise's details (EXR-11), with hiding, deleting your own, how-to steps and tips, and your equipment remembered; Phase 3's progress goes on the exercise page.
-
-- [ ] **More room for history (SYN-5):** move it from `localStorage` to IndexedDB and lift the 500-entry cap, so years of progress fit.
+Do these first: everything after builds on them. The data is ready for sync (#81) and has exercises in it (#86: your own exercises and notes, steps and sets linked to exercises, `data-version` 4, backup version 4). All 80 built-in exercises are written (#79–#88; more can be added at the end of the backlog in `docs/writing-exercises.md`, by the `exercise-writer` agent). Create picks exercises, your own can be renamed and edited, and your notes show mid-workout (EXR-1–3, EXR-9, EXR-10). Timers are called workouts throughout, in the code and saved data too (EXR-5). The Exercises list and a page per exercise are built (EXR-6–8), and Create shows an exercise's details (EXR-11), with hiding, deleting your own, how-to steps and tips, and your equipment remembered; Phase 3's progress goes on the exercise page. The history is in IndexedDB with no cap (SYN-5), so years of progress fit. Phase 1 is done.
 
 ### Phase 2: Feedback in the workout
 
+- [ ] **Make the end of a set and of the workout clearer:** it isn't obvious enough that a set has been completed, or that the workout has now ended, and a workout that runs until stopped (∞) is least clear of all. Dan has changes in mind; ask before starting. Comes after the history page work.
 - [ ] **Last time (PRG-1):** on each rep step, "Last time: 10, 10, 8 @ 60 kg".
 - [ ] **Personal bests (PRG-2):** called out on the finished screen.
 

@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { HistoryEntry, MAX_NOTE_LENGTH } from '../../models/history';
-import { HistoryStore, MAX_HISTORY } from './history-store.service';
+import { savedHistory } from '../testing/history-database';
+import { HistoryStore } from './history-store.service';
 
 function makeEntry(overrides: Partial<HistoryEntry> = {}): HistoryEntry {
     const startedAt = overrides.startedAt ?? 1_000_000;
@@ -19,7 +20,8 @@ function makeEntry(overrides: Partial<HistoryEntry> = {}): HistoryEntry {
     };
 }
 
-const saved = (): HistoryEntry[] => JSON.parse(localStorage.getItem('history') ?? '[]');
+const pending = (): unknown[] | null =>
+    JSON.parse(localStorage.getItem('history-pending') ?? 'null');
 
 // When the tests run: Date.now() for anything the store dates, e.g. a record
 const NOW = 5_000_000;
@@ -32,24 +34,35 @@ describe('HistoryStore', () => {
     });
     afterEach(() => localStorage.clear());
 
-    const createStore = () => TestBed.inject(HistoryStore);
+    async function createStore() {
+        const store = TestBed.inject(HistoryStore);
+        await store.ready;
+        return store;
+    }
 
-    it('starts empty', () => {
-        expect(createStore().entries()).toEqual([]);
+    /** As if the app were opened again. */
+    function reopen() {
+        TestBed.resetTestingModule();
+        return createStore();
+    }
+
+    it('starts empty', async () => {
+        expect((await createStore()).entries()).toEqual([]);
     });
 
-    it('records a workout and saves it', () => {
-        const store = createStore();
+    it('records a workout and saves it', async () => {
+        const store = await createStore();
         const entry = makeEntry();
 
         store.record(entry);
 
         expect(store.entries()).toEqual([entry]);
-        expect(saved()).toEqual([entry]);
+        expect(await savedHistory()).toEqual([entry]);
+        expect((await reopen()).entries()).toEqual([entry]);
     });
 
-    it('keeps the newest first, whatever order they are recorded in', () => {
-        const store = createStore();
+    it('keeps the newest first, whatever order they are recorded in', async () => {
+        const store = await createStore();
         const older = makeEntry({ startedAt: 1_000 });
         const newer = makeEntry({ startedAt: 2_000 });
 
@@ -59,8 +72,8 @@ describe('HistoryStore', () => {
         expect(store.entries()).toEqual([newer, older]);
     });
 
-    it('keeps one entry per run, updated by the latest record of it', () => {
-        const store = createStore();
+    it('keeps one entry per run, updated by the latest record of it', async () => {
+        const store = await createStore();
 
         store.record(makeEntry({ outcome: 'stopped', activeSeconds: 30 }));
         store.record(makeEntry({ outcome: 'finished', activeSeconds: 99 }));
@@ -68,11 +81,13 @@ describe('HistoryStore', () => {
         expect(store.entries()).toEqual([
             expect.objectContaining({ outcome: 'finished', activeSeconds: 99 }),
         ]);
-        expect(JSON.parse(localStorage.getItem('history')!)).toHaveLength(1);
+        expect(await savedHistory()).toEqual([
+            expect.objectContaining({ outcome: 'finished', activeSeconds: 99 }),
+        ]);
     });
 
-    it('keeps a note when the same run is recorded again, e.g. leaving its finished screen', () => {
-        const store = createStore();
+    it('keeps a note when the same run is recorded again, e.g. leaving its finished screen', async () => {
+        const store = await createStore();
         store.record(makeEntry());
         store.setNote(makeEntry().id, 'Felt strong');
 
@@ -84,18 +99,18 @@ describe('HistoryStore', () => {
     });
 
     describe('notes', () => {
-        it('saves a note, trimmed, with the entry', () => {
-            const store = createStore();
+        it('saves a note, trimmed, with the entry', async () => {
+            const store = await createStore();
             store.record(makeEntry());
 
             store.setNote(makeEntry().id, '  Knee sore  ');
 
             expect(store.entries()[0].note).toBe('Knee sore');
-            expect(JSON.parse(localStorage.getItem('history')!)[0].note).toBe('Knee sore');
+            expect(await savedHistory()).toEqual([expect.objectContaining({ note: 'Knee sore' })]);
         });
 
-        it('cuts a note to the longest allowed', () => {
-            const store = createStore();
+        it('cuts a note to the longest allowed', async () => {
+            const store = await createStore();
             store.record(makeEntry());
 
             store.setNote(makeEntry().id, 'x'.repeat(MAX_NOTE_LENGTH + 10));
@@ -103,8 +118,8 @@ describe('HistoryStore', () => {
             expect(store.entries()[0].note).toHaveLength(MAX_NOTE_LENGTH);
         });
 
-        it('removes the note when set to nothing', () => {
-            const store = createStore();
+        it('removes the note when set to nothing', async () => {
+            const store = await createStore();
             store.record(makeEntry({ note: 'Felt strong' }));
 
             store.setNote(makeEntry().id, '   ');
@@ -112,7 +127,7 @@ describe('HistoryStore', () => {
             expect('note' in store.entries()[0]).toBe(false);
         });
 
-        it('loads saved notes, and entries saved before notes existed', () => {
+        it('loads saved notes, and entries saved before notes existed', async () => {
             localStorage.setItem(
                 'history',
                 JSON.stringify([
@@ -123,54 +138,54 @@ describe('HistoryStore', () => {
             );
 
             // Newest first; the one with a broken note is dropped
-            expect(
-                createStore()
-                    .entries()
-                    .map((entry) => entry.note)
-            ).toEqual(['Felt strong', undefined]);
+            expect((await createStore()).entries().map((entry) => entry.note)).toEqual([
+                'Felt strong',
+                undefined,
+            ]);
         });
     });
 
-    it(`keeps only the newest ${MAX_HISTORY}`, () => {
-        const store = createStore();
-        for (let i = 1; i <= MAX_HISTORY + 1; i++) {
-            store.record(makeEntry({ startedAt: i * 1000 }));
-        }
+    it('keeps every workout, however many', async () => {
+        const store = await createStore();
+        const entries = Array.from({ length: 600 }, (_, i) =>
+            makeEntry({ startedAt: (i + 1) * 1000 })
+        );
 
-        expect(store.entries()).toHaveLength(MAX_HISTORY);
-        expect(store.entries().at(-1)?.startedAt).toBe(2000);
+        store.mergeEntries(entries, []);
+
+        expect(store.entries()).toHaveLength(600);
+        expect(await savedHistory()).toHaveLength(600);
     });
 
-    it('deletes an entry, and can restore it (for undo)', () => {
-        const store = createStore();
+    it('deletes an entry, and can restore it (for undo)', async () => {
+        const store = await createStore();
         const entry = makeEntry();
         store.record(entry);
 
         store.delete(entry.id);
         expect(store.entries()).toEqual([]);
-        expect(saved()).toEqual([]);
+        expect(await savedHistory()).toEqual([]);
 
         store.restore(entry);
         expect(store.entries()).toEqual([entry]);
-        expect(saved()).toEqual([entry]);
+        expect(await savedHistory()).toEqual([entry]);
     });
 
     // The run may still be going, and logs itself again when it finishes or the tab closes
-    it("doesn't let a deleted entry be recorded again, even after a reload", () => {
+    it("doesn't let a deleted entry be recorded again, even after a reload", async () => {
         const entry = makeEntry({ outcome: 'stopped' });
-        createStore().record(entry);
-        createStore().delete(entry.id);
+        (await createStore()).record(entry);
+        (await createStore()).delete(entry.id);
 
-        TestBed.resetTestingModule();
-        const store = createStore();
+        const store = await reopen();
         store.record({ ...entry, outcome: 'finished' });
 
         expect(store.entries()).toEqual([]);
-        expect(saved()).toEqual([]);
+        expect(await savedHistory()).toEqual([]);
     });
 
-    it('records a restored entry again as its run goes on', () => {
-        const store = createStore();
+    it('records a restored entry again as its run goes on', async () => {
+        const store = await createStore();
         const entry = makeEntry({ outcome: 'stopped' });
         store.record(entry);
         store.delete(entry.id);
@@ -181,18 +196,78 @@ describe('HistoryStore', () => {
         expect(store.entries().map((e) => e.outcome)).toEqual(['finished']);
     });
 
-    it('ignores unusable saved deletions', () => {
+    it('ignores unusable saved deletions', async () => {
         localStorage.setItem('deleted', '{broken');
-        const store = createStore();
+        const store = await createStore();
 
         store.record(makeEntry());
 
         expect(store.entries()).toHaveLength(1);
     });
 
+    describe('saving', () => {
+        it('moves the history saved in localStorage into IndexedDB', async () => {
+            const older = makeEntry({ startedAt: 1_000 });
+            const newer = makeEntry({ startedAt: 2_000 });
+            localStorage.setItem('history', JSON.stringify([older, newer]));
+
+            expect((await createStore()).entries()).toEqual([newer, older]);
+            expect(await savedHistory()).toEqual([newer, older]);
+            expect(localStorage.getItem('history')).toBeNull();
+            expect((await reopen()).entries()).toEqual([newer, older]);
+        });
+
+        it('keeps each change in localStorage until IndexedDB has it', async () => {
+            const store = await createStore();
+
+            store.record(makeEntry());
+            expect(pending()).toEqual([makeEntry()]);
+
+            await savedHistory();
+            expect(pending()).toBeNull();
+        });
+
+        // A write started as the page closes (logging the run) may never finish
+        it('saves a change that never reached IndexedDB on the next load', async () => {
+            (await createStore()).record(makeEntry({ outcome: 'stopped' }));
+            await savedHistory();
+            const closedOn = makeEntry({ outcome: 'finished', updatedAt: NOW + 1 });
+            localStorage.setItem('history-pending', JSON.stringify([closedOn]));
+
+            const store = await reopen();
+
+            expect(store.entries()).toEqual([closedOn]);
+            expect(await savedHistory()).toEqual([closedOn]);
+            expect(pending()).toBeNull();
+        });
+
+        it("leaves out an entry whose deletion didn't reach IndexedDB", async () => {
+            (await createStore()).record(makeEntry());
+            await savedHistory();
+            localStorage.setItem(
+                'deleted',
+                JSON.stringify([{ kind: 'history', id: makeEntry().id, deletedAt: NOW }])
+            );
+
+            expect((await reopen()).entries()).toEqual([]);
+            expect(await savedHistory()).toEqual([]);
+        });
+
+        it('keeps workouts recorded while it loads', async () => {
+            localStorage.setItem('history', JSON.stringify([makeEntry({ startedAt: 1_000 })]));
+            const store = TestBed.inject(HistoryStore);
+
+            store.record(makeEntry({ startedAt: 2_000 }));
+            await store.ready;
+
+            expect(store.entries().map((entry) => entry.startedAt)).toEqual([2_000, 1_000]);
+            expect(await savedHistory()).toHaveLength(2);
+        });
+    });
+
     describe('dates for sync', () => {
-        it('dates each record and note, as the time it changed', () => {
-            const store = createStore();
+        it('dates each record and note, as the time it changed', async () => {
+            const store = await createStore();
             store.record({ ...makeEntry(), updatedAt: 1 } as never);
             expect(store.entries()[0].updatedAt).toBe(NOW);
 
@@ -200,11 +275,13 @@ describe('HistoryStore', () => {
             store.setNote(makeEntry().id, 'Felt strong');
 
             expect(store.entries()[0].updatedAt).toBe(NOW + 500);
-            expect(saved()[0].updatedAt).toBe(NOW + 500);
+            expect(await savedHistory()).toEqual([
+                expect.objectContaining({ updatedAt: NOW + 500 }),
+            ]);
         });
 
-        it('leaves a dated deletion behind, which restoring clears', () => {
-            const store = createStore();
+        it('leaves a dated deletion behind, which restoring clears', async () => {
+            const store = await createStore();
             store.record(makeEntry());
 
             store.delete(makeEntry().id);
@@ -216,15 +293,15 @@ describe('HistoryStore', () => {
             expect(JSON.parse(localStorage.getItem('deleted')!)).toEqual([]);
         });
 
-        it('dates a saved entry with no date by when it ended', () => {
+        it('dates a saved entry with no date by when it ended', async () => {
             const { updatedAt: _u, ...undated } = makeEntry();
             localStorage.setItem('history', JSON.stringify([undated]));
 
-            expect(createStore().entries()[0].updatedAt).toBe(makeEntry().endedAt);
+            expect((await createStore()).entries()[0].updatedAt).toBe(makeEntry().endedAt);
         });
     });
 
-    it('loads saved sets, dropping broken ones but keeping the workout', () => {
+    it('loads saved sets, dropping broken ones but keeping the workout', async () => {
         const good = { round: 0, step: 1, name: 'Squats', reps: 10, weight: 60 };
         localStorage.setItem(
             'history',
@@ -234,21 +311,13 @@ describe('HistoryStore', () => {
             ])
         );
 
-        const [withSets, withBroken] = createStore().entries();
+        const [withSets, withBroken] = (await createStore()).entries();
 
         expect(withSets.sets).toEqual([good]);
         expect(withBroken).toEqual(makeEntry({ startedAt: 1_000 }));
     });
 
-    it('loads saved history, newest first', () => {
-        const older = makeEntry({ startedAt: 1_000 });
-        const newer = makeEntry({ startedAt: 2_000 });
-        localStorage.setItem('history', JSON.stringify([older, newer]));
-
-        expect(createStore().entries()).toEqual([newer, older]);
-    });
-
-    it('keeps valid saved entries and drops broken ones', () => {
+    it('keeps valid saved entries and drops broken ones', async () => {
         const valid = makeEntry();
         const broken = [
             null,
@@ -263,17 +332,17 @@ describe('HistoryStore', () => {
         ];
         localStorage.setItem('history', JSON.stringify([valid, ...broken]));
 
-        expect(createStore().entries()).toEqual([valid]);
+        expect((await createStore()).entries()).toEqual([valid]);
     });
 
     for (const [label, data] of [
         ['corrupted', '{oops'],
         ['not a list', '{"id": "a"}'],
     ]) {
-        it(`starts empty when the saved history is ${label}`, () => {
+        it(`starts empty when the saved history is ${label}`, async () => {
             localStorage.setItem('history', data);
 
-            expect(createStore().entries()).toEqual([]);
+            expect((await createStore()).entries()).toEqual([]);
         });
     }
 });

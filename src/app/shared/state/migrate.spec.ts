@@ -112,11 +112,13 @@ describe('migrating saved data', () => {
         expect(localStorage.getItem('data-version')).toBe(String(DATA_VERSION));
     });
 
-    it('happens before the stores load, so they see the new ids', () => {
+    it('happens before the stores load, so they see the new ids', async () => {
         saveVersion1();
 
         const workouts = TestBed.inject(WorkoutStore).workouts();
-        const history = TestBed.inject(HistoryStore).entries();
+        const store = TestBed.inject(HistoryStore);
+        await store.ready;
+        const history = store.entries();
 
         expect(workouts.map((t) => t.title)).toEqual(['Legs', 'Arms']);
         expect(history.find((e) => e.id === '1000000-1')?.workoutId).toBe(workouts[0].id);

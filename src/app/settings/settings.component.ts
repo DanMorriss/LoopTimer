@@ -70,8 +70,8 @@ export class SettingsComponent {
     /** What the last export or import did, read out as it changes. */
     protected readonly backupStatus = signal('');
 
-    protected exportBackup() {
-        this.backupStatus.set(`Backup saved as ${this.backup.export()}.`);
+    protected async exportBackup() {
+        this.backupStatus.set(`Backup saved as ${await this.backup.export()}.`);
     }
 
     protected async importBackup(input: HTMLInputElement) {

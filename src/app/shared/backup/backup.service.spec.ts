@@ -4,6 +4,7 @@ import { Deletion } from '../../models/sync';
 import { Workout } from '../../models/workout';
 import { ExerciseStore } from '../state/exercise-store.service';
 import { HistoryStore } from '../state/history-store.service';
+import { savedHistory } from '../testing/history-database';
 import { SettingsStore } from '../state/settings-store.service';
 import { WorkoutStore } from '../state/workout-store.service';
 import { makeWorkout } from '../testing/make-workout';
@@ -85,7 +86,7 @@ describe('BackupService', () => {
                 .spyOn(HTMLAnchorElement.prototype, 'click')
                 .mockImplementation(() => {});
 
-            const name = backup.export();
+            const name = await backup.export();
 
             expect(name).toMatch(/^looptimer-\d{4}-\d{2}-\d{2}\.json$/);
             expect(click).toHaveBeenCalledTimes(1);
@@ -115,7 +116,7 @@ describe('BackupService', () => {
             expect(workouts().workouts()).toEqual([legs]);
             expect(history().entries()).toEqual([makeEntry(1_000_000)]);
             expect(JSON.parse(localStorage.getItem('workouts')!)).toEqual([legs]);
-            expect(JSON.parse(localStorage.getItem('history')!)).toHaveLength(1);
+            expect(await savedHistory()).toHaveLength(1);
         });
 
         it('takes the most recent change to each workout and history entry', async () => {
@@ -343,7 +344,7 @@ describe('BackupService', () => {
             });
             vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
 
-            backup.export();
+            await backup.export();
 
             const file: BackupFile = JSON.parse(await blob!.text());
             expect(file.exercises).toEqual([mine]);

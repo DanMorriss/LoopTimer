@@ -1,77 +1,103 @@
-import { computed, inject, Service, signal } from '@angular/core';
+import { computed, DestroyRef, inject, Service, signal } from '@angular/core';
 import { HistoryEntry, isLoggedSet, MAX_NOTE_LENGTH } from '../../models/history';
 import { Deletion, mergeRecords } from '../../models/sync';
 import { DeletionStore } from './deletion-store.service';
+import { openDatabase, readAll, write } from './history-database';
 import { migrateSavedData } from './migrate';
 
-const STORAGE_KEY = 'history';
+/** Where the history was saved before it moved to IndexedDB; moved in on load. */
+const LEGACY_KEY = 'history';
 
-/** Plenty of workouts to look back on, without letting browser storage grow forever. */
-export const MAX_HISTORY = 500;
+/**
+ * Changes not yet confirmed saved in IndexedDB. A write started as the page closes may never
+ * finish, so each change is kept here too until it's done, and saved on the next load if not.
+ * If IndexedDB can't be used at all, the history stays here.
+ */
+const PENDING_KEY = 'history-pending';
 
-/** Completed and stopped workouts, newest first, saved in the browser. */
+/**
+ * Completed and stopped workouts, newest first, saved in the browser (IndexedDB). They load
+ * in the background: `ready` settles once they're in, and until then `entries` only has
+ * workouts recorded since the app opened.
+ */
 @Service()
 export class HistoryStore {
     private readonly deletions = inject(DeletionStore);
-    private readonly _entries = signal<HistoryEntry[]>(loadHistory());
+    private readonly _entries = signal<HistoryEntry[]>([]);
+    private db: IDBDatabase | null = null;
 
     /** Newest first. */
     readonly entries = computed(() => this._entries());
+
+    /** Settles once the saved history has loaded. Never fails: what can't be read is left out. */
+    readonly ready: Promise<void>;
+
+    constructor() {
+        migrateSavedData();
+        let destroyed = false;
+        inject(DestroyRef).onDestroy(() => {
+            destroyed = true;
+            this.db?.close();
+        });
+        this.ready = this.load(() => destroyed);
+    }
 
     /**
      * Adds a workout, or updates it if this run is already in the history. A run is logged
      * as stopped when its page closes, so if it's picked up again and later stopped or
      * finished, that replaces the earlier entry, keeping any note added to it meanwhile.
-     * The oldest entries go past MAX_HISTORY. A deleted entry isn't recorded again (its run
-     * may still be going when it's deleted); restore() puts one back.
+     * A deleted entry isn't recorded again (its run may still be going when it's deleted);
+     * restore() puts one back.
      */
     record(entry: Omit<HistoryEntry, 'updatedAt'>) {
         if (this.deletions.deletedAt('history', entry.id) !== undefined) {
             return;
         }
-        this._entries.update((entries) => {
-            const note = entry.note ?? entries.find((existing) => existing.id === entry.id)?.note;
-            const updated: HistoryEntry = {
-                ...entry,
-                ...(note === undefined ? {} : { note }),
-                updatedAt: Date.now(),
-            };
-            return sortAndCap([updated, ...entries.filter((existing) => existing.id !== entry.id)]);
-        });
-        this.save();
+        const note =
+            entry.note ?? this._entries().find((existing) => existing.id === entry.id)?.note;
+        const updated: HistoryEntry = {
+            ...entry,
+            ...(note === undefined ? {} : { note }),
+            updatedAt: Date.now(),
+        };
+        this._entries.update((entries) =>
+            sorted([updated, ...entries.filter((existing) => existing.id !== entry.id)])
+        );
+        this.save([updated]);
     }
 
     /**
      * Sets a workout's note, trimmed and cut to MAX_NOTE_LENGTH. An empty note removes it.
      */
     setNote(id: string, note: string) {
+        const entry = this._entries().find((existing) => existing.id === id);
+        if (!entry) {
+            return;
+        }
         const trimmed = note.trim().slice(0, MAX_NOTE_LENGTH);
+        const { note: _old, ...rest } = entry;
+        const changed: HistoryEntry = { ...rest, updatedAt: Date.now() };
+        const updated = trimmed ? { ...changed, note: trimmed } : changed;
         this._entries.update((entries) =>
-            entries.map((entry) => {
-                if (entry.id !== id) {
-                    return entry;
-                }
-                const { note: _old, ...rest } = entry;
-                const changed = { ...rest, updatedAt: Date.now() };
-                return trimmed ? { ...changed, note: trimmed } : changed;
-            })
+            entries.map((existing) => (existing.id === id ? updated : existing))
         );
-        this.save();
+        this.save([updated]);
     }
 
     delete(id: string) {
         this._entries.update((entries) => entries.filter((entry) => entry.id !== id));
         this.deletions.add({ kind: 'history', id, deletedAt: Date.now() });
-        this.save();
+        this.save([], [id]);
     }
 
     /**
      * Merges workouts from another copy (a backup), by run id: the most recent change to each
      * wins, e.g. a note added there. A deletion there removes a workout here that hasn't
      * changed since, and one deleted here doesn't come back unless it changed there after.
-     * The oldest still go past MAX_HISTORY.
+     * Wait for `ready` first, so it merges with the whole history.
      */
     mergeEntries(entries: readonly HistoryEntry[], deletedThere: readonly Deletion[]) {
+        const before = new Map(this._entries().map((entry) => [entry.id, entry]));
         const result = mergeRecords(
             'history',
             this._entries(),
@@ -81,8 +107,12 @@ export class HistoryStore {
         );
         result.deletions.forEach((deletion) => this.deletions.add(deletion));
         if (result.added + result.updated + result.removed > 0) {
-            this._entries.set(sortAndCap(result.records));
-            this.save();
+            const kept = new Set(result.records.map((entry) => entry.id));
+            this._entries.set(sorted(result.records));
+            this.save(
+                result.records.filter((entry) => before.get(entry.id) !== entry),
+                [...before.keys()].filter((id) => !kept.has(id))
+            );
         }
         return { added: result.added, updated: result.updated, removed: result.removed };
     }
@@ -93,30 +123,117 @@ export class HistoryStore {
         this.record(entry);
     }
 
-    private save() {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(this._entries()));
+    /**
+     * Loads the history from IndexedDB, along with anything still in localStorage: from before
+     * the move, or changes that weren't confirmed saved. Then saves those in IndexedDB.
+     */
+    private async load(destroyed: () => boolean) {
+        const db = await openDatabase();
+        if (destroyed()) {
+            db?.close();
+            return;
+        }
+        this.db = db;
+        const stored = readEntries(db ? await readAll(db) : []);
+        const latest = new Map(stored.map((entry) => [entry.id, entry]));
+
+        // Where there's more than one copy of an entry, the most recent change wins
+        const unsaved = new Map<string, HistoryEntry>();
+        for (const entry of [
+            ...readEntries(readList(LEGACY_KEY)),
+            ...readEntries(readList(PENDING_KEY)),
+            ...this._entries(),
+        ]) {
+            const other = latest.get(entry.id);
+            if (!other || entry.updatedAt >= other.updatedAt) {
+                latest.set(entry.id, entry);
+                unsaved.set(entry.id, entry);
+            }
+        }
+        // A deletion may not have reached IndexedDB; it wins if made after the last change
+        const deleted = [...latest.values()]
+            .filter(
+                (entry) => (this.deletions.deletedAt('history', entry.id) ?? -1) >= entry.updatedAt
+            )
+            .map((entry) => entry.id);
+        deleted.forEach((id) => {
+            latest.delete(id);
+            unsaved.delete(id);
+        });
+        this._entries.set(sorted([...latest.values()]));
+
+        if (db && (await write(db, [...unsaved.values()], deleted))) {
+            localStorage.removeItem(LEGACY_KEY);
+            confirmSaved([...unsaved.values()]);
+        }
+    }
+
+    /**
+     * Saves changed entries and removes deleted ones. Each change is kept in localStorage too
+     * until IndexedDB has it, so closing the page mid-write can't lose it.
+     */
+    private save(changed: readonly HistoryEntry[], removed: readonly string[] = []) {
+        const replaced = new Set([...changed.map((entry) => entry.id), ...removed]);
+        savePending([
+            ...readList(PENDING_KEY).filter((item) => !replaced.has(field(item, 'id') as string)),
+            ...changed,
+        ]);
+        if (!this.db) {
+            // Saved once it's open, or left in localStorage if it can't be
+            return;
+        }
+        void write(this.db, changed, removed).then((done) => {
+            if (done) {
+                confirmSaved(changed);
+            }
+        });
     }
 }
 
-function sortAndCap(entries: HistoryEntry[]): HistoryEntry[] {
-    return [...entries].sort((a, b) => b.startedAt - a.startedAt).slice(0, MAX_HISTORY);
+function sorted(entries: HistoryEntry[]): HistoryEntry[] {
+    return [...entries].sort((a, b) => b.startedAt - a.startedAt);
 }
 
-// Corrupted or unexpected data shouldn't stop the app from starting, so drop anything
-// that isn't a usable entry
-function loadHistory(): HistoryEntry[] {
-    migrateSavedData();
+// Corrupted data shouldn't stop the app from starting, so anything unreadable is left out
+function readList(key: string): unknown[] {
     try {
-        const parsed: unknown = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]');
-        return Array.isArray(parsed)
-            ? parsed
-                  .map((item) => readHistoryEntry(item))
-                  .filter((entry) => entry !== null)
-                  .sort((a, b) => b.startedAt - a.startedAt)
-            : [];
+        const parsed: unknown = JSON.parse(localStorage.getItem(key) ?? '[]');
+        return Array.isArray(parsed) ? parsed : [];
     } catch {
         return [];
     }
+}
+
+function readEntries(items: readonly unknown[]): HistoryEntry[] {
+    return items.map((item) => readHistoryEntry(item)).filter((entry) => entry !== null);
+}
+
+/** Lets go of pending changes now in IndexedDB, unless they've changed again since. */
+function confirmSaved(saved: readonly HistoryEntry[]) {
+    const savedAt = new Map(saved.map((entry) => [entry.id, entry.updatedAt]));
+    savePending(
+        readList(PENDING_KEY).filter(
+            (item) => savedAt.get(field(item, 'id') as string) !== field(item, 'updatedAt')
+        )
+    );
+}
+
+function savePending(items: readonly unknown[]) {
+    try {
+        if (items.length > 0) {
+            localStorage.setItem(PENDING_KEY, JSON.stringify(items));
+        } else {
+            localStorage.removeItem(PENDING_KEY);
+        }
+    } catch {
+        // Full: the change is still on its way to IndexedDB
+    }
+}
+
+function field(item: unknown, key: string): unknown {
+    return typeof item === 'object' && item !== null
+        ? (item as Record<string, unknown>)[key]
+        : undefined;
 }
 
 /**

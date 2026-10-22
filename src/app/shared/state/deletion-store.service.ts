@@ -4,8 +4,12 @@ import { migrateSavedData } from './migrate';
 
 const STORAGE_KEY = 'deleted';
 
-/** Plenty to carry deletions to another copy, without letting storage grow forever. */
-export const MAX_DELETIONS = 500;
+/**
+ * Plenty to carry deletions to another copy, without letting storage grow forever: years of
+ * deleting, at about 100 bytes each. Once a deletion drops off, an old backup can bring back
+ * what it deleted.
+ */
+export const MAX_DELETIONS = 5000;
 
 /**
  * Records that were deleted, saved in the browser, so a deletion reaches other copies of the

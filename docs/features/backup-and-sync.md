@@ -1,6 +1,6 @@
 # Backup and sync
 
-Export and import (SYN-1, SYN-2) are built, and the data is ready for sync: random ids, `updatedAt` and deletion markers (see [data](data.md)). The rest is planned (see [direction](../direction.md)); its rules are a first draft and get firmed up, with acceptance criteria, when it's built.
+Export and import (SYN-1, SYN-2) are built, the history has room for years (SYN-5), and the data is ready for sync: random ids, `updatedAt` and deletion markers (see [data](data.md)). The rest is planned (see [direction](../direction.md)); its rules are a first draft and get firmed up, with acceptance criteria, when it's built.
 
 ## Stories
 
@@ -21,7 +21,7 @@ Export and import (SYN-1, SYN-2) are built, and the data is ready for sync: rand
     - One in both keeps **the most recent change**: an edit, a note, a change of reps mid-workout. On a tie, this device's stays.
     - Exercises and notes come in first, so the file's workouts and history entries can be **linked** to them: a step or set that isn't linked yet (a file from before exercises), or is linked to an exercise that's neither here nor in the file, is linked by its name, as saved data is (see [data](data.md#data-version)).
     - One **deleted where the backup came from** is deleted here too, unless it's changed here since. One **deleted here** doesn't come back, unless it changed there after it was deleted here.
-    - Nothing else here is changed or removed. The newest 500 workouts are kept, as always.
+    - Nothing else here is changed or removed.
     - **Settings** in the file are left out: theme, sound, your equipment and so on are a choice for each device.
     - Workouts and history entries in the file that aren't usable are left out, the same as when the app loads its own data, and older workout formats convert.
     - **A version 1 file** (from before ids were random) has no dates or deletions, and its workout ids were only unique on its device. Its workouts are matched by what they are instead (title, steps and rounds): one the same as a workout here is skipped, any other is added with a new id. So a workout changed since that backup was made is kept, and the backup's version is added alongside it. Its workouts merge by run id as above.
@@ -31,14 +31,19 @@ Export and import (SYN-1, SYN-2) are built, and the data is ready for sync: rand
     - "Removed 3 items deleted since on the other device."
     - Those that apply, in that order, or "Nothing new: everything in that backup is already here."
     - Either, followed by "1 item in it couldn't be read, so it was left out." when some were.
-    - "That file isn't a LoopTimer backup." (not a backup, or over 10 MB)
+    - "That file isn't a LoopTimer backup." (not a backup, or over 50 MB)
     - "That file couldn't be read. Is it a LoopTimer backup?" (not JSON)
     - "That backup is from a newer version of LoopTimer. Update the app and try again."
 - A file that's turned down changes nothing.
 
+### Room for history (SYN-5)
+
+- Every workout in the history is kept, with no cap. On the web it's in IndexedDB rather than `localStorage` (about 5 MB, which held the newest 500), and the old list moves across on load (see [data](data.md#history-the-history)).
+- Deletions are remembered for the last 5,000, so an old backup can only bring back something deleted that long ago.
+- A backup can be up to 50 MB, far more than years of workouts take.
+
 ### Still to come (draft)
 
-- **Storage (SYN-5):** the history moves out of `localStorage` (about 5 MB, and the 500 cap) into IndexedDB on the web.
 - **Sync (SYN-3, SYN-4):** the device's copy is the one the app works from; changes are sent when online, and the most recent change to a record wins.
 
 ## Acceptance criteria
@@ -52,6 +57,8 @@ Export and import (SYN-1, SYN-2) are built, and the data is ready for sync: rand
 - Given a backup with a light theme and lb, when I import it, then my settings don't change.
 - Given a file that isn't a backup, or is from a newer version, when I import it, then nothing changes and I'm told why.
 - Given a backup with a broken workout and two broken history entries, when I import it, then the rest are added and "3 items in it couldn't be read" is shown.
+- Given 600 workouts in the history, when I open the app again, then all 600 are there.
+- Given a history saved before it moved to IndexedDB, when I open the app, then every entry is still there.
 
 ## Platform notes
 
