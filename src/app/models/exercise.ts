@@ -60,6 +60,7 @@ export type Equipment =
     | 'band'
     /** A box, bench-height step or stair. */
     | 'step'
+    | 'ab wheel'
     | 'none';
 
 /**

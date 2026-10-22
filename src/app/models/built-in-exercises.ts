@@ -1360,4 +1360,212 @@ export const BUILT_IN_EXERCISES: readonly BuiltInExercise[] = [
             'Keep your feet just off the floor, or a box under you, so you can step down when your grip goes.',
         ],
     },
+
+    // Eighth batch: conditioning and abs
+    {
+        id: 'builtin:burpee',
+        name: 'Burpee',
+        otherNames: ['Burpie', 'Full burpee'],
+        equipment: ['none'],
+        measuredBy: 'reps',
+        mainMuscles: ['quads', 'chest'],
+        supportingMuscles: ['glutes', 'shoulders', 'triceps', 'abs'],
+        description:
+            'From standing, you drop to a push-up, jump your feet back in and jump up. Works nearly everything and gets you breathing hard.',
+        steps: [
+            'Stand tall with your feet shoulder-width apart.',
+            'Squat down, put your hands on the floor, and jump your feet back into a push-up position.',
+            'Do a push-up, then jump your feet back in towards your hands.',
+            'Jump straight up, reaching your arms overhead, and land softly into the next one.',
+        ],
+        tips: [
+            'Too hard? Step your feet back and in instead of jumping, and leave out the push-up.',
+            "Keep your body straight when your feet land back; don't let your hips sag.",
+        ],
+    },
+    {
+        id: 'builtin:mountain-climber',
+        name: 'Mountain climber',
+        otherNames: ['Running plank'],
+        equipment: ['none'],
+        measuredBy: 'timed',
+        mainMuscles: ['abs'],
+        supportingMuscles: ['shoulders', 'quads', 'obliques'],
+        description:
+            'From a push-up position, you drive your knees to your chest in turn, quickly. Works your abs and gets your heart going.',
+        steps: [
+            'Start in a push-up position, hands under your shoulders and your body in a straight line.',
+            'Bring one knee towards your chest, then step it back as you bring the other knee in.',
+            'Keep swapping legs at a steady, quick pace until the time is up.',
+        ],
+        tips: [
+            'Keep your hips level with your shoulders; letting them rise makes it easier than it should be.',
+            'Too hard? Slow down and step each foot in, rather than running.',
+        ],
+    },
+    {
+        id: 'builtin:jumping-jack',
+        name: 'Jumping jack',
+        otherNames: ['Star jump', 'Side-straddle hop'],
+        equipment: ['none'],
+        measuredBy: 'timed',
+        mainMuscles: ['calves', 'quads'],
+        supportingMuscles: ['abductors', 'adductors', 'glutes', 'shoulders'],
+        description:
+            'You jump your feet out wide as your arms go up overhead, then jump back. A simple way to warm up or get breathing hard.',
+        steps: [
+            'Stand tall with your feet together and your arms by your sides.',
+            'Jump your feet out wider than your shoulders, swinging your arms out and up over your head.',
+            'Jump your feet back together as your arms come down to your sides, and keep going.',
+        ],
+        tips: [
+            'Land softly on the balls of your feet.',
+            'No jumping? Step one foot out to the side at a time instead.',
+        ],
+    },
+    {
+        id: 'builtin:jump-squat',
+        name: 'Jump squat',
+        otherNames: ['Squat jump', 'Jumping squat'],
+        equipment: ['none'],
+        measuredBy: 'reps',
+        mainMuscles: ['quads', 'glutes'],
+        supportingMuscles: ['hamstrings', 'calves'],
+        description:
+            'A squat where you jump as high as you can on the way up. Builds power in your legs.',
+        steps: [
+            'Stand with your feet shoulder-width apart, arms by your sides.',
+            'Sit your hips back and down into a squat, swinging your arms back.',
+            'Push hard through your feet to jump straight up, swinging your arms forward.',
+            'Land softly with your knees bent, and go straight down into the next squat.',
+        ],
+        tips: [
+            "Land quietly: if you're thudding down, bend your knees more as you land.",
+            "Knees follow your toes; don't let them cave in when you land.",
+        ],
+    },
+    {
+        id: 'builtin:box-jump',
+        name: 'Box jump',
+        otherNames: ['Plyo box jump', 'Plyometric box jump'],
+        equipment: ['step'],
+        measuredBy: 'reps',
+        mainMuscles: ['quads', 'glutes'],
+        supportingMuscles: ['hamstrings', 'calves'],
+        description:
+            'You jump from the floor up onto a sturdy box, landing softly. Trains your legs to push hard and fast.',
+        steps: [
+            'Stand facing a sturdy box about a step away, feet hip-width apart.',
+            'Swing your arms back as you dip into a quarter squat.',
+            'Swing your arms forward and jump up onto the box, landing softly on both feet with your knees bent.',
+            'Stand up tall on the box, then step back down one foot at a time.',
+        ],
+        tips: [
+            "Step down rather than jumping back off; it's far kinder on your ankles and knees.",
+            'Start with a low box: if you land in a deep squat, it is too high.',
+        ],
+    },
+    {
+        id: 'builtin:bodyweight-squat',
+        name: 'Bodyweight squat',
+        otherNames: ['Air squat', 'Freehand squat', 'Body-weight squat'],
+        equipment: ['none'],
+        measuredBy: 'reps',
+        mainMuscles: ['quads', 'glutes'],
+        supportingMuscles: ['hamstrings', 'adductors'],
+        description:
+            'A squat with no weight: you sit down and stand back up. A good warm-up, and the place to start before adding weight.',
+        steps: [
+            'Stand with your feet shoulder-width apart, toes turned out a little, arms out in front of you.',
+            'Sit your hips back and down, chest up, until your thighs are at least level with the floor.',
+            'Push through your whole foot to stand back up.',
+        ],
+        tips: [
+            "Knees follow your toes; don't let them cave in.",
+            'Heels lifting? Turn your toes out a little more, and sit back as if onto a chair.',
+        ],
+    },
+    {
+        id: 'builtin:wall-sit',
+        name: 'Wall sit',
+        otherNames: ['Wall squat', 'Wall seat'],
+        equipment: ['none'],
+        measuredBy: 'timed',
+        mainMuscles: ['quads'],
+        supportingMuscles: ['glutes', 'adductors'],
+        description:
+            'With your back flat against a wall, you hold a sitting position with no chair. Works your quads without moving.',
+        steps: [
+            'Stand with your back against a wall, feet hip-width apart and about a stride out from it.',
+            'Slide down the wall until your thighs are level with the floor and your knees are at a right angle.',
+            'Keep your back flat against the wall and hold, breathing steadily, until the time is up.',
+            'Slide back up the wall to stand.',
+        ],
+        tips: [
+            'Keep your knees over your ankles; move your feet further out if they come past your toes.',
+            'Too hard? Stop higher up the wall. Too easy? Rest a weight on your thighs.',
+        ],
+    },
+    {
+        id: 'builtin:crunch',
+        name: 'Crunch',
+        otherNames: ['Crunches', 'Ab crunch', 'Floor crunch'],
+        equipment: ['none'],
+        measuredBy: 'reps',
+        mainMuscles: ['abs'],
+        supportingMuscles: ['obliques'],
+        description:
+            'Lying on your back, you curl your shoulders up off the floor towards your knees. The simplest move for your abs.',
+        steps: [
+            'Lie on your back with your knees bent, feet flat, and your hands lightly by your ears or crossed on your chest.',
+            'Breathe out and curl your head and shoulders off the floor, bringing your ribs towards your hips.',
+            'Lower your shoulders back to the floor slowly.',
+        ],
+        tips: [
+            "Don't pull on your head with your hands; they're only resting there.",
+            "Your lower back stays on the floor: it's a small curl, not a sit-up.",
+        ],
+    },
+    {
+        id: 'builtin:bicycle-crunch',
+        name: 'Bicycle crunch',
+        otherNames: ['Bicycle crunches', 'Bicycle sit-up'],
+        equipment: ['none'],
+        measuredBy: 'reps',
+        mainMuscles: ['obliques', 'abs'],
+        supportingMuscles: [],
+        description:
+            'Lying on your back, you bring each elbow to the opposite knee in turn, pedalling your legs. Works the sides of your middle.',
+        steps: [
+            'Lie on your back with your hands lightly by your ears and your knees lifted over your hips.',
+            'Curl your shoulders up, then bring your right knee in and turn your left elbow towards it, straightening your left leg.',
+            'Swap sides: bring your left knee in and turn your right elbow towards it, straightening your right leg.',
+            'Keep going from side to side, slowly, with your shoulders off the floor.',
+        ],
+        tips: [
+            'Turn your shoulders, not just your elbows: slow and controlled counts for more than fast.',
+            'Count each side as a rep, or each pair, but always count the same way.',
+        ],
+    },
+    {
+        id: 'builtin:ab-wheel-rollout',
+        name: 'Ab wheel rollout',
+        otherNames: ['Ab rollout', 'Ab wheel', 'Ab roller'],
+        equipment: ['ab wheel'],
+        measuredBy: 'reps',
+        mainMuscles: ['abs'],
+        supportingMuscles: ['obliques', 'shoulders', 'upper-back', 'lower-back'],
+        description:
+            'Kneeling with your hands on an ab wheel, you roll it out in front of you and pull it back. Hard work for your abs.',
+        steps: [
+            "Kneel on a mat holding the ab wheel's handles, the wheel on the floor under your shoulders.",
+            'Brace your middle and roll the wheel forward slowly, letting your body lower towards the floor.',
+            'Go as far as you can without your lower back sagging.',
+            'Pull the wheel back towards your knees with your abs, to come back to the start.',
+        ],
+        tips: [
+            'Start with short rollouts, and go further as you get stronger.',
+            'Too easy? Do it from your feet instead of your knees.',
+        ],
+    },
 ];
