@@ -10,7 +10,11 @@ Do these first: everything after builds on them. The data is ready for sync (#81
 
 ### Phase 2: Feedback in the workout
 
-- [ ] **Make the end of a set and of the workout clearer:** it isn't obvious enough that a set has been completed, or that the workout has now ended, and a workout that runs until stopped (∞) is least clear of all. Dan has changes in mind; ask before starting. Comes after the history page work.
+Making it clearer which part of the workout is happening, as agreed with Dan on 2026-10-22. Pause and End workout are done: Stop is gone from the running screen, and a workout ends from the paused screen (Resume and End workout over the greyed ring). Still to do, in this order:
+
+- [ ] **Workout summary:** one full-screen sheet for both endings, finished by itself or by End workout, replacing the "You're finished!" screen. It shows the time taken, the rounds done, and each exercise's sets (e.g. "Squats: 10, 10, 8 @ 60 kg"), with a note box and View history and Done buttons. Logged sets can be changed (reps, weight) here; after a change, ask "Use these settings next time?" before updating the saved workout. A workout ended early, or one that runs until stopped, gets **Back to workout** (taking the run up again where it was paused). Leave room for personal bests (PRG-2).
+- [ ] **"Next:" pulses near a step's end:** the last 5s of a timed step (3s if the step is under 15s), swelling gently once a second in the next step's colour. Nothing on rep steps (Done is the cue). Reduced motion: a colour change only.
+- [ ] **Steps slide, like the number wheel:** on a new step the face's text slides up and out and the next slides in from below (about 300ms); on a new round it slides right to left instead, with the round line and dots, and the ring stays put. Reduced motion: a short crossfade.
 - [ ] **Last time (PRG-1):** on each rep step, "Last time: 10, 10, 8 @ 60 kg".
 - [ ] **Personal bests (PRG-2):** called out on the finished screen.
 
@@ -42,6 +46,8 @@ Do these first: everything after builds on them. The data is ready for sync (#81
 ## 2. Design
 
 - [ ] **Weights on library cards:** a card sums up a round (e.g. "4 steps · 01:30 + reps") rather than listing steps. Now that they're workouts (EXR-5), a workout card could list its exercises (e.g. "Squats, Bench press + 1 more"), which would make weights on cards unnecessary.
+
+- [ ] **A different look per step type on the workout page:** once steps slide in and out, timed, rep and rest steps could each have their own look or motion (e.g. the "Next:" line rising into the ring and becoming the new label). Dan wants to come back to this after the slides are in.
 
 ## 3. Known issues
 

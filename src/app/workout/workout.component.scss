@@ -61,7 +61,7 @@ $track-color: #334155; // slate-700: dark, so both phase colours stand out (3:1 
 
 .workout-ring {
     position: relative;
-    margin-top: 1rem;
+    transition: filter 0.3s ease;
     // 380px, or the screen width minus the page gutters on narrow phones
     width: min(380px, calc(100vw - 2rem));
     aspect-ratio: 1;
@@ -253,12 +253,87 @@ $track-color: #334155; // slate-700: dark, so both phase colours stand out (3:1 
     animation-play-state: paused;
 }
 
-.workout-face__paused {
-    font-size: 1.5rem;
+// ...and grey it out, with the face's own text making way for Resume and End workout.
+// Darkened rather than faded, so the face stays light under them in both themes.
+.workout-ring--paused {
+    filter: grayscale(1) brightness(0.9);
+}
+
+.workout-face--paused > * {
+    visibility: hidden;
+}
+
+// The ring and what sits over it while paused
+.workout-stage {
+    position: relative;
+    margin-top: 1rem;
+}
+
+// Grows into place: scale only, as fading would leave it faint for a moment
+@keyframes paused-in {
+    from {
+        transform: scale(0.92);
+    }
+}
+
+.workout-paused {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    animation: paused-in 0.2s ease-out;
+}
+
+// On the face, which is light in both themes
+.workout-paused__label {
+    margin: 0;
+    color: black;
+    font-size: 1.25rem;
+}
+
+.workout-paused__end {
+    border-color: $track-color;
+    color: black;
+
+    &:hover {
+        border-color: black;
+        background-color: rgb(0 0 0 / 0.06);
+    }
+}
+
+// Everything else on the page steps back too, in the muted text colour
+.workout-page--paused {
+    .workout-status,
+    .workout-note,
+    .workout-next {
+        color: var(--text-muted);
+    }
+}
+
+.workout-status,
+.workout-note,
+.workout-next {
+    transition: color 0.3s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .workout-ring,
+    .workout-status,
+    .workout-note,
+    .workout-next {
+        transition: none;
+    }
+
+    .workout-paused {
+        animation: none;
+    }
 }
 
 // Three columns with the big button in the middle one, so it sits centred under the ring;
-// Stop takes the right-hand column and the left one stays empty
+// Pause takes the right-hand column on a rep step, and the left one stays empty
 .workout-controls {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
@@ -285,7 +360,7 @@ $track-color: #334155; // slate-700: dark, so both phase colours stand out (3:1 
     }
 }
 
-.workout-control__stop {
+.workout-control__side {
     width: 56px;
     height: 56px;
 }

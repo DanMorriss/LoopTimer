@@ -66,6 +66,13 @@ describe('WorkoutComponent', () => {
         return (fixture.nativeElement as HTMLElement).textContent?.replace(/\s+/g, ' ') ?? '';
     }
 
+    /** Ends the run the only way there is: Pause, then End workout over the ring. */
+    function endWorkout() {
+        (fixture.nativeElement.querySelector('[aria-label="Pause"]') as HTMLElement).click();
+        fixture.detectChanges();
+        (fixture.nativeElement.querySelector('.workout-paused__end') as HTMLElement).click();
+    }
+
     it('points to the library and runs no countdown when there is no active workout', async () => {
         fixture = TestBed.createComponent(WorkoutComponent);
         component = fixture.componentInstance;
@@ -562,14 +569,23 @@ describe('WorkoutComponent', () => {
         });
     });
 
-    describe('pause, resume and stop', () => {
+    describe('pause, resume and end', () => {
         const buttons = () =>
             Array.from(
-                fixture.nativeElement.querySelectorAll('.workout-controls button')
+                fixture.nativeElement.querySelectorAll(
+                    '.workout-controls button, .workout-paused button'
+                )
             ) as HTMLButtonElement[];
-        // The controls are icons, so they're found by their accessible name
-        const button = (label: string) =>
-            buttons().find((b) => b.getAttribute('aria-label') === label);
+        // Found by their accessible name: an icon button's label, or a text button's text
+        // (less its icon, which is hidden from screen readers)
+        const name = (b: HTMLButtonElement) =>
+            b.getAttribute('aria-label') ??
+            Array.from(b.childNodes)
+                .filter((node) => !(node instanceof Element && node.ariaHidden === 'true'))
+                .map((node) => node.textContent)
+                .join('')
+                .trim();
+        const button = (label: string) => buttons().find((b) => name(b) === label);
         const ring = () => fixture.nativeElement.querySelector('.workout-ring') as HTMLElement;
 
         function press(label: string) {
@@ -579,25 +595,61 @@ describe('WorkoutComponent', () => {
             fixture.detectChanges();
         }
 
-        it('offers Pause and Stop while running', () => {
+        it('offers just Pause while running, so the workout is never ended by mistake', () => {
             start(makeWorkout());
 
-            expect(buttons().map((b) => b.getAttribute('aria-label'))).toEqual(['Pause', 'Stop']);
+            expect(buttons().map(name)).toEqual(['Pause']);
             fixture.destroy();
         });
 
-        it('captions the icon buttons with their names, hidden from screen readers', () => {
+        it('captions the icon button with its name, hidden from screen readers', () => {
             start(makeWorkout());
-            const captions = Array.from(
-                fixture.nativeElement.querySelectorAll('.workout-control__caption')
-            ) as HTMLElement[];
+            const caption = fixture.nativeElement.querySelector(
+                '.workout-control__caption'
+            ) as HTMLElement;
 
-            expect(captions.map((c) => c.textContent?.trim())).toEqual(['Pause', 'Stop']);
-            expect(captions.every((c) => c.getAttribute('aria-hidden') === 'true')).toBe(true);
+            expect(caption.textContent?.trim()).toBe('Pause');
+            expect(caption.getAttribute('aria-hidden')).toBe('true');
+            fixture.destroy();
+        });
+
+        it('greys out the page and offers Resume and End workout over the ring while paused', () => {
+            start(makeWorkout({ workSeconds: 10 }));
+            advance(3000);
 
             press('Pause');
 
-            expect(captions[0].textContent?.trim()).toBe('Resume');
+            expect(buttons().map(name)).toEqual(['Resume', 'End workout']);
+            expect(fixture.nativeElement.querySelector('.workout-paused').textContent).toContain(
+                'Paused · 00:07'
+            );
+            expect(fixture.nativeElement.querySelector('.workout-page').classList).toContain(
+                'workout-page--paused'
+            );
+            fixture.destroy();
+        });
+
+        it('moves focus to Resume on pause, and back to Pause on resume', () => {
+            start(makeWorkout({ workSeconds: 10 }));
+
+            press('Pause');
+            TestBed.tick();
+            expect(document.activeElement).toBe(button('Resume'));
+
+            press('Resume');
+            TestBed.tick();
+            expect(document.activeElement).toBe(button('Pause'));
+            fixture.destroy();
+        });
+
+        it('resumes on Escape', () => {
+            start(makeWorkout({ workSeconds: 10 }));
+            press('Pause');
+
+            document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+            fixture.detectChanges();
+
+            expect(component.isPaused()).toBe(false);
             fixture.destroy();
         });
 
@@ -698,12 +750,13 @@ describe('WorkoutComponent', () => {
             localStorage.clear();
         });
 
-        it('ends the workout and goes back to the library when stopped', async () => {
+        it('ends the workout and goes back to the library on End workout', async () => {
             start(makeWorkout());
             const router = TestBed.inject(Router);
             const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
-            press('Stop');
+            press('Pause');
+            press('End workout');
 
             expect(store.activeWorkout()).toBeNull();
             expect(navigate).toHaveBeenCalledWith(['/library']);
@@ -759,7 +812,7 @@ describe('WorkoutComponent', () => {
             it('leaves Space alone on a focused button, which Space presses anyway', () => {
                 start(makeWorkout());
 
-                expect(pressSpace(button('Stop')!)).toBe(false);
+                expect(pressSpace(button('Pause')!)).toBe(false);
                 expect(component.isPaused()).toBe(false);
                 fixture.destroy();
             });
@@ -812,12 +865,7 @@ describe('WorkoutComponent', () => {
 
         async function pressStop() {
             vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
-            const stop = Array.from(
-                fixture.nativeElement.querySelectorAll(
-                    '.workout-controls button'
-                ) as NodeListOf<HTMLElement>
-            ).find((b) => b.getAttribute('aria-label') === 'Stop')!;
-            stop.click();
+            endWorkout();
             await fixture.whenStable();
         }
 
@@ -1200,7 +1248,7 @@ describe('WorkoutComponent', () => {
             expect(component.isComplete()).toBe(false);
             expect(text()).toContain('round 721 of ∞');
             expect(fixture.nativeElement.querySelectorAll('.workout-controls button')).toHaveLength(
-                2
+                1
             );
             fixture.destroy();
         });
@@ -1304,7 +1352,11 @@ describe('WorkoutComponent', () => {
             unlockSound();
             advance(1500);
             const button = (label: string) =>
-                Array.from(fixture.nativeElement.querySelectorAll('.workout-controls button')).find(
+                Array.from(
+                    fixture.nativeElement.querySelectorAll(
+                        '.workout-controls button, .workout-paused button'
+                    )
+                ).find(
                     (b) => (b as HTMLElement).getAttribute('aria-label') === label
                 ) as HTMLElement;
 
@@ -1330,7 +1382,11 @@ describe('WorkoutComponent', () => {
             unlockSound();
             advance(3500);
             const button = (label: string) =>
-                Array.from(fixture.nativeElement.querySelectorAll('.workout-controls button')).find(
+                Array.from(
+                    fixture.nativeElement.querySelectorAll(
+                        '.workout-controls button, .workout-paused button'
+                    )
+                ).find(
                     (b) => (b as HTMLElement).getAttribute('aria-label') === label
                 ) as HTMLElement;
 
@@ -1370,7 +1426,7 @@ describe('WorkoutComponent', () => {
             unlockSound();
             vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
 
-            (fixture.nativeElement.querySelector('[aria-label="Stop"]') as HTMLElement).click();
+            endWorkout();
             fixture.detectChanges();
 
             expect(audio.scheduledNotes()).toEqual([]);
@@ -1525,7 +1581,7 @@ describe('WorkoutComponent', () => {
             fixture.destroy();
         });
 
-        it('swaps Pause for Done, keeping Stop', () => {
+        it('swaps Pause for Done, with a smaller Pause to one side', () => {
             start(circuit());
             expect(mainButton().getAttribute('aria-label')).toBe('Pause');
 
@@ -1534,7 +1590,18 @@ describe('WorkoutComponent', () => {
             expect(mainButton().getAttribute('aria-label')).toBe('Done');
             expect(mainButton().getAttribute('aria-keyshortcuts')).toBe('Space');
             expect(text()).toContain('Done');
-            expect(fixture.nativeElement.querySelector('[aria-label="Stop"]')).not.toBeNull();
+            const pause = fixture.nativeElement.querySelector(
+                '.workout-control--side [aria-label="Pause"]'
+            ) as HTMLElement;
+            expect(pause).not.toBeNull();
+
+            pause.click();
+            fixture.detectChanges();
+
+            expect(component.isPaused()).toBe(true);
+            expect(fixture.nativeElement.querySelector('.workout-paused').textContent).toContain(
+                'Paused · 20 reps'
+            );
             fixture.destroy();
         });
 
@@ -1785,7 +1852,7 @@ describe('WorkoutComponent', () => {
             advance(2000 + 3000 + 10_000); // 10s into round 2's push-ups
             vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
 
-            (fixture.nativeElement.querySelector('[aria-label="Stop"]') as HTMLElement).click();
+            endWorkout();
             await fixture.whenStable();
 
             expect(entries()[0]).toEqual(

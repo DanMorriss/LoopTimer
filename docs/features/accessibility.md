@@ -16,13 +16,13 @@
     - "Paused" when paused; "Finished" at the end.
 - ∞ is read as "until stopped". The round dots are hidden (the announcements say the same).
 - The ring reports progress through the step as a percentage, or "Waiting for Done" on a rep step.
-- Icon buttons have names (Pause, Resume, Done, Stop, Options for …). Visible captions repeat them, hidden from screen readers.
+- Icon buttons have names (Pause, Resume, Done, Options for …). Visible captions repeat them, hidden from screen readers.
 - Wheels are spin buttons named by their step, e.g. "Step 2, rest, Seconds", reporting their value and range.
 - Adding, moving or deleting a step is announced, e.g. "Moved squats to step 3".
 
 ### Keyboard and focus
 
-- Everything works with a keyboard. Space pauses, resumes, and presses Done (see [pause-and-stop](pause-and-stop.md)).
+- Everything works with a keyboard. Space pauses, resumes, and presses Done; Escape resumes. Focus moves to Resume on pause and back on resume (see [pause-and-stop](pause-and-stop.md)).
 - Wheels: arrows move one, Page Up/Down move five, Home/End jump to the ends, and typing digits picks a number.
 - Steps can be reordered with **Move up/down** buttons as well as by dragging (the drag handle is hidden from screen readers).
 - Focus is always put somewhere sensible: into a dialog (starting on Cancel), back to the button that opened a menu or dialog, onto a new step's name box, onto Undo after deleting from the history, onto the step that takes a deleted one's place.
