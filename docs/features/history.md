@@ -22,7 +22,7 @@
     - an optional note
     - the **sets** of its rep steps (HIS-5): for each Done, the round, the step, its name, the reps and the weight. A set is only logged on Done, so a workout stopped mid-set doesn't log that set.
 - **One entry per run**: logging the same run again (e.g. stopped when the app closed, then finished after a reload) updates its entry, keeping any note added meanwhile.
-- The newest **500** are kept; older ones drop off.
+- **All are kept**, however many: years of them (SYN-5).
 
 ### The page
 
@@ -64,8 +64,9 @@
 - Given an entry with a note, when I save it empty, then the note is removed.
 - Given I delete an entry, when I press Undo, then it's back with its note.
 - Given a run still going whose entry I delete, when the run finishes, then the entry doesn't come back, even after a reload.
+- Given a run I leave by closing the tab, when I open the app again, then it's in the history as stopped.
 
 ## Platform notes
 
-- **Web:** `HistoryStore` (`src/app/shared/state/history-store.service.ts`) and `HistoryComponent` (`src/app/history/`), at `/history`; `?note=<id>` and `?run=<id>` come from the finished screen. Formatting is in `src/app/history/history-format.ts`.
-- **iOS:** SwiftData (or a JSON file) for entries. The 500 cap was for browser storage, so a native app could keep more. Swipe to delete with an Undo toast is the iOS habit. The date groups should follow the user's locale, as they do on the web.
+- **Web:** `HistoryStore` (`src/app/shared/state/history-store.service.ts`) and `HistoryComponent` (`src/app/history/`), at `/history`. The history is saved in IndexedDB (`history-database.ts`; see [data](data.md#history-the-history)) and loads in the background, so `/history` and `/exercises/:id` wait for it to open, and a backup waits for it too; `?note=<id>` and `?run=<id>` come from the finished screen. Formatting is in `src/app/history/history-format.ts`.
+- **iOS:** SwiftData (or a JSON file) for entries, with no cap. Swipe to delete with an Undo toast is the iOS habit. The date groups should follow the user's locale, as they do on the web.

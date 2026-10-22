@@ -1,4 +1,9 @@
-import { Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { CanActivateFn, Routes } from '@angular/router';
+import { HistoryStore } from './shared/state/history-store.service';
+
+// Pages that read the history wait for it to load, so they don't show it empty at first
+const historyLoaded: CanActivateFn = () => inject(HistoryStore).ready.then(() => true);
 
 export const routes: Routes = [
     {
@@ -25,6 +30,7 @@ export const routes: Routes = [
     },
     {
         path: 'exercises/:id',
+        canActivate: [historyLoaded],
         loadComponent: () =>
             import('./exercises/exercise-page/exercise-page.component').then(
                 (m) => m.ExercisePageComponent
@@ -32,6 +38,7 @@ export const routes: Routes = [
     },
     {
         path: 'history',
+        canActivate: [historyLoaded],
         loadComponent: () => import('./history/history.component').then((m) => m.HistoryComponent),
     },
     {

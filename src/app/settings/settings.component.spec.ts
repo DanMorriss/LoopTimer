@@ -310,13 +310,14 @@ describe('SettingsComponent', () => {
                 fixture.nativeElement.querySelector('[role="status"]') as HTMLElement
             ).textContent!.trim();
 
-        it('exports a backup and says what it was saved as', () => {
+        it('exports a backup and says what it was saved as', async () => {
             create();
             const exportSpy = vi
                 .spyOn(TestBed.inject(BackupService), 'export')
-                .mockReturnValue('looptimer-2026-10-21.json');
+                .mockResolvedValue('looptimer-2026-10-21.json');
 
             button('Export backup').click();
+            await fixture.whenStable();
             fixture.detectChanges();
 
             expect(exportSpy).toHaveBeenCalledTimes(1);

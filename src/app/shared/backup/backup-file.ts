@@ -28,8 +28,8 @@ import { readWorkout } from '../state/workout-store.service';
  */
 export const BACKUP_VERSION = 5;
 
-/** Far more than years of workouts take, so a bigger file isn't a backup. */
-export const MAX_BACKUP_BYTES = 10 * 1024 * 1024;
+/** Far more than years of workouts take (about 1 KB each), so a bigger file isn't a backup. */
+export const MAX_BACKUP_BYTES = 50 * 1024 * 1024;
 
 /** Everything the app saves, as one file (see docs/features/backup-and-sync.md). */
 export interface BackupFile {

@@ -45,8 +45,9 @@ export class BackupService {
     private readonly settings = inject(SettingsStore);
     private readonly document = inject(DOCUMENT);
 
-    /** Downloads a backup of everything, and returns the file's name. */
-    export(): string {
+    /** Downloads a backup of everything, once the history has loaded, and gives the file's name. */
+    async export(): Promise<string> {
+        await this.history.ready;
         const exportedAt = Date.now();
         const backup = makeBackup(
             {
@@ -104,6 +105,7 @@ export class BackupService {
         if (!backup.ok) {
             return backup;
         }
+        await this.history.ready;
         const exercises = this.exercises.mergeOwn(backup.exercises, backup.deleted);
         this.exercises.mergeNotes(backup.exerciseNotes, backup.deleted);
         this.exercises.mergeHidden(backup.hiddenExercises, backup.deleted);

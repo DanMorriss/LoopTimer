@@ -4,7 +4,7 @@ What the app saves, and in what shape. Everything is on the device; there's no a
 
 **Ready for sync:** every workout and history entry has an id that can't clash with another device's (random, not 1, 2, 3) and an `updatedAt`, the time it last changed in ms since 1970. Deleting one leaves a marker in `deleted`. Merging two copies (a backup now, another device later) goes by id: the most recent change to each record wins, and a deletion wins over changes made before it. See [backup-and-sync](backup-and-sync.md).
 
-## Saved for good (`localStorage` on the web)
+## Saved for good (`localStorage` on the web, the history in IndexedDB)
 
 ### `workouts`: the library
 
@@ -37,7 +37,7 @@ A JSON list of workouts:
 
 ### `history`: the history
 
-A JSON list of entries, newest first, at most 500:
+In IndexedDB on the web: the `history` store of the `looptimer` database, one record per entry keyed by its `id`, with no limit on how many. Shown here as a list, as in a backup:
 
 ```json
 [
@@ -66,6 +66,10 @@ A JSON list of entries, newest first, at most 500:
 - `updatedAt`: when it was last logged or its note changed.
 - `totalRounds` is 0 for a workout that runs until stopped. `outcome` is `finished` or `stopped`. `note` is missing when there isn't one (up to 120 characters).
 - `sets` (missing when there were none): one per Done on a rep step, in order. `round` and `step` count from 0, `reps` is at least 1, `weight` is in kg (missing for none). `exerciseId` is the exercise it was, from its step (missing for an unnamed step). A broken set is dropped when loading, keeping the rest of the entry.
+
+**`history-pending` (`localStorage`):** each change to the history is kept here too until IndexedDB confirms it, as a JSON list of entries, since a write started as the page closes (logging a run left mid-way) may never finish. On the next load anything still here is saved to IndexedDB, the most recent change to each entry winning, and a deletion made after an entry's last change (in `deleted`) wins over it. If IndexedDB can't be used at all, the history stays here.
+
+**Moving in:** until October 2026 the history was a JSON list in `localStorage` under `history`, at most 500 entries. On load it's moved into IndexedDB, the same way, and the key removed once it's saved there.
 
 ### `exercises`: your own exercises
 
@@ -101,7 +105,7 @@ A JSON list of `{ "id": "<exercise id>", "updatedAt": … }`, one per exercise h
 
 ### `deleted`
 
-The last 500 workouts, history entries, exercises of your own, notes and hidden exercises deleted (shown again), oldest first, so a deletion reaches other copies and a run still going can't log itself back in (see [history](history.md)):
+The last 5,000 workouts, history entries, exercises of your own, notes and hidden exercises deleted (shown again), oldest first, so a deletion reaches other copies and a run still going can't log itself back in (see [history](history.md)):
 
 ```json
 [
@@ -202,7 +206,7 @@ From these, everything on the workout page is worked out (see [run-a-workout](ru
 - **Version 3 and older** files call workouts timers: a `timers` list in place of `workouts`, `timerId` in the history and the kind `timer` in `deleted`. They're renamed as they're read.
 - **Version 4 and older** files have no `hiddenExercises`, so nothing in them is hidden.
 - **Version 2** files (from before exercises) have no `exercises` or `exerciseNotes`, and their steps and sets aren't linked; they're linked by name as they're imported.
-- A file that isn't JSON, doesn't say `"app": "LoopTimer"`, lacks `workouts` or `history` lists, or is over 10 MB isn't a backup.
+- A file that isn't JSON, doesn't say `"app": "LoopTimer"`, lacks `workouts` or `history` lists, or is over 50 MB isn't a backup.
 
 ## Broken data
 
