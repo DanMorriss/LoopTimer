@@ -4,6 +4,7 @@ import { Timer, UNTIL_STOPPED } from '../models/timer';
 import { HistoryStore } from '../shared/state/history-store.service';
 import { SettingsStore } from '../shared/state/settings-store.service';
 import { TimerStore } from '../shared/state/timer-store.service';
+import { ExerciseStore } from '../shared/state/exercise-store.service';
 import { AlarmService } from '../shared/alarms/alarm.service';
 import { ActiveRunService } from '../shared/run/active-run.service';
 import { KeepAwakeService } from '../shared/run/keep-awake.service';
@@ -1476,6 +1477,31 @@ describe('TimerComponent', () => {
 
         beforeEach(() => localStorage.clear());
         afterEach(() => localStorage.clear());
+
+        it('shows your note on the exercise with its step, and says it', () => {
+            TestBed.inject(ExerciseStore).setNote('builtin:push-up', 'Elbows in');
+            start(
+                makeTimer({
+                    steps: [
+                        work(3),
+                        { ...reps(20, 'Push-ups'), exerciseId: 'builtin:push-up' },
+                        rest(2),
+                    ],
+                    repeats: 2,
+                })
+            );
+            const note = () =>
+                fixture.nativeElement.querySelector('.timer-note') as HTMLElement | null;
+            // The timed step is no exercise of yours, so has no note
+            expect(note()).toBeNull();
+
+            advance(3000);
+
+            expect(note()!.querySelector('span')!.textContent!.trim()).toBe('Your note: Elbows in');
+            expect(said()).toBe('Push-ups, 20 reps, your note: Elbows in, step 2 of 3');
+            pressDone();
+            expect(note()).toBeNull();
+        });
 
         it('shows the reps and waits, however long it takes', () => {
             start(circuit());

@@ -9,6 +9,7 @@ import { formatTime } from '../shared/format-time';
 import { ActiveRunService } from '../shared/run/active-run.service';
 import { SettingsStore } from '../shared/state/settings-store.service';
 import { TimerStore } from '../shared/state/timer-store.service';
+import { ExerciseStore } from '../shared/state/exercise-store.service';
 
 // Space on one of these already does something, e.g. presses the focused button
 const SPACE_HANDLED_BY =
@@ -47,6 +48,7 @@ export class TimerComponent {
 
     protected readonly alarms = inject(AlarmService);
     private readonly settings = inject(SettingsStore);
+    private readonly exercises = inject(ExerciseStore);
     /** Sound is on, but the browser is waiting for a tap before it will play any. */
     soundLocked = computed(
         () => this.alarms.supported && this.settings.sound() && !this.alarms.unlocked()
@@ -117,6 +119,11 @@ export class TimerComponent {
     stepLabel = computed(() => {
         const step = this.state()?.step;
         return step?.name || (step && step.kind !== 'work' ? kindName(step) : '');
+    });
+    /** Your note on the step's exercise (EXR-10), e.g. "Pause at the bottom", or ''. */
+    exerciseNote = computed(() => {
+        const step = this.state()?.step;
+        return step?.exerciseId ? (this.exercises.noteFor(step.exerciseId) ?? '') : '';
     });
     /** e.g. "Plank · 00:45", "Squats · 10 reps @ 60 kg", or "finish" when the workout ends after this step. */
     upNext = computed(() => {
@@ -226,6 +233,9 @@ export class TimerComponent {
         if (state.step.kind === 'reps') {
             const weight = this.weightText(state.step);
             parts.push(`${state.step.reps} reps${weight ? ` at ${weight}` : ''}`);
+        }
+        if (this.exerciseNote()) {
+            parts.push(`your note: ${this.exerciseNote()}`);
         }
         if (this.showStepCount()) {
             parts.push(`step ${state.stepIndex + 1} of ${timer.steps.length}`);

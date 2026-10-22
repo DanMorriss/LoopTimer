@@ -134,6 +134,39 @@ export interface OwnExercise extends Synced {
 
 export type Exercise = BuiltInExercise | OwnExercise;
 
+/** What you can change on an exercise of your own (EXR-3, EXR-9). */
+export type OwnExerciseDetails = Pick<
+    OwnExercise,
+    'name' | 'measuredBy' | 'equipment' | 'mainMuscles' | 'supportingMuscles' | 'description'
+>;
+
+/** The longest an exercise's name can be: the same as a step's, as it's shown on the timer. */
+export const MAX_EXERCISE_NAME_LENGTH = 40;
+
+/** A couple of sentences, like a built-in one's. */
+export const MAX_EXERCISE_DESCRIPTION_LENGTH = 300;
+
+/** The equipment that can be picked for an exercise of your own, in the order it's offered. */
+export const EQUIPMENT_CHOICES: readonly Exclude<Equipment, 'none'>[] = [
+    'barbell',
+    'dumbbells',
+    'kettlebell',
+    'bench',
+    'rack',
+    'pull-up bar',
+    'parallel bars',
+    'cable',
+    'machine',
+    'band',
+    'step',
+    'ab wheel',
+];
+
+/** How each piece of equipment is written in the app, e.g. "Pull-up bar". */
+export function equipmentLabel(equipment: Equipment): string {
+    return equipment.charAt(0).toUpperCase() + equipment.slice(1);
+}
+
 export function isBuiltIn(exercise: Exercise): exercise is BuiltInExercise {
     return exercise.id.startsWith('builtin:');
 }

@@ -1,0 +1,58 @@
+<!-- The list follows the input's focus (aria-activedescendant), so focus never leaves the box -->
+<input
+    class="picker-field__input"
+    role="combobox"
+    autocomplete="off"
+    aria-autocomplete="list"
+    [id]="inputId()"
+    [value]="value()"
+    [placeholder]="placeholder()"
+    [attr.aria-describedby]="describedBy() || null"
+    [attr.aria-expanded]="expanded()"
+    [attr.aria-controls]="listId"
+    [attr.aria-activedescendant]="activeOptionId()"
+    (input)="onInput($event)"
+    (keydown)="onKeydown($event)"
+    (blur)="close()"
+/>
+<!-- In the page all along, so aria-controls always points somewhere; hidden while closed -->
+<ul
+    class="exercise-picker__list"
+    role="listbox"
+    aria-label="Exercises"
+    [id]="listId"
+    [hidden]="!expanded()"
+>
+    @for (option of options(); track $index; let i = $index) {
+        <!-- mousedown would take focus from the box and close the list before the click lands -->
+        <li
+            class="exercise-picker__option"
+            role="option"
+            [class.exercise-picker__option--active]="i === active()"
+            [class.exercise-picker__option--make]="option.kind === 'make'"
+            [id]="optionId(i)"
+            [attr.aria-selected]="i === active()"
+            (mousedown)="$event.preventDefault()"
+            (click)="choose(option)"
+        >
+            @if (option.kind === 'exercise') {
+                <span class="exercise-picker__name">{{ option.exercise.name }}</span>
+                @if (option.otherName) {
+                    <span class="exercise-picker__detail"
+                        ><span class="sr-only">, </span>Also called {{ option.otherName }}</span
+                    >
+                } @else if (!isBuiltIn(option.exercise)) {
+                    <span class="exercise-picker__detail"
+                        ><span class="sr-only">, </span>Your own</span
+                    >
+                }
+            } @else {
+                <mat-icon class="exercise-picker__icon" aria-hidden="true">add</mat-icon>
+                <span class="exercise-picker__name">Make "{{ option.name }}"</span>
+                <span class="exercise-picker__detail"
+                    ><span class="sr-only">, </span>A new exercise of your own</span
+                >
+            }
+        </li>
+    }
+</ul>

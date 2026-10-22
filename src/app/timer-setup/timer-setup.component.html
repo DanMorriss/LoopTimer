@@ -150,16 +150,94 @@
                                 animate.leave="step__body--closing"
                             >
                                 <div class="step__body-inner">
-                                    <label class="picker-field" [for]="'step-' + key + '-name'">
-                                        <span class="picker-field__label">Name (optional)</span>
-                                        <input
-                                            class="picker-field__input"
-                                            [id]="'step-' + key + '-name'"
-                                            [formField]="step.name"
-                                            [placeholder]="nameExamples[kind]"
-                                            [attr.aria-describedby]="'step-' + key + '-title'"
-                                        />
-                                    </label>
+                                    @if (kind === 'rest') {
+                                        <label class="picker-field" [for]="'step-' + key + '-name'">
+                                            <span class="picker-field__label">Name (optional)</span>
+                                            <input
+                                                class="picker-field__input"
+                                                [id]="'step-' + key + '-name'"
+                                                [formField]="step.name"
+                                                [placeholder]="nameExamples[kind]"
+                                                [attr.aria-describedby]="'step-' + key + '-title'"
+                                            />
+                                        </label>
+                                    } @else {
+                                        <!-- Finds an exercise as you type, or makes a new one -->
+                                        @let exercise = exerciseFor(step().value());
+                                        <div class="picker-field">
+                                            <label
+                                                class="picker-field__label"
+                                                [for]="'step-' + key + '-name'"
+                                            >
+                                                Exercise (optional)
+                                            </label>
+                                            <app-exercise-picker
+                                                [inputId]="'step-' + key + '-name'"
+                                                [formField]="step.name"
+                                                [(exerciseId)]="step.exerciseId().value"
+                                                [placeholder]="nameExamples[kind]"
+                                                [describedBy]="
+                                                    'step-' +
+                                                    key +
+                                                    '-title step-' +
+                                                    key +
+                                                    '-exercise-status'
+                                                "
+                                            />
+                                        </div>
+                                        @if (exercise || step().value().name.trim()) {
+                                            <div class="step__exercise">
+                                                <p
+                                                    class="step__exercise-status"
+                                                    [id]="'step-' + key + '-exercise-status'"
+                                                >
+                                                    @if (exercise) {
+                                                        {{
+                                                            isBuiltIn(exercise)
+                                                                ? 'Built-in exercise'
+                                                                : 'Your own exercise'
+                                                        }}
+                                                        @if (noteFor(exercise); as note) {
+                                                            <span class="step__exercise-note">
+                                                                Your note: {{ note }}
+                                                            </span>
+                                                        }
+                                                    } @else {
+                                                        A new exercise of your own, made when the
+                                                        timer is saved
+                                                    }
+                                                </p>
+                                                @if (exercise) {
+                                                    <button
+                                                        type="button"
+                                                        class="btn-pill step__exercise-edit"
+                                                        [id]="'step-' + key + '-exercise'"
+                                                        [attr.aria-label]="
+                                                            (isBuiltIn(exercise)
+                                                                ? noteFor(exercise)
+                                                                    ? 'Edit your note on '
+                                                                    : 'Add a note to '
+                                                                : 'Edit ') + exercise.name
+                                                        "
+                                                        (click)="openExercise(exercise, key)"
+                                                    >
+                                                        <mat-icon aria-hidden="true">{{
+                                                            isBuiltIn(exercise)
+                                                                ? 'edit_note'
+                                                                : 'edit'
+                                                        }}</mat-icon>
+                                                        {{
+                                                            isBuiltIn(exercise)
+                                                                ? noteFor(exercise)
+                                                                    ? 'Edit note'
+                                                                    : 'Add note'
+                                                                : 'Edit'
+                                                        }}
+                                                    </button>
+                                                }
+                                            </div>
+                                        }
+                                    }
 
                                     @if (kind === 'reps') {
                                         <div class="picker-row">
@@ -341,4 +419,12 @@
     >
         {{ pending.description }}
     </app-confirm-dialog>
+}
+
+@if (exerciseInEditor(); as opened) {
+    <app-exercise-editor
+        [exercise]="opened.exercise"
+        (closed)="closeExercise()"
+        (saved)="exerciseSaved($event)"
+    />
 }

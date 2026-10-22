@@ -123,12 +123,7 @@ export class BackupService {
 
     /** A timer with each step linked to an exercise that's here, linking by name if not. */
     private linked(timer: Timer): Timer {
-        const steps = timer.steps.map((step) =>
-            step.exerciseId !== undefined && this.exercises.byId(step.exerciseId)
-                ? step
-                : linkSteps([step], this.exercises.finder)[0]
-        );
-        return { ...timer, steps };
+        return { ...timer, steps: linkSteps(timer.steps, this.exercises.finder) };
     }
 
     private linkedSets(entry: HistoryEntry): HistoryEntry {

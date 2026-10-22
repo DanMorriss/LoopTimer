@@ -195,6 +195,31 @@ export class TimerStore {
         return updatedTimer;
     }
 
+    /**
+     * An exercise of your own has been renamed (EXR-3): the steps linked to it take its new
+     * name, in every saved timer and the one running.
+     */
+    renameExerciseSteps(exerciseId: string, name: string) {
+        const renamed = (timer: Timer): Timer => {
+            if (!timer.steps.some((step) => step.exerciseId === exerciseId && step.name !== name)) {
+                return timer;
+            }
+            const steps = timer.steps.map((step) =>
+                step.exerciseId === exerciseId ? { ...step, name } : step
+            );
+            return { ...timer, steps, updatedAt: Date.now() };
+        };
+        const timers = this._timers().map(renamed);
+        if (timers.some((timer, i) => timer !== this._timers()[i])) {
+            this._timers.set(timers);
+            this.saveTimers();
+        }
+        const active = this._activeTimer();
+        if (active) {
+            this._activeTimer.set(renamed(active));
+        }
+    }
+
     /** Makes `timer` the active timer and starts it from the beginning. */
     setActiveTimer(timer: Timer) {
         const startedAt = Date.now();

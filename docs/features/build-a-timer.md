@@ -27,6 +27,7 @@
     - **Rest**: a time, the same range.
     - **Reps**: a count, 1 to 100, and an optional **weight**. No countdown; the timer waits until Done (see [run-a-timer](run-a-timer.md)).
 - Each step has an optional **name**, up to 40 characters, trimmed when saved. The name box suggests "e.g. Squats" (timed), "e.g. Catch your breath" (rest) or "e.g. Push-ups" (reps).
+- A timed or rep step's name box is labelled **Exercise (optional)** and finds exercises as you type, or makes a new one (EXR-2, see [exercises](exercises.md#picking-an-exercise-exr-2)). A rest step's is a plain name box.
 - **Up to 20 steps.** At 20, the add buttons are disabled and the page says "That's the most steps a timer can have (20)."
 - A new timer starts with **no steps**, just the Add buttons and the hint "Add a step to start." Every step can be deleted, which brings the hint back.
 - Steps left at **0:00 or 0 reps are left out** when the timer is saved.

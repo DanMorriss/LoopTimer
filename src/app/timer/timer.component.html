@@ -114,6 +114,14 @@
             </div>
         </div>
 
+        <!-- Your note on this exercise, e.g. a cue or a machine setting -->
+        @if (exerciseNote() && isComplete() === false) {
+            <p class="timer-note">
+                <mat-icon class="timer-note__icon" aria-hidden="true">sticky_note_2</mat-icon>
+                <span><span class="sr-only">Your note: </span>{{ exerciseNote() }}</span>
+            </p>
+        }
+
         @if (upNext()) {
             <p class="timer-next">Next: {{ upNext() }}</p>
         }

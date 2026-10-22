@@ -63,8 +63,10 @@ function toVersion3(now: number) {
  * `own`, for linking saved data before the exercise store is there to do it.
  */
 export function listFinder(own: OwnExercise[], now: number): ExerciseFinder {
+    const all = () => [...BUILT_IN_EXERCISES, ...own] as Exercise[];
     return {
-        find: (name) => findByName(name, [...BUILT_IN_EXERCISES, ...own] as Exercise[]),
+        find: (name) => findByName(name, all()),
+        byId: (id) => all().find((exercise) => exercise.id === id),
         create: (name: string, measuredBy: MeasuredBy) => {
             const exercise: OwnExercise = {
                 id: newId(),
