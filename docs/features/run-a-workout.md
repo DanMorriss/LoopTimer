@@ -22,7 +22,7 @@
 ### Rep steps
 
 - When the clock reaches a rep step, the workout **stops and waits**, however long it takes. The ring is full and still, in violet, and the face shows the reps, e.g. "20 reps", with the weight under them if there is one, e.g. "60 kg".
-- The main button becomes **Done** (in place of Pause). Done moves on to the next step, which starts from its **full time**.
+- The main button becomes **Done** (in place of Pause), with a smaller **Pause** to one side. Done moves on to the next step, which starts from its **full time**.
 - The time spent on reps doesn't come off any countdown, but it **counts as time spent** in the history.
 
 ### What's on screen

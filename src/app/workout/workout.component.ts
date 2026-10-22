@@ -1,4 +1,13 @@
-import { afterNextRender, Component, computed, inject, Injector, signal } from '@angular/core';
+import {
+    afterNextRender,
+    Component,
+    computed,
+    ElementRef,
+    inject,
+    Injector,
+    signal,
+    viewChild,
+} from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { MAX_REPS, RepStep, runsUntilStopped, Step } from '../models/workout';
 import { formatWeight, weightIn, weightOptions, weightToKg } from '../models/weight';
@@ -34,6 +43,7 @@ const MAX_ROUND_DOTS = 15;
     styleUrls: ['./workout.component.scss'],
     host: {
         '(document:keydown.space)': 'onSpace($event)',
+        '(document:keydown.escape)': 'onEscape()',
     },
 })
 export class WorkoutComponent {
@@ -258,8 +268,30 @@ export class WorkoutComponent {
         return step.weight ? formatWeight(step.weight, this.settings.weightUnit()) : '';
     }
 
+    /** What was left when paused, e.g. "00:23" or "20 reps". */
+    pausedOn = computed(() => (this.isRepsActive() ? `${this.reps()} reps` : this.time()));
+
+    private readonly mainButton = viewChild<ElementRef<HTMLButtonElement>>('mainButton');
+    private readonly resumeButton = viewChild<ElementRef<HTMLButtonElement>>('resumeButton');
+
+    /**
+     * Pausing swaps the controls for Resume and End workout over the ring, and resuming swaps
+     * them back, so the button just pressed is gone: focus moves to the one that took its place.
+     */
     togglePause() {
         this.run.togglePause();
+        afterNextRender(
+            () =>
+                (this.isPaused() ? this.resumeButton() : this.mainButton())?.nativeElement.focus(),
+            { injector: this.injector }
+        );
+    }
+
+    /** Escape resumes, as it would close a menu or dialog. */
+    onEscape() {
+        if (this.isPaused() && !this.isComplete()) {
+            this.togglePause();
+        }
     }
 
     protected toggleChangingReps() {
