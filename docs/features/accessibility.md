@@ -30,7 +30,7 @@
 
 ### Motion and colour
 
-- With **reduced motion**: looping animations stop, the logo shows drawn at once, wheels jump rather than glide, and themes change without a fade.
+- With **reduced motion**: looping animations stop (the "Next:" pulse too, leaving its coloured border), the logo shows drawn at once, wheels jump rather than glide, a new step or round crossfades rather than sliding, and themes change without a fade.
 - Every page meets **WCAG 2.1 AA** in both themes: text at least 4.5:1 against what it sits on, controls and the ring at least 3:1. Nothing relies on colour alone (e.g. switches say On or Off).
 
 ## Acceptance criteria

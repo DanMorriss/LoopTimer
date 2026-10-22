@@ -12,26 +12,40 @@
         <div class="sr-only" aria-live="polite" aria-atomic="true">{{ announcement() }}</div>
         <div class="workout-status text-(--text-strong)">
             @if (isComplete() === false) {
-                @if (untilStopped()) {
-                    <p class="text-2xl">
-                        round {{ roundNumber() }} of
-                        <span class="symbol-infinity" aria-hidden="true">∞</span>
-                        <span class="sr-only">until stopped</span>
-                    </p>
-                } @else if (totalRounds() > 1) {
-                    @if (repeats() === 1) {
-                        <p class="workout-status__last text-2xl">Last one!</p>
-                    } @else {
-                        <p class="text-2xl">round {{ roundNumber() }} of {{ totalRounds() }}</p>
-                    }
-                    <!-- The same count as the line above, as a picture: rounds done, this one, and those to go -->
-                    @if (roundDots().length) {
-                        <div class="round-dots" aria-hidden="true">
-                            @for (dot of roundDots(); track $index) {
-                                <span class="round-dot" [class]="'round-dot--' + dot"></span>
+                <!-- Keyed by round: a new round's line slides in from the right -->
+                @for (slide of roundSlides(); track slide.key) {
+                    <div
+                        class="workout-status__round"
+                        animate.enter="slide-in-sideways"
+                        animate.leave="slide-out-sideways"
+                    >
+                        @if (slide.untilStopped) {
+                            <p class="text-2xl">
+                                round {{ slide.round }} of
+                                <span class="symbol-infinity" aria-hidden="true">∞</span>
+                                <span class="sr-only">until stopped</span>
+                            </p>
+                        } @else if (slide.totalRounds > 1) {
+                            @if (slide.last) {
+                                <p class="workout-status__last text-2xl">Last one!</p>
+                            } @else {
+                                <p class="text-2xl">
+                                    round {{ slide.round }} of {{ slide.totalRounds }}
+                                </p>
                             }
-                        </div>
-                    }
+                            <!-- The same count as the line above, as a picture: rounds done, this one, and those to go -->
+                            @if (slide.dots.length) {
+                                <div class="round-dots" aria-hidden="true">
+                                    @for (dot of slide.dots; track $index) {
+                                        <span
+                                            class="round-dot"
+                                            [class]="'round-dot--' + dot"
+                                        ></span>
+                                    }
+                                </div>
+                            }
+                        }
+                    </div>
                 }
             }
         </div>
@@ -70,47 +84,53 @@
                 }
                 <div class="workout-inner">
                     <div
-                        class="workout-face flex items-center justify-center rounded-full text-center text-4xl text-black"
+                        class="workout-face rounded-full text-center text-4xl text-black"
                         [class]="{
                             'flash-fade': isWorkActive(),
                             'flash-fade-blue': isRestActive(),
                             'bg-sky-50/50': isComplete(),
                             'workout-face--reps': isRepsActive(),
                             'workout-face--paused': isPaused(),
+                            'workout-face--new-round': newRound(),
                         }"
                     >
-                        @if (isComplete() === false) {
-                            <div>
-                                <!-- Unnamed work shows just the time; the empty line keeps it centred -->
-                                <p
-                                    class="workout-face__label"
-                                    [class.text-transparent]="!stepLabel()"
-                                    [attr.aria-hidden]="!stepLabel() || null"
-                                >
-                                    {{ stepLabel() || 'Timed' }}
-                                </p>
-                                @if (isRepsActive()) {
-                                    <p>
-                                        {{ reps() }}
-                                        <span class="workout-face__reps">reps</span>
+                        <!-- Keyed by step: the last step's text slides up and out as the next
+                             one's slides in from below, like the number wheels; a new round
+                             slides right to left instead -->
+                        @for (slide of faceSlides(); track slide.key) {
+                            <div
+                                class="workout-face__content"
+                                animate.enter="face-in"
+                                animate.leave="face-out"
+                            >
+                                @if (!slide.complete) {
+                                    <!-- Unnamed work shows just the time; the empty line keeps it centred -->
+                                    <p
+                                        class="workout-face__label"
+                                        [class.text-transparent]="!slide.label"
+                                        [attr.aria-hidden]="!slide.label || null"
+                                    >
+                                        {{ slide.label || 'Timed' }}
                                     </p>
-                                    @if (weight()) {
-                                        <p class="workout-face__weight">{{ weight() }}</p>
+                                    @if (slide.reps !== null) {
+                                        <p>
+                                            {{ slide.reps }}
+                                            <span class="workout-face__reps">reps</span>
+                                        </p>
+                                        @if (slide.weight) {
+                                            <p class="workout-face__weight">{{ slide.weight }}</p>
+                                        }
+                                    } @else {
+                                        <p>{{ slide.time }}</p>
+                                    }
+                                    @if (slide.step) {
+                                        <p class="workout-face__step">
+                                            {{ slide.step }}
+                                        </p>
                                     }
                                 } @else {
-                                    <p>{{ isWorkActive() ? workTime() : restTime() }}</p>
+                                    <p>You're finished!</p>
                                 }
-                                @if (showStepCount()) {
-                                    <p class="workout-face__step">
-                                        step {{ stepNumber() }} of {{ stepCount() }}
-                                    </p>
-                                }
-                            </div>
-                        }
-
-                        @if (isComplete() === true) {
-                            <div>
-                                <p>You're finished!</p>
                             </div>
                         }
                     </div>
@@ -149,7 +169,14 @@
         }
 
         @if (upNext()) {
-            <p class="workout-next">Next: {{ upNext() }}</p>
+            <!-- Pulses in the next step's colour as this one nears its end, to get ready -->
+            <p
+                class="workout-next"
+                [class.workout-next--soon]="nextSoon()"
+                [attr.data-next]="nextKind()"
+            >
+                Next: {{ upNext() }}
+            </p>
         }
 
         @if (isComplete() === false) {

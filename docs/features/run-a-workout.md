@@ -39,9 +39,11 @@
     - The step's name. Unnamed work shows just the time; unnamed rest says "Rest"; unnamed reps say "Reps".
     - The time left as mm:ss, e.g. "00:45", or the reps.
     - "step 2 of 5" when a round has more than one work or rep step. A plain work-and-rest workout leaves it out.
-    - "Paused" while paused.
+    - While paused, the face's text gives way to "Paused · 00:23", Resume and End workout (see [pause-and-stop](pause-and-stop.md)).
+- **Moving on**: the face's text slides up and out as the next step's slides in from below (half a second, like the number wheels), so a new step is plain to see. When a new **round** starts it slides right to left instead, and the round line and dots slide with it. The ring stays put. The text sliding out keeps showing the step it was, e.g. its last "00:01".
 - **Your note** on the step's exercise (EXR-10), if you've written one, in a box under the ring, e.g. "Pause at the bottom". Any work or rep step linked to an exercise shows it; screen readers hear it with the step, e.g. "Push-ups, 20 reps, your note: Elbows in".
 - **Next**: "Next: Plank · 00:45", "Next: Push-ups · 20 reps", "Next: Squats · 10 reps @ 60 kg", or "Next: finish" before the last step. Unnamed steps use their kind ("Timed", "Rest", "Reps").
+    - In the **last 5 seconds** of a timed step (the last 3 for a step under 15 seconds), "Next:" becomes a pill in the next step's colour (pink for timed, blue for rest, violet for reps, the accent colour for finish) that swells and glows once a second, to get ready. Not on a rep step, where Done is the cue, and not while paused.
 
 ### Changing reps or weight mid-workout (RUN-6)
 
@@ -88,6 +90,10 @@
 - Given the workout finishes, then the summary opens with no Back to workout, and a note typed there is saved to it in the history.
 - Given 20 push-ups at 40 kg in round 1 and the workout ended in round 2, when I change the set to 18 reps on the summary, then the history has 18; on "Yes, use next time" the saved workout starts from 18 at 40 kg, and on "No, just this time" it stays at 20.
 - Given a workout ended early, when I press Back to workout, then it is paused where it was ended, with focus on Resume.
+- Given work 0:20 then rest, then "Next: Rest" pulses in the rest colour from 00:05 left, and stops when paused.
+- Given work 0:10, then "Next:" pulses only from 00:03 left.
+- Given a rep step, then "Next:" never pulses.
+- Given a new step in the same round, then its text slides in from below; given round 2 starting, then the text and "round 2 of 3" slide in from the right.
 
 ## Platform notes
 

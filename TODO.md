@@ -10,10 +10,8 @@ Do these first: everything after builds on them. The data is ready for sync (#81
 
 ### Phase 2: Feedback in the workout
 
-Making it clearer which part of the workout is happening, as agreed with Dan on 2026-10-22. Pause and End workout are done (Stop is gone from the running screen; a workout ends from the paused screen), and so is the workout summary (RUN-7) for both endings, with Back to workout, corrected sets and "Use these settings next time?". Still to do, in this order:
+Making it clearer which part of the workout is happening, as agreed with Dan on 2026-10-22, is done: Pause and End workout (Stop is gone from the running screen), the workout summary (RUN-7) with Back to workout and "Use these settings next time?", "Next:" pulsing in a step's last seconds, and each step sliding in like the number wheels (sideways for a new round). A different look per step type is under Design. Next:
 
-- [ ] **"Next:" pulses near a step's end:** the last 5s of a timed step (3s if the step is under 15s), swelling gently once a second in the next step's colour. Nothing on rep steps (Done is the cue). Reduced motion: a colour change only.
-- [ ] **Steps slide, like the number wheel:** on a new step the face's text slides up and out and the next slides in from below (about 300ms); on a new round it slides right to left instead, with the round line and dots, and the ring stays put. Reduced motion: a short crossfade.
 - [ ] **Last time (PRG-1):** on each rep step, "Last time: 10, 10, 8 @ 60 kg".
 - [ ] **Personal bests (PRG-2):** called out on the workout summary (RUN-7), which has room left for them.
 
@@ -46,7 +44,7 @@ Making it clearer which part of the workout is happening, as agreed with Dan on 
 
 - [ ] **Weights on library cards:** a card sums up a round (e.g. "4 steps · 01:30 + reps") rather than listing steps. Now that they're workouts (EXR-5), a workout card could list its exercises (e.g. "Squats, Bench press + 1 more"), which would make weights on cards unnecessary.
 
-- [ ] **A different look per step type on the workout page:** once steps slide in and out, timed, rep and rest steps could each have their own look or motion (e.g. the "Next:" line rising into the ring and becoming the new label). Dan wants to come back to this after the slides are in.
+- [ ] **A different look per step type on the workout page:** timed, rep and rest steps could each have their own look or motion (e.g. the "Next:" line rising into the ring and becoming the new label). The slides are in (`workout-motion.scss`), so this can be picked up whenever Dan wants.
 
 ## 3. Known issues
 

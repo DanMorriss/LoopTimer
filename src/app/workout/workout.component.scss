@@ -164,6 +164,14 @@ $track-color: #334155; // slate-700: dark, so both phase colours stand out (3:1 
 .workout-face {
     width: calc(100% - 10px);
     height: calc(100% - 10px);
+    // The old step's text and the new one's share the middle while one slides past the other
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+}
+
+.workout-face__content {
+    grid-area: 1 / 1;
 }
 
 // Steady rather than flashing: nothing is running out
@@ -195,17 +203,25 @@ $track-color: #334155; // slate-700: dark, so both phase colours stand out (3:1 
 // Tall enough for the round line and its dots, so the ring stays put when they go at the end
 .workout-status {
     min-height: 3.5rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.4rem;
+    display: grid;
+    place-items: center;
+    width: 100%;
+    // Clips a round line sliding in from the side, rather than scrolling the page sideways
+    overflow-x: clip;
     text-align: center;
 
     // body.mat-typography gives paragraphs a 12px bottom margin
-    > * {
+    p {
         margin: 0;
     }
+}
+
+.workout-status__round {
+    grid-area: 1 / 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
 }
 
 .workout-status__last {
@@ -427,13 +443,6 @@ $track-color: #334155; // slate-700: dark, so both phase colours stand out (3:1 
     height: 1.25rem;
     font-size: 1.25rem;
     color: var(--text-muted);
-}
-
-.workout-next {
-    margin: 1rem 0 0;
-    color: var(--text-strong);
-    font-size: 1.25rem;
-    text-align: center;
 }
 
 // Under the ring on a rep step, opening the reps and weight wheels
