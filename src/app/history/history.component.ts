@@ -26,7 +26,7 @@ function dayKey(time: number): string {
 }
 
 /**
- * Workouts by day. Arriving from the finished screen, `?run=<id>` highlights that run and
+ * Workouts by day. Arriving from the workout summary, `?run=<id>` highlights that run and
  * brings it into view, and `?note=<id>` does the same with its note box open.
  */
 @Component({
@@ -79,7 +79,7 @@ export class HistoryComponent {
     /** Whose menu is open, and whose note is being edited: one of each at most. */
     protected readonly openMenuId = signal<string | null>(null);
     protected readonly editingId = signal<string | null>(null);
-    /** The run arrived at from the finished screen. */
+    /** The run arrived at from the workout summary. */
     protected readonly highlightedId = signal<string | null>(null);
 
     protected readonly entryName = entryName;

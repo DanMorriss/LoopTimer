@@ -377,7 +377,7 @@ for (const theme of ['dark', 'light'] as const) {
                 await expectNoViolations();
             });
 
-            it('during work, rest and once finished', async () => {
+            it('during work, rest and once finished, with its summary', async () => {
                 store.setActiveWorkout(store.addWorkout(sprints)); // 2s work, 2s rest, 2 rounds
                 await open('/workout');
                 await expectNoViolations();
@@ -387,7 +387,7 @@ for (const theme of ['dark', 'light'] as const) {
                 await expectNoViolations();
 
                 await settle(4000);
-                expect(fixture.nativeElement.textContent).toContain("You're finished!");
+                expect(fixture.nativeElement.textContent).toContain('Workout finished');
                 await expectNoViolations();
             }, 15000);
 
@@ -439,6 +439,32 @@ for (const theme of ['dark', 'light'] as const) {
                 store.pause();
                 await open('/workout');
                 expect(fixture.nativeElement.textContent).toContain('Paused');
+                await expectNoViolations();
+            });
+
+            it('ended, with its sets being changed and the next-time question', async () => {
+                store.setActiveWorkout(
+                    store.addWorkout(
+                        makeWorkout({
+                            steps: [{ kind: 'reps', reps: 10, name: 'Squats', weight: 60 }],
+                            repeats: 3,
+                        })
+                    )
+                );
+                await open('/workout');
+                click('.workout-control--main button'); // Done
+                await settle();
+                click('.workout-control--side button'); // Pause
+                await settle();
+                click('.workout-paused__end');
+                await settle();
+                click('.summary__change');
+                await settle();
+                click('app-wheel-picker [data-value="8"]');
+                await settle();
+                expect(fixture.nativeElement.textContent).toContain(
+                    'Use these settings next time?'
+                );
                 await expectNoViolations();
             });
         });

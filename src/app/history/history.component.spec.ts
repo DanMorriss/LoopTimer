@@ -349,7 +349,7 @@ describe('HistoryComponent', () => {
         });
     });
 
-    describe('arriving from the finished screen', () => {
+    describe('arriving from the workout summary', () => {
         const run = makeEntry({ title: 'Sprints' });
 
         async function arrive(url: string) {

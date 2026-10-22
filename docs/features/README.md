@@ -28,6 +28,7 @@ Status: ✅ done, ◐ partly, — not started. The iOS column fills in as a port
 | RUN-4  | Know when I've finished, and note how it went                            | ✅  | —   | [run-a-workout](run-a-workout.md)             |
 | RUN-5  | Keep accurate time whatever the device does                              | ✅  | —   | [run-a-workout](run-a-workout.md)             |
 | RUN-6  | Change the reps or weight mid-workout, e.g. going up a weight            | ✅  | —   | [run-a-workout](run-a-workout.md)             |
+| RUN-7  | See a summary when I finish or end a workout, and correct its sets       | ✅  | —   | [run-a-workout](run-a-workout.md)             |
 | CTL-1  | Pause and resume                                                         | ✅  | —   | [pause-and-stop](pause-and-stop.md)           |
 | CTL-2  | Stop a workout early                                                     | ✅  | —   | [pause-and-stop](pause-and-stop.md)           |
 | CTL-3  | Pick up where I was if the app is closed or reloaded                     | ✅  | —   | [pause-and-stop](pause-and-stop.md)           |

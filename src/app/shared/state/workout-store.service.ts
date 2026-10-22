@@ -271,6 +271,17 @@ export class WorkoutStore {
         sessionStorage.setItem('activeSets', JSON.stringify(this._activeSets()));
     }
 
+    /** Corrects a set already done, e.g. its reps or weight changed on the summary. */
+    updateActiveSet(index: number, set: LoggedSet) {
+        if (!this._activeSets()[index]) {
+            return;
+        }
+        this._activeSets.update((sets) =>
+            sets.map((existing, i) => (i === index ? set : existing))
+        );
+        sessionStorage.setItem('activeSets', JSON.stringify(this._activeSets()));
+    }
+
     private clearRepSteps() {
         this._activeRepStepsDone.set(0);
         this._activeRepMs.set(0);
