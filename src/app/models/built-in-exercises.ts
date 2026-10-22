@@ -928,7 +928,10 @@ export const BUILT_IN_EXERCISES: readonly BuiltInExercise[] = [
         id: 'builtin:preacher-curl',
         name: 'Preacher curl',
         otherNames: ['Preacher bench curl', 'Scott curl', 'EZ bar preacher curl'],
-        equipment: [['barbell', 'dumbbells'], 'bench'],
+        equipment: [
+            ['barbell', 'dumbbells'],
+            ['preacher bench', 'bench'],
+        ],
         measuredBy: 'reps',
         mainMuscles: ['biceps'],
         supportingMuscles: ['forearms'],
@@ -1172,15 +1175,19 @@ export const BUILT_IN_EXERCISES: readonly BuiltInExercise[] = [
         id: 'builtin:inverted-row',
         name: 'Inverted row',
         otherNames: ['Bodyweight row', 'Australian pull-up', 'Body row'],
-        equipment: ['barbell', 'rack'],
+        // A barbell in a rack, or a Smith machine, or rings: each choice is met by either.
+        equipment: [
+            ['barbell', 'smith machine', 'rings'],
+            ['rack', 'smith machine', 'rings'],
+        ],
         measuredBy: 'reps',
         mainMuscles: ['upper-back'],
         supportingMuscles: ['biceps', 'shoulders', 'forearms', 'abs'],
         description:
             'Lying under a bar set at waist height, you pull your chest up to it. A row using your own weight.',
         steps: [
-            'Set a bar in a rack at about waist height, and lie under it with your chest below the bar.',
-            'Grip it a little wider than your shoulders, and lift your hips so your body is straight from heels to head.',
+            'Set a bar in a rack or Smith machine at about waist height (or hang rings there), and lie under it.',
+            'Grip a little wider than your shoulders, and lift your hips so your body is straight from heels to head.',
             'Pull your chest up to the bar, squeezing your shoulder blades together.',
             'Lower yourself slowly until your arms are straight.',
         ],

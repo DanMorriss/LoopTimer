@@ -35,7 +35,23 @@ describe('built-in exercises', () => {
             if (items.includes('none')) {
                 expect(exercise.equipment, exercise.name).toEqual(['none']);
             }
-            expect(new Set(items).size, exercise.name).toBe(items.length);
+            // A choice can show up in two needs ("a barbell in a rack, or a Smith machine"),
+            // but nothing is listed twice in one, or both on its own and in a choice.
+            for (const need of exercise.equipment) {
+                if (typeof need !== 'string') {
+                    expect(new Set(need).size, exercise.name).toBe(need.length);
+                }
+            }
+            const single = exercise.equipment.filter((need) => typeof need === 'string');
+            expect(new Set(single).size, exercise.name).toBe(single.length);
+            for (const item of single) {
+                expect(
+                    exercise.equipment.some(
+                        (need) => typeof need !== 'string' && need.includes(item)
+                    ),
+                    `${exercise.name}: ${item}`
+                ).toBe(false);
+            }
         }
     });
 

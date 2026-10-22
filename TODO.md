@@ -8,10 +8,10 @@ Open work, highest priority first. Tick items off (or delete them) as they're do
 
 Do these first: everything after builds on them. The data is ready for sync (#81) and has exercises in it (#86: your own exercises and notes, steps and sets linked to exercises, `data-version` 4, backup version 4). All 80 built-in exercises are written (#79–#88; more can be added at the end of the backlog in `docs/writing-exercises.md`, by the `exercise-writer` agent). Create picks exercises, your own can be renamed and edited, and your notes show mid-workout (EXR-1–3, EXR-9, EXR-10). Timers are called workouts throughout, in the code and saved data too (EXR-5).
 
-- [ ] **Fill the equipment gaps found in review:** a preacher bench for the preacher curl (#84 lists it as a `bench`), and rings or a Smith machine as choices for the inverted row (#87 lists `barbell` and `rack`). Add the new items to `Equipment` and `EQUIPMENT_CHOICES` (what the exercise editor offers) in `exercise.ts`, and to the list in `docs/features/exercises.md`, then update those exercises.
 - [ ] **Exercise pages (EXR-6–8):** browse and search the list, and a page per exercise with its description, how-to steps and the body map (`<app-body-map [main] [supporting]>`, built in #83). Phase 3's progress goes on the same page. Also:
     - Your note on the exercise page, under the description (EXR-10), and editing your own exercise from there: `ExerciseEditorComponent` (`shared/components/exercise-editor/`) is the dialog Create uses.
     - How-to steps and tips for your own exercises, which the editor doesn't offer yet, and picking muscles by tapping the body map as well as from the chips.
+    - Showing equipment as chips, reading a choice that's in two needs (the inverted row's) as "Barbell and rack, Smith machine, or rings", as drafted in `docs/features/exercises.md`.
     - Hiding a built-in exercise from the picker, and deleting your own (not while a workout uses it; one with only history is hidden instead), as drafted in `docs/features/exercises.md`.
 - [ ] **More room for history (SYN-5):** move it from `localStorage` to IndexedDB and lift the 500-entry cap, so years of progress fit.
 

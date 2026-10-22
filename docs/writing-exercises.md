@@ -23,7 +23,7 @@ How the exercises that come with LoopTimer are written, and which are still to w
 | `steps`             | 3–5, in order: set up, do it, go back. Each a sentence or two, at most 140 characters.                                                                                                                                               |
 | `tips`              | 1 or 2, each at most 140 characters: the commonest mistake, or how to make it easier or harder.                                                                                                                                      |
 
-Equipment is one of: `barbell`, `dumbbells`, `kettlebell`, `bench`, `rack`, `pull-up bar`, `parallel bars`, `cable`, `machine` (a dedicated gym machine), `band`, `step` (a box, step or stair), `ab wheel`, `none`. If an exercise truly needs something else (e.g. a preacher bench), add it to `Equipment` in `exercise.ts` and to the list in [features/exercises](features/exercises.md#the-built-in-list-exr-6-exr-7), in the same batch.
+Equipment is one of: `barbell`, `dumbbells`, `kettlebell`, `bench`, `preacher bench`, `rack`, `smith machine`, `pull-up bar`, `parallel bars`, `rings` (or suspension straps), `cable`, `machine` (a dedicated gym machine), `band`, `step` (a box, step or stair), `ab wheel`, `none`. If an exercise truly needs something else, add it to `Equipment` and `EQUIPMENT_CHOICES` to `Equipment` in `exercise.ts` and to the list in [features/exercises](features/exercises.md#the-built-in-list-exr-6-exr-7), in the same batch.
 
 Muscle groups are the 18 in `MuscleGroup`, the shapes on the body map. There are no separate front, side or rear shoulders, and no lats: use `shoulders` and `upper-back`.
 
