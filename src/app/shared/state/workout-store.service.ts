@@ -8,7 +8,7 @@ import {
     WorkoutFields,
 } from '../../models/workout';
 import { MAX_WEIGHT_KG } from '../../models/weight';
-import { isLoggedSet, LoggedSet } from '../../models/history';
+import { isLoggedSet, isTimedSet, RepSet } from '../../models/history';
 import { Deletion, mergeRecords, newId } from '../../models/sync';
 import { DeletionStore } from './deletion-store.service';
 import { ExerciseStore } from './exercise-store.service';
@@ -26,7 +26,7 @@ export class WorkoutStore {
     private _activeRunStartedAt = signal<number | null>(null);
     private _activeRepStepsDone = signal(0);
     private _activeRepMs = signal(0);
-    private _activeSets = signal<LoggedSet[]>([]);
+    private _activeSets = signal<RepSet[]>([]);
 
     readonly workouts = computed(() => this._workouts());
     readonly activeWorkout = computed(() => this._activeWorkout());
@@ -47,7 +47,10 @@ export class WorkoutStore {
      * (see `finishRepStep()`), so the history adds it back to the time spent.
      */
     readonly activeRepMs = computed(() => this._activeRepMs());
-    /** The sets of rep steps done so far in the current run, in order. */
+    /**
+     * The sets of rep steps done so far in the current run, in order. Its timed sets are
+     * worked out from the clock (see `ActiveRunService.sets`).
+     */
     readonly activeSets = computed(() => this._activeSets());
 
     constructor() {
@@ -252,7 +255,7 @@ export class WorkoutStore {
      * by that much, so the countdown picks up exactly where the rep step began. `set` is
      * what was done, logged for the history.
      */
-    finishRepStep(waitedMs: number, set: LoggedSet) {
+    finishRepStep(waitedMs: number, set: RepSet) {
         const startedAt = this._activeWorkoutStartedAt();
         if (!this._activeWorkout() || startedAt === null) {
             return;
@@ -272,7 +275,7 @@ export class WorkoutStore {
     }
 
     /** Corrects a set already done, e.g. its reps or weight changed on the summary. */
-    updateActiveSet(index: number, set: LoggedSet) {
+    updateActiveSet(index: number, set: RepSet) {
         if (!this._activeSets()[index]) {
             return;
         }
@@ -364,10 +367,12 @@ function isWholeNumber(value: unknown, min: number, max = Number.MAX_SAFE_INTEGE
 }
 
 /** The saved sets of the run in progress; anything broken is dropped. */
-function readSets(saved: string | null): LoggedSet[] {
+function readSets(saved: string | null): RepSet[] {
     try {
         const parsed: unknown = JSON.parse(saved ?? '[]');
-        return Array.isArray(parsed) ? parsed.filter(isLoggedSet) : [];
+        return Array.isArray(parsed)
+            ? parsed.filter((set): set is RepSet => isLoggedSet(set) && !isTimedSet(set))
+            : [];
     } catch {
         return [];
     }

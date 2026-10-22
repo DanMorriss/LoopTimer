@@ -18,7 +18,7 @@ Planned (see [direction](../direction.md)). Builds on [exercises](exercises.md).
     - heaviest weight lifted for at least 1 rep
     - most reps at a weight
     - estimated one-rep max, by the Epley formula: weight × (1 + reps ÷ 30)
-    - for timed exercises, the longest hold
+    - for timed exercises, the longest hold: from timed sets, each a timed work step of the exercise that ran to its end (see [history](history.md)). Workouts from before timed sets were logged have none.
     - a bodyweight exercise (no weight) has most reps in a set only.
 - A best only counts from a logged set, so stopped workouts count for the sets that were done.
 - **Chart (PRG-4):** one point per workout: the best estimated one-rep max for weighted exercises, the most reps for bodyweight, the longest time for timed. Over 4 weeks, 3 months, a year, or all.

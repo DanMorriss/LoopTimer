@@ -1,6 +1,7 @@
-import { UNTIL_STOPPED } from '../models/workout';
+import { RepSet, TimedSet } from '../models/history';
+import { Step, UNTIL_STOPPED } from '../models/workout';
 import { makeWorkout, reps, rest, work } from '../shared/testing/make-workout';
-import { nextRepStep, workoutStateAt } from './workout-state';
+import { nextRepStep, setsDone, workoutStateAt } from './workout-state';
 
 describe('workoutStateAt', () => {
     const workout = makeWorkout(); // 30s work, 10s rest, 3 rounds = 30 + 10 + 30 + 10 + 30 = 110s
@@ -304,5 +305,46 @@ describe('workoutStateAt', () => {
             expect(nextRepStep(circuit, 2)).toBeNull();
             expect(nextRepStep(makeWorkout(), 0)).toBeNull();
         });
+    });
+});
+
+describe('setsDone', () => {
+    const plank: Step = { kind: 'work', seconds: 45, name: 'Plank', exerciseId: 'builtin:plank' };
+    const pushUp: RepSet = { round: 0, step: 1, name: 'Push-ups', reps: 20 };
+    // 45s plank, push-ups, 15s rest, an unnamed 10s work step; 2 rounds
+    const workout = makeWorkout({
+        steps: [plank, reps(20, 'Push-ups'), rest(15), work(10)],
+        repeats: 2,
+    });
+    const timed = (round: number): TimedSet => ({
+        round,
+        step: 0,
+        name: 'Plank',
+        seconds: 45,
+        exerciseId: 'builtin:plank',
+    });
+
+    it('logs a timed step of an exercise once it has run to its end', () => {
+        expect(setsDone(workout, workoutStateAt(workout, 44_999), [])).toEqual([]);
+        expect(setsDone(workout, workoutStateAt(workout, 45_000), [])).toEqual([timed(0)]);
+    });
+
+    it('puts the timed sets among the rep sets, in the order they were done', () => {
+        const pushUps = [pushUp, { ...pushUp, round: 1 }];
+        const complete = workoutStateAt(workout, 1_000_000, 2);
+
+        expect(complete.phase).toBe('complete');
+        expect(setsDone(workout, complete, pushUps)).toEqual([
+            timed(0),
+            pushUps[0],
+            timed(1),
+            pushUps[1],
+        ]);
+    });
+
+    it('leaves out rest and unnamed steps, which are no exercise', () => {
+        const unnamed = makeWorkout({ steps: [work(30)], repeats: 2 });
+
+        expect(setsDone(unnamed, workoutStateAt(unnamed, 100_000), [])).toEqual([]);
     });
 });

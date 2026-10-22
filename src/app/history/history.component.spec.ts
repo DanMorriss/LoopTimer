@@ -471,6 +471,30 @@ describe('HistoryComponent', () => {
             ]);
         });
 
+        it('sums up timed sets by how long they ran', () => {
+            const plank = (round: number, seconds: number): LoggedSet => ({
+                round,
+                step: 0,
+                name: 'Plank',
+                seconds,
+                exerciseId: 'builtin:plank',
+            });
+
+            expect(describeSets([plank(0, 45), plank(1, 45), plank(2, 45)], 'kg')).toEqual([
+                { name: 'Plank', text: '3 × 0:45', spoken: '3 sets of 45 seconds' },
+            ]);
+            expect(describeSets([plank(0, 90)], 'kg')[0]).toEqual({
+                name: 'Plank',
+                text: '1:30',
+                spoken: '1 minute 30 seconds',
+            });
+            expect(describeSets([plank(0, 60), plank(1, 45)], 'kg')[0]).toEqual({
+                name: 'Plank',
+                text: '1:00, 0:45',
+                spoken: 'sets of 1 minute, 45 seconds',
+            });
+        });
+
         it('names a line by its exercise where a current name is given', () => {
             const linked = { ...set(0, 5), exerciseId: 'mine' };
             const names = (id: string) => (id === 'mine' ? 'Sled drag' : undefined);

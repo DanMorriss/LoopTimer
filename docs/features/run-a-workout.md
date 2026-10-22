@@ -59,10 +59,10 @@
 - It shows:
     - "**Workout finished**" or "**Workout ended**", and the workout's title.
     - **Time** (as in the history, pauses left out) and **Rounds**, e.g. "1 of 3 rounds · stopped".
-    - **Sets**, one line per rep step as in the history, e.g. "Squats: 10, 10, 8 @ 60 kg".
+    - **Sets**, one line per step as in the history, e.g. "Squats: 10, 10, 8 @ 60 kg" or "Plank: 3 × 0:45".
     - A **Note** box, saved to this workout in the history as you leave it.
     - Buttons: **Done** (the main one: on to the library), **View history** (opens the history with this workout highlighted), and **Back to workout** for a workout ended early or one that runs until stopped. Escape does the same as Back to workout, where there is one.
-- **Change reps or weight** turns each set into a Reps and a Weight wheel, so a set logged wrongly can be corrected (e.g. the last set was 8, not 10). A change goes into this workout's history entry at once, and then asks "**Use these settings next time?**":
+- **Change reps or weight** (shown when there are rep sets) turns each rep set into a Reps and a Weight wheel, so a set logged wrongly can be corrected (e.g. the last set was 8, not 10). Timed sets ran as set, so they can't be changed. A change goes into this workout's history entry at once, and then asks "**Use these settings next time?**":
     - **Yes, use next time**: each rep step of the saved workout starts next time from its last set in this workout. It says "Saved: next time starts from these."
     - **No, just this time**: only the history changes.
 - A workout ended before its first step was done has nothing logged: the summary says "Nothing to log", with no note box or View history.

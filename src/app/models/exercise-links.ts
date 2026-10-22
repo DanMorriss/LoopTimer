@@ -1,5 +1,5 @@
 import { Exercise, exerciseKey, MeasuredBy } from './exercise';
-import { HistoryEntry, LoggedSet } from './history';
+import { HistoryEntry, isTimedSet, LoggedSet } from './history';
 import { Step, Workout } from './workout';
 
 /** Finds an exercise by name, or makes one of your own, for linking steps and sets to. */
@@ -112,7 +112,8 @@ export function linkSets(sets: readonly LoggedSet[], exercises: ExerciseFinder):
         if (set.exerciseId !== undefined || set.name.trim() === '') {
             return set;
         }
-        const exercise = exercises.find(set.name) ?? exercises.create(set.name, 'reps');
+        const measuredBy = isTimedSet(set) ? 'timed' : 'reps';
+        const exercise = exercises.find(set.name) ?? exercises.create(set.name, measuredBy);
         return { ...set, exerciseId: exercise.id };
     });
 }

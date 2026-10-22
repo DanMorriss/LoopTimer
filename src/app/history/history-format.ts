@@ -1,4 +1,4 @@
-import { HistoryEntry, LoggedSet } from '../models/history';
+import { HistoryEntry, isTimedSet, LoggedSet, RepSet, TimedSet } from '../models/history';
 import { WeightUnit, weightIn } from '../models/weight';
 
 /** e.g. 75 → "1:15", 3725 → "1:02:05" */
@@ -26,7 +26,7 @@ export function entryName(entry: HistoryEntry): string {
     return entry.title.trim() || 'Untitled workout';
 }
 
-/** One rep step's sets, summed up: e.g. "3 × 10 @ 60 kg", with what screen readers say. */
+/** One step's sets, summed up: e.g. "3 × 10 @ 60 kg", with what screen readers say. */
 export interface SetsSummary {
     /** The step's name, or "Reps". */
     name: string;
@@ -35,12 +35,13 @@ export interface SetsSummary {
 }
 
 /**
- * A workout's sets, one line per rep step, in the order the steps first came:
+ * A workout's sets, one line per step, in the order the steps first came:
  *
  * - "3 × 10 @ 60 kg": the same reps and weight every set
  * - "10, 10, 8 @ 60 kg": the reps changed, the weight didn't
  * - "10 @ 60, 8 @ 62.5 kg": the weight changed
  * - "3 × 20": no weight
+ * - "3 × 0:45": a timed step, e.g. a plank
  *
  * Each line is named as its last set was, unless `currentName` gives a name for its
  * exercise, e.g. an exercise of your own renamed since (EXR-3).
@@ -55,19 +56,27 @@ export function describeSets(
         byStep.set(set.step, [...(byStep.get(set.step) ?? []), set]);
     }
     return Array.from(byStep.values(), (stepSets) => {
-        const weights = stepSets.map((set) => (set.weight ? weightIn(set.weight, unit) : 0));
-        const reps = stepSets.map((set) => set.reps);
+        const last = stepSets.at(-1)!;
+        const name = (last.exerciseId && currentName(last.exerciseId)) || last.name;
+        const repSets = stepSets.filter((set): set is RepSet => !isTimedSet(set));
+        if (repSets.length < stepSets.length) {
+            return {
+                name: name || 'Work',
+                ...describeTimes(stepSets.filter((set) => isTimedSet(set))),
+            };
+        }
+        const weights = repSets.map((set) => (set.weight ? weightIn(set.weight, unit) : 0));
+        const reps = repSets.map((set) => set.reps);
         const sameWeight = weights.every((w) => w === weights[0]);
         const sameReps = reps.every((r) => r === reps[0]);
-        const last = stepSets.at(-1)!;
         return {
-            name: (last.exerciseId && currentName(last.exerciseId)) || last.name || 'Reps',
+            name: name || 'Reps',
             text: sameWeight
                 ? `${repsText(reps, sameReps)}${weights[0] ? ` @ ${weights[0]} ${unit}` : ''}`
                 : `${stepSets.map((_, i) => setText(reps[i], weights[i])).join(', ')} ${unit}`,
             spoken: sameWeight
                 ? `${spokenReps(reps, sameReps)}${weights[0] ? ` at ${weights[0]} ${unit}` : ''}`
-                : stepSets
+                : repSets
                       .map(
                           (_, i) =>
                               `${reps[i]} reps${weights[i] ? ` at ${weights[i]} ${unit}` : ''}`
@@ -75,6 +84,35 @@ export function describeSets(
                       .join(', '),
         };
     });
+}
+
+// A timed step's sets: e.g. "3 × 0:45", "0:45, 0:30", or "0:45" for one
+function describeTimes(sets: readonly TimedSet[]): Pick<SetsSummary, 'text' | 'spoken'> {
+    const seconds = sets.map((set) => set.seconds);
+    if (seconds.length === 1) {
+        return { text: formatDuration(seconds[0]), spoken: spokenDuration(seconds[0]) };
+    }
+    if (seconds.every((s) => s === seconds[0])) {
+        return {
+            text: `${seconds.length} × ${formatDuration(seconds[0])}`,
+            spoken: `${seconds.length} sets of ${spokenDuration(seconds[0])}`,
+        };
+    }
+    return {
+        text: seconds.map(formatDuration).join(', '),
+        spoken: `sets of ${seconds.map(spokenDuration).join(', ')}`,
+    };
+}
+
+/** e.g. 45 → "45 seconds", 90 → "1 minute 30 seconds", 120 → "2 minutes" */
+export function spokenDuration(seconds: number): string {
+    const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    if (m === 0) {
+        return plural(s, 'second');
+    }
+    return s === 0 ? plural(m, 'minute') : `${plural(m, 'minute')} ${plural(s, 'second')}`;
 }
 
 // e.g. "3 × 10", "10, 10, 8" or just "10 reps" for one set

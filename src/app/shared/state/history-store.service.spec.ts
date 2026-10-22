@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { HistoryEntry, MAX_NOTE_LENGTH } from '../../models/history';
+import { HistoryEntry, LoggedSet, MAX_NOTE_LENGTH } from '../../models/history';
 import { savedHistory } from '../testing/history-database';
 import { HistoryStore } from './history-store.service';
 
@@ -315,6 +315,25 @@ describe('HistoryStore', () => {
 
         expect(withSets.sets).toEqual([good]);
         expect(withBroken).toEqual(makeEntry({ startedAt: 1_000 }));
+    });
+
+    it('loads timed sets, dropping ones that are also reps or weighed', async () => {
+        const held = { round: 0, step: 0, name: 'Plank', seconds: 45, exerciseId: 'plank' };
+        localStorage.setItem(
+            'history',
+            JSON.stringify([
+                makeEntry({
+                    sets: [
+                        held,
+                        { ...held, seconds: 0 },
+                        { ...held, reps: 10 },
+                        { ...held, weight: 20 },
+                    ] as LoggedSet[],
+                }),
+            ])
+        );
+
+        expect((await createStore()).entries()[0].sets).toEqual([held]);
     });
 
     it('keeps valid saved entries and drops broken ones', async () => {
