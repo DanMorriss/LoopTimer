@@ -32,18 +32,20 @@
                 <section class="summary__section" aria-labelledby="summary-sets">
                     <div class="summary__section-head">
                         <h3 id="summary-sets">Sets</h3>
-                        <button
-                            type="button"
-                            class="btn-pill summary__change"
-                            aria-controls="summary-sets-list"
-                            [attr.aria-expanded]="changingSets()"
-                            (click)="changingSets.set(!changingSets())"
-                        >
-                            <mat-icon aria-hidden="true">{{
-                                changingSets() ? 'check' : 'tune'
-                            }}</mat-icon>
-                            {{ changingSets() ? 'Done changing' : 'Change reps or weight' }}
-                        </button>
+                        @if (setGroups().length) {
+                            <button
+                                type="button"
+                                class="btn-pill summary__change"
+                                aria-controls="summary-sets-list"
+                                [attr.aria-expanded]="changingSets()"
+                                (click)="changingSets.set(!changingSets())"
+                            >
+                                <mat-icon aria-hidden="true">{{
+                                    changingSets() ? 'check' : 'tune'
+                                }}</mat-icon>
+                                {{ changingSets() ? 'Done changing' : 'Change reps or weight' }}
+                            </button>
+                        }
                     </div>
 
                     <div id="summary-sets-list">

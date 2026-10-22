@@ -1713,11 +1713,47 @@ describe('WorkoutComponent', () => {
             fixture.destroy();
         });
 
-        it('logs no sets for a workout without rep steps', () => {
+        it('logs no sets for a workout of unnamed timed steps', () => {
             start(makeWorkout({ steps: [work(3)], repeats: 1 }));
             advance(3000);
 
             expect(entries()[0].sets).toBeUndefined();
+            fixture.destroy();
+        });
+
+        it('logs a timed step of an exercise as a set once it runs to its end', () => {
+            // 3s plank, 20 push-ups, 2s rest; 2 rounds
+            const planks = makeWorkout({
+                steps: [work(3, 'Plank'), reps(20, 'Push-ups'), rest(2)],
+                repeats: 2,
+            });
+            start(store.addWorkout(planks));
+            advance(3000);
+            pressDone();
+            advance(2000 + 3000);
+            pressDone();
+
+            const plank = { step: 0, name: 'Plank', seconds: 3, exerciseId: 'builtin:plank' };
+            expect(entries()[0].sets).toEqual([
+                { round: 0, ...plank },
+                { round: 0, step: 1, name: 'Push-ups', reps: 20, exerciseId: 'builtin:push-up' },
+                { round: 1, ...plank },
+                { round: 1, step: 1, name: 'Push-ups', reps: 20, exerciseId: 'builtin:push-up' },
+            ]);
+            fixture.destroy();
+        });
+
+        it("doesn't log a timed step ended part-way", () => {
+            start(store.addWorkout(makeWorkout({ steps: [work(3, 'Plank')], repeats: 2 })));
+            advance(4000);
+            endWorkout();
+            TestBed.tick();
+
+            expect(entries()[0].sets).toEqual([
+                { round: 0, step: 0, name: 'Plank', seconds: 3, exerciseId: 'builtin:plank' },
+            ]);
+            expect(text()).toContain('Plank: 0:03');
+            expect(text()).not.toContain('Change reps or weight');
             fixture.destroy();
         });
 

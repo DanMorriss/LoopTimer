@@ -55,7 +55,15 @@ In IndexedDB on the web: the `history` store of the `looptimer` database, one re
         "note": "felt strong",
         "sets": [
             { "round": 0, "step": 0, "name": "Squats", "reps": 10, "weight": 60 },
-            { "round": 1, "step": 0, "name": "Squats", "reps": 8, "weight": 62.5 }
+            {
+                "round": 0,
+                "step": 1,
+                "name": "Plank",
+                "seconds": 45,
+                "exerciseId": "builtin:plank"
+            },
+            { "round": 1, "step": 0, "name": "Squats", "reps": 8, "weight": 62.5 },
+            { "round": 1, "step": 1, "name": "Plank", "seconds": 45, "exerciseId": "builtin:plank" }
         ]
     }
 ]
@@ -65,7 +73,7 @@ In IndexedDB on the web: the `history` store of the `looptimer` database, one re
 - `id` is `<startedAt>-<workoutId>`: unique per run, so the same run logged again replaces its entry, and the same run matches across copies.
 - `updatedAt`: when it was last logged or its note changed.
 - `totalRounds` is 0 for a workout that runs until stopped. `outcome` is `finished` or `stopped`. `note` is missing when there isn't one (up to 120 characters).
-- `sets` (missing when there were none): one per Done on a rep step, in order. `round` and `step` count from 0, `reps` is at least 1, `weight` is in kg (missing for none). `exerciseId` is the exercise it was, from its step (missing for an unnamed step). A broken set is dropped when loading, keeping the rest of the entry.
+- `sets` (missing when there were none), in order: one per Done on a rep step, and one per timed work step of an exercise that ran to its end. `round` and `step` count from 0. A rep set has `reps`, at least 1, and `weight` in kg (missing for none); a timed set has `seconds` (1–5999, the step's length) and no `reps` or `weight`. Entries from before timed sets were logged have rep sets only. `exerciseId` is the exercise it was, from its step (missing for an unnamed step). A broken set is dropped when loading, keeping the rest of the entry.
 
 **`history-pending` (`localStorage`):** each change to the history is kept here too until IndexedDB confirms it, as a JSON list of entries, since a write started as the page closes (logging a run left mid-way) may never finish. On the next load anything still here is saved to IndexedDB, the most recent change to each entry winning, and a deletion made after an entry's last change (in `deleted`) wins over it. If IndexedDB can't be used at all, the history stays here.
 
@@ -168,7 +176,7 @@ The run in progress in a tab moves too (`activeTimerId`, `activeTimerStartedAt` 
 | `activeWorkoutPausedAt`  | When it was paused, if it is.                                                                                                      |
 | `activeRepStepsDone`     | How many rep steps have been done, counting across rounds.                                                                         |
 | `activeRepMs`            | Time spent on rep steps so far, which counts as time spent in the history.                                                         |
-| `activeSets`             | The sets done so far, as they'll go in the history entry.                                                                          |
+| `activeSets`             | The rep sets done so far. The timed ones are worked out from the clock.                                                            |
 
 From these, everything on the workout page is worked out (see [run-a-workout](run-a-workout.md)).
 

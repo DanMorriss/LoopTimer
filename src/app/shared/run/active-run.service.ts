@@ -12,7 +12,7 @@ import {
 import { HistoryEntry, historyId } from '../../models/history';
 import { RepStep, Workout, workoutSeconds } from '../../models/workout';
 import { alarmEvents } from '../../workout/alarm-schedule';
-import { workoutStateAt } from '../../workout/workout-state';
+import { setsDone, workoutStateAt } from '../../workout/workout-state';
 import { AlarmService } from '../alarms/alarm.service';
 import { HistoryStore } from '../state/history-store.service';
 import { SettingsStore } from '../state/settings-store.service';
@@ -77,6 +77,13 @@ export class ActiveRunService {
         // A rep step ends with Done, which adds one to the rep steps done
         const repStepsDone = this.store.activeRepStepsDone() + (state.phase === 'reps' ? 1 : 0);
         return workoutStateAt(workout, stepEndMs, repStepsDone);
+    });
+
+    /** The sets done so far, rep and timed, in the order they were done. */
+    readonly sets = computed(() => {
+        const workout = this.workout();
+        const state = this.state();
+        return workout && state ? setsDone(workout, state, this.store.activeSets()) : [];
     });
 
     readonly isComplete = computed(() => this.state()?.phase === 'complete');
@@ -365,7 +372,7 @@ export class ActiveRunService {
         // the time spent on rep steps, which the clock leaves out
         const countdownMs = finished ? workoutSeconds(workout) * 1000 : elapsedMs;
         const activeSeconds = Math.floor((countdownMs + this.store.activeRepMs()) / 1000);
-        const sets = this.store.activeSets();
+        const sets = this.sets();
         this.history.record({
             id,
             workoutId: workout.id,

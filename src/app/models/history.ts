@@ -1,5 +1,6 @@
 import { Synced } from './sync';
 import { MAX_WEIGHT_KG } from './weight';
+import { MAX_STEP_SECONDS } from './workout';
 
 /** One workout in the history: a workout run that finished, or was stopped part-way. */
 export interface HistoryEntry extends Synced {
@@ -21,7 +22,10 @@ export interface HistoryEntry extends Synced {
     outcome: 'finished' | 'stopped';
     /** A short line of the user's own, e.g. "felt strong". Missing when there isn't one. */
     note?: string;
-    /** The sets of its rep steps, in the order they were done. Missing when there were none. */
+    /**
+     * The sets done, in the order they were done: one per Done on a rep step, and one per
+     * timed work step of an exercise that ran to its end. Missing when there were none.
+     */
     sets?: LoggedSet[];
 }
 
@@ -32,8 +36,11 @@ export function historyId(startedAt: number, workoutId: string): string {
     return `${startedAt}-${workoutId}`;
 }
 
+/** One set: reps (with a weight where there was one), or a time held, e.g. a plank. */
+export type LoggedSet = RepSet | TimedSet;
+
 /** One set of a rep step, logged when Done is pressed. */
-export interface LoggedSet {
+export interface RepSet {
     /** Which round it was in, from 0. */
     round: number;
     /** Which step of the round it was, from 0. */
@@ -47,21 +54,48 @@ export interface LoggedSet {
     exerciseId?: string;
 }
 
-/** Whether a saved value is a usable set: whole rounds, steps and reps, and a sane weight. */
+/**
+ * One timed work step of an exercise that ran to its end. A step stopped part-way isn't a
+ * set, and nor is an unnamed or rest step, which isn't an exercise.
+ */
+export interface TimedSet {
+    round: number;
+    step: number;
+    name: string;
+    /** How long it ran: the step's whole length. */
+    seconds: number;
+    exerciseId?: string;
+}
+
+export function isTimedSet(set: LoggedSet): set is TimedSet {
+    return 'seconds' in set;
+}
+
+/**
+ * Whether a saved value is a usable set: whole rounds, steps and reps (or seconds), and a
+ * sane weight.
+ */
 export function isLoggedSet(value: unknown): value is LoggedSet {
     if (typeof value !== 'object' || value === null) {
         return false;
     }
     const set = value as Record<string, unknown>;
-    const whole = (n: unknown, min: number) => Number.isInteger(n) && (n as number) >= min;
+    const whole = (n: unknown, min: number, max = Number.MAX_SAFE_INTEGER) =>
+        Number.isInteger(n) && (n as number) >= min && (n as number) <= max;
     const weight = set['weight'];
+    const measured =
+        'seconds' in set
+            ? whole(set['seconds'], 1, MAX_STEP_SECONDS) &&
+              set['reps'] === undefined &&
+              weight === undefined
+            : whole(set['reps'], 1) &&
+              (weight === undefined ||
+                  (typeof weight === 'number' && weight > 0 && weight <= MAX_WEIGHT_KG));
     return (
         whole(set['round'], 0) &&
         whole(set['step'], 0) &&
         typeof set['name'] === 'string' &&
-        whole(set['reps'], 1) &&
-        (weight === undefined ||
-            (typeof weight === 'number' && weight > 0 && weight <= MAX_WEIGHT_KG)) &&
+        measured &&
         (set['exerciseId'] === undefined || typeof set['exerciseId'] === 'string')
     );
 }

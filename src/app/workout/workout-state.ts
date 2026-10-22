@@ -1,3 +1,4 @@
+import { LoggedSet, RepSet, TimedSet } from '../models/history';
 import {
     repStepsPerRound,
     roundSeconds,
@@ -137,4 +138,30 @@ export function nextRepStep(
         atSeconds += stepSeconds(step);
     }
     return null;
+}
+
+/**
+ * The sets a run has done by `state`: its rep sets, as logged on Done, and a timed set for
+ * each work step of an exercise that has run to its end, in the order they were done.
+ */
+export function setsDone(
+    workout: Workout,
+    state: WorkoutState,
+    repSets: readonly RepSet[]
+): LoggedSet[] {
+    const timed: TimedSet[] = [];
+    // Once complete, `round` is the rounds there were and `stepIndex` 0, so all of them count
+    for (let round = 0; round <= state.round; round++) {
+        const stepsDone = round < state.round ? workout.steps.length : state.stepIndex;
+        workout.steps.slice(0, stepsDone).forEach((step, stepIndex) => {
+            if (step.kind === 'work' && step.exerciseId !== undefined) {
+                const { name, seconds, exerciseId } = step;
+                timed.push({ round, step: stepIndex, name, seconds, exerciseId });
+            }
+        });
+    }
+    if (timed.length === 0) {
+        return [...repSets];
+    }
+    return [...repSets, ...timed].sort((a, b) => a.round - b.round || a.step - b.step);
 }

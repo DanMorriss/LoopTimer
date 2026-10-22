@@ -3,7 +3,7 @@ import { Component, computed, inject, linkedSignal, output, signal } from '@angu
 import { form, FormField, maxLength } from '@angular/forms/signals';
 import { MatIconModule } from '@angular/material/icon';
 import { isBuiltIn } from '../../models/exercise';
-import { LoggedSet, MAX_NOTE_LENGTH } from '../../models/history';
+import { MAX_NOTE_LENGTH, RepSet } from '../../models/history';
 import { MAX_REPS } from '../../models/workout';
 import { weightIn, weightOptions, weightToKg } from '../../models/weight';
 import { WheelPickerComponent } from '../../shared/components/wheel-picker/wheel-picker.component';
@@ -23,7 +23,7 @@ import {
 interface SetGroup {
     name: string;
     /** Each set, with where it is in the run's list of sets. */
-    sets: { index: number; set: LoggedSet }[];
+    sets: { index: number; set: RepSet }[];
 }
 
 /**
@@ -74,12 +74,12 @@ export class WorkoutSummaryComponent {
         const exercise = this.exercises.byId(id);
         return exercise && !isBuiltIn(exercise) ? exercise.name : undefined;
     };
-    /** Its rep steps' sets, one line per step, e.g. "Squats: 10, 10, 8 @ 60 kg". */
+    /** Its sets, one line per step, e.g. "Squats: 10, 10, 8 @ 60 kg" or "Plank: 3 × 0:45". */
     protected readonly setLines = computed(() =>
-        describeSets(this.store.activeSets(), this.weightUnit(), this.exerciseName)
+        describeSets(this.run.sets(), this.weightUnit(), this.exerciseName)
     );
 
-    // Correcting the sets, e.g. the last one was 8 reps, not 10
+    // Correcting the rep sets, e.g. the last one was 8 reps, not 10. Timed ones ran as set.
     protected readonly changingSets = signal(false);
     protected readonly setGroups = computed((): SetGroup[] => {
         const groups = new Map<number, SetGroup>();
@@ -88,10 +88,14 @@ export class WorkoutSummaryComponent {
             group.sets.push({ index, set });
             groups.set(set.step, group);
         });
-        // Named as the lines above are
-        return Array.from(groups.values(), (group, i) => ({
+        // Named as its line is
+        return Array.from(groups.values(), (group) => ({
             ...group,
-            name: this.setLines()[i]?.name ?? 'Reps',
+            name: describeSets(
+                group.sets.map((item) => item.set),
+                this.weightUnit(),
+                this.exerciseName
+            )[0].name,
         }));
     });
     protected readonly repOptions = Array.from({ length: MAX_REPS }, (_, i) => ({
@@ -99,7 +103,7 @@ export class WorkoutSummaryComponent {
         label: String(i + 1),
     }));
     protected readonly weightOptions = computed(() => weightOptions(this.weightUnit()));
-    protected weightValue(set: LoggedSet): number {
+    protected weightValue(set: RepSet): number {
         return set.weight ? weightIn(set.weight, this.weightUnit()) : 0;
     }
 
