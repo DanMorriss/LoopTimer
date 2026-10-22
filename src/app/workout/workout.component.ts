@@ -12,6 +12,7 @@ import { Router, RouterLink } from '@angular/router';
 import { MAX_REPS, RepStep, runsUntilStopped, Step } from '../models/workout';
 import { formatWeight, weightIn, weightOptions, weightToKg } from '../models/weight';
 import { WheelPickerComponent } from '../shared/components/wheel-picker/wheel-picker.component';
+import { WorkoutSummaryComponent } from './workout-summary/workout-summary.component';
 import { AlarmService } from '../shared/alarms/alarm.service';
 import { MatIconModule } from '@angular/material/icon';
 import { formatTime } from '../shared/format-time';
@@ -38,7 +39,7 @@ const MAX_ROUND_DOTS = 15;
  */
 @Component({
     selector: 'app-workout',
-    imports: [RouterLink, MatIconModule, WheelPickerComponent],
+    imports: [RouterLink, MatIconModule, WheelPickerComponent, WorkoutSummaryComponent],
     templateUrl: './workout.component.html',
     styleUrls: ['./workout.component.scss'],
     host: {
@@ -53,6 +54,8 @@ export class WorkoutComponent {
     private readonly run = inject(ActiveRunService);
     workout = this.run.workout;
     isPaused = this.run.isPaused;
+    /** The summary is open over the page, so its keys are left to it. */
+    summaryOpen = this.run.summaryOpen;
     private readonly state = this.run.state;
     private readonly nextState = this.run.nextState;
 
@@ -289,7 +292,7 @@ export class WorkoutComponent {
 
     /** Escape resumes, as it would close a menu or dialog. */
     onEscape() {
-        if (this.isPaused() && !this.isComplete()) {
+        if (this.isPaused() && !this.isComplete() && !this.summaryOpen()) {
             this.togglePause();
         }
     }
@@ -329,6 +332,7 @@ export class WorkoutComponent {
         const target = event.target as Element | null;
         if (
             !this.workout() ||
+            this.summaryOpen() ||
             this.isComplete() ||
             (event as KeyboardEvent).repeat ||
             target?.closest?.(SPACE_HANDLED_BY)
@@ -344,20 +348,25 @@ export class WorkoutComponent {
         }
     }
 
-    /**
-     * From the finished screen to this run in the history: with its note box open, ready to
-     * type, or just highlighted.
-     */
-    async openHistory(withNote: boolean) {
-        const run = this.run.runId();
-        await this.router.navigate(
-            ['/history'],
-            run ? { queryParams: withNote ? { note: run } : { run } } : {}
-        );
+    /** End workout: the summary opens over the run, which waits, paused, in case of Back. */
+    end() {
+        this.run.end();
     }
 
-    async stop() {
+    /** Back from the summary to the paused run, with focus on Resume. */
+    backToWorkout() {
+        this.run.back();
+        afterNextRender(() => this.resumeButton()?.nativeElement.focus(), {
+            injector: this.injector,
+        });
+    }
+
+    /** The summary's Done or View history: the run is over, on to the library or the history. */
+    async closeSummary(toHistory = false) {
+        const run = this.run.runId();
         this.run.stop();
-        await this.router.navigate(['/library']);
+        await (toHistory && run
+            ? this.router.navigate(['/history'], { queryParams: { run } })
+            : this.router.navigate(['/library']));
     }
 }

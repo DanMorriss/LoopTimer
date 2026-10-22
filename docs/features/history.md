@@ -45,7 +45,7 @@
 
 - Each entry's **⋮ menu** offers **Add note** (or **Edit note** and **Remove note** once there is one) and **Delete**. One menu open at a time.
 - A note is up to **120 characters**, trimmed. Saving an empty note removes it. Cancel keeps the note as it was.
-- From the finished screen, **Add a note** opens the history with that workout highlighted, in view, and its note box open and focused. **View history** highlights it without opening the box.
+- From the workout summary, **View history** opens the history with that workout highlighted and in view. (`?note=<id>` does the same with its note box open and focused; nothing links there since the note box moved onto the summary.)
 
 ### Delete and Undo
 
@@ -68,5 +68,5 @@
 
 ## Platform notes
 
-- **Web:** `HistoryStore` (`src/app/shared/state/history-store.service.ts`) and `HistoryComponent` (`src/app/history/`), at `/history`. The history is saved in IndexedDB (`history-database.ts`; see [data](data.md#history-the-history)) and loads in the background, so `/history` and `/exercises/:id` wait for it to open, and a backup waits for it too; `?note=<id>` and `?run=<id>` come from the finished screen. Formatting is in `src/app/history/history-format.ts`.
+- **Web:** `HistoryStore` (`src/app/shared/state/history-store.service.ts`) and `HistoryComponent` (`src/app/history/`), at `/history`. The history is saved in IndexedDB (`history-database.ts`; see [data](data.md#history-the-history)) and loads in the background, so `/history` and `/exercises/:id` wait for it to open, and a backup waits for it too; `?run=<id>` comes from the workout summary. Formatting is in `src/app/history/history-format.ts`.
 - **iOS:** SwiftData (or a JSON file) for entries, with no cap. Swipe to delete with an Undo toast is the iOS habit. The date groups should follow the user's locale, as they do on the web.

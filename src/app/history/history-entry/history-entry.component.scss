@@ -16,7 +16,7 @@
     z-index: 5;
 }
 
-// The run just finished, arriving from the finished screen: an accent bar and tint
+// The run just finished or ended, arriving from the workout summary: an accent bar and tint
 :host(.entry--highlighted) {
     margin-inline: -0.75rem;
     padding-inline: 0.75rem;

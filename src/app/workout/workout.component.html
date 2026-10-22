@@ -132,7 +132,7 @@
                     >
                         <mat-icon aria-hidden="true">play_arrow</mat-icon>
                     </button>
-                    <button type="button" class="btn-pill workout-paused__end" (click)="stop()">
+                    <button type="button" class="btn-pill workout-paused__end" (click)="end()">
                         <mat-icon aria-hidden="true">stop</mat-icon>
                         End workout
                     </button>
@@ -242,24 +242,15 @@
                     Tap to turn on sound
                 </button>
             }
-        } @else {
-            <!-- Done: straight on to a note about how it went, or just a look at the history -->
-            <div class="workout-finish mt-6 flex flex-col items-center gap-4">
-                <button
-                    type="button"
-                    class="btn-main workout-finish__note"
-                    (click)="openHistory(true)"
-                >
-                    <mat-icon aria-hidden="true">edit_note</mat-icon>
-                    Add a note
-                </button>
-                <div class="flex gap-3">
-                    <button type="button" class="btn-pill" (click)="openHistory(false)">
-                        View history
-                    </button>
-                    <a routerLink="/library" class="btn-pill">Library</a>
-                </div>
-            </div>
+        }
+
+        <!-- How it went: once finished, or ended with End workout -->
+        @if (summaryOpen()) {
+            <app-workout-summary
+                (back)="backToWorkout()"
+                (done)="closeSummary()"
+                (viewHistory)="closeSummary(true)"
+            />
         }
     } @else {
         <div

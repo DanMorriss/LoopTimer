@@ -80,6 +80,10 @@ export class ActiveRunService {
     });
 
     readonly isComplete = computed(() => this.state()?.phase === 'complete');
+    /** End workout was pressed: the summary is open over the run, which waits, paused. */
+    readonly ending = signal(false);
+    /** The summary shows once the run is finished, or ended with End workout. */
+    readonly summaryOpen = computed(() => !!this.workout() && (this.ending() || this.isComplete()));
     /** A run is going, and not paused: the clock ticks, alarms sound, the screen stays on. */
     readonly isRunning = computed(() => !!this.workout() && !this.isPaused() && !this.isComplete());
 
@@ -192,6 +196,7 @@ export class ActiveRunService {
         }
         this.store.setActiveWorkout(workout);
         this.resumedAt.set(0);
+        this.ending.set(false);
         this.sync();
     }
 
@@ -253,12 +258,78 @@ export class ActiveRunService {
         );
     }
 
-    /** Ends the run, logging it as stopped, and silences any alarm still sounding. */
+    /**
+     * End workout: the run is logged as it stands, any alarm sounding is silenced, and the
+     * summary opens. The run is kept, paused, until the summary is closed with stop(), so
+     * back() can take it up again.
+     */
+    end() {
+        this.sync();
+        this.store.pause();
+        this.recordRun('stopped');
+        this.alarms.cancel();
+        this.ending.set(true);
+    }
+
+    /** From the summary back to the run, still paused where it was ended. */
+    back() {
+        this.ending.set(false);
+    }
+
+    /**
+     * Corrects a set already done, from the summary, and updates its history entry. Only
+     * this run's record changes; useSetsNextTime() carries it over to the saved workout.
+     */
+    changeSet(index: number, change: { reps: number } | { weight: number | undefined }) {
+        const set = this.store.activeSets()[index];
+        if (!set) {
+            return;
+        }
+        const reps = 'reps' in change ? change.reps : set.reps;
+        const weight = 'weight' in change ? change.weight : set.weight;
+        const { weight: _old, ...rest } = set;
+        this.store.updateActiveSet(index, {
+            ...rest,
+            reps,
+            ...(weight === undefined ? {} : { weight }),
+        });
+        this.recordRun(this.isComplete() ? 'finished' : 'stopped');
+    }
+
+    /**
+     * Makes each rep step of the saved workout start next time from its last set in this run,
+     * e.g. after the summary's sets were corrected.
+     */
+    useSetsNextTime() {
+        const workout = this.workout();
+        if (!workout) {
+            return;
+        }
+        const lastSets = new Map(this.store.activeSets().map((set) => [set.step, set]));
+        for (const [stepIndex, set] of lastSets) {
+            const step = workout.steps[stepIndex];
+            if (step?.kind !== 'reps') {
+                continue;
+            }
+            const { weight: _old, ...rest } = step;
+            this.store.updateActiveStep(stepIndex, {
+                ...rest,
+                reps: set.reps,
+                ...(set.weight === undefined ? {} : { weight: set.weight }),
+            });
+        }
+    }
+
+    /**
+     * Ends the run for good, logging it (as finished if it was), and silences any alarm still
+     * sounding.
+     */
     stop() {
         this.sync();
-        this.recordRun('stopped');
+        this.recordRun(this.isComplete() ? 'finished' : 'stopped');
         this.store.stop();
         this.alarms.cancel();
+        this.ending.set(false);
     }
 
     /** The run's id in the history, or null with no run. */

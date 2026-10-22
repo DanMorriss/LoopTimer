@@ -68,7 +68,10 @@ describe('WorkoutComponent', () => {
 
     /** Ends the run the only way there is: Pause, then End workout over the ring. */
     function endWorkout() {
-        (fixture.nativeElement.querySelector('[aria-label="Pause"]') as HTMLElement).click();
+        // Already paused, e.g. back from the summary
+        (
+            fixture.nativeElement.querySelector('[aria-label="Pause"]') as HTMLElement | null
+        )?.click();
         fixture.detectChanges();
         (fixture.nativeElement.querySelector('.workout-paused__end') as HTMLElement).click();
     }
@@ -750,16 +753,15 @@ describe('WorkoutComponent', () => {
             localStorage.clear();
         });
 
-        it('ends the workout and goes back to the library on End workout', async () => {
+        it('opens the summary on End workout, keeping the run, paused, behind it', () => {
             start(makeWorkout());
-            const router = TestBed.inject(Router);
-            const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
             press('Pause');
             press('End workout');
 
-            expect(store.activeWorkout()).toBeNull();
-            expect(navigate).toHaveBeenCalledWith(['/library']);
+            expect(fixture.nativeElement.querySelector('app-workout-summary')).not.toBeNull();
+            expect(store.activeWorkout()).not.toBeNull();
+            expect(component.isPaused()).toBe(true);
             fixture.destroy();
         });
 
@@ -900,53 +902,7 @@ describe('WorkoutComponent', () => {
             fixture.destroy();
         });
 
-        describe('the finished screen', () => {
-            const finish = () => {
-                const startedAt = Date.now();
-                start(makeWorkout({ id: 'workout-4', workSeconds: 1, restSeconds: 0, repeats: 1 }));
-                advance(1000);
-                return `${startedAt}-workout-4`;
-            };
-            const finishButton = (name: string) =>
-                Array.from(
-                    fixture.nativeElement.querySelectorAll(
-                        '.workout-finish button, .workout-finish a'
-                    )
-                ).find((b) => (b as HTMLElement).textContent!.includes(name)) as HTMLElement;
-
-            it('offers a note as the main button, then the history and the library', () => {
-                finish();
-
-                expect(finishButton('Add a note').classList).toContain('btn-main');
-                expect(finishButton('View history')).toBeDefined();
-                expect(finishButton('Library').getAttribute('href')).toBe('/library');
-                expect(fixture.nativeElement.querySelector('.workout-controls')).toBeNull();
-                fixture.destroy();
-            });
-
-            it('opens this run in the history with its note box, or just highlighted', async () => {
-                const run = finish();
-                const navigate = vi
-                    .spyOn(TestBed.inject(Router), 'navigate')
-                    .mockResolvedValue(true);
-
-                finishButton('Add a note').click();
-                await fixture.whenStable();
-                expect(navigate).toHaveBeenLastCalledWith(['/history'], {
-                    queryParams: { note: run },
-                });
-                expect(entries().map((entry) => entry.id)).toEqual([run]);
-
-                finishButton('View history').click();
-                await fixture.whenStable();
-                expect(navigate).toHaveBeenLastCalledWith(['/history'], {
-                    queryParams: { run },
-                });
-                fixture.destroy();
-            });
-        });
-
-        it('logs it once, even if the finished screen is shown again', () => {
+        it('logs it once, even if the summary is shown again', () => {
             start(makeWorkout({ workSeconds: 1, repeats: 1 }));
             advance(1000);
             fixture.destroy();
@@ -1906,6 +1862,252 @@ describe('WorkoutComponent', () => {
             expect(component.isRepsActive()).toBe(true);
             expect(component.roundNumber()).toBe(2);
             fixture.destroy();
+        });
+    });
+
+    describe('the summary', () => {
+        beforeEach(() => localStorage.clear());
+        afterEach(() => localStorage.clear());
+
+        const entries = () => TestBed.inject(HistoryStore).entries();
+        const summary = () =>
+            fixture.nativeElement.querySelector('app-workout-summary') as HTMLElement | null;
+        const summaryText = () => summary()?.textContent?.replace(/\s+/g, ' ') ?? '';
+        /** The time and rounds, e.g. "Time: 0:03". */
+        const stats = () =>
+            Array.from(summary()!.querySelectorAll('.summary__stat')).map(
+                (stat) =>
+                    `${stat.querySelector('dt')!.textContent!.trim()}: ${stat.querySelector('dd')!.textContent!.trim()}`
+            );
+        const summaryButton = (name: string) =>
+            Array.from(summary()?.querySelectorAll('button') ?? []).find((b) =>
+                b.textContent!.includes(name)
+            ) as HTMLButtonElement | undefined;
+        function pressInSummary(name: string) {
+            const target = summaryButton(name);
+            expect(target, `expected a ${name} button`).toBeDefined();
+            target!.click();
+            fixture.detectChanges();
+        }
+        // 2s work, then 20 push-ups at 40 kg; 3 rounds
+        const circuit = () =>
+            makeWorkout({
+                steps: [work(2), { kind: 'reps', reps: 20, name: 'Push-ups', weight: 40 } as const],
+                repeats: 3,
+            });
+        /** Starts the circuit as saved in the library, does round 1, and ends it in round 2. */
+        function endInRound2() {
+            const startedAt = Date.now();
+            const saved = store.addWorkout(circuit());
+            start(saved);
+            advance(2000);
+            (
+                fixture.nativeElement.querySelector('.workout-control--main button') as HTMLElement
+            ).click();
+            fixture.detectChanges();
+            advance(1000);
+            endWorkout();
+            fixture.detectChanges();
+            return `${startedAt}-${saved.id}`;
+        }
+        function mockNavigate() {
+            return vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+        }
+
+        it('sums up a workout ended early, logged as stopped, with focus on its heading', () => {
+            endInRound2();
+            TestBed.tick();
+
+            const dialog = summary()!.querySelector('[role="dialog"]')!;
+            expect(dialog.getAttribute('aria-modal')).toBe('true');
+            expect(summaryText()).toContain('Workout ended');
+            expect(stats()).toEqual(['Time: 0:03', 'Rounds: 1 of 3 rounds · stopped']);
+            expect(summaryText()).toContain('Push-ups: 20 reps @ 40 kg');
+            expect(entries()).toEqual([expect.objectContaining({ outcome: 'stopped' })]);
+            expect(document.activeElement?.id).toBe('summary-heading');
+            fixture.destroy();
+        });
+
+        it('goes back to the run, still paused, with Back to workout or Escape', () => {
+            endInRound2();
+
+            pressInSummary('Back to workout');
+            TestBed.tick();
+            expect(summary()).toBeNull();
+            expect(component.isPaused()).toBe(true);
+            expect(document.activeElement?.getAttribute('aria-label')).toBe('Resume');
+
+            endWorkout();
+            fixture.detectChanges();
+            summary()!
+                .querySelector('[role="dialog"]')!
+                .dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+            fixture.detectChanges();
+            expect(summary()).toBeNull();
+            expect(component.isPaused()).toBe(true);
+            fixture.destroy();
+        });
+
+        it('leaves the run alone on Space while it is open', () => {
+            endInRound2();
+
+            document.body.dispatchEvent(
+                new KeyboardEvent('keydown', { key: ' ', code: 'Space', bubbles: true })
+            );
+            fixture.detectChanges();
+
+            expect(component.isPaused()).toBe(true);
+            expect(summary()).not.toBeNull();
+            fixture.destroy();
+        });
+
+        it('ends the run on Done, and goes to the library', async () => {
+            endInRound2();
+            const navigate = mockNavigate();
+
+            pressInSummary('Done');
+            await fixture.whenStable();
+
+            expect(store.activeWorkout()).toBeNull();
+            expect(navigate).toHaveBeenCalledWith(['/library']);
+            expect(entries()).toHaveLength(1);
+            fixture.destroy();
+        });
+
+        it('ends the run on View history, and opens it there', async () => {
+            const run = endInRound2();
+            const navigate = mockNavigate();
+
+            pressInSummary('View history');
+            await fixture.whenStable();
+
+            expect(store.activeWorkout()).toBeNull();
+            expect(navigate).toHaveBeenCalledWith(['/history'], { queryParams: { run } });
+            fixture.destroy();
+        });
+
+        it('opens by itself once finished, with no way back to the workout', async () => {
+            start(makeWorkout({ workSeconds: 1, restSeconds: 0, repeats: 1 }));
+            advance(1000);
+
+            expect(summaryText()).toContain('Workout finished');
+            expect(stats()).toEqual(['Time: 0:01', 'Rounds: 1 round']);
+            expect(summaryButton('Back to workout')).toBeUndefined();
+
+            // Escape has nothing to go back to
+            summary()!
+                .querySelector('[role="dialog"]')!
+                .dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+            fixture.detectChanges();
+            expect(summary()).not.toBeNull();
+
+            mockNavigate();
+            pressInSummary('Done');
+            await fixture.whenStable();
+            expect(entries()).toEqual([expect.objectContaining({ outcome: 'finished' })]);
+            fixture.destroy();
+        });
+
+        it('has nothing to log when ended before the first step was done', () => {
+            start(makeWorkout());
+            endWorkout();
+            fixture.detectChanges();
+
+            expect(summaryText()).toContain('Nothing to log');
+            expect(summaryButton('View history')).toBeUndefined();
+            expect(summary()!.querySelector('#summary-note')).toBeNull();
+            expect(entries()).toEqual([]);
+            fixture.destroy();
+        });
+
+        it('saves a note to the run in the history', () => {
+            const run = endInRound2();
+            const note = summary()!.querySelector('#summary-note') as HTMLInputElement;
+
+            note.value = 'Felt strong';
+            note.dispatchEvent(new Event('input'));
+            note.dispatchEvent(new Event('change'));
+            fixture.detectChanges();
+
+            expect(entries().find((entry) => entry.id === run)?.note).toBe('Felt strong');
+            fixture.destroy();
+        });
+
+        describe('changing the sets', () => {
+            function openChanges() {
+                pressInSummary('Change reps or weight');
+            }
+            function choose(set: number, wheel: 'reps' | 'weight', value: string) {
+                const picker = summary()!.querySelector(
+                    `app-wheel-picker:has([aria-labelledby="summary-set-${set} summary-${wheel}-${set}"])`
+                ) as HTMLElement;
+                (picker.querySelector(`[data-value="${value}"]`) as HTMLElement).click();
+                fixture.detectChanges();
+            }
+
+            it('corrects a set in the history, then asks whether to use it next time', () => {
+                const run = endInRound2();
+                openChanges();
+
+                choose(0, 'reps', '18');
+                choose(0, 'weight', '42.5');
+
+                expect(entries().find((entry) => entry.id === run)?.sets).toEqual([
+                    expect.objectContaining({ reps: 18, weight: 42.5 }),
+                ]);
+                expect(summaryText()).toContain('Use these settings next time?');
+                // Not until asked
+                expect(store.workouts()[0].steps[1]).toEqual(
+                    expect.objectContaining({ reps: 20, weight: 40 })
+                );
+
+                pressInSummary('Done changing');
+                expect(summaryText()).toContain('Push-ups: 18 reps @ 42.5 kg');
+                fixture.destroy();
+            });
+
+            it('carries the last set of each step over to the saved workout on Yes', () => {
+                endInRound2();
+                openChanges();
+                choose(0, 'reps', '18');
+
+                pressInSummary('Yes, use next time');
+
+                expect(store.workouts()[0].steps[1]).toEqual(
+                    expect.objectContaining({ kind: 'reps', reps: 18, weight: 40 })
+                );
+                expect(summaryText()).toContain('Saved: next time starts from these.');
+                fixture.destroy();
+            });
+
+            it('leaves the saved workout alone on No', () => {
+                endInRound2();
+                openChanges();
+                choose(0, 'weight', '0');
+
+                pressInSummary('No, just this time');
+
+                expect(store.workouts()[0].steps[1]).toEqual(
+                    expect.objectContaining({ reps: 20, weight: 40 })
+                );
+                expect(summaryText()).not.toContain('Use these settings next time?');
+                fixture.destroy();
+            });
+
+            it('keeps the corrections if the run is taken up again and logged later', () => {
+                const run = endInRound2();
+                openChanges();
+                choose(0, 'reps', '12');
+
+                pressInSummary('Back to workout');
+                endWorkout();
+                fixture.detectChanges();
+
+                expect(entries().find((entry) => entry.id === run)?.sets).toEqual([
+                    expect.objectContaining({ reps: 12 }),
+                ]);
+                fixture.destroy();
+            });
         });
     });
 });

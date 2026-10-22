@@ -10,13 +10,12 @@ Do these first: everything after builds on them. The data is ready for sync (#81
 
 ### Phase 2: Feedback in the workout
 
-Making it clearer which part of the workout is happening, as agreed with Dan on 2026-10-22. Pause and End workout are done: Stop is gone from the running screen, and a workout ends from the paused screen (Resume and End workout over the greyed ring). Still to do, in this order:
+Making it clearer which part of the workout is happening, as agreed with Dan on 2026-10-22. Pause and End workout are done (Stop is gone from the running screen; a workout ends from the paused screen), and so is the workout summary (RUN-7) for both endings, with Back to workout, corrected sets and "Use these settings next time?". Still to do, in this order:
 
-- [ ] **Workout summary:** one full-screen sheet for both endings, finished by itself or by End workout, replacing the "You're finished!" screen. It shows the time taken, the rounds done, and each exercise's sets (e.g. "Squats: 10, 10, 8 @ 60 kg"), with a note box and View history and Done buttons. Logged sets can be changed (reps, weight) here; after a change, ask "Use these settings next time?" before updating the saved workout. A workout ended early, or one that runs until stopped, gets **Back to workout** (taking the run up again where it was paused). Leave room for personal bests (PRG-2).
 - [ ] **"Next:" pulses near a step's end:** the last 5s of a timed step (3s if the step is under 15s), swelling gently once a second in the next step's colour. Nothing on rep steps (Done is the cue). Reduced motion: a colour change only.
 - [ ] **Steps slide, like the number wheel:** on a new step the face's text slides up and out and the next slides in from below (about 300ms); on a new round it slides right to left instead, with the round line and dots, and the ring stays put. Reduced motion: a short crossfade.
 - [ ] **Last time (PRG-1):** on each rep step, "Last time: 10, 10, 8 @ 60 kg".
-- [ ] **Personal bests (PRG-2):** called out on the finished screen.
+- [ ] **Personal bests (PRG-2):** called out on the workout summary (RUN-7), which has room left for them.
 
 ### Phase 3: Progress pages
 

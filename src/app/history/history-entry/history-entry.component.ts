@@ -35,7 +35,7 @@ import { isBuiltIn } from '../../models/exercise';
     host: {
         class: 'entry',
         '[id]': "'entry-' + entry().id",
-        // Focusable from code only, for arriving from the finished screen
+        // Focusable from code only, for arriving from the workout summary
         tabindex: '-1',
         '[class.entry--stopped]': "entry().outcome === 'stopped'",
         '[class.entry--highlighted]': 'highlighted()',
@@ -54,7 +54,7 @@ export class HistoryEntryComponent {
     readonly menuOpen = input(false);
     /** Whether its note is being added or edited. */
     readonly editing = input(false);
-    /** The run just finished, when arriving from the finished screen. */
+    /** The run just finished, when arriving from the workout summary. */
     readonly highlighted = input(false);
 
     readonly menuToggled = output<void>();
@@ -86,7 +86,7 @@ export class HistoryEntryComponent {
     );
 
     constructor() {
-        // Into the note box as it opens, from the menu or straight from the finished screen
+        // Into the note box as it opens, from the menu or straight from the workout summary
         effect(() => {
             if (this.editing()) {
                 untracked(() => this.focusAfterRender(`#note-${CSS.escape(this.id())}`));

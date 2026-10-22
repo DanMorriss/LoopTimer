@@ -26,7 +26,7 @@
 
 ### End workout (Stop)
 
-- End workout, on the paused screen, ends the workout, silences any alarm still sounding, and goes to the library.
+- End workout, on the paused screen, logs the workout as it stands, silences any alarm still sounding, and opens the **summary** (see [run-a-workout](run-a-workout.md)). The run is kept, paused, behind it: **Back to workout** (or Escape) closes the summary and the run carries on from where it was, while **Done** or **View history** end it for good. If the run is taken up again, its history entry is updated when it later stops or finishes.
 - The workout is logged as **stopped**, with the full rounds done and the time spent so far, if **at least one step was done**. Stopping before the first step ends leaves no trace, so a workout started by mistake doesn't clutter the history.
 - Starting another workout while one is going ends the first, logged as stopped by the same rule.
 
@@ -44,7 +44,7 @@
 - Given a run paused, when the app reloads, then it's still paused at the same point.
 - Given a run 4.5s in, when the app reloads, then it carries on from 4.5s, and only alarms still to come are booked.
 - Given a run going, then the only control is Pause; when paused, then Resume and End workout show over the greyed ring, and Escape resumes.
-- Given a run on its first step, when I end it, then nothing is logged.
+- Given a run on its first step, when I end it, then nothing is logged, and the summary says "Nothing to log".
 - Given a run in round 2 of 3, when I end it, then it's logged as stopped, "1 of 3 rounds", with the time spent less pauses.
 - Given a run going, when I open History, then the alarms carry on, and it's logged when it finishes even though I'm not on the workout page.
 - Given a run going, when I start another workout, then the first is logged as stopped.

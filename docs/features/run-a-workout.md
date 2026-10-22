@@ -8,6 +8,7 @@
 - **RUN-4** As a user I want to know when I've finished, and be able to note how it went.
 - **RUN-5** As a user I want the countdown to stay right even if my phone sleeps or I switch apps.
 - **RUN-6** As a user I want to change the reps or weight while I'm on a rep step (e.g. going up a weight, or managing fewer reps), so what I log is what I did, and next time starts from there.
+- **RUN-7** As a user I want a summary of how a workout went when I finish or end it, where I can correct a set, add a note, and go back to the workout if I ended it early.
 
 ## Rules
 
@@ -49,12 +50,20 @@
 - The wheels close by themselves on Done; the next rep step starts with them closed.
 - Space on a focused wheel is left to the wheel, rather than pressing Done.
 
-### Finishing
+### Finishing, and the summary (RUN-4, RUN-7)
 
-- The face says "**You're finished!**", the controls go, and three buttons show:
-    - **Add a note** (the main one): opens this workout in the history with its note box open.
-    - **View history**: opens the history with this workout highlighted.
-    - **Library**.
+- The face says "**You're finished!**", the controls go, and the **summary** opens over the page by itself. End workout opens the same summary (see [pause-and-stop](pause-and-stop.md)).
+- It's a sheet: the whole screen on a phone, a card in the middle on anything wider. Focus starts on its heading and stays inside it.
+- It shows:
+    - "**Workout finished**" or "**Workout ended**", and the workout's title.
+    - **Time** (as in the history, pauses left out) and **Rounds**, e.g. "1 of 3 rounds · stopped".
+    - **Sets**, one line per rep step as in the history, e.g. "Squats: 10, 10, 8 @ 60 kg".
+    - A **Note** box, saved to this workout in the history as you leave it.
+    - Buttons: **Done** (the main one: on to the library), **View history** (opens the history with this workout highlighted), and **Back to workout** for a workout ended early or one that runs until stopped. Escape does the same as Back to workout, where there is one.
+- **Change reps or weight** turns each set into a Reps and a Weight wheel, so a set logged wrongly can be corrected (e.g. the last set was 8, not 10). A change goes into this workout's history entry at once, and then asks "**Use these settings next time?**":
+    - **Yes, use next time**: each rep step of the saved workout starts next time from its last set in this workout. It says "Saved: next time starts from these."
+    - **No, just this time**: only the history changes.
+- A workout ended before its first step was done has nothing logged: the summary says "Nothing to log", with no note box or View history.
 - The workout is logged in the history once, when it finishes, wherever the user is in the app (see [history](history.md)). It's dated when it actually finished, even if the app only noticed later.
 
 ### No workout
@@ -76,7 +85,9 @@
 - Given 20 push-ups in round 1, when I change them to 15 at 22.5 kg, then the face shows "15 reps" and "22.5 kg", the saved workout has 15 at 22.5 kg, and round 2 starts from 15 at 22.5 kg.
 - Given a step at 40 kg, when I set the weight to –, then the step has no weight.
 - Given steps Squats (work), Rest, Plank (work), then Squats shows "step 1 of 3" and "Next: Rest · 00:15".
-- Given the workout finishes, then "Add a note" opens it in the history with the note box open.
+- Given the workout finishes, then the summary opens with no Back to workout, and a note typed there is saved to it in the history.
+- Given 20 push-ups at 40 kg in round 1 and the workout ended in round 2, when I change the set to 18 reps on the summary, then the history has 18; on "Yes, use next time" the saved workout starts from 18 at 40 kg, and on "No, just this time" it stays at 20.
+- Given a workout ended early, when I press Back to workout, then it is paused where it was ended, with focus on Resume.
 
 ## Platform notes
 
