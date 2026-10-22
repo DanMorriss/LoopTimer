@@ -1,6 +1,6 @@
 # Exercises
 
-Built: exercises are in the data (#86), with the built-in list, your own exercises and notes, and existing data carried over (EXR-4). In the app: the Exercises list and a page per exercise (EXR-6–8), the picker in Create (EXR-2), making, renaming and editing your own exercises (EXR-3, EXR-9), your notes, shown on the exercise's page and mid-workout (EXR-10), hiding any exercise from the picker, and deleting your own. Progress on the exercise page (PRG-4) is still to come (see [progress](progress.md)).
+Built: exercises are in the data (#86), with the built-in list, your own exercises and notes, and existing data carried over (EXR-4). In the app: the Exercises list and a page per exercise (EXR-6–8), the picker in Create (EXR-2) with each exercise's details a tap away (EXR-11), making, renaming and editing your own exercises (EXR-3, EXR-9), your notes, shown on the exercise's page and mid-workout (EXR-10), hiding any exercise from the picker, and deleting your own. Progress on the exercise page (PRG-4) is still to come (see [progress](progress.md)).
 
 ## Stories
 
@@ -14,6 +14,7 @@ Built: exercises are in the data (#86), with the built-in list, your own exercis
 - **EXR-8** As a user I want to see which muscles an exercise works, shaded on a body map.
 - **EXR-9** As a user I want to make my own exercise, with its own description and the muscles it works.
 - **EXR-10** As a user I want to add my own note to any exercise, built-in ones included (e.g. "Pause at the bottom").
+- **EXR-11** As a user I want to see an exercise's details while building a workout, so I can tell it's the one I want before I use it.
 
 ## Rules (draft)
 
@@ -109,11 +110,15 @@ A link to an exercise that isn't there (deleted, or mistyped) says "Exercise not
 
     A match on an exercise's own name comes before one on its other names; otherwise they're in alphabetical order. A match on another name says so ("Push-up, Also called Press-up"), and your own exercises say "Your own".
 
+- Each exercise in the list also says its main muscles and what it needs (EXR-11), so similar ones can be told apart: "Quads, glutes · Barbell, rack", "Quads, glutes · Dumbbells or kettlebell". Equipment reads as on the exercise page; one of your own with neither yet has no such line.
+
 - When no exercise has the name typed, the list ends with **Make "Sled drag"** ("A new exercise of your own").
 - Up and Down move through the list (wrapping round), Enter or a click picks, Escape closes it, and leaving the box closes it. Enter with nothing chosen submits the form as usual.
 - **Picking** an exercise fills in its name and links the step to it. **Typing** over the name drops the link, and the step goes by its name again, as before there was a picker.
 - **Making** one keeps the name typed (tidied); the exercise is made when the workout is saved, so a workout that's never saved leaves nothing behind. It's measured as its step is: reps for a rep step, time for a timed one. That can be changed when editing it.
-- Under the box, a line says which exercise the step is: "Built-in exercise" or "Your own exercise" (with your note under it, if any), or "A new exercise of your own, made when the workout is saved". Beside it, **Edit** (your own) or **Add note** / **Edit note** (built-in) opens the exercise in a dialog. Focus goes back to that button when the dialog closes.
+- Under the box, a line says which exercise the step is: "Built-in exercise" or "Your own exercise" (with your note under it, if any), or "A new exercise of your own, made when the workout is saved". Beside it (or under it, where there isn't room):
+    - **Details** (EXR-11) opens a dialog titled with the exercise's name, showing what its page shows: other names, equipment and how it's measured, the description, your note, the body map, how to do it and tips, so you needn't leave the workout to check. **Done** closes it; **Pick another** closes it and puts the cursor in the step's name box with the name selected, so typing replaces it. Escape or a tap outside closes it too, and focus goes back to Details.
+    - **Edit** (your own) or **Add note** / **Edit note** (built-in) opens the exercise in the editing dialog. Focus goes back to that button when the dialog closes.
 - A step is still allowed **no exercise**: leave the box empty.
 
 ### Your own exercises (EXR-3, EXR-9)
@@ -162,6 +167,9 @@ Past logged sets are linked the same way. Unnamed steps stay unnamed and aren't 
 - Given I search "press-up", then Push-up comes first, saying "Also called Press-up".
 - Given I pick Calves, then only exercises with calves as a main muscle are listed.
 - Given I pick a pull-up bar as my equipment and turn on Only what I have, then Pull-up and Push-up are listed and Back squat isn't, and after a reload it's still so.
+- Given I type "squat" in a step's name box, then Back squat's option says "Quads, glutes · Barbell, rack" and Goblet squat's "Quads, glutes · Dumbbells or kettlebell".
+- Given a step linked to Front squat, when I press Details, then a dialog titled "Front squat" shows its description, body map and how-to steps; Done closes it and focus goes back to Details.
+- Given the details of the step's exercise, when I press Pick another, then the dialog closes and the step's name is selected in its box, ready to type over.
 - Given Plank is hidden, then it's left out of the list and shown under "Hidden from the picker (1)", and the picker in Create doesn't offer it for "plan" but does for "plank".
 - Given New on the Exercises list, when I name it "Sled drag" and save, then it's made and its page opens.
 - Given the inverted row's page, then its equipment reads "Barbell and rack, Smith machine, or rings".
@@ -174,5 +182,5 @@ Past logged sets are linked the same way. Unnamed steps stay unnamed and aren't 
 
 ## Platform notes
 
-- **Web:** the Exercises list is `ExerciseListComponent` (`src/app/exercises/`) and the page `ExercisePageComponent` (`src/app/exercises/exercise-page/`), routed at `/exercises` and `/exercises/:id`. Equipment reads as `equipmentPhrases()` in `models/exercise.ts`, and `exerciseUsage()` in `models/exercise-links.ts` says whether one can be deleted. `ExerciseStore` keeps which are hidden (`setHidden()`) and makes (`createOwn()`) and deletes (`deleteOwn()`) your own; your equipment is in `SettingsStore`. The picker is `ExercisePickerComponent` (`src/app/workout-setup/exercise-picker/`), an ARIA 1.2 combobox with `aria-activedescendant`, searching with `searchExercises()` in `models/exercise-links.ts`. The dialog is `ExerciseEditorComponent` (`src/app/shared/components/exercise-editor/`); `ExerciseStore.updateOwn()` saves your own exercise and `WorkoutStore.renameExerciseSteps()` renames its steps. The body map is `BodyMapComponent` (`src/app/shared/components/body-map/`). Its shapes, `body-shapes.ts`, are generated by `node tools/build-body-shapes.mjs` from a pinned commit of react-native-body-highlighter; don't edit them by hand. The built-in exercises are `src/app/models/built-in-exercises.ts`, written as in [writing-exercises](../writing-exercises.md).
+- **Web:** the Exercises list is `ExerciseListComponent` (`src/app/exercises/`) and the page `ExercisePageComponent` (`src/app/exercises/exercise-page/`), which shows `ExerciseDetailsComponent` (`src/app/shared/components/exercise-details/`), as does Create's `ExerciseDetailsDialogComponent` (`src/app/workout-setup/exercise-details-dialog/`), routed at `/exercises` and `/exercises/:id`. Equipment reads as `equipmentPhrases()` in `models/exercise.ts`, and `exerciseUsage()` in `models/exercise-links.ts` says whether one can be deleted. `ExerciseStore` keeps which are hidden (`setHidden()`) and makes (`createOwn()`) and deletes (`deleteOwn()`) your own; your equipment is in `SettingsStore`. The picker is `ExercisePickerComponent` (`src/app/workout-setup/exercise-picker/`), an ARIA 1.2 combobox with `aria-activedescendant`, searching with `searchExercises()` in `models/exercise-links.ts`. The dialog is `ExerciseEditorComponent` (`src/app/shared/components/exercise-editor/`); `ExerciseStore.updateOwn()` saves your own exercise and `WorkoutStore.renameExerciseSteps()` renames its steps. The body map is `BodyMapComponent` (`src/app/shared/components/body-map/`). Its shapes, `body-shapes.ts`, are generated by `node tools/build-body-shapes.mjs` from a pinned commit of react-native-body-highlighter; don't edit them by hand. The built-in exercises are `src/app/models/built-in-exercises.ts`, written as in [writing-exercises](../writing-exercises.md).
 - **iOS:** the list maps onto a `List` with `.searchable`, and the muscle chips onto a horizontal `ScrollView`; each card is a `NavigationLink` to the exercise's page. Tapping the body map needs hit-testing each `Path` (`contentShape`). The same paths work as SwiftUI `Path`s from SVG data, or through react-native-body-highlighter itself in a React Native app. The picker maps onto a `TextField` with a list of suggestions under it (or `.searchable` with `searchSuggestions`), and the exercise dialog onto a sheet.

@@ -34,6 +34,7 @@ import { WeightUnit, weightIn, weightOptions, weightToKg } from '../models/weigh
 import { Exercise, isBuiltIn, MAX_EXERCISE_NAME_LENGTH } from '../models/exercise';
 import { findByName } from '../models/exercise-links';
 import { ExerciseEditorComponent } from '../shared/components/exercise-editor/exercise-editor.component';
+import { ExerciseDetailsDialogComponent } from './exercise-details-dialog/exercise-details-dialog.component';
 import { ExerciseStore } from '../shared/state/exercise-store.service';
 import { ExercisePickerComponent } from './exercise-picker/exercise-picker.component';
 import { InfinitySwitchComponent } from '../shared/components/infinity-switch/infinity-switch.component';
@@ -120,6 +121,7 @@ const NAME_EXAMPLES: Record<StepKind, string> = {
         ConfirmDialogComponent,
         ExercisePickerComponent,
         ExerciseEditorComponent,
+        ExerciseDetailsDialogComponent,
         MatFormFieldModule,
         MatIconModule,
     ],
@@ -195,6 +197,10 @@ export class WorkoutSetupComponent {
     } | null>(null);
 
     /** The exercise open in the editor, and the step it was opened from. */
+    /** The exercise whose details are showing, and the step they were opened from. */
+    protected readonly exerciseInDetails = signal<{ exercise: Exercise; stepKey: number } | null>(
+        null
+    );
     protected readonly exerciseInEditor = signal<{ exercise: Exercise; stepKey: number } | null>(
         null
     );
@@ -283,6 +289,36 @@ export class WorkoutSetupComponent {
 
     protected noteFor(exercise: Exercise): string | undefined {
         return this.exercises.noteFor(exercise.id);
+    }
+
+    protected showDetails(exercise: Exercise, stepKey: number) {
+        this.exerciseInDetails.set({ exercise, stepKey });
+    }
+
+    protected closeDetails() {
+        const opened = this.exerciseInDetails();
+        this.exerciseInDetails.set(null);
+        if (opened) {
+            this.focusAfterRender(`step-${opened.stepKey}-details`);
+        }
+    }
+
+    /** Back to the step's name box with its name selected, so typing replaces it. */
+    protected pickAnother() {
+        const opened = this.exerciseInDetails();
+        this.exerciseInDetails.set(null);
+        if (opened) {
+            afterNextRender(
+                () => {
+                    const box = document.getElementById(`step-${opened.stepKey}-name`);
+                    if (box instanceof HTMLInputElement) {
+                        box.focus();
+                        box.select();
+                    }
+                },
+                { injector: this.injector }
+            );
+        }
     }
 
     protected openExercise(exercise: Exercise, stepKey: number) {

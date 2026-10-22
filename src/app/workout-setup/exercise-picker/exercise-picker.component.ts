@@ -1,13 +1,19 @@
 import { Component, computed, inject, input, model, signal } from '@angular/core';
 import { FormValueControl } from '@angular/forms/signals';
 import { MatIconModule } from '@angular/material/icon';
-import { Exercise, isBuiltIn } from '../../models/exercise';
+import {
+    capitalise,
+    equipmentPhrases,
+    Exercise,
+    isBuiltIn,
+    MUSCLE_LABELS,
+} from '../../models/exercise';
 import { findByName, searchExercises } from '../../models/exercise-links';
 import { ExerciseStore } from '../../shared/state/exercise-store.service';
 
 /** One row of the list: an exercise to pick, or making a new one from what's typed. */
 type PickerOption =
-    | { kind: 'exercise'; exercise: Exercise; otherName?: string }
+    | { kind: 'exercise'; exercise: Exercise; otherName?: string; hint: string }
     | { kind: 'make'; name: string };
 
 let nextId = 0;
@@ -56,6 +62,7 @@ export class ExercisePickerComponent implements FormValueControl<string> {
         const found: PickerOption[] = searchExercises(typed, shown).map((match) => ({
             kind: 'exercise',
             ...match,
+            hint: hint(match.exercise),
         }));
         return typed && !named
             ? [...found, { kind: 'make', name: typed.replace(/\s+/g, ' ') }]
@@ -128,4 +135,16 @@ export class ExercisePickerComponent implements FormValueControl<string> {
         this.open.set(false);
         this.active.set(-1);
     }
+}
+
+/**
+ * What tells one exercise from another at a glance: its main muscles and what it needs,
+ * e.g. "Quads, glutes · Barbell, rack". Empty for one of your own with neither yet.
+ */
+export function hint(exercise: Exercise): string {
+    const muscles = exercise.mainMuscles.map((muscle) => MUSCLE_LABELS[muscle].toLowerCase());
+    return [muscles.join(', '), equipmentPhrases(exercise.equipment).join(', ')]
+        .filter((part) => part !== '')
+        .map(capitalise)
+        .join(' · ');
 }

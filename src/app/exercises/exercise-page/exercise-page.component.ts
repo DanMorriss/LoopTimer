@@ -3,10 +3,10 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { MatIconModule } from '@angular/material/icon';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
-import { BodyMapComponent } from '../../shared/components/body-map/body-map.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
+import { ExerciseDetailsComponent } from '../../shared/components/exercise-details/exercise-details.component';
 import { ExerciseEditorComponent } from '../../shared/components/exercise-editor/exercise-editor.component';
-import { capitalise, equipmentPhrases, isBuiltIn } from '../../models/exercise';
+import { isBuiltIn } from '../../models/exercise';
 import { exerciseUsage } from '../../models/exercise-links';
 import { ExerciseStore } from '../../shared/state/exercise-store.service';
 import { HistoryStore } from '../../shared/state/history-store.service';
@@ -29,7 +29,7 @@ type DeleteStep = 'confirm-delete' | 'confirm-hide' | 'in-use' | null;
     imports: [
         MatIconModule,
         RouterLink,
-        BodyMapComponent,
+        ExerciseDetailsComponent,
         ConfirmDialogComponent,
         ExerciseEditorComponent,
     ],
@@ -65,9 +65,6 @@ export class ExercisePageComponent {
         const exercise = this.exercise();
         return exercise !== undefined && this.exercises.isHidden(exercise.id);
     });
-    protected readonly equipment = computed(() =>
-        equipmentPhrases(this.exercise()?.equipment ?? []).map(capitalise)
-    );
     protected readonly usage = computed(() =>
         exerciseUsage(
             this.exercise()?.id ?? '',

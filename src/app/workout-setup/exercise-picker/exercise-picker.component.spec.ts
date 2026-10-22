@@ -37,11 +37,14 @@ describe('ExercisePickerComponent', () => {
     const list = () => fixture.nativeElement.querySelector('[role="listbox"]') as HTMLElement;
     const options = () =>
         Array.from(fixture.nativeElement.querySelectorAll('[role="option"]')) as HTMLElement[];
-    /** Each option as it reads, e.g. "Push-up, Also called Press-up", leaving out its icon. */
+    /**
+     * Each option as it reads, e.g. "Push-up, Also called Press-up", leaving out its icon and
+     * its muscles and equipment (see `hints`).
+     */
     const optionText = () =>
         options().map((option) => {
             const copy = option.cloneNode(true) as HTMLElement;
-            copy.querySelectorAll('mat-icon').forEach((icon) => icon.remove());
+            copy.querySelectorAll('mat-icon, .exercise-picker__hint').forEach((e) => e.remove());
             return copy.textContent!.replace(/\s+/g, ' ').trim();
         });
 
@@ -85,6 +88,25 @@ describe('ExercisePickerComponent', () => {
 
         await type('front squats');
         expect(optionText()).toEqual(['Front squat']);
+    });
+
+    it("says each one's main muscles and what it needs, to tell them apart", async () => {
+        TestBed.inject(ExerciseStore).addOwn('Squat jump hold', 'timed');
+
+        await type('squat');
+
+        const hints = options().map((option) =>
+            option.querySelector('.exercise-picker__hint')?.textContent!.replace(/^,\s*/, '').trim()
+        );
+        const names = optionText();
+        expect(hints[names.indexOf('Back squat, Also called Squat')]).toBe(
+            'Quads, glutes · Barbell, rack'
+        );
+        expect(hints[names.indexOf('Goblet squat')]).toBe(
+            'Quads, glutes · Dumbbells or kettlebell'
+        );
+        // Your own with no muscles or equipment yet has none
+        expect(hints[names.indexOf('Squat jump hold, Your own')]).toBeUndefined();
     });
 
     it('offers to make an exercise when none has the name typed', async () => {
@@ -142,9 +164,7 @@ describe('ExercisePickerComponent', () => {
     it('picks an exercise by clicking it', async () => {
         await type('dead');
 
-        options()
-            .find((option) => option.textContent!.trim() === 'Deadlift')!
-            .click();
+        options()[optionText().indexOf('Deadlift')].click();
         fixture.detectChanges();
         await fixture.whenStable();
 
