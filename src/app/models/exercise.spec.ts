@@ -16,6 +16,20 @@ describe('canDoWith', () => {
         expect(canDoWith(gobletSquat, ['barbell'])).toBe(false);
     });
 
+    it('takes one pair of things, or one thing that does both, as choices across two needs', () => {
+        const invertedRow = {
+            equipment: [
+                ['barbell', 'smith machine', 'rings'],
+                ['rack', 'smith machine', 'rings'],
+            ],
+        } as const;
+
+        expect(canDoWith(invertedRow, ['barbell', 'rack'])).toBe(true);
+        expect(canDoWith(invertedRow, ['smith machine'])).toBe(true);
+        expect(canDoWith(invertedRow, ['rings'])).toBe(true);
+        expect(canDoWith(invertedRow, ['barbell'])).toBe(false);
+    });
+
     it('can always do an exercise that needs nothing', () => {
         expect(canDoWith({ equipment: ['none'] }, [])).toBe(true);
     });

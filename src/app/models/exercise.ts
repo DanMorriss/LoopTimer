@@ -52,9 +52,15 @@ export type Equipment =
     | 'dumbbells'
     | 'kettlebell'
     | 'bench'
+    /** A bench with an angled pad to rest the backs of your arms on. */
+    | 'preacher bench'
     | 'rack'
+    /** A bar that runs up and down fixed rails, in a frame of its own. */
+    | 'smith machine'
     | 'pull-up bar'
     | 'parallel bars'
+    /** Gymnastic rings or suspension straps, hung from something overhead. */
+    | 'rings'
     | 'cable'
     | 'machine'
     | 'band'
@@ -152,9 +158,12 @@ export const EQUIPMENT_CHOICES: readonly Exclude<Equipment, 'none'>[] = [
     'dumbbells',
     'kettlebell',
     'bench',
+    'preacher bench',
     'rack',
+    'smith machine',
     'pull-up bar',
     'parallel bars',
+    'rings',
     'cable',
     'machine',
     'band',

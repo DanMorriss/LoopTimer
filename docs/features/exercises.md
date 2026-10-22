@@ -41,7 +41,8 @@ Partly built: exercises are in the data (#86), with the built-in list, your own 
 - The list is part of the app, not the user's data: it updates with the app and isn't synced or exported.
 - Searchable by name and other names, and can be filtered by muscle and equipment.
 - **Equipment** lists everything an exercise needs, all of it, so the list can be filtered by **what you have**: an exercise shows if you have every piece it lists. Where any one of a few things will do, it's a choice (a goblet squat needs a dumbbell _or_ a kettlebell). "None" means nothing at all. Plates and a floor are taken for granted.
-- The equipment: barbell, dumbbells, kettlebell, bench, rack, pull-up bar, parallel bars, cable, machine (a dedicated gym machine, e.g. a leg press), band, step (a box, step or stair), ab wheel, none.
+    - Where a pair of things will do, or one thing that does the job of both, the choice is in two needs: an inverted row needs a barbell _or_ a Smith machine _or_ rings, and a rack _or_ a Smith machine _or_ rings. When the exercise page shows equipment, it should read that as "Barbell and rack, Smith machine, or rings".
+- The equipment: barbell, dumbbells, kettlebell, bench, preacher bench (a bench with an angled arm pad), rack, Smith machine, pull-up bar, parallel bars, rings (gymnastic rings or suspension straps), cable, machine (a dedicated gym machine, e.g. a leg press), band, step (a box, step or stair), ab wheel, none. All but none can be picked for an exercise of your own.
 
 ### The body map (EXR-8)
 
