@@ -5,6 +5,7 @@ import { HistoryEntry, LoggedSet } from '../models/history';
 import { HistoryStore } from '../shared/state/history-store.service';
 import { describeRounds, describeSets, formatDuration } from './history-format';
 import { SettingsStore } from '../shared/state/settings-store.service';
+import { ExerciseStore } from '../shared/state/exercise-store.service';
 import { HistoryComponent } from './history.component';
 
 // Midday on Sunday 18 October 2026, so "today" and "yesterday" can't flip mid-test
@@ -126,6 +127,31 @@ describe('HistoryComponent', () => {
         expect(text('.entry__sets li .sr-only')).toEqual(['Bench, 2 sets of 5 reps at 135 lb']);
         // The workout without rep steps has no list
         expect(fixture.nativeElement.querySelectorAll('.entry__sets')).toHaveLength(1);
+    });
+
+    it('names sets of your own exercise as it is now called, and built-in ones as they ran', () => {
+        const exercises = TestBed.inject(ExerciseStore);
+        const mine = exercises.addOwn('Sled push', 'reps');
+        exercises.updateOwn(mine.id, { ...mine, name: 'Sled drag' });
+        create(
+            makeEntry({
+                sets: [
+                    { round: 0, step: 0, name: 'Sled push', reps: 5, exerciseId: mine.id },
+                    {
+                        round: 0,
+                        step: 1,
+                        name: 'Squats',
+                        reps: 8,
+                        exerciseId: 'builtin:back-squat',
+                    },
+                ],
+            })
+        );
+
+        expect(text('.entry__sets li [aria-hidden="true"]')).toEqual([
+            'Sled drag: 5 reps',
+            'Squats: 8 reps',
+        ]);
     });
 
     it('names an untitled timer', () => {
@@ -443,6 +469,16 @@ describe('HistoryComponent', () => {
                 'Bench: 2 × 5 @ 45 lb',
                 'Push-ups: 20 reps',
             ]);
+        });
+
+        it('names a line by its exercise where a current name is given', () => {
+            const linked = { ...set(0, 5), exerciseId: 'mine' };
+            const names = (id: string) => (id === 'mine' ? 'Sled drag' : undefined);
+
+            expect(describeSets([linked], 'kg', names)[0].name).toBe('Sled drag');
+            expect(describeSets([{ ...linked, exerciseId: 'other' }], 'kg', names)[0].name).toBe(
+                'Squats'
+            );
         });
     });
 });

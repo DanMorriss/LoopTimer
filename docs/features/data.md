@@ -31,7 +31,7 @@ A JSON list of timers:
 - `repeats`: 1–30, or **0 for until stopped**.
 - `seconds`: 1–5999 (99:59). `reps`: 1–100. `name`: may be empty.
 - `weight` (rep steps only, optional): in **kg whatever unit is shown**, to the gram, more than 0 and up to 300. Missing for none. A weight picked in lb is converted (1 lb = 0.45359237 kg), so 45 lb saves as 20.412 kg.
-- `exerciseId` (work and rep steps, optional): the exercise the step is, e.g. `builtin:back-squat`, or one of your own. Every time a timer is saved, each named work step is linked by its name, as the conversion to version 3 does (below), so a renamed step follows its name. Missing for a rest or an unnamed step.
+- `exerciseId` (work and rep steps, optional): the exercise the step is, e.g. `builtin:back-squat`, or one of your own. Set by picking an exercise in setup (EXR-2). When a timer is saved, a step keeps its exercise while that exercise is still there; any other named work step is linked by its name, as the conversion to version 3 does (below). Typing over a step's name in setup drops its link, so a renamed step follows its name. Missing for a rest or an unnamed step.
 - A timer with no work (no timed step with time, and no rep step) isn't valid.
 - **Older format:** timers saved before steps existed have `timerMinutes`, `timerSeconds`, `restMinutes`, `restSeconds` in place of `steps`. They're read as a timed step plus a rest step (left out if 0), and saved in the new format the next time anything changes.
 

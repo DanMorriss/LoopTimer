@@ -365,6 +365,34 @@ describe('TimerStore', () => {
             expect(updated!.steps[0].exerciseId).toBe('builtin:push-up');
         });
 
+        it('keeps the exercise picked for a step, whatever its name', () => {
+            const timer = createStore().addTimer(
+                makeTimer({ steps: [{ ...reps(10, 'Squats'), exerciseId: 'builtin:front-squat' }] })
+            );
+
+            expect(timer.steps[0].exerciseId).toBe('builtin:front-squat');
+        });
+
+        it('gives the steps of a renamed exercise its new name, in every timer and the one running', () => {
+            const store = createStore();
+            const mine = TestBed.inject(ExerciseStore).addOwn('Sled push', 'reps');
+            const first = store.addTimer(
+                makeTimer({ steps: [reps(10, 'sled push'), rest(30), reps(5, 'Squats')] })
+            );
+            const other = store.addTimer(makeTimer({ steps: [reps(8, 'Push-ups')] }));
+            store.setActiveTimer(first);
+            vi.spyOn(Date, 'now').mockReturnValue(first.updatedAt + 5);
+
+            store.renameExerciseSteps(mine.id, 'Sled drag');
+
+            const [renamed, untouched] = store.timers();
+            expect(renamed.steps.map((s) => s.name)).toEqual(['Sled drag', '', 'Squats']);
+            expect(renamed.updatedAt).toBe(first.updatedAt + 5);
+            expect(untouched).toEqual(other);
+            expect(store.activeTimer()?.steps[0].name).toBe('Sled drag');
+            expect(savedTimers()[0].steps[0].name).toBe('Sled drag');
+        });
+
         it("keeps a saved step's link when loading", () => {
             const saved = {
                 ...baseTimer({

@@ -41,8 +41,15 @@ export interface SetsSummary {
  * - "10, 10, 8 @ 60 kg": the reps changed, the weight didn't
  * - "10 @ 60, 8 @ 62.5 kg": the weight changed
  * - "3 × 20": no weight
+ *
+ * Each line is named as its last set was, unless `currentName` gives a name for its
+ * exercise, e.g. an exercise of your own renamed since (EXR-3).
  */
-export function describeSets(sets: readonly LoggedSet[], unit: WeightUnit): SetsSummary[] {
+export function describeSets(
+    sets: readonly LoggedSet[],
+    unit: WeightUnit,
+    currentName: (exerciseId: string) => string | undefined = () => undefined
+): SetsSummary[] {
     const byStep = new Map<number, LoggedSet[]>();
     for (const set of sets) {
         byStep.set(set.step, [...(byStep.get(set.step) ?? []), set]);
@@ -52,8 +59,9 @@ export function describeSets(sets: readonly LoggedSet[], unit: WeightUnit): Sets
         const reps = stepSets.map((set) => set.reps);
         const sameWeight = weights.every((w) => w === weights[0]);
         const sameReps = reps.every((r) => r === reps[0]);
+        const last = stepSets.at(-1)!;
         return {
-            name: stepSets.at(-1)!.name || 'Reps',
+            name: (last.exerciseId && currentName(last.exerciseId)) || last.name || 'Reps',
             text: sameWeight
                 ? `${repsText(reps, sameReps)}${weights[0] ? ` @ ${weights[0]} ${unit}` : ''}`
                 : `${stepSets.map((_, i) => setText(reps[i], weights[i])).join(', ')} ${unit}`,

@@ -1,6 +1,6 @@
 # Exercises
 
-Partly built: exercises are in the data (#86): the built-in list, your own exercises and notes, steps and sets linked to an exercise by name, and existing data carried over (EXR-4). The body map is built too. Still to come: the picker in Create, renaming, notes and hiding in the app, and the exercise pages. Rules not yet built are a first draft (see [direction](../direction.md)).
+Partly built: exercises are in the data (#86), with the built-in list, your own exercises and notes, and existing data carried over (EXR-4). In the app: the picker in Create (EXR-2), renaming and editing your own exercises (EXR-3, EXR-9), and your notes, shown mid-workout (EXR-10). The body map is built too. Still to come: the exercise pages (EXR-6–8), hiding built-in exercises from the picker, and deleting your own. Rules not yet built are a first draft (see [direction](../direction.md)).
 
 ## Stories
 
@@ -61,12 +61,32 @@ The component is built (`BodyMapComponent`); it goes on the exercise pages when 
 
 Top to bottom: back to Exercises; the name; "Also called: …"; equipment and how it's measured as chips; the one-line description; **Muscles worked** (the figure and its labels); **How to do it** (numbered steps); **Tips**. Progress (PRG-4) goes below these later.
 
-### Your own exercises (EXR-2, EXR-9)
+### Picking an exercise (EXR-2)
 
-- Typing a name in the picker that matches no exercise offers "**Make 'Zercher squat'**". It asks only how it's measured; muscles and a description can be added later.
-- Names are unique among what you can see, ignoring case and spaces: typing "squats " finds "Squats", whether that's built-in or your own. A built-in exercise's other names count as a match too.
-- Muscles are picked by tapping the body map or from a list, as main or supporting.
-- Deleting one of your own exercises that a workout uses isn't allowed; one with only history can be hidden.
+- A timed or rep step's name box in setup, labelled **Exercise (optional)**, is a combobox. As you type, it lists up to 8 exercises, built-in and your own, whose name or other names match (as names are matched: case, spaces and a plural "s" don't count):
+
+    1. the same name, e.g. "squat" finds Back squat, one of whose other names is "Squat"
+    2. names starting with what's typed
+    3. names with a word starting with it, e.g. "squat" finds Goblet squat
+    4. names containing it
+
+    A match on an exercise's own name comes before one on its other names; otherwise they're in alphabetical order. A match on another name says so ("Push-up, Also called Press-up"), and your own exercises say "Your own".
+
+- When no exercise has the name typed, the list ends with **Make "Sled drag"** ("A new exercise of your own").
+- Up and Down move through the list (wrapping round), Enter or a click picks, Escape closes it, and leaving the box closes it. Enter with nothing chosen submits the form as usual.
+- **Picking** an exercise fills in its name and links the step to it. **Typing** over the name drops the link, and the step goes by its name again, as before there was a picker.
+- **Making** one keeps the name typed (tidied); the exercise is made when the timer is saved, so a timer that's never saved leaves nothing behind. It's measured as its step is: reps for a rep step, time for a timed one. That can be changed when editing it.
+- Under the box, a line says which exercise the step is: "Built-in exercise" or "Your own exercise" (with your note under it, if any), or "A new exercise of your own, made when the timer is saved". Beside it, **Edit** (your own) or **Add note** / **Edit note** (built-in) opens the exercise in a dialog. Focus goes back to that button when the dialog closes.
+- A step is still allowed **no exercise**: leave the box empty.
+
+### Your own exercises (EXR-3, EXR-9)
+
+- Names are unique among what you can see, ignoring case, spaces and a plural "s": typing "squats " finds "Squats", whether that's built-in or your own. A built-in exercise's other names count as a match too.
+- **Editing** one (the dialog from its step in setup; later, its exercise page) changes its **name**, how it's **measured** (Reps or Time), a **description** (up to 300 characters), its **equipment** (single pieces; a choice of pieces from a backup is kept as it is) and its **main and supporting muscles**, picked from a list of chips, with the body map shading them as they're picked. A muscle is main or supporting, not both: picking it in one takes it out of the other.
+    - The name is needed, up to 40 characters, and can't be another exercise's: "There's already an exercise called "Bench press"". Saving with a problem puts the cursor in the name box.
+    - How-to steps and tips for your own exercises, and picking muscles by tapping the body map, are still to come.
+- **Renaming** one (EXR-3) renames it everywhere: the steps linked to it in every saved timer (and the one running) take the new name, and the history shows it by its new name (see [history](history.md)).
+- Deleting one of your own exercises that a workout uses isn't allowed; one with only history can be hidden. (Not built yet.)
 
 ### Carrying over (EXR-4)
 
@@ -80,11 +100,19 @@ Past logged sets are linked the same way. Unnamed steps stay unnamed and aren't 
 ### Your notes on an exercise (EXR-10)
 
 - **Any exercise**, built-in or your own, can have a note of your own, e.g. "Pause at the bottom" or "Seat on hole 4". It's how you make a built-in exercise your own without changing it: there's no copying a built-in exercise into your own, so its history stays in one place.
-- The note shows on the exercise page under the description, marked as yours, and with the rep step mid-workout.
+- It's written in the exercise's dialog, opened from its step in setup: **Your note (optional)**, "Shown with this exercise mid-workout."
+- The note shows under its step in setup, and mid-workout with any work or rep step linked to the exercise (see [run-a-timer](run-a-timer.md)); later, on the exercise page under the description, marked as yours.
 - Up to 200 characters, trimmed; saving an empty note removes it. Notes are your data: saved, exported and synced.
 - A built-in exercise keeps its note across app updates, even if its own text changes.
 
 ## Acceptance criteria
+
+- Given a rep step, when I type "front sq" and pick Front squat, then the step is named "Front squat" and saved linked to `builtin:front-squat`.
+- Given "Sled drag", which no exercise has, then the list offers `Make "Sled drag"`, and saving the timer makes it an exercise of my own.
+- Given a step linked to Push-up, when I type over its name, then it's linked by the new name when saved.
+- Given my own exercise "Sled push" in a saved timer, when I rename it "Sled drag", then the timer's step and the history's sets of it say "Sled drag".
+- Given my own exercise, when I rename it "bench press", then it isn't saved and I'm told there's already an exercise called that.
+- Given my note "Elbows in" on Push-up, when a step linked to Push-up is running, then the note shows under the ring and is read out with the step.
 
 - Given a back squat (main quads and glutes; supporting hamstrings, adductors and lower back), then the quads and glutes are shaded strongest, the others softer, and the labels read "Main: Quads, Glutes" and "Supporting: Hamstrings, Adductors, Lower back".
 - Given the female figure chosen in settings, then the body map draws the female figure.
@@ -93,5 +121,5 @@ Past logged sets are linked the same way. Unnamed steps stay unnamed and aren't 
 
 ## Platform notes
 
-- **Web:** the body map is `BodyMapComponent` (`src/app/shared/components/body-map/`). Its shapes, `body-shapes.ts`, are generated by `node tools/build-body-shapes.mjs` from a pinned commit of react-native-body-highlighter; don't edit them by hand. The built-in exercises are `src/app/models/built-in-exercises.ts`, written as in [writing-exercises](../writing-exercises.md).
-- **iOS:** the same paths work as SwiftUI `Path`s from SVG data, or through react-native-body-highlighter itself in a React Native app.
+- **Web:** the picker is `ExercisePickerComponent` (`src/app/timer-setup/exercise-picker/`), an ARIA 1.2 combobox with `aria-activedescendant`, searching with `searchExercises()` in `models/exercise-links.ts`. The dialog is `ExerciseEditorComponent` (`src/app/shared/components/exercise-editor/`); `ExerciseStore.updateOwn()` saves your own exercise and `TimerStore.renameExerciseSteps()` renames its steps. The body map is `BodyMapComponent` (`src/app/shared/components/body-map/`). Its shapes, `body-shapes.ts`, are generated by `node tools/build-body-shapes.mjs` from a pinned commit of react-native-body-highlighter; don't edit them by hand. The built-in exercises are `src/app/models/built-in-exercises.ts`, written as in [writing-exercises](../writing-exercises.md).
+- **iOS:** the same paths work as SwiftUI `Path`s from SVG data, or through react-native-body-highlighter itself in a React Native app. The picker maps onto a `TextField` with a list of suggestions under it (or `.searchable` with `searchSuggestions`), and the exercise dialog onto a sheet.

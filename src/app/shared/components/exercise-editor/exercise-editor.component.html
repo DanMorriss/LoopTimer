@@ -1,0 +1,160 @@
+<div class="editor-overlay" role="presentation" (click)="cancel()" (keydown.escape)="cancel()">
+    <div
+        class="editor"
+        cdkTrapFocus
+        [cdkTrapFocusAutoCapture]="true"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="exercise-editor-title"
+        (click)="$event.stopPropagation()"
+    >
+        <form class="editor__form" novalidate (submit)="save($event)">
+            <h2 id="exercise-editor-title" class="editor__title">
+                {{ builtIn() ? exercise().name : 'Edit exercise' }}
+            </h2>
+
+            @if (builtIn()) {
+                <p class="editor__kind">Built-in exercise</p>
+                <p class="editor__description">{{ exercise().description }}</p>
+            } @else {
+                <label class="picker-field" for="exercise-editor-name">
+                    <span class="picker-field__label">Name</span>
+                    <input
+                        class="picker-field__input"
+                        id="exercise-editor-name"
+                        autocomplete="off"
+                        [formField]="editorForm.name"
+                        [attr.aria-invalid]="!!nameError()"
+                        [attr.aria-describedby]="nameError() ? 'exercise-editor-name-error' : null"
+                    />
+                </label>
+                @if (nameError(); as error) {
+                    <p id="exercise-editor-name-error" class="editor__error">{{ error }}</p>
+                }
+                <p class="editor__hint">
+                    Renaming it renames it everywhere: your timers and history.
+                </p>
+
+                <fieldset class="editor__group">
+                    <legend class="picker-field__label">Measured by</legend>
+                    <div class="editor__choices">
+                        @for (choice of measuredByChoices; track choice.value) {
+                            <label class="editor__radio">
+                                <input
+                                    type="radio"
+                                    name="exercise-editor-measured-by"
+                                    [value]="choice.value"
+                                    [checked]="editorForm.measuredBy().value() === choice.value"
+                                    (change)="setMeasuredBy(choice.value)"
+                                />
+                                {{ choice.label }}
+                            </label>
+                        }
+                    </div>
+                </fieldset>
+
+                <label class="picker-field" for="exercise-editor-description">
+                    <span class="picker-field__label">Description (optional)</span>
+                    <textarea
+                        class="picker-field__input editor__textarea"
+                        id="exercise-editor-description"
+                        rows="3"
+                        [formField]="editorForm.description"
+                        placeholder="e.g. A squat with the bar held in the crook of your elbows."
+                    ></textarea>
+                </label>
+
+                <fieldset class="editor__group">
+                    <legend class="picker-field__label">Equipment</legend>
+                    <div class="editor__chips">
+                        @for (equipment of equipmentChoices; track equipment) {
+                            <button
+                                type="button"
+                                class="editor__chip"
+                                [attr.aria-pressed]="hasEquipment(equipment)"
+                                (click)="toggleEquipment(equipment)"
+                            >
+                                @if (hasEquipment(equipment)) {
+                                    <mat-icon class="editor__chip-icon" aria-hidden="true"
+                                        >check</mat-icon
+                                    >
+                                }
+                                {{ equipmentLabel(equipment) }}
+                            </button>
+                        }
+                    </div>
+                </fieldset>
+
+                <fieldset class="editor__group">
+                    <legend class="picker-field__label">Main muscles</legend>
+                    <div class="editor__chips">
+                        @for (muscle of muscles; track muscle) {
+                            <button
+                                type="button"
+                                class="editor__chip editor__chip--main"
+                                [attr.aria-pressed]="isMain(muscle)"
+                                (click)="toggleMuscle(muscle, 'main')"
+                            >
+                                @if (isMain(muscle)) {
+                                    <mat-icon class="editor__chip-icon" aria-hidden="true"
+                                        >check</mat-icon
+                                    >
+                                }
+                                {{ muscleLabels[muscle] }}
+                            </button>
+                        }
+                    </div>
+                </fieldset>
+
+                <fieldset class="editor__group">
+                    <legend class="picker-field__label">Supporting muscles</legend>
+                    <div class="editor__chips">
+                        @for (muscle of muscles; track muscle) {
+                            <button
+                                type="button"
+                                class="editor__chip editor__chip--supporting"
+                                [attr.aria-pressed]="isSupporting(muscle)"
+                                (click)="toggleMuscle(muscle, 'supporting')"
+                            >
+                                @if (isSupporting(muscle)) {
+                                    <mat-icon class="editor__chip-icon" aria-hidden="true"
+                                        >check</mat-icon
+                                    >
+                                }
+                                {{ muscleLabels[muscle] }}
+                            </button>
+                        }
+                    </div>
+                </fieldset>
+
+                <app-body-map
+                    class="editor__body-map"
+                    [main]="mainMuscles()"
+                    [supporting]="supportingMuscles()"
+                />
+            }
+
+            <label class="picker-field" for="exercise-editor-note">
+                <span class="picker-field__label">Your note (optional)</span>
+                <textarea
+                    class="picker-field__input editor__textarea"
+                    id="exercise-editor-note"
+                    rows="2"
+                    [formField]="editorForm.note"
+                    placeholder="e.g. Pause at the bottom"
+                    aria-describedby="exercise-editor-note-hint"
+                ></textarea>
+            </label>
+            <p id="exercise-editor-note-hint" class="editor__hint">
+                Shown with this exercise mid-workout. Up to {{ maxNote }} characters.
+            </p>
+
+            <div class="editor__actions">
+                <button type="button" class="btn-pill editor__cancel" (click)="cancel()">
+                    Cancel
+                </button>
+                <button type="submit" class="btn-pill editor__save">Save</button>
+            </div>
+        </form>
+    </div>
+</div>

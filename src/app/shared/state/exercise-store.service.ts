@@ -9,6 +9,7 @@ import {
     MUSCLE_LABELS,
     MuscleGroup,
     OwnExercise,
+    OwnExerciseDetails,
 } from '../../models/exercise';
 import { ExerciseFinder, findByName } from '../../models/exercise-links';
 import { Deletion, mergeRecords, newId } from '../../models/sync';
@@ -42,11 +43,49 @@ export class ExerciseStore {
     /** For linking steps and sets by name: finds an exercise, or makes one of your own. */
     readonly finder: ExerciseFinder = {
         find: (name) => findByName(name, this.exercises()),
+        byId: (id) => this.byId(id),
         create: (name, measuredBy) => this.addOwn(name, measuredBy),
     };
 
     byId(id: string): Exercise | undefined {
         return this.exercises().find((exercise) => exercise.id === id);
+    }
+
+    /**
+     * Whether `name` is already another exercise's, as names are matched (see `findByName()`),
+     * other names of built-in ones included. `exceptId` is the exercise being renamed.
+     */
+    nameTaken(name: string, exceptId?: string): boolean {
+        const found = findByName(name, this.exercises());
+        return found !== undefined && found.id !== exceptId;
+    }
+
+    /**
+     * Changes the details of an exercise of your own (EXR-3, EXR-9), tidied: the name's
+     * spaces, the description trimmed, and a muscle in both lists kept as main only. Returns
+     * the exercise as saved, or null if it isn't one of yours or its new name is taken.
+     */
+    updateOwn(id: string, details: OwnExerciseDetails): OwnExercise | null {
+        const existing = this._own().find((exercise) => exercise.id === id);
+        const name = details.name.trim().replace(/\s+/g, ' ');
+        if (!existing || name === '' || this.nameTaken(name, id)) {
+            return null;
+        }
+        const updated: OwnExercise = {
+            ...existing,
+            name,
+            measuredBy: details.measuredBy,
+            equipment: [...details.equipment],
+            mainMuscles: [...details.mainMuscles],
+            supportingMuscles: details.supportingMuscles.filter(
+                (muscle) => !details.mainMuscles.includes(muscle)
+            ),
+            description: details.description.trim(),
+            updatedAt: Date.now(),
+        };
+        this._own.update((own) => own.map((exercise) => (exercise.id === id ? updated : exercise)));
+        this.saveOwn();
+        return updated;
     }
 
     /** Makes an exercise of your own with just a name and how it's measured, and saves it. */

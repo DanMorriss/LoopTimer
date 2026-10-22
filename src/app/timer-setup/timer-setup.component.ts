@@ -31,6 +31,11 @@ import {
     UNTIL_STOPPED,
 } from '../models/timer';
 import { WeightUnit, weightIn, weightOptions, weightToKg } from '../models/weight';
+import { Exercise, isBuiltIn, MAX_EXERCISE_NAME_LENGTH } from '../models/exercise';
+import { findByName } from '../models/exercise-links';
+import { ExerciseEditorComponent } from '../shared/components/exercise-editor/exercise-editor.component';
+import { ExerciseStore } from '../shared/state/exercise-store.service';
+import { ExercisePickerComponent } from './exercise-picker/exercise-picker.component';
 import { InfinitySwitchComponent } from '../shared/components/infinity-switch/infinity-switch.component';
 import { ConfirmDialogComponent } from '../shared/components/confirm-dialog/confirm-dialog.component';
 import {
@@ -56,6 +61,11 @@ interface StepModel {
     /** In the unit chosen in settings, to the nearest half; 0 for none. */
     weight: number;
     /**
+     * The exercise picked for a work or rep step, or '' if none has been: it then goes by
+     * its name when saved (see `linkSteps()`).
+     */
+    exerciseId: string;
+    /**
      * The weight as saved, in kg, kept as it was unless the wheel moves, so rounding it
      * for the wheel doesn't change it. Null for a new step.
      */
@@ -71,7 +81,6 @@ interface TimerSetupModel {
 
 /** Enough for a long circuit, while keeping the page manageable. */
 export const MAX_STEPS = 20;
-const MAX_NAME_LENGTH = 40;
 
 function pickerOptions(
     from: number,
@@ -109,6 +118,8 @@ const NAME_EXAMPLES: Record<StepKind, string> = {
         WheelPickerComponent,
         InfinitySwitchComponent,
         ConfirmDialogComponent,
+        ExercisePickerComponent,
+        ExerciseEditorComponent,
         MatFormFieldModule,
         MatIconModule,
     ],
@@ -119,6 +130,7 @@ export class TimerSetupComponent {
     private readonly router = inject(Router);
     private readonly route = inject(ActivatedRoute);
     private readonly injector = inject(Injector);
+    private readonly exercises = inject(ExerciseStore);
     /** Weights are shown and picked in this, and saved in kg. */
     protected readonly weightUnit = inject(SettingsStore).weightUnit();
 
@@ -130,6 +142,7 @@ export class TimerSetupComponent {
     protected readonly repOptions = pickerOptions(0, MAX_REPS, String);
     protected readonly weightOptions = weightOptions(this.weightUnit);
     protected readonly nameExamples = NAME_EXAMPLES;
+    protected readonly isBuiltIn = isBuiltIn;
     // 1-30, then ∞ at the end of the wheel
     protected readonly repeatOptions: WheelPickerOption[] = [
         ...pickerOptions(1, 30, String),
@@ -145,7 +158,7 @@ export class TimerSetupComponent {
         this.model,
         (setup) => {
             // Long enough for a name, short enough to fit on the timer
-            applyEach(setup.steps, (step) => maxLength(step.name, MAX_NAME_LENGTH));
+            applyEach(setup.steps, (step) => maxLength(step.name, MAX_EXERCISE_NAME_LENGTH));
             // The wheels only offer valid times, so the one rule is that there's some work
             validate(setup, ({ value }) =>
                 hasWork(toSteps(value().steps, this.weightUnit))
@@ -180,6 +193,11 @@ export class TimerSetupComponent {
         index: number;
         description: string;
     } | null>(null);
+
+    /** The exercise open in the editor, and the step it was opened from. */
+    protected readonly exerciseInEditor = signal<{ exercise: Exercise; stepKey: number } | null>(
+        null
+    );
 
     // With no steps yet, the hint to add one says enough
     protected readonly noTimeError = computed(() =>
@@ -246,6 +264,61 @@ export class TimerSetupComponent {
             return step.weight > 0 ? `${reps} @ ${step.weight} ${this.weightUnit}` : reps;
         }
         return `${padded(step.minutes)}:${padded(step.seconds)}`;
+    }
+
+    /**
+     * The exercise a work or rep step is: the one picked for it, or else the one its name
+     * means, as it would be linked when saved. Undefined for a rest step, an unnamed one, or
+     * a name no exercise has yet.
+     */
+    protected exerciseFor(step: StepModel): Exercise | undefined {
+        if (step.kind === 'rest') {
+            return undefined;
+        }
+        return (
+            (step.exerciseId ? this.exercises.byId(step.exerciseId) : undefined) ??
+            findByName(step.name, this.exercises.exercises())
+        );
+    }
+
+    protected noteFor(exercise: Exercise): string | undefined {
+        return this.exercises.noteFor(exercise.id);
+    }
+
+    protected openExercise(exercise: Exercise, stepKey: number) {
+        this.exerciseInEditor.set({ exercise, stepKey });
+    }
+
+    /**
+     * The editor saved: the step it was opened from is linked to the exercise, and every step
+     * that is the exercise takes its name, in case it was renamed (EXR-3). Saved timers have
+     * been renamed by then; this does the same for the one being set up.
+     */
+    protected exerciseSaved(saved: Exercise) {
+        const opened = this.exerciseInEditor();
+        if (!opened) {
+            return;
+        }
+        this.updateSteps((steps) =>
+            steps.map((step) => {
+                const isIt =
+                    step.key === opened.stepKey ||
+                    step.exerciseId === saved.id ||
+                    (step.kind !== 'rest' &&
+                        !step.exerciseId &&
+                        findByName(step.name, [opened.exercise]) !== undefined);
+                return isIt ? { ...step, name: saved.name, exerciseId: saved.id } : step;
+            })
+        );
+        this.closeExercise();
+    }
+
+    protected closeExercise() {
+        const opened = this.exerciseInEditor();
+        this.exerciseInEditor.set(null);
+        if (opened) {
+            this.focusAfterRender(`step-${opened.stepKey}-exercise`);
+        }
     }
 
     protected isExpanded(key: number): boolean {
@@ -393,6 +466,7 @@ export class TimerSetupComponent {
             weight:
                 step.kind === 'reps' && step.weight ? weightIn(step.weight, this.weightUnit) : 0,
             savedWeight: (step.kind === 'reps' && step.weight) || null,
+            exerciseId: step.exerciseId ?? '',
         };
     }
 
@@ -422,8 +496,8 @@ export class TimerSetupComponent {
 }
 
 /**
- * The steps to save: whole seconds, trimmed names and weights in kg, leaving out any left
- * at 0:00 or 0 reps.
+ * The steps to save: whole seconds, trimmed names, weights in kg and any exercise picked,
+ * leaving out any left at 0:00 or 0 reps.
  */
 function toSteps(steps: readonly StepModel[], unit: WeightUnit): Step[] {
     return steps
@@ -435,11 +509,15 @@ function toSteps(steps: readonly StepModel[], unit: WeightUnit): Step[] {
                           reps: step.reps,
                           name: step.name.trim(),
                           ...(step.weight > 0 ? { weight: savedWeight(step, unit) } : {}),
+                          ...(step.exerciseId ? { exerciseId: step.exerciseId } : {}),
                       }
                     : {
                           kind: step.kind,
                           seconds: step.minutes * 60 + step.seconds,
                           name: step.name.trim(),
+                          ...(step.kind === 'work' && step.exerciseId
+                              ? { exerciseId: step.exerciseId }
+                              : {}),
                       }
         )
         .filter((step) => (step.kind === 'reps' ? step.reps > 0 : step.seconds > 0));

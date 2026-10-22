@@ -1,6 +1,6 @@
 import { BUILT_IN_EXERCISES } from './built-in-exercises';
 import { Exercise, exerciseKey, MeasuredBy, OwnExercise } from './exercise';
-import { ExerciseFinder, findByName, linkSets, linkSteps } from './exercise-links';
+import { ExerciseFinder, findByName, linkSets, linkSteps, searchExercises } from './exercise-links';
 import { Step } from './timer';
 
 function own(id: string, name: string, otherNames: string[] = []): OwnExercise {
@@ -22,9 +22,11 @@ function own(id: string, name: string, otherNames: string[] = []): OwnExercise {
 /** Finds among the built-in exercises and `mine`, making new ones into `mine`. */
 function finder(mine: OwnExercise[] = []): ExerciseFinder & { made: [string, MeasuredBy][] } {
     const made: [string, MeasuredBy][] = [];
+    const all = () => [...BUILT_IN_EXERCISES, ...mine] as Exercise[];
     return {
         made,
-        find: (name) => findByName(name, [...BUILT_IN_EXERCISES, ...mine] as Exercise[]),
+        find: (name) => findByName(name, all()),
+        byId: (id) => all().find((exercise) => exercise.id === id),
         create: (name, measuredBy) => {
             made.push([name, measuredBy]);
             const exercise = own(`own-${made.length}`, name);
@@ -63,6 +65,47 @@ describe('findByName', () => {
     it('finds nothing for a name no exercise has, or no name', () => {
         expect(findByName('Wall walks', exercises)).toBeUndefined();
         expect(findByName('  ', exercises)).toBeUndefined();
+    });
+});
+
+describe('searchExercises', () => {
+    const exercises = [
+        ...BUILT_IN_EXERCISES,
+        own('mine', 'Zercher squat', ['Zerchers']),
+    ] as Exercise[];
+    const names = (query: string, limit?: number) =>
+        searchExercises(query, exercises, limit).map(({ exercise }) => exercise.name);
+
+    it('puts the same name first, then names starting with it, then words starting with it', () => {
+        const found = names('squat', 20);
+
+        // "Squat" is one of Back squat's other names
+        expect(found[0]).toBe('Back squat');
+        expect(found).toContain('Zercher squat');
+        expect(found).toContain('Goblet squat');
+        expect(found.indexOf('Goblet squat')).toBeLessThan(found.indexOf('Zercher squat'));
+    });
+
+    it('finds by other names, and says which matched', () => {
+        const [first] = searchExercises('press-up', exercises);
+
+        expect(first).toEqual({
+            exercise: expect.objectContaining({ id: 'builtin:push-up' }),
+            otherName: 'Press-up',
+        });
+    });
+
+    it('gives just the exercise when its own name matches', () => {
+        expect(searchExercises('Zercher sq', exercises)).toEqual([{ exercise: exercises.at(-1) }]);
+    });
+
+    it('ignores case, spaces and a plural "s"', () => {
+        expect(names('  PUSH-UPS ')[0]).toBe('Push-up');
+    });
+
+    it('finds nothing for an empty search, and keeps to the limit', () => {
+        expect(searchExercises('  ', exercises)).toEqual([]);
+        expect(names('e', 5)).toHaveLength(5);
     });
 });
 
@@ -114,13 +157,25 @@ describe('linkSteps', () => {
         ]);
     });
 
-    it('links a renamed step anew, since the name chooses the exercise', () => {
+    it('keeps the exercise picked for a step, whatever its name', () => {
         const [linked] = linkSteps(
-            [{ kind: 'reps', reps: 10, name: 'Push-ups', exerciseId: 'builtin:back-squat' }],
+            [{ kind: 'reps', reps: 10, name: 'Squats', exerciseId: 'builtin:front-squat' }],
             finder()
         );
 
+        expect(linked.exerciseId).toBe('builtin:front-squat');
+    });
+
+    it("links by name a step whose exercise isn't there any more", () => {
+        const exercises = finder();
+
+        const [linked] = linkSteps(
+            [{ kind: 'reps', reps: 10, name: 'Push-ups', exerciseId: 'gone' }],
+            exercises
+        );
+
         expect(linked.exerciseId).toBe('builtin:push-up');
+        expect(exercises.made).toEqual([]);
     });
 });
 

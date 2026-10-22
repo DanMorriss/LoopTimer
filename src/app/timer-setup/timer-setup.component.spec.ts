@@ -13,6 +13,7 @@ import { BehaviorSubject } from 'rxjs';
 import { Timer, TimerFields, UNTIL_STOPPED } from '../models/timer';
 import { SettingsStore } from '../shared/state/settings-store.service';
 import { TimerStore } from '../shared/state/timer-store.service';
+import { ExerciseStore } from '../shared/state/exercise-store.service';
 import { reps, rest, unlinked, unlinkedTimer, work } from '../shared/testing/make-timer';
 import { MAX_STEPS, TimerSetupComponent } from './timer-setup.component';
 
@@ -673,6 +674,95 @@ describe('TimerSetupComponent', () => {
                 });
 
             expect(label).toEqual(['Step 2, rest', 'Seconds']);
+        });
+    });
+
+    describe('exercises', () => {
+        const status = (step: number) =>
+            el('.step__exercise-status', steps()[step])?.textContent!.replace(/\s+/g, ' ').trim();
+
+        function pick(step: number, name: string) {
+            const option = Array.from(steps()[step].querySelectorAll('[role="option"]')).find(
+                (o) => o.querySelector('.exercise-picker__name')!.textContent!.trim() === name
+            ) as HTMLElement;
+            expect(option, `expected "${name}" in the list`).toBeDefined();
+            option.click();
+            fixture.detectChanges();
+        }
+
+        it('finds an exercise as a work or rep step is named, and saves the step linked to it', async () => {
+            await setup();
+            await create();
+
+            typeName(0, 'front sq');
+            pick(0, 'Front squat');
+            chooseTime(0, 'seconds', '30');
+            await submit();
+
+            expect(store.timers()[0].steps[0]).toEqual({
+                kind: 'work',
+                seconds: 30,
+                name: 'Front squat',
+                exerciseId: 'builtin:front-squat',
+            });
+        });
+
+        it('says which exercise a step is, or that a new one will be made', async () => {
+            await setup();
+            await create();
+
+            expect(steps()[0].querySelector('[role="combobox"]')).not.toBeNull();
+            expect(status(0)).toBeUndefined();
+            typeName(0, 'Squats');
+            expect(status(0)).toBe('Built-in exercise');
+            typeName(0, 'Wall walk');
+            expect(status(0)).toBe('A new exercise of your own, made when the timer is saved');
+            // A rest isn't an exercise, so it has a plain name box
+            expect(steps()[1].querySelector('[role="combobox"]')).toBeNull();
+        });
+
+        it('adds a note to a built-in exercise, shown under the step', async () => {
+            await setup();
+            await create();
+            typeName(0, 'Back squat');
+
+            await press('Add a note to Back squat');
+            const note = el<HTMLTextAreaElement>('#exercise-editor-note');
+            typeInto(note as unknown as HTMLInputElement, 'Pause at the bottom');
+            el('.editor__save').click();
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(el('app-exercise-editor')).toBeNull();
+            expect(status(0)).toBe('Built-in exercise Your note: Pause at the bottom');
+            expect(document.activeElement).toBe(button('Edit your note on Back squat'));
+        });
+
+        it('renames your own exercise from its step, in the form and in saved timers', async () => {
+            await setup({ editId: 'timer-2' });
+            const exercises = TestBed.inject(ExerciseStore);
+            const mine = exercises.addOwn('Sled push', 'timed');
+            store.addTimer({
+                title: 'Sleds',
+                steps: [work(30, 'Sled push'), rest(30)],
+                repeats: 2,
+            });
+            await create();
+            await press('Step 1, Sled push, 00:30');
+
+            await press('Edit Sled push');
+            typeInto(el('#exercise-editor-name'), 'Sled drag');
+            el('.editor__save').click();
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(exercises.byId(mine.id)?.name).toBe('Sled drag');
+            expect(shown().steps[0].name).toBe('Sled drag');
+            expect(store.timers()[0].steps[0]).toEqual({
+                ...work(30, 'Sled drag'),
+                exerciseId: mine.id,
+            });
+            expect(status(0)).toBe('Your own exercise');
         });
     });
 

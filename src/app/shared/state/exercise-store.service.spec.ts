@@ -76,6 +76,83 @@ describe('ExerciseStore', () => {
         expect(createStore().own()).toEqual([good]);
     });
 
+    describe('changing your own exercise', () => {
+        const details = {
+            name: 'Sled push',
+            measuredBy: 'reps' as const,
+            equipment: [],
+            mainMuscles: [],
+            supportingMuscles: [],
+            description: '',
+        };
+
+        it('renames it and saves its details, tidied and dated', () => {
+            const store = createStore();
+            const mine = store.addOwn('Sled push', 'reps');
+            vi.spyOn(Date, 'now').mockReturnValue(NOW + 1);
+
+            const updated = store.updateOwn(mine.id, {
+                name: '  Sled   drag ',
+                measuredBy: 'timed',
+                equipment: ['machine'],
+                mainMuscles: ['quads', 'glutes'],
+                // A muscle in both counts as main
+                supportingMuscles: ['glutes', 'calves'],
+                description: '  Pulled backwards.  ',
+            });
+
+            expect(updated).toEqual({
+                ...mine,
+                name: 'Sled drag',
+                measuredBy: 'timed',
+                equipment: ['machine'],
+                mainMuscles: ['quads', 'glutes'],
+                supportingMuscles: ['calves'],
+                description: 'Pulled backwards.',
+                updatedAt: NOW + 1,
+            });
+            expect(store.byId(mine.id)).toEqual(updated);
+            expect(saved(EXERCISES_KEY)).toEqual([updated]);
+        });
+
+        it('keeps its own name, in any case or spacing', () => {
+            const store = createStore();
+            const mine = store.addOwn('Sled push', 'reps');
+
+            expect(store.updateOwn(mine.id, { ...details, name: 'sled  PUSH' })?.name).toBe(
+                'sled PUSH'
+            );
+        });
+
+        it("won't take a name another exercise has, built-in names and other names included", () => {
+            const store = createStore();
+            const mine = store.addOwn('Sled push', 'reps');
+            store.addOwn('Farmer walk', 'timed');
+
+            for (const name of ['Farmer walks', 'Bench press', 'press-ups', '  ']) {
+                expect(store.updateOwn(mine.id, { ...details, name })).toBeNull();
+            }
+            expect(store.byId(mine.id)?.name).toBe('Sled push');
+        });
+
+        it("can't change a built-in exercise, or one that isn't there", () => {
+            const store = createStore();
+
+            expect(store.updateOwn('builtin:plank', { ...details, name: 'Plonk' })).toBeNull();
+            expect(store.updateOwn('gone', details)).toBeNull();
+        });
+
+        it('says whether a name is taken by another exercise', () => {
+            const store = createStore();
+            const mine = store.addOwn('Sled push', 'reps');
+
+            expect(store.nameTaken('SLED  push ')).toBe(true);
+            expect(store.nameTaken('SLED  push ', mine.id)).toBe(false);
+            expect(store.nameTaken('Squat', mine.id)).toBe(true);
+            expect(store.nameTaken('Zercher squat')).toBe(false);
+        });
+    });
+
     describe('notes', () => {
         it('saves a note on any exercise, trimmed, cut short and dated', () => {
             const store = createStore();

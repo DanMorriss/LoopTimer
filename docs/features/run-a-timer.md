@@ -39,6 +39,7 @@
     - The time left as mm:ss, e.g. "00:45", or the reps.
     - "step 2 of 5" when a round has more than one work or rep step. A plain work-and-rest timer leaves it out.
     - "Paused" while paused.
+- **Your note** on the step's exercise (EXR-10), if you've written one, in a box under the ring, e.g. "Pause at the bottom". Any work or rep step linked to an exercise shows it; screen readers hear it with the step, e.g. "Push-ups, 20 reps, your note: Elbows in".
 - **Next**: "Next: Plank · 00:45", "Next: Push-ups · 20 reps", "Next: Squats · 10 reps @ 60 kg", or "Next: finish" before the last step. Unnamed steps use their kind ("Timed", "Rest", "Reps").
 
 ### Changing reps or weight mid-workout (RUN-6)

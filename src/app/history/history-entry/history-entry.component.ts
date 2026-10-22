@@ -18,6 +18,8 @@ import { HistoryEntry, MAX_NOTE_LENGTH } from '../../models/history';
 import { HistoryStore } from '../../shared/state/history-store.service';
 import { describeRounds, describeSets, entryName, formatDuration } from '../history-format';
 import { SettingsStore } from '../../shared/state/settings-store.service';
+import { ExerciseStore } from '../../shared/state/exercise-store.service';
+import { isBuiltIn } from '../../models/exercise';
 
 /**
  * One workout in the history, with a ⋮ menu to add, edit or remove its note, or delete it.
@@ -43,6 +45,7 @@ import { SettingsStore } from '../../shared/state/settings-store.service';
 export class HistoryEntryComponent {
     private readonly history = inject(HistoryStore);
     private readonly settings = inject(SettingsStore);
+    private readonly exercises = inject(ExerciseStore);
     private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
     private readonly injector = inject(Injector);
 
@@ -65,7 +68,11 @@ export class HistoryEntryComponent {
     protected readonly rounds = computed(() => describeRounds(this.entry()));
     /** Its rep steps' sets, one line per step, in the unit chosen in settings. */
     protected readonly sets = computed(() =>
-        describeSets(this.entry().sets ?? [], this.settings.weightUnit())
+        describeSets(this.entry().sets ?? [], this.settings.weightUnit(), (id) => {
+            // Built-in names never change, so a set keeps the name it ran with, e.g. "Squats"
+            const exercise = this.exercises.byId(id);
+            return exercise && !isBuiltIn(exercise) ? exercise.name : undefined;
+        })
     );
     protected readonly id = computed(() => this.entry().id);
 
