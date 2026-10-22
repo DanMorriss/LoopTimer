@@ -159,6 +159,46 @@ for (const theme of ['dark', 'light'] as const) {
                 await settle();
                 await expectNoViolations();
             });
+
+            it("picking an exercise, with each one's muscles and equipment", async () => {
+                await open('/setup');
+                click('.add-step');
+                await settle();
+                const box = fixture.nativeElement.querySelector('[role="combobox"]');
+                box.focus();
+                box.value = 'squat';
+                box.dispatchEvent(new Event('input'));
+                await settle();
+                expect(
+                    fixture.nativeElement.querySelector('.exercise-picker__hint')
+                ).not.toBeNull();
+                await expectNoViolations();
+            });
+
+            it("with an exercise's details open", async () => {
+                const saved = store.addWorkout(
+                    makeWorkout({
+                        steps: [
+                            {
+                                kind: 'reps',
+                                reps: 8,
+                                name: 'Inverted row',
+                                exerciseId: 'builtin:inverted-row',
+                            },
+                        ],
+                    })
+                );
+                TestBed.inject(ExerciseStore).setNote('builtin:inverted-row', 'Feet on a box');
+                await open('/setup?editId=' + saved.id);
+                click('.step__toggle');
+                await settle();
+                click('.step__exercise-details');
+                await settle();
+                expect(
+                    fixture.nativeElement.querySelector('app-exercise-details-dialog')
+                ).not.toBeNull();
+                await expectNoViolations();
+            });
         });
 
         describe('library', () => {

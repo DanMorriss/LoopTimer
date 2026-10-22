@@ -292,13 +292,20 @@
     }
 }
 
-// Which exercise the step is, under its name, with a button to edit it or add a note
+// Which exercise the step is, under its name, with buttons for its details and to edit it
+// or add a note; they go under the line when there isn't room beside it
 .step__exercise {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: 0.75rem;
     margin-top: -0.35rem;
+}
+
+.step__exercise-actions {
+    display: flex;
+    gap: 0.5rem;
 }
 
 .step__exercise-status {

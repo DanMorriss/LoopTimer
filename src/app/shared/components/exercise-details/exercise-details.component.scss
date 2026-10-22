@@ -1,0 +1,113 @@
+:host {
+    display: block;
+}
+
+.exercise__head {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+// body.mat-typography gives headings Material's Roboto and margins; keep the app's font
+.exercise__heading {
+    margin: 0;
+    font-family: 'Audiowide', sans-serif;
+    font-size: 1rem;
+    color: var(--text-strong);
+}
+
+.exercise__also,
+.exercise__hidden,
+.exercise__empty {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.exercise__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.exercise__chip {
+    padding: 0.25rem 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--text);
+    font-size: 0.8rem;
+
+    &--measured {
+        border-color: var(--accent-line);
+    }
+
+    &--own {
+        border-color: var(--reps);
+    }
+}
+
+.exercise__description {
+    margin: 0 0 1rem;
+    color: var(--text);
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+// Yours, so it's set apart from the exercise's own text
+.exercise__note {
+    margin-bottom: 1rem;
+    padding: 0.6rem 0.8rem;
+    border: 1px solid var(--border-soft);
+    border-radius: 0.75rem;
+    background: var(--violet-tint);
+}
+
+.exercise__note-label {
+    margin: 0 0 0.2rem;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+.exercise__note-text {
+    margin: 0;
+    color: var(--text);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.exercise__section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.exercise__steps,
+.exercise__tips {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin: 0;
+    padding-left: 1.25rem;
+    font-size: 0.85rem;
+    line-height: 1.55;
+}
+
+// Tailwind's reset takes list markers away; the steps are numbered and the tips bulleted
+.exercise__steps {
+    color: var(--text);
+    list-style: decimal;
+}
+
+.exercise__tips {
+    color: var(--text-muted);
+    list-style: disc;
+}
+
+.exercise__empty {
+    margin-top: 1.5rem;
+}

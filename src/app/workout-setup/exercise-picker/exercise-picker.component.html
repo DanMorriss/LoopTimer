@@ -46,6 +46,11 @@
                         ><span class="sr-only">, </span>Your own</span
                     >
                 }
+                @if (option.hint) {
+                    <span class="exercise-picker__detail exercise-picker__hint"
+                        ><span class="sr-only">, </span>{{ option.hint }}</span
+                    >
+                }
             } @else {
                 <mat-icon class="exercise-picker__icon" aria-hidden="true">add</mat-icon>
                 <span class="exercise-picker__name">Make "{{ option.name }}"</span>

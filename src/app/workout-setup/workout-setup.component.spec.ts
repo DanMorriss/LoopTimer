@@ -767,6 +767,47 @@ describe('WorkoutSetupComponent', () => {
             });
             expect(status(0)).toBe('Your own exercise');
         });
+
+        it("shows the exercise's details, as its page does, without leaving", async () => {
+            await setup();
+            await create();
+            typeName(0, 'front sq');
+            pick(0, 'Front squat');
+
+            await press('Details of Front squat');
+
+            const dialog = el('[role="dialog"]');
+            expect(el('#exercise-details-title').textContent!.trim()).toBe('Front squat');
+            // At the top, rather than scrolled down to the first button
+            expect(document.activeElement).toBe(el('#exercise-details-title'));
+            expect(dialog.getAttribute('aria-labelledby')).toBe('exercise-details-title');
+            expect(el('.exercise__description', dialog)).not.toBeNull();
+            expect(el('app-body-map', dialog)).not.toBeNull();
+            expect(el('.exercise__steps', dialog)).not.toBeNull();
+
+            el('.details__done').click();
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(el('app-exercise-details-dialog')).toBeNull();
+            expect(document.activeElement).toBe(button('Details of Front squat'));
+        });
+
+        it('goes back to the name box to pick another, ready to type over', async () => {
+            await setup();
+            await create();
+            typeName(0, 'Back squat');
+
+            await press('Details of Back squat');
+            el('.details__pick-another').click();
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            const box = el<HTMLInputElement>('[role="combobox"]', steps()[0]);
+            expect(el('app-exercise-details-dialog')).toBeNull();
+            expect(document.activeElement).toBe(box);
+            expect([box.selectionStart, box.selectionEnd]).toEqual([0, 'Back squat'.length]);
+        });
     });
 
     describe('until stopped', () => {

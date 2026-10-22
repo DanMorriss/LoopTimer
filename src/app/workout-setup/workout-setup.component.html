@@ -208,32 +208,48 @@
                                                     }
                                                 </p>
                                                 @if (exercise) {
-                                                    <button
-                                                        type="button"
-                                                        class="btn-pill step__exercise-edit"
-                                                        [id]="'step-' + key + '-exercise'"
-                                                        [attr.aria-label]="
-                                                            (isBuiltIn(exercise)
-                                                                ? noteFor(exercise)
-                                                                    ? 'Edit your note on '
-                                                                    : 'Add a note to '
-                                                                : 'Edit ') + exercise.name
-                                                        "
-                                                        (click)="openExercise(exercise, key)"
-                                                    >
-                                                        <mat-icon aria-hidden="true">{{
-                                                            isBuiltIn(exercise)
-                                                                ? 'edit_note'
-                                                                : 'edit'
-                                                        }}</mat-icon>
-                                                        {{
-                                                            isBuiltIn(exercise)
-                                                                ? noteFor(exercise)
-                                                                    ? 'Edit note'
-                                                                    : 'Add note'
-                                                                : 'Edit'
-                                                        }}
-                                                    </button>
+                                                    <div class="step__exercise-actions">
+                                                        <button
+                                                            type="button"
+                                                            class="btn-pill step__exercise-details"
+                                                            [id]="'step-' + key + '-details'"
+                                                            [attr.aria-label]="
+                                                                'Details of ' + exercise.name
+                                                            "
+                                                            (click)="showDetails(exercise, key)"
+                                                        >
+                                                            <mat-icon aria-hidden="true"
+                                                                >info</mat-icon
+                                                            >
+                                                            Details
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            class="btn-pill step__exercise-edit"
+                                                            [id]="'step-' + key + '-exercise'"
+                                                            [attr.aria-label]="
+                                                                (isBuiltIn(exercise)
+                                                                    ? noteFor(exercise)
+                                                                        ? 'Edit your note on '
+                                                                        : 'Add a note to '
+                                                                    : 'Edit ') + exercise.name
+                                                            "
+                                                            (click)="openExercise(exercise, key)"
+                                                        >
+                                                            <mat-icon aria-hidden="true">{{
+                                                                isBuiltIn(exercise)
+                                                                    ? 'edit_note'
+                                                                    : 'edit'
+                                                            }}</mat-icon>
+                                                            {{
+                                                                isBuiltIn(exercise)
+                                                                    ? noteFor(exercise)
+                                                                        ? 'Edit note'
+                                                                        : 'Add note'
+                                                                    : 'Edit'
+                                                            }}
+                                                        </button>
+                                                    </div>
                                                 }
                                             </div>
                                         }
@@ -419,6 +435,14 @@
     >
         {{ pending.description }}
     </app-confirm-dialog>
+}
+
+@if (exerciseInDetails(); as opened) {
+    <app-exercise-details-dialog
+        [exercise]="opened.exercise"
+        (closed)="closeDetails()"
+        (pickAnother)="pickAnother()"
+    />
 }
 
 @if (exerciseInEditor(); as opened) {

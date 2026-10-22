@@ -1,0 +1,65 @@
+@let shown = exercise();
+<div class="exercise__head">
+    @if (shown.otherNames.length > 0) {
+        <p class="exercise__also">Also called: {{ shown.otherNames.join(', ') }}</p>
+    }
+    <ul class="exercise__chips" aria-label="Equipment and how it's measured">
+        @for (phrase of equipment(); track phrase) {
+            <li class="exercise__chip">{{ phrase }}</li>
+        }
+        <li class="exercise__chip exercise__chip--measured">
+            {{ shown.measuredBy === 'reps' ? 'Reps' : 'Timed' }}
+        </li>
+        @if (!builtIn()) {
+            <li class="exercise__chip exercise__chip--own">Your own</li>
+        }
+    </ul>
+    @if (hidden()) {
+        <p class="exercise__hidden">Hidden from the picker in Create.</p>
+    }
+</div>
+
+@if (shown.description) {
+    <p class="exercise__description">{{ shown.description }}</p>
+}
+
+@if (note(); as note) {
+    <div class="exercise__note">
+        <p class="exercise__note-label">Your note</p>
+        <p class="exercise__note-text">{{ note }}</p>
+    </div>
+}
+
+<!-- The buttons that go with it, e.g. Edit, under the description and note -->
+<ng-content />
+
+<section class="exercise__section" [attr.aria-labelledby]="id + '-muscles'">
+    <h3 [id]="id + '-muscles'" class="exercise__heading">Muscles worked</h3>
+    <app-body-map [main]="shown.mainMuscles" [supporting]="shown.supportingMuscles" />
+</section>
+
+@if (shown.steps.length > 0) {
+    <section class="exercise__section" [attr.aria-labelledby]="id + '-how'">
+        <h3 [id]="id + '-how'" class="exercise__heading">How to do it</h3>
+        <ol class="exercise__steps">
+            @for (step of shown.steps; track $index) {
+                <li>{{ step }}</li>
+            }
+        </ol>
+    </section>
+}
+
+@if (shown.tips.length > 0) {
+    <section class="exercise__section" [attr.aria-labelledby]="id + '-tips'">
+        <h3 [id]="id + '-tips'" class="exercise__heading">Tips</h3>
+        <ul class="exercise__tips">
+            @for (tip of shown.tips; track $index) {
+                <li>{{ tip }}</li>
+            }
+        </ul>
+    </section>
+}
+
+@if (emptyHint() && shown.steps.length === 0 && shown.tips.length === 0) {
+    <p class="exercise__empty">{{ emptyHint() }}</p>
+}
