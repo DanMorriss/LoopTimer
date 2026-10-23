@@ -188,6 +188,13 @@ $track-color: #334155; // slate-700: dark, so both phase colours stand out (3:1 
     line-height: 1.2;
 }
 
+.workout-face__last-time {
+    font-size: 0.8rem;
+    line-height: 1.3;
+    color: var(--text-muted);
+    margin-top: 0.2rem;
+}
+
 .workout-page {
     gap: 0.25rem;
     padding: 0 1rem 2rem;

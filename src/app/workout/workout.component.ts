@@ -17,9 +17,11 @@ import { AlarmService } from '../shared/alarms/alarm.service';
 import { MatIconModule } from '@angular/material/icon';
 import { formatTime } from '../shared/format-time';
 import { ActiveRunService } from '../shared/run/active-run.service';
+import { HistoryStore } from '../shared/state/history-store.service';
 import { SettingsStore } from '../shared/state/settings-store.service';
 import { WorkoutStore } from '../shared/state/workout-store.service';
 import { ExerciseStore } from '../shared/state/exercise-store.service';
+import { describeSets } from '../history/history-format';
 
 // Space on one of these already does something, e.g. presses the focused button
 const SPACE_HANDLED_BY =
@@ -61,6 +63,7 @@ export class WorkoutComponent {
 
     protected readonly alarms = inject(AlarmService);
     private readonly settings = inject(SettingsStore);
+    private readonly history = inject(HistoryStore);
     private readonly exercises = inject(ExerciseStore);
     /** Sound is on, but the browser is waiting for a tap before it will play any. */
     soundLocked = computed(
@@ -80,6 +83,30 @@ export class WorkoutComponent {
     weight = computed(() => {
         const step = this.state()?.step;
         return step?.kind === 'reps' ? this.weightText(step) : '';
+    });
+    /** The sets from the most recent workout with this exercise, in the same format as history. */
+    lastTime = computed(() => {
+        const step = this.state()?.step;
+        if (step?.kind !== 'reps' || step.exerciseId === undefined) {
+            return '';
+        }
+        for (const entry of this.history.entries()) {
+            const sets = (entry.sets ?? []).filter(
+                (set) => !('seconds' in set) && set.exerciseId === step.exerciseId
+            );
+            if (sets.length === 0) {
+                continue;
+            }
+            const summary = describeSets(
+                sets,
+                this.settings.weightUnit(),
+                (id) => this.exercises.byId(id)?.name
+            )
+                .map((line) => line.text)
+                .join(' + ');
+            return summary ? `Last time: ${summary}` : '';
+        }
+        return '';
     });
     // Changing the reps or weight of the rep step being waited on, e.g. going up a weight
     protected readonly repOptions = Array.from({ length: MAX_REPS }, (_, i) => ({
