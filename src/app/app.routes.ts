@@ -25,6 +25,7 @@ export const routes: Routes = [
     },
     {
         path: 'exercises',
+        canActivate: [historyLoaded],
         loadComponent: () =>
             import('./exercises/exercise-list.component').then((m) => m.ExerciseListComponent),
     },

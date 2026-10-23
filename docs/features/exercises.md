@@ -1,6 +1,6 @@
 # Exercises
 
-Built: exercises are in the data (#86), with the built-in list, your own exercises and notes, and existing data carried over (EXR-4). In the app: the Exercises list and a page per exercise (EXR-6–8), the picker in Create (EXR-2) with each exercise's details a tap away (EXR-11), making, renaming and editing your own exercises (EXR-3, EXR-9), your notes, shown on the exercise's page and mid-workout (EXR-10), hiding any exercise from the picker, and deleting your own. Progress on the exercise page (PRG-4) is still to come (see [progress](progress.md)).
+Built: exercises are in the data (#86), with the built-in list, your own exercises and notes, and existing data carried over (EXR-4). In the app: the Exercises list and a page per exercise (EXR-6–8), the picker in Create (EXR-2) with each exercise's details a tap away (EXR-11), making, renaming and editing your own exercises (EXR-3, EXR-9), your notes, shown on the exercise's page and mid-workout (EXR-10), hiding any exercise from the picker, and deleting your own. Each card has its latest and best (PRG-3), and the page its progress (PRG-4; see [progress](progress.md)).
 
 ## Stories
 
@@ -84,9 +84,9 @@ At `/exercises/<name>` for a built-in exercise (e.g. `/exercises/back-squat`, it
 - **Your note**, set apart, when you've written one (EXR-10).
 - **Add note** / **Edit note** (built-in) or **Edit** (your own), opening the exercise dialog. Focus goes back to it when the dialog closes.
 - **Muscles worked**: the body map.
+- **Progress** (PRG-4): bests, a chart and recent sessions; see [progress](progress.md).
 - **How to do it** (numbered steps) and **Tips**, each when it has any. Your own with neither says "No how-to steps or tips yet. Add them with Edit."
 - **Hide from the picker** / **Show in the picker**, and **Delete** on your own (see below).
-- Progress (PRG-4) goes above the hide and delete buttons later.
 
 A link to an exercise that isn't there (deleted, or mistyped) says "Exercise not found", with a link to all exercises.
 

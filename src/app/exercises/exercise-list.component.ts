@@ -1,4 +1,4 @@
-import { NgTemplateOutlet } from '@angular/common';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { Router, RouterLink } from '@angular/router';
@@ -18,6 +18,16 @@ import {
     MuscleGroup,
 } from '../models/exercise';
 import { searchExercises } from '../models/exercise-links';
+import {
+    exerciseBests,
+    ExerciseSession,
+    progressMeasure,
+    sessionsByExercise,
+} from '../models/progress';
+import { WeightUnit } from '../models/weight';
+import { describeSets } from '../history/history-format';
+import { HistoryStore } from '../shared/state/history-store.service';
+import { headlineBest } from './progress-format';
 import { blankOwnExercise, ExerciseStore } from '../shared/state/exercise-store.service';
 import { SettingsStore } from '../shared/state/settings-store.service';
 
@@ -31,6 +41,18 @@ interface ExerciseCard {
     equipment: string;
     /** The other name a search found it by, if not its own. */
     otherName?: string;
+    /** Its latest and best (PRG-3); missing until it's been done in a workout. */
+    progress?: CardProgress;
+}
+
+/** e.g. latest "3 × 10 @ 60 kg" on 18 October, best "80 kg". */
+interface CardProgress {
+    latest: string;
+    latestSpoken: string;
+    latestAt: number;
+    /** The date with its year, unless it was this year. */
+    dateFormat: string;
+    best: string;
 }
 
 const MUSCLES = Object.keys(MUSCLE_LABELS) as MuscleGroup[];
@@ -43,6 +65,7 @@ const MUSCLES = Object.keys(MUSCLE_LABELS) as MuscleGroup[];
 @Component({
     selector: 'app-exercise-list',
     imports: [
+        DatePipe,
         MatIconModule,
         NgTemplateOutlet,
         RouterLink,
@@ -55,6 +78,7 @@ const MUSCLES = Object.keys(MUSCLE_LABELS) as MuscleGroup[];
 export class ExerciseListComponent {
     private readonly exercises = inject(ExerciseStore);
     private readonly settings = inject(SettingsStore);
+    private readonly history = inject(HistoryStore);
     private readonly router = inject(Router);
 
     protected readonly muscles = MUSCLES;
@@ -74,6 +98,9 @@ export class ExerciseListComponent {
     protected readonly myEquipment = this.settings.myEquipment;
     protected readonly onlyMyEquipment = this.settings.onlyMyEquipment;
 
+    /** Each exercise's sessions in the history, newest first. */
+    private readonly sessions = computed(() => sessionsByExercise(this.history.entries()));
+
     /** Best match first while searching, otherwise A to Z. */
     private readonly found = computed(() => {
         const muscle = this.muscle();
@@ -91,7 +118,14 @@ export class ExerciseListComponent {
                     (muscle === null || exercise.mainMuscles.includes(muscle)) &&
                     (!this.onlyMyEquipment() || canDoWith(exercise, kit))
             )
-            .map(({ exercise, otherName }) => card(exercise, otherName));
+            .map(({ exercise, otherName }) =>
+                card(
+                    exercise,
+                    otherName,
+                    this.sessions().get(exercise.id),
+                    this.settings.weightUnit()
+                )
+            );
     });
 
     protected readonly shown = computed(() =>
@@ -152,7 +186,12 @@ export class ExerciseListComponent {
     }
 }
 
-function card(exercise: Exercise, otherName?: string): ExerciseCard {
+function card(
+    exercise: Exercise,
+    otherName: string | undefined,
+    sessions: readonly ExerciseSession[] | undefined,
+    unit: WeightUnit
+): ExerciseCard {
     return {
         exercise,
         path: exercisePath(exercise),
@@ -160,5 +199,23 @@ function card(exercise: Exercise, otherName?: string): ExerciseCard {
         mainMuscles: exercise.mainMuscles.map((muscle) => MUSCLE_LABELS[muscle]),
         equipment: capitalise(equipmentPhrases(exercise.equipment).join(', ')),
         otherName,
+        ...(sessions?.length ? { progress: cardProgress(sessions, unit) } : {}),
+    };
+}
+
+// Its latest session's sets, as in the history, and its headline best
+function cardProgress(sessions: readonly ExerciseSession[], unit: WeightUnit): CardProgress {
+    const latest = sessions[0];
+    const lines = describeSets(latest.sets, unit);
+    const measure = progressMeasure(sessions)!;
+    return {
+        latest: lines.map((line) => line.text).join(' + '),
+        latestSpoken: lines.map((line) => line.spoken).join(', then '),
+        latestAt: latest.startedAt,
+        dateFormat:
+            new Date(latest.startedAt).getFullYear() === new Date().getFullYear()
+                ? 'd MMM'
+                : 'd MMM y',
+        best: headlineBest(exerciseBests(sessions), measure, unit),
     };
 }

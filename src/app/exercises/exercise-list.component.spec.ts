@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { BUILT_IN_EXERCISES } from '../models/built-in-exercises';
 import { ExerciseStore } from '../shared/state/exercise-store.service';
+import { HistoryStore } from '../shared/state/history-store.service';
 import { SettingsStore } from '../shared/state/settings-store.service';
 import { ExerciseListComponent } from './exercise-list.component';
 
@@ -164,5 +165,48 @@ describe('ExerciseListComponent', () => {
         expect(made.name).toBe('Sled drag');
         expect(navigate).toHaveBeenCalledWith(`/exercises/${made.id}`);
         expect(el().querySelector('app-exercise-editor')).toBeNull();
+    });
+
+    it('shows the latest and best of each exercise done in a workout', async () => {
+        const startedAt = Date.now();
+        TestBed.inject(HistoryStore).record({
+            id: 'run',
+            workoutId: 'legs',
+            title: 'Legs',
+            startedAt,
+            endedAt: startedAt + 1000,
+            activeSeconds: 1,
+            roundsCompleted: 2,
+            totalRounds: 2,
+            outcome: 'finished',
+            sets: [
+                {
+                    round: 0,
+                    step: 0,
+                    name: 'Back squat',
+                    reps: 5,
+                    weight: 100,
+                    exerciseId: 'builtin:back-squat',
+                },
+                {
+                    round: 1,
+                    step: 0,
+                    name: 'Back squat',
+                    reps: 5,
+                    weight: 100,
+                    exerciseId: 'builtin:back-squat',
+                },
+            ],
+        });
+        await create();
+        await search('back squat');
+
+        const card = el().querySelector('.exercise-card')!;
+        const progress = card
+            .querySelector('.exercise-card__progress')!
+            .textContent!.replace(/\s+/g, ' ');
+        expect(progress).toContain('Latest 2 × 5 @ 100 kg');
+        expect(progress).toContain('Best 100 kg');
+        expect(el().querySelectorAll('.exercise-card__progress').length).toBe(1);
     });
 });
