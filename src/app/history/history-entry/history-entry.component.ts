@@ -14,12 +14,13 @@ import {
 import { DatePipe } from '@angular/common';
 import { form, FormField, maxLength } from '@angular/forms/signals';
 import { MatIconModule } from '@angular/material/icon';
+import { RouterLink } from '@angular/router';
 import { HistoryEntry, MAX_NOTE_LENGTH } from '../../models/history';
 import { HistoryStore } from '../../shared/state/history-store.service';
 import { describeRounds, describeSets, entryName, formatDuration } from '../history-format';
 import { SettingsStore } from '../../shared/state/settings-store.service';
 import { ExerciseStore } from '../../shared/state/exercise-store.service';
-import { isBuiltIn } from '../../models/exercise';
+import { exercisePath, isBuiltIn } from '../../models/exercise';
 
 /**
  * One workout in the history, with a ⋮ menu to add, edit or remove its note, or delete it.
@@ -29,7 +30,7 @@ import { isBuiltIn } from '../../models/exercise';
  */
 @Component({
     selector: 'li[appHistoryEntry]',
-    imports: [DatePipe, FormField, MatIconModule],
+    imports: [DatePipe, FormField, MatIconModule, RouterLink],
     templateUrl: './history-entry.component.html',
     styleUrl: './history-entry.component.scss',
     host: {
@@ -66,12 +67,18 @@ export class HistoryEntryComponent {
     protected readonly name = computed(() => entryName(this.entry()));
     protected readonly duration = computed(() => formatDuration(this.entry().activeSeconds));
     protected readonly rounds = computed(() => describeRounds(this.entry()));
-    /** Its rep steps' sets, one line per step, in the unit chosen in settings. */
+    /**
+     * Its sets, one line per step, in the unit chosen in settings. Each is linked to its
+     * exercise's page, where it has one.
+     */
     protected readonly sets = computed(() =>
         describeSets(this.entry().sets ?? [], this.settings.weightUnit(), (id) => {
             // Built-in names never change, so a set keeps the name it ran with, e.g. "Squats"
             const exercise = this.exercises.byId(id);
             return exercise && !isBuiltIn(exercise) ? exercise.name : undefined;
+        }).map((line) => {
+            const exercise = line.exerciseId ? this.exercises.byId(line.exerciseId) : undefined;
+            return { ...line, path: exercise ? exercisePath(exercise) : null };
         })
     );
     protected readonly id = computed(() => this.entry().id);

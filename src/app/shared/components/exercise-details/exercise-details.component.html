@@ -38,6 +38,9 @@
     <app-body-map [main]="shown.mainMuscles" [supporting]="shown.supportingMuscles" />
 </section>
 
+<!-- What goes under the body map, e.g. the exercise page's progress -->
+<ng-content select="[underMuscles]" />
+
 @if (shown.steps.length > 0) {
     <section class="exercise__section" [attr.aria-labelledby]="id + '-how'">
         <h3 [id]="id + '-how'" class="exercise__heading">How to do it</h3>

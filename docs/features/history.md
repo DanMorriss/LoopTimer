@@ -39,6 +39,7 @@
     - "Squats: 10 @ 60, 8 @ 62.5 kg": the weight changed
     - "Push-ups: 3 × 20", or "Push-ups: 20 reps" for one set: no weight. An unnamed step is called "Reps".
     - "Plank: 3 × 0:45", "Plank: 0:45" for one set, or "Plank: 1:00, 0:45" if the lengths differ: a timed step. Screen readers hear "Plank, 3 sets of 45 seconds".
+    - The name links to its exercise's page (PRG-4), where the line is linked to an exercise that's still there.
     - A line is named as the step was when it ran, except for an exercise of your own, which shows its name now, so renaming it (EXR-3) renames it here too. Built-in exercises can't be renamed, so a set from a step called "Squats" stays "Squats".
     - Screen readers hear words, e.g. "Squats, 3 sets of 10 reps at 60 kg".
 - The note, if any, sits under the entry.

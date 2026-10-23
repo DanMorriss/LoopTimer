@@ -32,6 +32,8 @@ export interface SetsSummary {
     name: string;
     text: string;
     spoken: string;
+    /** The exercise it was, as its last set was linked. Missing for an unnamed step. */
+    exerciseId?: string;
 }
 
 /**
@@ -58,10 +60,12 @@ export function describeSets(
     return Array.from(byStep.values(), (stepSets) => {
         const last = stepSets.at(-1)!;
         const name = (last.exerciseId && currentName(last.exerciseId)) || last.name;
+        const link = last.exerciseId === undefined ? {} : { exerciseId: last.exerciseId };
         const repSets = stepSets.filter((set): set is RepSet => !isTimedSet(set));
         if (repSets.length < stepSets.length) {
             return {
                 name: name || 'Work',
+                ...link,
                 ...describeTimes(stepSets.filter((set) => isTimedSet(set))),
             };
         }
@@ -71,6 +75,7 @@ export function describeSets(
         const sameReps = reps.every((r) => r === reps[0]);
         return {
             name: name || 'Reps',
+            ...link,
             text: sameWeight
                 ? `${repsText(reps, sameReps)}${weights[0] ? ` @ ${weights[0]} ${unit}` : ''}`
                 : `${stepSets.map((_, i) => setText(reps[i], weights[i])).join(', ')} ${unit}`,

@@ -6,6 +6,7 @@ import { map } from 'rxjs';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { ExerciseDetailsComponent } from '../../shared/components/exercise-details/exercise-details.component';
 import { ExerciseEditorComponent } from '../../shared/components/exercise-editor/exercise-editor.component';
+import { ExerciseProgressComponent } from './exercise-progress/exercise-progress.component';
 import { isBuiltIn } from '../../models/exercise';
 import { exerciseUsage } from '../../models/exercise-links';
 import { ExerciseStore } from '../../shared/state/exercise-store.service';
@@ -32,6 +33,7 @@ type DeleteStep = 'confirm-delete' | 'confirm-hide' | 'in-use' | null;
         ExerciseDetailsComponent,
         ConfirmDialogComponent,
         ExerciseEditorComponent,
+        ExerciseProgressComponent,
     ],
     templateUrl: './exercise-page.component.html',
     styleUrl: './exercise-page.component.scss',

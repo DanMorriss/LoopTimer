@@ -7,8 +7,14 @@
             <ul class="entry__sets">
                 @for (line of sets(); track $index) {
                     <li>
-                        <span aria-hidden="true">{{ line.name }}: {{ line.text }}</span>
-                        <span class="sr-only">{{ line.name }}, {{ line.spoken }}</span>
+                        @if (line.path) {
+                            <a class="entry__exercise" [routerLink]="line.path">{{ line.name }}</a
+                            ><span aria-hidden="true">: {{ line.text }}</span>
+                            <span class="sr-only">, {{ line.spoken }}</span>
+                        } @else {
+                            <span aria-hidden="true">{{ line.name }}: {{ line.text }}</span>
+                            <span class="sr-only">{{ line.name }}, {{ line.spoken }}</span>
+                        }
                     </li>
                 }
             </ul>

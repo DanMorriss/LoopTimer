@@ -1,0 +1,209 @@
+<section class="progress" [attr.aria-labelledby]="id + '-heading'">
+    <h3 [id]="id + '-heading'" class="progress__heading">Progress</h3>
+
+    @if (sessions().length === 0) {
+        <p class="progress__empty">
+            Nothing logged yet. Do it in a workout and its bests and progress show up here.
+        </p>
+    } @else {
+        <dl class="progress__bests" aria-label="Personal bests">
+            @for (best of bests(); track best.label) {
+                <div class="progress__best">
+                    <dt>{{ best.label }}</dt>
+                    <dd>
+                        <span class="progress__best-value" aria-hidden="true">{{ best.text }}</span>
+                        <span class="sr-only">{{ best.spoken }}</span>
+                        <span class="progress__best-when">
+                            @if (best.detail) {
+                                {{ best.detail }} ·
+                            }
+                            {{ best.at | date: dateFormat(best.at) }}
+                        </span>
+                    </dd>
+                </div>
+            }
+        </dl>
+
+        <div class="progress__chart-head">
+            <h4 [id]="id + '-chart'" class="progress__subheading">{{ measureTitle() }}</h4>
+            <div class="progress__ranges" role="group" aria-label="Chart range">
+                @for (option of ranges; track option.value) {
+                    <button
+                        type="button"
+                        class="progress__range"
+                        [attr.aria-pressed]="option.value === range()"
+                        (click)="pickRange(option.value)"
+                    >
+                        {{ option.label }}
+                    </button>
+                }
+            </div>
+        </div>
+
+        @if (points().length === 0) {
+            <p class="progress__empty">Not done in {{ rangeSpoken() }}.</p>
+        } @else {
+            <!-- Arrow keys step through the workouts; the readout says each one -->
+            <div
+                class="progress__chart"
+                tabindex="0"
+                role="group"
+                [attr.aria-labelledby]="id + '-chart'"
+                [attr.aria-describedby]="id + '-chart-help ' + id + '-readout'"
+                (keydown)="onKeydown($event)"
+                (focus)="onFocus()"
+                (blur)="active.set(null)"
+            >
+                <span class="sr-only" [id]="id + '-chart-help'"
+                    >{{ points().length }} {{ points().length === 1 ? 'workout' : 'workouts' }} in
+                    {{ rangeSpoken() }}. Use the left and right arrow keys to hear each one.</span
+                >
+                <svg
+                    class="progress__svg"
+                    [attr.viewBox]="'0 0 ' + width + ' ' + height"
+                    aria-hidden="true"
+                    (pointermove)="onPointerMove($event)"
+                    (pointerleave)="active.set(null)"
+                >
+                    @for (tick of ticks(); track tick.label) {
+                        <line
+                            class="progress__grid"
+                            [attr.x1]="left"
+                            [attr.x2]="right"
+                            [attr.y1]="tick.y"
+                            [attr.y2]="tick.y"
+                        />
+                        <text
+                            class="progress__axis"
+                            [attr.x]="left - 6"
+                            [attr.y]="tick.y"
+                            dy="0.32em"
+                            text-anchor="end"
+                        >
+                            {{ tick.label }}
+                        </text>
+                    }
+                    @if (axisDates(); as dates) {
+                        <text class="progress__axis" [attr.x]="left" [attr.y]="height - 6">
+                            {{ dates.start | date: dates.format }}
+                        </text>
+                        <text
+                            class="progress__axis"
+                            [attr.x]="right"
+                            [attr.y]="height - 6"
+                            text-anchor="end"
+                        >
+                            {{ dates.end | date: dateFormat(dates.end) }}
+                        </text>
+                    }
+                    @if (activePoint(); as point) {
+                        <line
+                            class="progress__crosshair"
+                            [attr.x1]="point.x"
+                            [attr.x2]="point.x"
+                            [attr.y1]="12"
+                            [attr.y2]="bottom"
+                        />
+                    }
+                    <path class="progress__line" [attr.d]="line()" />
+                    @for (point of points(); track point.entryId; let i = $index) {
+                        <circle
+                            class="progress__dot"
+                            [class.progress__dot--active]="i === active()"
+                            [attr.cx]="point.x"
+                            [attr.cy]="point.y"
+                            [attr.r]="i === active() ? 6 : 4"
+                        />
+                    }
+                </svg>
+
+                @if (activePoint(); as point) {
+                    <div
+                        class="progress__tooltip"
+                        aria-hidden="true"
+                        [class.progress__tooltip--left]="point.x > width / 2"
+                        [class.progress__tooltip--below]="point.y < height / 2"
+                        [style.left.%]="(point.x / width) * 100"
+                        [style.top.%]="(point.y / height) * 100"
+                    >
+                        <strong>{{ point.text }}</strong>
+                        <span>{{ point.at | date: dateFormat(point.at) }}</span>
+                        <span>{{ point.title }}</span>
+                    </div>
+                }
+                <span class="sr-only" [id]="id + '-readout'" aria-live="polite">
+                    @if (activePoint(); as point) {
+                        {{ point.spoken }}, {{ point.at | date: 'd MMMM y' }}, {{ point.title }}
+                    }
+                </span>
+            </div>
+
+            <button
+                type="button"
+                class="progress__toggle"
+                [attr.aria-controls]="id + '-table'"
+                [attr.aria-expanded]="tableOpen()"
+                (click)="tableOpen.set(!tableOpen())"
+            >
+                {{ tableOpen() ? 'Hide the table' : 'Show as a table' }}
+            </button>
+            @if (tableOpen()) {
+                <table class="progress__table" [id]="id + '-table'">
+                    <caption class="sr-only">
+                        {{
+                            measureTitle()
+                        }},
+                        {{
+                            rangeSpoken()
+                        }}
+                    </caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Date</th>
+                            <th scope="col">Workout</th>
+                            <th scope="col">{{ measureTitle() }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (point of points(); track point.entryId) {
+                            <tr>
+                                <td>{{ point.at | date: dateFormat(point.at) }}</td>
+                                <td>{{ point.title }}</td>
+                                <td>{{ point.text }}</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        }
+
+        <h4 [id]="id + '-recent'" class="progress__subheading">Recent sessions</h4>
+        <ul class="progress__sessions" [attr.aria-labelledby]="id + '-recent'">
+            @for (session of recent(); track session.entryId) {
+                <li class="progress__session">
+                    <a
+                        class="progress__session-link"
+                        routerLink="/history"
+                        [queryParams]="{ run: session.entryId }"
+                    >
+                        <span class="progress__session-date">{{
+                            session.at | date: dateFormat(session.at)
+                        }}</span>
+                        <span class="progress__session-title">{{ session.title }}</span>
+                    </a>
+                    @for (line of session.lines; track $index) {
+                        <span class="progress__session-sets">
+                            <span aria-hidden="true">{{ line.text }}</span>
+                            <span class="sr-only">{{ line.spoken }}</span>
+                        </span>
+                    }
+                </li>
+            }
+        </ul>
+        @if (sessions().length > recentCount) {
+            <button type="button" class="progress__toggle" (click)="showAll.set(!showAll())">
+                {{ showAll() ? 'Show fewer' : 'Show all ' + sessions().length }}
+            </button>
+        }
+    }
+</section>

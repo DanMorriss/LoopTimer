@@ -148,10 +148,30 @@ describe('HistoryComponent', () => {
             })
         );
 
-        expect(text('.entry__sets li [aria-hidden="true"]')).toEqual([
-            'Sled drag: 5 reps',
-            'Squats: 8 reps',
-        ]);
+        expect(text('.entry__exercise')).toEqual(['Sled drag', 'Squats']);
+        expect(text('.entry__sets li [aria-hidden="true"]')).toEqual([': 5 reps', ': 8 reps']);
+    });
+
+    it("links each exercise's sets to its page", () => {
+        create(
+            makeEntry({
+                sets: [
+                    {
+                        round: 0,
+                        step: 0,
+                        name: 'Squats',
+                        reps: 8,
+                        exerciseId: 'builtin:back-squat',
+                    },
+                    { round: 0, step: 1, name: '', reps: 5 },
+                ],
+            })
+        );
+
+        const links = fixture.nativeElement.querySelectorAll('.entry__exercise');
+        expect(links).toHaveLength(1);
+        expect(links[0].getAttribute('href')).toBe('/exercises/back-squat');
+        expect(text('.entry__sets li .sr-only')).toEqual([', 8 reps', 'Reps, 5 reps']);
     });
 
     it('names an untitled workout', () => {
@@ -481,14 +501,21 @@ describe('HistoryComponent', () => {
             });
 
             expect(describeSets([plank(0, 45), plank(1, 45), plank(2, 45)], 'kg')).toEqual([
-                { name: 'Plank', text: '3 × 0:45', spoken: '3 sets of 45 seconds' },
+                {
+                    name: 'Plank',
+                    text: '3 × 0:45',
+                    spoken: '3 sets of 45 seconds',
+                    exerciseId: 'builtin:plank',
+                },
             ]);
             expect(describeSets([plank(0, 90)], 'kg')[0]).toEqual({
+                exerciseId: 'builtin:plank',
                 name: 'Plank',
                 text: '1:30',
                 spoken: '1 minute 30 seconds',
             });
             expect(describeSets([plank(0, 60), plank(1, 45)], 'kg')[0]).toEqual({
+                exerciseId: 'builtin:plank',
                 name: 'Plank',
                 text: '1:00, 0:45',
                 spoken: 'sets of 1 minute, 45 seconds',

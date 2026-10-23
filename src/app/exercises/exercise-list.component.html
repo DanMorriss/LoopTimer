@@ -178,6 +178,22 @@
                         <span class="exercise-card__equipment">{{ item.equipment }}</span>
                     }
                 </span>
+                @if (item.progress; as progress) {
+                    <span class="exercise-card__progress">
+                        <span>
+                            <span class="exercise-card__progress-label">Latest</span>&ngsp;
+                            <span aria-hidden="true">{{ progress.latest }}</span>
+                            <span class="sr-only">{{ progress.latestSpoken }}</span>
+                            · {{ progress.latestAt | date: progress.dateFormat }}
+                        </span>
+                        @if (progress.best) {
+                            <span>
+                                <span class="exercise-card__progress-label">Best</span>&ngsp;
+                                {{ progress.best }}
+                            </span>
+                        }
+                    </span>
+                }
             </span>
             <mat-icon class="exercise-card__chevron" aria-hidden="true">chevron_right</mat-icon>
         </a>

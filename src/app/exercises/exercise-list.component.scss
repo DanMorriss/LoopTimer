@@ -275,6 +275,19 @@
     font-size: 0.75rem;
 }
 
+// Latest and best (PRG-3), once it's been done in a workout
+.exercise-card__progress {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.15rem 0.9rem;
+    color: var(--text);
+    font-size: 0.75rem;
+}
+
+.exercise-card__progress-label {
+    color: var(--text-muted);
+}
+
 .exercise-card__chevron {
     flex: none;
     color: var(--text-muted);
