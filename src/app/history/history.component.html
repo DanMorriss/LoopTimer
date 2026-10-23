@@ -35,7 +35,10 @@
             @if (musclesWorked().hasData) {
                 <section class="history__muscles">
                     <h3 class="history__muscles-title">Muscles worked this week</h3>
-                    <app-body-map [main]="musclesWorked().main" [supporting]="musclesWorked().supporting" />
+                    <app-body-map
+                        [main]="musclesWorked().main"
+                        [supporting]="musclesWorked().supporting"
+                    />
                     <p class="history__muscles-most">{{ musclesWorked().most }}</p>
                 </section>
             }
