@@ -4,6 +4,7 @@ import { form, FormField, maxLength } from '@angular/forms/signals';
 import { MatIconModule } from '@angular/material/icon';
 import { isBuiltIn } from '../../models/exercise';
 import { MAX_NOTE_LENGTH, RepSet } from '../../models/history';
+import { exerciseBests, sessionsByExercise } from '../../models/progress';
 import { MAX_REPS } from '../../models/workout';
 import { weightIn, weightOptions, weightToKg } from '../../models/weight';
 import { WheelPickerComponent } from '../../shared/components/wheel-picker/wheel-picker.component';
@@ -18,6 +19,7 @@ import {
     entryName,
     formatDuration,
 } from '../../history/history-format';
+import { bestLines } from '../../exercises/progress-format';
 
 /** One rep step's sets, for correcting them one by one. */
 interface SetGroup {
@@ -78,6 +80,42 @@ export class WorkoutSummaryComponent {
     protected readonly setLines = computed(() =>
         describeSets(this.run.sets(), this.weightUnit(), this.exerciseName)
     );
+    protected readonly personalBests = computed(() => {
+        const entry = this.entry();
+        if (!entry || !entry.sets?.length) {
+            return [] as string[];
+        }
+        const previous = this.history
+            .entries()
+            .filter((other) => other.id !== entry.id)
+            .map((other) => ({ ...other, sets: other.sets ?? [] }));
+        const byExercise = sessionsByExercise(previous);
+        const exerciseIds = new Set(
+            entry.sets.filter((set) => set.exerciseId !== undefined).map((set) => set.exerciseId!)
+        );
+        const lines: string[] = [];
+
+        for (const exerciseId of exerciseIds) {
+            const before = byExercise.get(exerciseId) ?? [];
+            const after = [
+                ...before,
+                {
+                    entryId: entry.id,
+                    startedAt: entry.startedAt,
+                    title: entry.title,
+                    sets: entry.sets.filter((set) => set.exerciseId === exerciseId),
+                },
+            ];
+            const current = bestLines(exerciseBests(after), this.weightUnit());
+            for (const line of current) {
+                if (line.at === entry.startedAt) {
+                    lines.push(`${line.label}: ${line.text}`);
+                }
+            }
+        }
+
+        return lines;
+    });
 
     // Correcting the rep sets, e.g. the last one was 8 reps, not 10. Timed ones ran as set.
     protected readonly changingSets = signal(false);
