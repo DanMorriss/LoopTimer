@@ -1,7 +1,7 @@
 import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ExerciseEditorComponent } from '../shared/components/exercise-editor/exercise-editor.component';
 import { ToggleSwitchComponent } from '../shared/components/toggle-switch/toggle-switch.component';
 import {
@@ -30,11 +30,13 @@ import { HistoryStore } from '../shared/state/history-store.service';
 import { headlineBest } from './progress-format';
 import { blankOwnExercise, ExerciseStore } from '../shared/state/exercise-store.service';
 import { SettingsStore } from '../shared/state/settings-store.service';
+import { parseMusclesParam, serialiseMusclesParam } from './muscle-filter-query';
 
 /** One exercise in the list, as its card shows it. */
 interface ExerciseCard {
     exercise: Exercise;
     path: string;
+    queryParams: { muscles?: string };
     own: boolean;
     mainMuscles: string[];
     /** e.g. "Barbell, rack", or empty when it lists none. */
@@ -80,6 +82,7 @@ export class ExerciseListComponent {
     private readonly settings = inject(SettingsStore);
     private readonly history = inject(HistoryStore);
     private readonly router = inject(Router);
+    private readonly route = inject(ActivatedRoute);
 
     protected readonly muscles = MUSCLES;
     protected readonly muscleLabels = MUSCLE_LABELS;
@@ -89,6 +92,14 @@ export class ExerciseListComponent {
     protected readonly query = signal('');
     /** The main muscle the list is cut down to, or null for all. */
     protected readonly muscle = signal<MuscleGroup | null>(null);
+    protected readonly selectedMuscles = computed(() => {
+        const muscle = this.muscle();
+        return muscle === null ? [] : [muscle];
+    });
+    protected readonly muscleQueryParams = computed(() => {
+        const muscles = serialiseMusclesParam(this.selectedMuscles());
+        return muscles ? { muscles } : {};
+    });
     protected readonly kitOpen = signal(false);
     protected readonly hiddenOpen = signal(false);
     /** A blank exercise of your own in the editor, made when it's saved. */
@@ -107,6 +118,7 @@ export class ExerciseListComponent {
         const kit = this.myEquipment();
         const typed = this.query().trim();
         const all = this.exercises.exercises();
+        const queryParams = this.muscleQueryParams();
         const matches = typed
             ? searchExercises(typed, all, Infinity)
             : [...all]
@@ -121,12 +133,18 @@ export class ExerciseListComponent {
             .map(({ exercise, otherName }) =>
                 card(
                     exercise,
+                    queryParams,
                     otherName,
                     this.sessions().get(exercise.id),
                     this.settings.weightUnit()
                 )
             );
     });
+
+    constructor() {
+        const picked = parseMusclesParam(this.route.snapshot.queryParamMap.get('muscles'));
+        this.muscle.set(picked[0] ?? null);
+    }
 
     protected readonly shown = computed(() =>
         this.found().filter((c) => !this.exercises.isHidden(c.exercise.id))
@@ -151,6 +169,12 @@ export class ExerciseListComponent {
 
     protected pickMuscle(muscle: MuscleGroup | null) {
         this.muscle.set(muscle);
+        void this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: { muscles: serialiseMusclesParam(muscle === null ? [] : [muscle]) },
+            queryParamsHandling: 'merge',
+            replaceUrl: true,
+        });
     }
 
     protected setOnlyMine(only: boolean) {
@@ -171,7 +195,7 @@ export class ExerciseListComponent {
 
     protected clearFilters() {
         this.query.set('');
-        this.muscle.set(null);
+        this.pickMuscle(null);
         this.setOnlyMine(false);
     }
 
@@ -188,6 +212,7 @@ export class ExerciseListComponent {
 
 function card(
     exercise: Exercise,
+    queryParams: { muscles?: string },
     otherName: string | undefined,
     sessions: readonly ExerciseSession[] | undefined,
     unit: WeightUnit
@@ -195,6 +220,7 @@ function card(
     return {
         exercise,
         path: exercisePath(exercise),
+        queryParams,
         own: !isBuiltIn(exercise),
         mainMuscles: exercise.mainMuscles.map((muscle) => MUSCLE_LABELS[muscle]),
         equipment: capitalise(equipmentPhrases(exercise.equipment).join(', ')),

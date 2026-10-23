@@ -44,7 +44,7 @@ Timed sets are logged now (a set per timed work step of an exercise that runs to
 
 Filtering the Exercises list (EXR-6) by muscle, asked for by Dan on 2026-10-23:
 
-- [ ] **Keep the muscle filter when coming back:** pick a muscle, open an exercise, then go back with the "Exercises" link at the top left, and the same muscles are still picked. Keeping the filter in the address (e.g. `/exercises?muscles=quads,glutes`) would make the browser's Back button keep it too, and the search could go there as well.
+- [x] **Keep the muscle filter when coming back:** pick a muscle, open an exercise, then go back with the "Exercises" link at the top left, and the same muscles are still picked. Keeping the filter in the address (e.g. `/exercises?muscles=quads,glutes`) would make the browser's Back button keep it too, and the search could go there as well.
 - [ ] **Pick more than one muscle:** the pills toggle on and off, with "All muscles" clearing them. Draft: an exercise shows if any of the picked muscles is one of its main ones.
 - [ ] **Pick muscles on the body map:** tapping a muscle on the figure picks it, the same as its pill, and the picked muscles are shaded on the figure, so the pills and the figure always match. The figure needs tappable, keyboard-reachable shapes with names for screen readers; the abductors can't be picked there until the body map has them (see Known issues).
 

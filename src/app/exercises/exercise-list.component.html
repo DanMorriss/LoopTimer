@@ -159,7 +159,7 @@
 
 <ng-template #cardTemplate let-item>
     <li>
-        <a class="exercise-card" [routerLink]="item.path">
+        <a class="exercise-card" [routerLink]="item.path" [queryParams]="item.queryParams">
             <span class="exercise-card__text">
                 <span class="exercise-card__name">
                     {{ item.exercise.name }}
