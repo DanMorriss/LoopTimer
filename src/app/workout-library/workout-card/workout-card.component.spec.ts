@@ -99,11 +99,18 @@ describe('WorkoutCardComponent', () => {
         set({
             workout: {
                 ...sprints,
-                steps: [work(30, 'Squats'), reps(20, 'Bench press'), work(25, 'Deadlifts'), rest(20)],
+                steps: [
+                    work(30, 'Squats'),
+                    reps(20, 'Bench press'),
+                    work(25, 'Deadlifts'),
+                    rest(20),
+                ],
             },
         });
 
-        expect(el('.workout-card__summary').textContent).toContain('Squats, Bench press + 1 more x 4');
+        expect(el('.workout-card__summary').textContent).toContain(
+            'Squats, Bench press + 1 more x 4'
+        );
         expect(el('.workout-card__summary').getAttribute('aria-label')).toBe(
             'Squats, Bench press + 1 more, repeated 4 times'
         );

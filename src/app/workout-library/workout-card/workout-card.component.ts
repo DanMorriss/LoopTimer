@@ -57,9 +57,7 @@ export class WorkoutCardComponent {
             const preview = namedExercises.slice(0, 2);
             const remainder = namedExercises.length - preview.length;
             const text =
-                remainder > 0
-                    ? `${preview.join(', ')} + ${remainder} more`
-                    : preview.join(', ');
+                remainder > 0 ? `${preview.join(', ')} + ${remainder} more` : preview.join(', ');
             return { text, spoken: text };
         }
 
