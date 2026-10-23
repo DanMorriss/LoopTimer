@@ -1537,6 +1537,68 @@ describe('WorkoutComponent', () => {
             fixture.destroy();
         });
 
+        it('shows the most recent sets for the same exercise, in the history format', () => {
+            TestBed.inject(HistoryStore).record({
+                id: `${Date.now() - 1000}-legs`,
+                workoutId: 'legs',
+                title: 'Legs',
+                startedAt: Date.now() - 1000,
+                endedAt: Date.now(),
+                activeSeconds: 90,
+                roundsCompleted: 2,
+                totalRounds: 2,
+                outcome: 'finished',
+                sets: [
+                    {
+                        round: 0,
+                        step: 1,
+                        name: 'Squats',
+                        reps: 10,
+                        weight: 60,
+                        exerciseId: 'exr:squat',
+                    },
+                    {
+                        round: 1,
+                        step: 1,
+                        name: 'Squats',
+                        reps: 10,
+                        weight: 60,
+                        exerciseId: 'exr:squat',
+                    },
+                    {
+                        round: 1,
+                        step: 1,
+                        name: 'Squats',
+                        reps: 8,
+                        weight: 60,
+                        exerciseId: 'exr:squat',
+                    },
+                ],
+            });
+            start(
+                makeWorkout({
+                    steps: [
+                        work(3),
+                        {
+                            kind: 'reps',
+                            reps: 12,
+                            name: 'Squats',
+                            weight: 60,
+                            exerciseId: 'exr:squat',
+                        },
+                        rest(2),
+                    ],
+                    repeats: 1,
+                })
+            );
+            advance(3000);
+
+            expect(
+                fixture.nativeElement.querySelector('.workout-face__last-time')!.textContent
+            ).toBe('Last time: 10, 10, 8 @ 60 kg');
+            fixture.destroy();
+        });
+
         it('swaps Pause for Done, with a smaller Pause to one side', () => {
             start(circuit());
             expect(mainButton().getAttribute('aria-label')).toBe('Pause');
@@ -2044,6 +2106,55 @@ describe('WorkoutComponent', () => {
         function mockNavigate() {
             return vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
         }
+
+        it('calls out a new personal best on the workout summary', () => {
+            const history = TestBed.inject(HistoryStore);
+            history.record({
+                id: 'old-run',
+                workoutId: 'old-workout',
+                title: 'Old bench',
+                startedAt: Date.now() - 10 * 60 * 1000,
+                endedAt: Date.now() - 9 * 60 * 1000,
+                activeSeconds: 600,
+                roundsCompleted: 1,
+                totalRounds: 1,
+                outcome: 'finished',
+                sets: [
+                    {
+                        round: 0,
+                        step: 0,
+                        name: 'Bench press',
+                        reps: 5,
+                        weight: 80,
+                        exerciseId: 'builtin:barbell-bench-press',
+                    },
+                ],
+            });
+
+            start(
+                makeWorkout({
+                    steps: [
+                        work(2),
+                        {
+                            kind: 'reps',
+                            reps: 5,
+                            name: 'Bench press',
+                            weight: 100,
+                            exerciseId: 'builtin:barbell-bench-press',
+                        } as const,
+                    ],
+                    repeats: 1,
+                })
+            );
+            advance(2000);
+            (fixture.nativeElement.querySelector('[aria-label="Done"]') as HTMLElement).click();
+            fixture.detectChanges();
+
+            expect(component.summaryOpen()).toBe(true);
+            expect(summaryText()).toContain('Personal bests');
+            expect(summaryText()).toContain('Heaviest: 100 kg × 5');
+            fixture.destroy();
+        });
 
         it('sums up a workout ended early, logged as stopped, with focus on its heading', () => {
             endInRound2();
