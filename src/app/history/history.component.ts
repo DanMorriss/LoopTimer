@@ -1,8 +1,11 @@
 import { DatePipe } from '@angular/common';
 import { afterNextRender, Component, computed, inject, Injector, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { MUSCLE_LABELS, MuscleGroup } from '../models/exercise';
 import { HistoryEntry } from '../models/history';
+import { BodyMapComponent } from '../shared/components/body-map/body-map.component';
 import { injectPrefersReducedMotion } from '../shared/reduced-motion';
+import { ExerciseStore } from '../shared/state/exercise-store.service';
 import { HistoryStore } from '../shared/state/history-store.service';
 import { HistoryEntryComponent } from './history-entry/history-entry.component';
 import { entryName, formatDuration } from './history-format';
@@ -31,7 +34,7 @@ function dayKey(time: number): string {
  */
 @Component({
     selector: 'app-history',
-    imports: [DatePipe, HistoryEntryComponent, RouterLink],
+    imports: [BodyMapComponent, DatePipe, HistoryEntryComponent, RouterLink],
     templateUrl: './history.component.html',
     styleUrl: './history.component.scss',
     host: {
@@ -41,6 +44,7 @@ function dayKey(time: number): string {
 })
 export class HistoryComponent {
     private readonly history = inject(HistoryStore);
+    private readonly exercises = inject(ExerciseStore);
     private readonly injector = inject(Injector);
     private readonly reducedMotion = injectPrefersReducedMotion();
     private readonly now = Date.now();
@@ -71,6 +75,50 @@ export class HistoryComponent {
         return {
             workouts: recent.length,
             time: formatDuration(recent.reduce((total, entry) => total + entry.activeSeconds, 0)),
+        };
+    });
+
+    /** Which muscles have been used in the last seven days. */
+    protected readonly musclesWorked = computed(() => {
+        const recent = this.history
+            .entries()
+            .filter((entry) => entry.startedAt >= this.now - 7 * DAY_MS);
+        const counts = new Map<MuscleGroup, number>();
+
+        for (const entry of recent) {
+            for (const set of entry.sets ?? []) {
+                const exercise = set.exerciseId ? this.exercises.byId(set.exerciseId) : undefined;
+                if (!exercise) {
+                    continue;
+                }
+                for (const muscle of exercise.mainMuscles) {
+                    counts.set(muscle, (counts.get(muscle) ?? 0) + 1);
+                }
+                for (const muscle of exercise.supportingMuscles) {
+                    counts.set(muscle, (counts.get(muscle) ?? 0) + 0.5);
+                }
+            }
+        }
+
+        const sorted = [...counts.entries()].sort(
+            ([muscleA, scoreA], [muscleB, scoreB]) =>
+                scoreB - scoreA || MUSCLE_LABELS[muscleB].localeCompare(MUSCLE_LABELS[muscleA])
+        );
+
+        const main = sorted.filter(([, score]) => score >= 1).map(([muscle]) => muscle);
+        const supporting = sorted
+            .filter(([, score]) => score > 0 && score < 1)
+            .map(([muscle]) => muscle);
+        const most = sorted.slice(0, 3).map(([muscle, score]) => {
+            const count = score % 1 === 0 ? `${score}` : score.toFixed(1).replace(/\.0$/, '');
+            return `${MUSCLE_LABELS[muscle]} (${count} ${score === 1 ? 'set' : 'sets'})`;
+        });
+
+        return {
+            hasData: sorted.length > 0,
+            main,
+            supporting,
+            most: most.length > 0 ? `Most worked: ${most.join(', ')}` : '',
         };
     });
 

@@ -190,6 +190,26 @@ describe('HistoryComponent', () => {
         expect(text('.history__summary')).toEqual(['Last 7 days: 2 workouts · 1:03:20']);
     });
 
+    it('shows which muscles were worked in the last seven days', () => {
+        create(
+            makeEntry({
+                startedAt: NOW - HOUR,
+                sets: [
+                    { round: 0, step: 0, name: 'Back squat', reps: 5, exerciseId: 'builtin:back-squat' },
+                    { round: 0, step: 1, name: 'Back squat', reps: 5, exerciseId: 'builtin:back-squat' },
+                    { round: 0, step: 2, name: 'Bench press', reps: 8, exerciseId: 'builtin:barbell-bench-press' },
+                ],
+            }),
+            makeEntry({ startedAt: NOW - 9 * DAY, sets: [{ round: 0, step: 0, name: 'Plank', reps: 30, exerciseId: 'builtin:plank' }] })
+        );
+
+        expect(text('.history__muscles-title')).toEqual(['Muscles worked this week']);
+        expect(fixture.nativeElement.querySelector('app-body-map')).not.toBeNull();
+        expect(text('.history__muscles-most')).toEqual([
+            'Most worked: Quads (2 sets), Glutes (2 sets), Lower back (1 set)'
+        ]);
+    });
+
     /** Opens an entry's ⋮ menu and picks an item, e.g. "Delete". */
     function choose(entry: string, item: string) {
         button(`Options for ${entry}`).click();

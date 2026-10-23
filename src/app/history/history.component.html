@@ -32,6 +32,14 @@
                 {{ lastWeek().workouts === 1 ? 'workout' : 'workouts' }} · {{ lastWeek().time }}
             </p>
 
+            @if (musclesWorked().hasData) {
+                <section class="history__muscles">
+                    <h3 class="history__muscles-title">Muscles worked this week</h3>
+                    <app-body-map [main]="musclesWorked().main" [supporting]="musclesWorked().supporting" />
+                    <p class="history__muscles-most">{{ musclesWorked().most }}</p>
+                </section>
+            }
+
             @for (group of groups(); track group.key) {
                 <section class="history__day" [attr.aria-labelledby]="'day-' + group.key">
                     <h3 class="history__day-label" [id]="'day-' + group.key">
