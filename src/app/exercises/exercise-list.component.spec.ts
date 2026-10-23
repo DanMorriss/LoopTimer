@@ -103,6 +103,9 @@ describe('ExerciseListComponent', () => {
         }
         expect(button('Calves').getAttribute('aria-pressed')).toBe('true');
         expect(button('All muscles').getAttribute('aria-pressed')).toBe('false');
+
+        const firstCard = el().querySelector('.exercise-card') as HTMLAnchorElement;
+        expect(firstCard.getAttribute('href')).toContain('?muscles=calves');
     });
 
     it('shows only what you can do with your equipment, remembered', async () => {

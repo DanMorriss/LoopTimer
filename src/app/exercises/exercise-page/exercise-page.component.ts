@@ -9,6 +9,7 @@ import { ExerciseEditorComponent } from '../../shared/components/exercise-editor
 import { ExerciseProgressComponent } from './exercise-progress/exercise-progress.component';
 import { isBuiltIn } from '../../models/exercise';
 import { exerciseUsage } from '../../models/exercise-links';
+import { parseMusclesParam, serialiseMusclesParam } from '../muscle-filter-query';
 import { ExerciseStore } from '../../shared/state/exercise-store.service';
 import { HistoryStore } from '../../shared/state/history-store.service';
 import { WorkoutStore } from '../../shared/state/workout-store.service';
@@ -43,11 +44,19 @@ export class ExercisePageComponent {
     private readonly workouts = inject(WorkoutStore);
     private readonly history = inject(HistoryStore);
     private readonly router = inject(Router);
+    private readonly route = inject(ActivatedRoute);
 
     private readonly param = toSignal(
-        inject(ActivatedRoute).paramMap.pipe(map((params) => params.get('id') ?? '')),
+        this.route.paramMap.pipe(map((params) => params.get('id') ?? '')),
         { initialValue: '' }
     );
+    private readonly musclesQuery = computed(() =>
+        serialiseMusclesParam(parseMusclesParam(this.route.snapshot.queryParamMap.get('muscles')))
+    );
+    protected readonly backQueryParams = computed(() => {
+        const muscles = this.musclesQuery();
+        return muscles ? { muscles } : {};
+    });
 
     protected readonly exercise = computed(
         () =>
@@ -124,7 +133,7 @@ export class ExercisePageComponent {
             return;
         }
         this.exercises.deleteOwn(exercise.id);
-        void this.router.navigateByUrl('/exercises');
+        void this.router.navigate(['/exercises'], { queryParams: this.backQueryParams() });
     }
 
     /** With history, it's hidden instead, so the history still has its name. */

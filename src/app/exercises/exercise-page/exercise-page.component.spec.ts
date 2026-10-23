@@ -102,6 +102,13 @@ describe('ExercisePageComponent', () => {
             await click('#exercise-page-hide');
             expect(exercises.isHidden('builtin:back-squat')).toBe(false);
         });
+
+        it('keeps the picked muscle on the back link', async () => {
+            await open('/exercises/back-squat?muscles=quads');
+
+            const back = el().querySelector('.exercise__back') as HTMLAnchorElement;
+            expect(back.getAttribute('href')).toBe('/exercises?muscles=quads');
+        });
     });
 
     describe('your own exercise', () => {
@@ -127,6 +134,17 @@ describe('ExercisePageComponent', () => {
 
             expect(exercises.byId(mine.id)).toBeUndefined();
             expect(TestBed.inject(Router).url).toBe('/exercises');
+        });
+
+        it('keeps the picked muscle when deleting and returning to the list', async () => {
+            const mine = exercises.addOwn('Sled push', 'reps');
+            await open(`/exercises/${mine.id}?muscles=glutes`);
+
+            await click('#exercise-page-delete');
+            await click('.confirm-dialog__button--delete');
+
+            expect(exercises.byId(mine.id)).toBeUndefined();
+            expect(TestBed.inject(Router).url).toBe('/exercises?muscles=glutes');
         });
 
         it("won't delete one a workout uses, and says which", async () => {
