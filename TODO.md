@@ -12,14 +12,14 @@ Do these first: everything after builds on them. The data is ready for sync (#81
 
 Making it clearer which part of the workout is happening, as agreed with Dan on 2026-10-22, is done: Pause and End workout (Stop is gone from the running screen), the workout summary (RUN-7) with Back to workout and "Use these settings next time?", "Next:" pulsing in a step's last seconds, and each step sliding in like the number wheels (sideways for a new round). A different look per step type is under Design. Next:
 
-- [ ] **Last time (PRG-1):** on each rep step, "Last time: 10, 10, 8 @ 60 kg".
-- [ ] **Personal bests (PRG-2):** called out on the workout summary (RUN-7), which has room left for them.
+- [x] **Last time (PRG-1):** on each rep step, "Last time: 10, 10, 8 @ 60 kg".
+- [x] **Personal bests (PRG-2):** called out on the workout summary (RUN-7), which has room left for them.
 
 ### Phase 3: Progress pages
 
 Timed sets are logged now (a set per timed work step of an exercise that runs to its end), so timed exercises have a history for the longest hold and the muscles worked; workouts from before have rep sets only. PRG-3 and PRG-4 are done (the exercises list's latest and best, and the exercise page's bests, chart and recent sessions; history set lines link there). PRG-1 and PRG-2 are left for now (Dan, 2026-10-23). Next:
 
-- [ ] **Muscles worked this week (PRG-6):** the body map on the history page, shaded by sets in the last 7 days.
+- [x] **Muscles worked this week (PRG-6):** the body map on the history page, shaded by sets in the last 7 days.
 
 ### Phase 4: Sync
 

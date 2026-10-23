@@ -120,6 +120,17 @@
                         }
                     </div>
 
+                    @if (personalBests().length) {
+                        <div class="summary__bests" aria-live="polite">
+                            <h3>Personal bests</h3>
+                            <ul>
+                                @for (best of personalBests(); track best) {
+                                    <li>{{ best }}</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+
                     <!-- Changing what was done can carry over to the saved workout, if wanted -->
                     <div class="summary__next-time" aria-live="polite">
                         @switch (nextTime()) {

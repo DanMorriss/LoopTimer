@@ -120,6 +120,9 @@
                                         @if (slide.weight) {
                                             <p class="workout-face__weight">{{ slide.weight }}</p>
                                         }
+                                        @if (lastTime()) {
+                                            <p class="workout-face__last-time">{{ lastTime() }}</p>
+                                        }
                                     } @else {
                                         <p>{{ slide.time }}</p>
                                     }
