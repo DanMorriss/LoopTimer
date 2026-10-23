@@ -50,7 +50,7 @@ Filtering the Exercises list (EXR-6) by muscle, asked for by Dan on 2026-10-23:
 
 ## 2. Design
 
-- [ ] **Weights on library cards:** a card sums up a round (e.g. "4 steps · 01:30 + reps") rather than listing steps. Now that they're workouts (EXR-5), a workout card could list its exercises (e.g. "Squats, Bench press + 1 more"), which would make weights on cards unnecessary.
+- [x] **Weights on library cards:** a card sums up a round (e.g. "4 steps · 01:30 + reps") rather than listing steps. Now that they're workouts (EXR-5), a workout card could list its exercises (e.g. "Squats, Bench press + 1 more"), which would make weights on cards unnecessary.
 
 - [ ] **A different look per step type on the workout page:** timed, rep and rest steps could each have their own look or motion (e.g. the "Next:" line rising into the ring and becoming the new label). The slides are in (`workout-motion.scss`), so this can be picked up whenever Dan wants.
 

@@ -77,8 +77,8 @@ describe('WorkoutCardComponent', () => {
         );
     });
 
-    it('sums up a round of several steps by their count and total time', () => {
-        set({ workout: { ...sprints, steps: [work(30, 'Squats'), work(45), rest(20)] } });
+    it('sums up an unnamed round of several steps by their count and total time', () => {
+        set({ workout: { ...sprints, steps: [work(30), work(45), rest(20)] } });
 
         expect(el('.workout-card__summary').textContent).toContain('3 steps · 01:35 x 4');
         expect(el('.workout-card__summary').getAttribute('aria-label')).toBe(
@@ -86,12 +86,33 @@ describe('WorkoutCardComponent', () => {
         );
     });
 
-    it('adds "+ reps" to the time of a round with rep steps, as they take as long as they take', () => {
-        set({ workout: { ...sprints, steps: [work(30), reps(20, 'Push-ups'), rest(20)] } });
+    it('adds "+ reps" to the time of an unnamed round with rep steps', () => {
+        set({ workout: { ...sprints, steps: [work(30), reps(20), rest(20)] } });
 
         expect(el('.workout-card__summary').textContent).toContain('3 steps · 00:50 + reps x 4');
         expect(el('.workout-card__summary').getAttribute('aria-label')).toBe(
             '3 steps, 00:50 a round plus reps, repeated 4 times'
+        );
+    });
+
+    it('lists the named exercises in the round when the workout has them', () => {
+        set({
+            workout: {
+                ...sprints,
+                steps: [
+                    work(30, 'Squats'),
+                    reps(20, 'Bench press'),
+                    work(25, 'Deadlifts'),
+                    rest(20),
+                ],
+            },
+        });
+
+        expect(el('.workout-card__summary').textContent).toContain(
+            'Squats, Bench press + 1 more x 4'
+        );
+        expect(el('.workout-card__summary').getAttribute('aria-label')).toBe(
+            'Squats, Bench press + 1 more, repeated 4 times'
         );
     });
 
