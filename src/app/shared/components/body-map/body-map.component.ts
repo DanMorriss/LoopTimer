@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, output } from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { MUSCLE_LABELS, MuscleGroup } from '../../../models/exercise';
 import { SettingsStore } from '../../state/settings-store.service';
 import { BODY_FIGURES } from './body-shapes';
@@ -28,10 +28,13 @@ export class BodyMapComponent {
     /** Muscles that help or hold steady. A muscle in both counts as main. */
     readonly supporting = input<readonly MuscleGroup[]>([]);
     readonly tappable = input(false);
+    readonly removableLabels = input(false);
     readonly muscleTapped = output<MuscleGroup>();
+    readonly muscleCleared = output<MuscleGroup>();
 
     private readonly settings = inject(SettingsStore);
     protected readonly id = `body-map-${nextId++}`;
+    protected readonly hoveredMuscle = signal<MuscleGroup | null>(null);
 
     protected readonly sides = computed(() => {
         const figure = BODY_FIGURES[this.settings.bodyFigure()];
@@ -50,9 +53,11 @@ export class BodyMapComponent {
             name: side === 'front' ? 'Front' : 'Back',
             viewBox: figure[side].viewBox,
             outline: figure[side].outline,
-            paths: figure[side].shapes.flatMap((shape) =>
-                shape.paths.map((d) => ({ d, muscle: shape.muscle, shade: shadeOf(shape.muscle) }))
-            ),
+            shapes: figure[side].shapes.map((shape) => ({
+                muscle: shape.muscle,
+                shade: shadeOf(shape.muscle),
+                paths: shape.paths,
+            })),
         }));
     });
 
@@ -60,6 +65,44 @@ export class BodyMapComponent {
     protected readonly supportingLabels = computed(() =>
         labels(this.supporting().filter((muscle) => !this.main().includes(muscle)))
     );
+
+    protected readonly mainList = computed(() => [...new Set(this.main())]);
+    protected readonly supportingList = computed(() =>
+        [...new Set(this.supporting())].filter((muscle) => !this.main().includes(muscle))
+    );
+
+    protected muscleLabel(muscle: MuscleGroup): string {
+        return MUSCLE_LABELS[muscle];
+    }
+
+    protected toggleByKey(event: KeyboardEvent, muscle: MuscleGroup | null): void {
+        if (!this.tappable() || muscle === null || (event.key !== 'Enter' && event.key !== ' ')) {
+            return;
+        }
+        event.preventDefault();
+        this.muscleTapped.emit(muscle);
+    }
+
+    protected tapMuscle(muscle: MuscleGroup | null): void {
+        if (!this.tappable() || muscle === null) {
+            return;
+        }
+        this.muscleTapped.emit(muscle);
+    }
+
+    protected clearMuscle(muscle: MuscleGroup): void {
+        if (!this.removableLabels()) {
+            return;
+        }
+        this.muscleCleared.emit(muscle);
+    }
+
+    protected setHover(muscle: MuscleGroup | null): void {
+        if (!this.tappable()) {
+            return;
+        }
+        this.hoveredMuscle.set(muscle);
+    }
 }
 
 function labels(muscles: readonly MuscleGroup[]): string[] {

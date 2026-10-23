@@ -124,6 +124,58 @@ describe('ExerciseListComponent', () => {
         expect(button('Shins').getAttribute('aria-pressed')).toBe('false');
     });
 
+    it('picks muscles from the body map and keeps chips and URL in sync', async () => {
+        await create();
+
+        const shapeFor = (muscle: string) => {
+            const label = `Toggle ${muscle.charAt(0).toUpperCase()}${muscle.slice(1)}`;
+            return el().querySelector(`[aria-label="${label}"]`) as SVGPathElement;
+        };
+
+        shapeFor('quads').dispatchEvent(new MouseEvent('click'));
+        await render();
+
+        expect(button('Quads').getAttribute('aria-pressed')).toBe('true');
+        const firstCard = el().querySelector('.exercise-card') as HTMLAnchorElement;
+        expect(firstCard.getAttribute('href')).toContain('?muscles=quads');
+
+        button('Quads').click();
+        await render();
+
+        const quadsShape = shapeFor('quads');
+        expect(button('Quads').getAttribute('aria-pressed')).toBe('false');
+        expect(quadsShape.getAttribute('aria-pressed')).toBe('false');
+    });
+
+    it('does not let the map pick abductors (no shape yet)', async () => {
+        await create();
+
+        const abort =
+            (el().querySelector('[aria-label="Toggle Abductors"]') as SVGPathElement) ?? null;
+        expect(abort).toBeNull();
+
+        expect(button('Abductors').getAttribute('aria-pressed')).toBe('false');
+    });
+
+    it('can de-select from the body-map selected-muscle list', async () => {
+        await create();
+
+        const shapeFor = (muscle: string) => {
+            const label = `Toggle ${muscle.charAt(0).toUpperCase()}${muscle.slice(1)}`;
+            return el().querySelector(`[aria-label="${label}"]`) as SVGPathElement;
+        };
+
+        shapeFor('quads').dispatchEvent(new MouseEvent('click'));
+        await render();
+        expect(button('Quads').getAttribute('aria-pressed')).toBe('true');
+
+        const remove = el().querySelector('button[aria-label="Remove Quads"]') as HTMLButtonElement;
+        remove.click();
+        await render();
+
+        expect(button('Quads').getAttribute('aria-pressed')).toBe('false');
+    });
+
     it('shows only what you can do with your equipment, remembered', async () => {
         await create();
         el().querySelector<HTMLButtonElement>('.exercises__kit-edit')!.click();

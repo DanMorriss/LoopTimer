@@ -108,6 +108,16 @@
             }
         </div>
 
+        <section class="exercises__map" aria-label="Pick muscles on body map">
+            <app-body-map
+                [main]="selectedMuscles()"
+                [tappable]="true"
+                [removableLabels]="true"
+                (muscleTapped)="pickFromMap($event)"
+                (muscleCleared)="pickMuscle($event)"
+            />
+        </section>
+
         <p class="exercises__count" role="status">
             {{ shown().length }} {{ shown().length === 1 ? 'exercise' : 'exercises' }}
         </p>

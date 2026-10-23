@@ -53,6 +53,17 @@
         &:hover {
             stroke: var(--accent);
         }
+
+        &:focus-visible {
+            stroke: var(--accent);
+            stroke-width: 2;
+            outline: none;
+        }
+    }
+
+    &--hovered {
+        stroke: var(--accent);
+        stroke-width: 2;
     }
 }
 
@@ -87,6 +98,9 @@
 }
 
 .body-map__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
     padding: 0.4rem 0.85rem;
     border-radius: 999px;
     font-size: 0.875rem;
@@ -99,5 +113,30 @@
     &--supporting {
         background: var(--muscle-supporting);
         color: var(--muscle-supporting-ink);
+    }
+}
+
+.body-map__remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1rem;
+    height: 1rem;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: currentColor;
+    font: inherit;
+    font-size: 0.75rem;
+    line-height: 1;
+    cursor: pointer;
+
+    &:hover {
+        background: color-mix(in oklab, currentColor 16%, transparent);
+    }
+
+    &:focus-visible {
+        outline: 2px solid currentColor;
+        outline-offset: 2px;
     }
 }
