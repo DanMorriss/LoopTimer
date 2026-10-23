@@ -45,6 +45,24 @@ export class WorkoutCardComponent {
      */
     protected readonly summary = computed(() => {
         const steps = this.workout().steps;
+        const namedExercises: string[] = [];
+        for (const step of steps) {
+            if (step.kind === 'rest') continue;
+            const name = step.name.trim();
+            if (name && !namedExercises.includes(name)) {
+                namedExercises.push(name);
+            }
+        }
+        if (namedExercises.length > 0) {
+            const preview = namedExercises.slice(0, 2);
+            const remainder = namedExercises.length - preview.length;
+            const text =
+                remainder > 0
+                    ? `${preview.join(', ')} + ${remainder} more`
+                    : preview.join(', ');
+            return { text, spoken: text };
+        }
+
         const [first, second] = steps;
         if (steps.length <= 2 && first.kind === 'work' && (!second || second.kind === 'rest')) {
             const work = clock(first.seconds);
