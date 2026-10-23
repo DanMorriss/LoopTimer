@@ -91,8 +91,8 @@
             <button
                 type="button"
                 class="exercises__chip"
-                [attr.aria-pressed]="muscle() === null"
-                (click)="pickMuscle(null)"
+                [attr.aria-pressed]="selectedMuscles().length === 0"
+                (click)="clearMuscles()"
             >
                 All muscles
             </button>
@@ -100,7 +100,7 @@
                 <button
                     type="button"
                     class="exercises__chip"
-                    [attr.aria-pressed]="muscle() === m"
+                    [attr.aria-pressed]="selectedMuscles().includes(m)"
                     (click)="pickMuscle(m)"
                 >
                     {{ muscleLabels[m] }}

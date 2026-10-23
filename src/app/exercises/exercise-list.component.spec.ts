@@ -90,22 +90,38 @@ describe('ExerciseListComponent', () => {
         );
     });
 
-    it('cuts the list down to one main muscle', async () => {
+    it('cuts the list down to any picked main muscle, toggling each chip', async () => {
         await create();
 
         button('Calves').click();
+        button('Shins').click();
         await render();
 
         expect(names().length).toBeGreaterThan(0);
         for (const name of names()) {
             const exercise = BUILT_IN_EXERCISES.find((e) => e.name === name)!;
-            expect(exercise.mainMuscles).toContain('calves');
+            expect(
+                exercise.mainMuscles.includes('calves') || exercise.mainMuscles.includes('shins')
+            ).toBe(true);
         }
         expect(button('Calves').getAttribute('aria-pressed')).toBe('true');
+        expect(button('Shins').getAttribute('aria-pressed')).toBe('true');
         expect(button('All muscles').getAttribute('aria-pressed')).toBe('false');
 
         const firstCard = el().querySelector('.exercise-card') as HTMLAnchorElement;
-        expect(firstCard.getAttribute('href')).toContain('?muscles=calves');
+        expect(firstCard.getAttribute('href')).toContain('?muscles=calves,shins');
+
+        button('Calves').click();
+        await render();
+
+        expect(button('Calves').getAttribute('aria-pressed')).toBe('false');
+        expect(button('Shins').getAttribute('aria-pressed')).toBe('true');
+
+        button('All muscles').click();
+        await render();
+
+        expect(button('All muscles').getAttribute('aria-pressed')).toBe('true');
+        expect(button('Shins').getAttribute('aria-pressed')).toBe('false');
     });
 
     it('shows only what you can do with your equipment, remembered', async () => {
