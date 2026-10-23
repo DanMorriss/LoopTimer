@@ -139,7 +139,9 @@ export class ExerciseListComponent {
     });
 
     constructor() {
-        this.selectedMuscles.set(parseMusclesParam(this.route.snapshot.queryParamMap.get('muscles')));
+        this.selectedMuscles.set(
+            parseMusclesParam(this.route.snapshot.queryParamMap.get('muscles'))
+        );
     }
 
     protected readonly shown = computed(() =>
