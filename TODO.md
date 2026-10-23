@@ -12,7 +12,7 @@ Do these first: everything after builds on them. The data is ready for sync (#81
 
 Making it clearer which part of the workout is happening, as agreed with Dan on 2026-10-22, is done: Pause and End workout (Stop is gone from the running screen), the workout summary (RUN-7) with Back to workout and "Use these settings next time?", "Next:" pulsing in a step's last seconds, and each step sliding in like the number wheels (sideways for a new round). A different look per step type is under Design. Next:
 
-- [ ] **Last time (PRG-1):** on each rep step, "Last time: 10, 10, 8 @ 60 kg".
+- [x] **Last time (PRG-1):** on each rep step, "Last time: 10, 10, 8 @ 60 kg".
 - [ ] **Personal bests (PRG-2):** called out on the workout summary (RUN-7), which has room left for them.
 
 ### Phase 3: Progress pages
