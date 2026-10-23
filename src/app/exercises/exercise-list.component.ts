@@ -61,7 +61,7 @@ const MUSCLES = Object.keys(MUSCLE_LABELS) as MuscleGroup[];
 
 /**
  * Every exercise, built-in and your own, to browse and search (EXR-6). The list can be cut
- * down to one main muscle, and to what you can do with your equipment, which is remembered.
+ * down to picked main muscles, and to what you can do with your equipment, which is remembered.
  * Hidden exercises are kept apart at the end. New makes an exercise of your own.
  */
 @Component({
@@ -90,12 +90,8 @@ export class ExerciseListComponent {
     protected readonly equipmentLabel = equipmentLabel;
 
     protected readonly query = signal('');
-    /** The main muscle the list is cut down to, or null for all. */
-    protected readonly muscle = signal<MuscleGroup | null>(null);
-    protected readonly selectedMuscles = computed(() => {
-        const muscle = this.muscle();
-        return muscle === null ? [] : [muscle];
-    });
+    /** Main muscles the list is cut down to, or empty for all. */
+    protected readonly selectedMuscles = signal<MuscleGroup[]>([]);
     protected readonly muscleQueryParams = computed(() => {
         const muscles = serialiseMusclesParam(this.selectedMuscles());
         return muscles ? { muscles } : {};
@@ -114,7 +110,7 @@ export class ExerciseListComponent {
 
     /** Best match first while searching, otherwise A to Z. */
     private readonly found = computed(() => {
-        const muscle = this.muscle();
+        const selected = this.selectedMuscles();
         const kit = this.myEquipment();
         const typed = this.query().trim();
         const all = this.exercises.exercises();
@@ -127,7 +123,8 @@ export class ExerciseListComponent {
         return matches
             .filter(
                 ({ exercise }) =>
-                    (muscle === null || exercise.mainMuscles.includes(muscle)) &&
+                    (selected.length === 0 ||
+                        selected.some((muscle) => exercise.mainMuscles.includes(muscle))) &&
                     (!this.onlyMyEquipment() || canDoWith(exercise, kit))
             )
             .map(({ exercise, otherName }) =>
@@ -142,8 +139,9 @@ export class ExerciseListComponent {
     });
 
     constructor() {
-        const picked = parseMusclesParam(this.route.snapshot.queryParamMap.get('muscles'));
-        this.muscle.set(picked[0] ?? null);
+        this.selectedMuscles.set(
+            parseMusclesParam(this.route.snapshot.queryParamMap.get('muscles'))
+        );
     }
 
     protected readonly shown = computed(() =>
@@ -153,7 +151,10 @@ export class ExerciseListComponent {
         this.found().filter((c) => this.exercises.isHidden(c.exercise.id))
     );
     protected readonly filtered = computed(
-        () => this.query().trim() !== '' || this.muscle() !== null || this.onlyMyEquipment()
+        () =>
+            this.query().trim() !== '' ||
+            this.selectedMuscles().length > 0 ||
+            this.onlyMyEquipment()
     );
     protected readonly kitSummary = computed(() => {
         const count = this.myEquipment().length;
@@ -167,11 +168,24 @@ export class ExerciseListComponent {
         this.query.set((event.target as HTMLInputElement).value);
     }
 
-    protected pickMuscle(muscle: MuscleGroup | null) {
-        this.muscle.set(muscle);
+    protected pickMuscle(muscle: MuscleGroup) {
+        const next = this.selectedMuscles().includes(muscle)
+            ? this.selectedMuscles().filter((picked) => picked !== muscle)
+            : [...this.selectedMuscles(), muscle];
+        this.selectedMuscles.set(next);
         void this.router.navigate([], {
             relativeTo: this.route,
-            queryParams: { muscles: serialiseMusclesParam(muscle === null ? [] : [muscle]) },
+            queryParams: { muscles: serialiseMusclesParam(next) },
+            queryParamsHandling: 'merge',
+            replaceUrl: true,
+        });
+    }
+
+    protected clearMuscles() {
+        this.selectedMuscles.set([]);
+        void this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: { muscles: null },
             queryParamsHandling: 'merge',
             replaceUrl: true,
         });
@@ -195,7 +209,7 @@ export class ExerciseListComponent {
 
     protected clearFilters() {
         this.query.set('');
-        this.pickMuscle(null);
+        this.clearMuscles();
         this.setOnlyMine(false);
     }
 
