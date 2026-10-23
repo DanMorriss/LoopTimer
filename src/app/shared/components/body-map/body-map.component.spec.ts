@@ -60,7 +60,7 @@ describe('BodyMapComponent', () => {
         expect(labels('supporting')).toEqual(['Hamstrings', 'Lower back']);
     });
 
-    it('hides the drawing from screen readers, and labels each list', () => {
+    it('hides the drawing from screen readers when not tappable, and labels each list', () => {
         create(['chest'], ['triceps']);
 
         expect(el().querySelector('.body-map__figures')!.getAttribute('aria-hidden')).toBe('true');
@@ -160,5 +160,101 @@ describe('BodyMapComponent', () => {
         quads().dispatchEvent(new MouseEvent('click'));
         expect(tapped).toEqual(['quads']);
         expect(quads().classList).toContain('body-map__shape--tappable');
+    });
+
+    it('makes tappable shapes keyboard reachable and labelled', () => {
+        create(['quads']);
+
+        const shape = () => {
+            const index = BODY_FIGURES.male.front.shapes.findIndex((s) => s.muscle === 'quads');
+            const before = BODY_FIGURES.male.front.shapes
+                .slice(0, index)
+                .reduce((total, bodyShape) => total + bodyShape.paths.length, 0);
+            return el().querySelectorAll('.body-map__shape')[before] as SVGPathElement;
+        };
+
+        fixture.componentRef.setInput('tappable', true);
+        fixture.detectChanges();
+
+        expect(el().querySelector('.body-map__figures')!.getAttribute('aria-hidden')).toBeNull();
+        expect(shape().getAttribute('role')).toBe('button');
+        expect(shape().getAttribute('tabindex')).toBe('0');
+        expect(shape().getAttribute('aria-label')).toBe('Toggle Quads');
+        expect(shape().getAttribute('aria-pressed')).toBe('true');
+    });
+
+    it('toggles a tappable shape with Enter or Space', () => {
+        create([]);
+        const tapped: MuscleGroup[] = [];
+        fixture.componentInstance.muscleTapped.subscribe((m) => tapped.push(m));
+        const quads = () => {
+            const index = BODY_FIGURES.male.front.shapes.findIndex((s) => s.muscle === 'quads');
+            const before = BODY_FIGURES.male.front.shapes
+                .slice(0, index)
+                .reduce((total, shape) => total + shape.paths.length, 0);
+            return el().querySelectorAll('.body-map__shape')[before] as SVGPathElement;
+        };
+
+        fixture.componentRef.setInput('tappable', true);
+        fixture.detectChanges();
+
+        quads().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+        quads().dispatchEvent(new KeyboardEvent('keydown', { key: ' ' }));
+        quads().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+
+        expect(tapped).toEqual(['quads', 'quads']);
+    });
+
+    it('highlights every path in a muscle group when one of its paths is hovered', () => {
+        create(['abs']);
+        fixture.componentRef.setInput('tappable', true);
+        fixture.detectChanges();
+
+        const absShapeIndex = BODY_FIGURES.male.front.shapes.findIndex((s) => s.muscle === 'abs');
+        const absPathsBefore = BODY_FIGURES.male.front.shapes
+            .slice(0, absShapeIndex)
+            .reduce((total, shape) => total + shape.paths.length, 0);
+        const absPath = el().querySelectorAll('.body-map__shape')[absPathsBefore] as SVGPathElement;
+
+        absPath.dispatchEvent(new MouseEvent('mouseenter'));
+        fixture.detectChanges();
+
+        const highlighted = el().querySelectorAll('.body-map__shape--hovered').length;
+        expect(highlighted).toBe(pathsFor(['abs']));
+    });
+
+    it('can remove a listed muscle when removable labels are enabled', () => {
+        create(['quads'], ['hamstrings']);
+        const removed: MuscleGroup[] = [];
+        fixture.componentInstance.muscleCleared.subscribe((muscle) => removed.push(muscle));
+
+        fixture.componentRef.setInput('removableLabels', true);
+        fixture.detectChanges();
+
+        const removeQuads = el().querySelector(
+            'button[aria-label="Remove Quads"]'
+        ) as HTMLButtonElement;
+        removeQuads.click();
+
+        expect(removed).toEqual(['quads']);
+    });
+
+    it('maps each shape path to exactly one muscle group id (no overlaps)', () => {
+        const labels = new Set<string>();
+
+        for (const figure of ['male', 'female'] as const) {
+            for (const side of ['front', 'back'] as const) {
+                for (const shape of BODY_FIGURES[figure][side].shapes) {
+                    if (shape.muscle === null) {
+                        continue;
+                    }
+                    for (const path of shape.paths) {
+                        const key = `${figure}:${side}:${path}`;
+                        expect(labels.has(key)).toBe(false);
+                        labels.add(key);
+                    }
+                }
+            }
+        }
     });
 });

@@ -4,6 +4,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ExerciseEditorComponent } from '../shared/components/exercise-editor/exercise-editor.component';
 import { ToggleSwitchComponent } from '../shared/components/toggle-switch/toggle-switch.component';
+import { BodyMapComponent } from '../shared/components/body-map/body-map.component';
 import {
     canDoWith,
     capitalise,
@@ -72,6 +73,7 @@ const MUSCLES = Object.keys(MUSCLE_LABELS) as MuscleGroup[];
         NgTemplateOutlet,
         RouterLink,
         ToggleSwitchComponent,
+        BodyMapComponent,
         ExerciseEditorComponent,
     ],
     templateUrl: './exercise-list.component.html',
@@ -172,20 +174,26 @@ export class ExerciseListComponent {
         const next = this.selectedMuscles().includes(muscle)
             ? this.selectedMuscles().filter((picked) => picked !== muscle)
             : [...this.selectedMuscles(), muscle];
+        this.setMuscles(next);
+    }
+
+    protected clearMuscles() {
+        this.setMuscles([]);
+    }
+
+    protected pickFromMap(muscle: MuscleGroup) {
+        // The current body map has no abductors shape, so map picks can't include it yet.
+        if (muscle === 'abductors') {
+            return;
+        }
+        this.pickMuscle(muscle);
+    }
+
+    private setMuscles(next: MuscleGroup[]) {
         this.selectedMuscles.set(next);
         void this.router.navigate([], {
             relativeTo: this.route,
             queryParams: { muscles: serialiseMusclesParam(next) },
-            queryParamsHandling: 'merge',
-            replaceUrl: true,
-        });
-    }
-
-    protected clearMuscles() {
-        this.selectedMuscles.set([]);
-        void this.router.navigate([], {
-            relativeTo: this.route,
-            queryParams: { muscles: null },
             queryParamsHandling: 'merge',
             replaceUrl: true,
         });
