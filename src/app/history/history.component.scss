@@ -19,6 +19,29 @@
     text-align: center;
 }
 
+.history__muscles {
+    margin: 0 0 1.25rem;
+    padding: 1rem;
+    border: 1px solid var(--panel-border);
+    border-radius: 0.9rem;
+    background: var(--panel-alt);
+}
+
+.history__muscles-title {
+    margin: 0 0 0.75rem;
+    font-family: 'Audiowide', sans-serif;
+    color: var(--text-strong);
+    font-size: 1rem;
+    text-align: center;
+}
+
+.history__muscles-most {
+    margin: 0.75rem 0 0;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    text-align: center;
+}
+
 .history__day + .history__day {
     margin-top: 1.25rem;
 }

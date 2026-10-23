@@ -2107,6 +2107,55 @@ describe('WorkoutComponent', () => {
             return vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
         }
 
+        it('calls out a new personal best on the workout summary', () => {
+            const history = TestBed.inject(HistoryStore);
+            history.record({
+                id: 'old-run',
+                workoutId: 'old-workout',
+                title: 'Old bench',
+                startedAt: Date.now() - 10 * 60 * 1000,
+                endedAt: Date.now() - 9 * 60 * 1000,
+                activeSeconds: 600,
+                roundsCompleted: 1,
+                totalRounds: 1,
+                outcome: 'finished',
+                sets: [
+                    {
+                        round: 0,
+                        step: 0,
+                        name: 'Bench press',
+                        reps: 5,
+                        weight: 80,
+                        exerciseId: 'builtin:barbell-bench-press',
+                    },
+                ],
+            });
+
+            start(
+                makeWorkout({
+                    steps: [
+                        work(2),
+                        {
+                            kind: 'reps',
+                            reps: 5,
+                            name: 'Bench press',
+                            weight: 100,
+                            exerciseId: 'builtin:barbell-bench-press',
+                        } as const,
+                    ],
+                    repeats: 1,
+                })
+            );
+            advance(2000);
+            (fixture.nativeElement.querySelector('[aria-label="Done"]') as HTMLElement).click();
+            fixture.detectChanges();
+
+            expect(component.summaryOpen()).toBe(true);
+            expect(summaryText()).toContain('Personal bests');
+            expect(summaryText()).toContain('Heaviest: 100 kg × 5');
+            fixture.destroy();
+        });
+
         it('sums up a workout ended early, logged as stopped, with focus on its heading', () => {
             endInRound2();
             TestBed.tick();
