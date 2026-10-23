@@ -40,6 +40,14 @@ Timed sets are logged now (a set per timed work step of an exercise that runs to
 - [ ] **Alarm order setting (ALM-4):** pick which sound plays for each step, with a preview. Needs the sound files first.
 - [ ] **Alarms on a locked phone:** iPhones suspend web audio when locked, so the beeps stop if the phone is locked by hand ("Keep screen on" stops it locking by itself). Scheduled notifications aren't possible on iOS (no Notification Triggers), and server push needs a backend (possible once Phase 4 adds one). Tried (PR #64, taken out again): playing the beeps as an `<audio>` track made on the spot, unlocked with a moment of silence on the first tap and shown on the lock screen via Media Session. In Safari on an iPhone it was silent once locked, so don't repeat it as it was. Parked for now (ALM-2 in `docs/features/alarms.md`).
 
+### Exercises list (any time)
+
+Filtering the Exercises list (EXR-6) by muscle, asked for by Dan on 2026-10-23:
+
+- [ ] **Keep the muscle filter when coming back:** pick a muscle, open an exercise, then go back with the "Exercises" link at the top left, and the same muscles are still picked. Keeping the filter in the address (e.g. `/exercises?muscles=quads,glutes`) would make the browser's Back button keep it too, and the search could go there as well.
+- [ ] **Pick more than one muscle:** the pills toggle on and off, with "All muscles" clearing them. Draft: an exercise shows if any of the picked muscles is one of its main ones.
+- [ ] **Pick muscles on the body map:** tapping a muscle on the figure picks it, the same as its pill, and the picked muscles are shaded on the figure, so the pills and the figure always match. The figure needs tappable, keyboard-reachable shapes with names for screen readers; the abductors can't be picked there until the body map has them (see Known issues).
+
 ## 2. Design
 
 - [ ] **Weights on library cards:** a card sums up a round (e.g. "4 steps · 01:30 + reps") rather than listing steps. Now that they're workouts (EXR-5), a workout card could list its exercises (e.g. "Squats, Bench press + 1 more"), which would make weights on cards unnecessary.
