@@ -11,13 +11,13 @@ import { Component, input, output } from '@angular/core';
     styleUrl: './confirm-dialog.component.scss',
     template: `
         <div
-            class="confirm-overlay"
+            class="confirm-overlay dialog-overlay"
             role="presentation"
             (click)="cancelled.emit()"
             (keydown.escape)="cancelled.emit()"
         >
             <div
-                class="confirm-dialog"
+                class="confirm-dialog dialog-card"
                 cdkTrapFocus
                 [cdkTrapFocusAutoCapture]="true"
                 role="dialog"

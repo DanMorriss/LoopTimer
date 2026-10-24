@@ -549,6 +549,7 @@
 
 @if (stepPendingDelete(); as pending) {
     <app-confirm-dialog
+        animate.leave="dialog-leave"
         title="Delete step?"
         (cancelled)="cancelDeleteStep()"
         (confirmed)="confirmDeleteStep()"
@@ -559,6 +560,7 @@
 
 @if (exerciseInDetails(); as opened) {
     <app-exercise-details-dialog
+        animate.leave="dialog-leave"
         [exercise]="opened.exercise"
         (closed)="closeDetails()"
         (pickAnother)="pickAnother()"
@@ -567,6 +569,7 @@
 
 @if (exerciseInEditor(); as opened) {
     <app-exercise-editor
+        animate.leave="dialog-leave"
         [exercise]="opened.exercise"
         (closed)="closeExercise()"
         (saved)="exerciseSaved($event)"

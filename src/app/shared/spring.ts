@@ -5,7 +5,19 @@ export interface SpringTiming {
     duration: number;
 }
 
-/** Where the curve counts as settled: 0.1% from its end. */
+export interface SpringOptions {
+    /**
+     * How fast it's already moving as it starts, as a fraction of the distance to go per
+     * second: e.g. a finger moving 500px/s with 250px left is 2. Hands a gesture's speed on to
+     * the spring, so there's no seam where the drag lets go. A fast enough start carries it a
+     * little past the end before it settles.
+     */
+    velocity?: number;
+    /** The easing for browsers without `linear()` easings, over the same time. */
+    fallback?: string;
+}
+
+/** Where the curve counts as settled: 0.1% from its end, and all but still. */
 const SETTLED = 0.001;
 
 /** Points along the curve: plenty for a smooth line, few enough to keep the easing short. */
@@ -13,24 +25,29 @@ const SAMPLES = 40;
 
 /**
  * A spring as a CSS `linear()` easing, for motion that should settle like something real
- * rather than follow a fixed curve. Critically damped, so it never overshoots: Apple's
- * default for moving things about (damping 1). `response` is how quickly it gets there, in
- * seconds (Apple uses 0.4 to reposition something); it has no fixed length, so the duration
- * is when it has settled.
- *
- * Browsers without `linear()` easings get `fallback` over the same time.
+ * rather than follow a fixed curve. Critically damped, so from rest it never overshoots:
+ * Apple's default for moving things about (damping 1). `response` is how quickly it gets
+ * there, in seconds (Apple uses 0.4 to reposition something); it has no fixed length, so the
+ * duration is when it has settled.
  */
 export function criticallyDampedSpring(
     response = 0.4,
-    fallback = 'cubic-bezier(0.22, 1, 0.36, 1)'
+    { velocity = 0, fallback = 'cubic-bezier(0.22, 1, 0.36, 1)' }: SpringOptions = {}
 ): SpringTiming {
-    // A spring with mass 1 and stiffness (2π / response)², critically damped
+    // A spring with mass 1 and stiffness (2π / response)², critically damped, starting at 0
+    // and moving at `velocity`: p(t) = 1 - (1 + (ω - v)t)e^(-ωt), so p'(0) = v
     const omega = (2 * Math.PI) / response;
-    const progress = (t: number) => 1 - (1 + omega * t) * Math.exp(-omega * t);
+    const a = omega - velocity;
+    const progress = (t: number) => 1 - (1 + a * t) * Math.exp(-omega * t);
+    const speed = (t: number) => (velocity + omega * a * t) * Math.exp(-omega * t);
 
-    // Step out until it's within SETTLED of the end
+    // Step out until it's close to the end and all but still (with a start fast enough to
+    // carry it past, it's close to the end on the way through too)
     let settledAt = 0;
-    while (1 - progress(settledAt) > SETTLED) {
+    while (
+        Math.abs(1 - progress(settledAt)) > SETTLED ||
+        Math.abs(speed(settledAt)) > SETTLED * omega
+    ) {
         settledAt += 0.001;
     }
 

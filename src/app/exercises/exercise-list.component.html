@@ -213,6 +213,7 @@
 
 @if (drafting()) {
     <app-exercise-editor
+        animate.leave="dialog-leave"
         [exercise]="draft"
         [isNew]="true"
         (closed)="closeDraft()"

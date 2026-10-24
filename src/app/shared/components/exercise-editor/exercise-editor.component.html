@@ -1,6 +1,11 @@
-<div class="editor-overlay" role="presentation" (click)="cancel()" (keydown.escape)="cancel()">
+<div
+    class="editor-overlay dialog-overlay"
+    role="presentation"
+    (click)="cancel()"
+    (keydown.escape)="cancel()"
+>
     <div
-        class="editor"
+        class="editor dialog-card"
         cdkTrapFocus
         [cdkTrapFocusAutoCapture]="true"
         role="dialog"

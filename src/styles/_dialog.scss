@@ -1,0 +1,70 @@
+// Dialogs over the page (confirm, the exercise editor, an exercise's details): the page dims
+// and blurs behind as the card settles into place from just smaller, on the app's spring, and
+// closing goes back the way it came. In a dialog's template, the overlay is .dialog-overlay
+// and the card .dialog-card; where it's used, the dialog's element has
+// animate.leave="dialog-leave", which keeps it on the page while it goes.
+
+.dialog-overlay {
+    animation: dialog-dim-in 0.2s ease-out;
+}
+
+.dialog-card {
+    animation: dialog-card-in var(--spring-duration) var(--ease-spring);
+}
+
+// Angular keeps the dialog for as long as its own element animates, so it carries an
+// animation that changes nothing, as long as the overlay's. The overlay fades itself rather
+// than the dialog's element fading it: an ancestor part-faded would cut its blur off from the
+// page behind it, so the blur would vanish at the start of every close.
+.dialog-leave {
+    animation: dialog-leaving 0.16s;
+}
+
+// On its way out it's done with, so taps go straight through to the page
+.dialog-leave .dialog-overlay {
+    animation: dialog-dim-out 0.16s ease-in forwards;
+    pointer-events: none;
+}
+
+.dialog-leave .dialog-card {
+    animation: dialog-card-out 0.16s ease-in forwards;
+}
+
+@keyframes dialog-dim-in {
+    from {
+        opacity: 0;
+    }
+}
+
+@keyframes dialog-dim-out {
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes dialog-card-in {
+    from {
+        transform: scale(0.96);
+    }
+}
+
+@keyframes dialog-card-out {
+    to {
+        transform: scale(0.96);
+    }
+}
+
+@keyframes dialog-leaving {
+    to {
+        visibility: visible;
+    }
+}
+
+// With reduced motion the card doesn't grow or shrink; the dimming still fades, as it helps
+// to see what's happened
+@media (prefers-reduced-motion: reduce) {
+    .dialog-card,
+    .dialog-leave .dialog-card {
+        animation: none;
+    }
+}

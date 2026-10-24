@@ -1,5 +1,14 @@
 import { CdkTrapFocus } from '@angular/cdk/a11y';
-import { Component, computed, inject, linkedSignal, output, signal } from '@angular/core';
+import {
+    Component,
+    computed,
+    ElementRef,
+    inject,
+    linkedSignal,
+    output,
+    signal,
+    viewChild,
+} from '@angular/core';
 import { form, FormField, maxLength } from '@angular/forms/signals';
 import { MatIconModule } from '@angular/material/icon';
 import { isBuiltIn } from '../../models/exercise';
@@ -26,6 +35,9 @@ import {
     formatDuration,
 } from '../../history/history-format';
 import { bestLines } from '../../exercises/progress-format';
+import { project, rubberband, VelocityTracker } from '../../shared/gesture';
+import { injectPrefersReducedMotion } from '../../shared/reduced-motion';
+import { criticallyDampedSpring } from '../../shared/spring';
 
 /** One rep step's sets, for correcting them one by one. */
 interface SetGroup {
@@ -45,6 +57,7 @@ interface SetGroup {
     imports: [CdkTrapFocus, FormField, MatIconModule, WheelPickerComponent],
     templateUrl: './workout-summary.component.html',
     styleUrl: './workout-summary.component.scss',
+    host: { '[class.summary--dragged-away]': 'draggedAway()' },
 })
 export class WorkoutSummaryComponent {
     private readonly run = inject(ActiveRunService);
@@ -224,5 +237,120 @@ export class WorkoutSummaryComponent {
         if (!this.finished()) {
             this.leave('back');
         }
+    }
+
+    // Dragging the sheet down by its grabber, on a phone, to go back to the workout. It follows
+    // the finger 1:1 from where it was grabbed, resists being pulled up (rubber-banding), and
+    // on letting go the flick decides: projected past halfway, it carries on down at the
+    // finger's speed and goes back; otherwise it springs home, also from the finger's speed.
+    // It can be grabbed again mid-spring, from wherever it is.
+
+    private readonly sheet = viewChild.required<ElementRef<HTMLElement>>('sheet');
+    private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+    private readonly reducedMotion = injectPrefersReducedMotion();
+    /** Gone by dragging, so it doesn't play its closing animation on top. */
+    protected readonly draggedAway = signal(false);
+    private dragging: {
+        pointerId: number;
+        startY: number;
+        startOffset: number;
+        offset: number;
+        tracker: VelocityTracker;
+    } | null = null;
+
+    protected grab(event: PointerEvent) {
+        if (event.pointerType === 'mouse' && event.button !== 0) {
+            return;
+        }
+        const sheet = this.sheet().nativeElement;
+        // Where it is on screen now, mid-spring included, and stop it there
+        const offset = new DOMMatrix(getComputedStyle(sheet).transform).m42;
+        this.host.nativeElement
+            .getAnimations({ subtree: true })
+            .forEach((animation) => animation.cancel());
+        this.moveTo(offset);
+        (event.currentTarget as Element).setPointerCapture(event.pointerId);
+        const tracker = new VelocityTracker();
+        tracker.add(offset, event.timeStamp);
+        this.dragging = {
+            pointerId: event.pointerId,
+            startY: event.clientY,
+            startOffset: offset,
+            offset,
+            tracker,
+        };
+    }
+
+    protected drag(event: PointerEvent) {
+        const dragging = this.dragging;
+        if (!dragging || event.pointerId !== dragging.pointerId) {
+            return;
+        }
+        const pulled = dragging.startOffset + event.clientY - dragging.startY;
+        // Down follows the finger; up, past where it sits, resists more the further it goes
+        const offset = pulled < 0 ? rubberband(pulled, this.height()) : pulled;
+        dragging.offset = offset;
+        dragging.tracker.add(offset, event.timeStamp);
+        this.moveTo(offset);
+    }
+
+    protected async letGo(event: PointerEvent) {
+        const dragging = this.dragging;
+        if (!dragging || event.pointerId !== dragging.pointerId) {
+            return;
+        }
+        this.dragging = null;
+        const velocity = dragging.tracker.velocity(event.timeStamp);
+        const height = this.height();
+        // Where the flick would come to rest decides, not where the finger let go
+        const away = dragging.offset + project(velocity) > height / 2;
+        await this.springTo(away ? height : 0, dragging.offset, velocity);
+        if (away) {
+            this.draggedAway.set(true);
+            this.leave('back');
+        }
+    }
+
+    private height(): number {
+        return this.sheet().nativeElement.offsetHeight || window.innerHeight;
+    }
+
+    /** Puts the sheet `offset` px down, and fades the dimming behind to match. */
+    private moveTo(offset: number) {
+        this.sheet().nativeElement.style.transform = `translateY(${offset}px)`;
+        this.host.nativeElement.style.setProperty('--dim', String(this.dim(offset)));
+    }
+
+    /** How dimmed the page behind is with the sheet `offset` px down: fully at the top, not at all off the bottom. */
+    private dim(offset: number): number {
+        return 1 - Math.min(1, Math.max(0, offset / this.height()));
+    }
+
+    /**
+     * Springs the sheet from `from` to `to` px down, setting off at the finger's `velocity`
+     * (px/s), so there's no seam where the drag lets go. With reduced motion it's just there.
+     */
+    private async springTo(to: number, from: number, velocity: number) {
+        const distance = to - from;
+        this.moveTo(to);
+        if (this.reducedMotion() || Math.abs(distance) < 1) {
+            return;
+        }
+        // The spring wants speed as a share of the distance left per second
+        const { easing, duration } = criticallyDampedSpring(0.3, {
+            velocity: velocity / distance,
+        });
+        const timing = { duration, easing };
+        // The dimming behind, on the host's ::before, fades with it
+        this.host.nativeElement.animate([{ opacity: this.dim(from) }, { opacity: this.dim(to) }], {
+            ...timing,
+            pseudoElement: '::before',
+        });
+        await this.sheet()
+            .nativeElement.animate(
+                [{ transform: `translateY(${from}px)` }, { transform: `translateY(${to}px)` }],
+                timing
+            )
+            .finished.catch(() => undefined);
     }
 }

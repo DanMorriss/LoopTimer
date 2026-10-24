@@ -1,4 +1,5 @@
 <div
+    #sheet
     class="summary"
     cdkTrapFocus
     [cdkTrapFocusAutoCapture]="true"
@@ -7,6 +8,18 @@
     aria-labelledby="summary-heading"
     (keydown.escape)="onEscape($event)"
 >
+    <!-- Drags the sheet down to go back to the workout, on a phone; pointer only, as Back to
+         workout and Escape do the same -->
+    @if (!finished()) {
+        <div
+            class="summary__grabber"
+            aria-hidden="true"
+            (pointerdown)="grab($event)"
+            (pointermove)="drag($event)"
+            (pointerup)="letGo($event)"
+            (pointercancel)="letGo($event)"
+        ></div>
+    }
     <div class="summary__body">
         <!-- Focus starts here, so it's read from the top -->
         <h2 id="summary-heading" class="summary__heading" tabindex="-1" cdkFocusInitial>

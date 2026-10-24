@@ -40,9 +40,25 @@ describe('criticallyDampedSpring', () => {
         expect(curve[Math.round(curve.length / 3)]).toBeGreaterThan(0.75);
     });
 
+    describe("handed a gesture's speed", () => {
+        it('sets off faster than from rest, so the drag and the spring join without a seam', () => {
+            const fromRest = points(criticallyDampedSpring(0.3).easing);
+            const moving = points(criticallyDampedSpring(0.3, { velocity: 8 }).easing);
+
+            expect(moving[1]).toBeGreaterThan(fromRest[1]);
+        });
+
+        it('can carry past the end when thrown hard, then settles on it', () => {
+            const curve = points(criticallyDampedSpring(0.3, { velocity: 40 }).easing);
+
+            expect(Math.max(...curve)).toBeGreaterThan(1);
+            expect(curve.at(-1)).toBe(1);
+        });
+    });
+
     it('falls back to a curve where linear() easings are missing', () => {
         vi.spyOn(CSS, 'supports').mockReturnValue(false);
 
-        expect(criticallyDampedSpring(0.4, 'ease-out').easing).toBe('ease-out');
+        expect(criticallyDampedSpring(0.4, { fallback: 'ease-out' }).easing).toBe('ease-out');
     });
 });

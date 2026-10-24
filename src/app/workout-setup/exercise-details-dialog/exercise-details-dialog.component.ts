@@ -14,13 +14,13 @@ import { Exercise } from '../../models/exercise';
     imports: [CdkTrapFocus, MatIconModule, ExerciseDetailsComponent],
     template: `
         <div
-            class="details-overlay"
+            class="details-overlay dialog-overlay"
             role="presentation"
             (click)="closed.emit()"
             (keydown.escape)="closed.emit()"
         >
             <div
-                class="details"
+                class="details dialog-card"
                 cdkTrapFocus
                 [cdkTrapFocusAutoCapture]="true"
                 role="dialog"
