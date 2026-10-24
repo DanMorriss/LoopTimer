@@ -1,6 +1,6 @@
 # Progress
 
-Built: latest and best on the exercises list (PRG-3), and progress on the exercise page (PRG-4). The rest is planned (see [direction](../direction.md)); its rules are a first draft and get firmed up, with acceptance criteria, when it's built. Builds on [exercises](exercises.md) and the sets in the [history](history.md).
+Built: last time on each rep step (PRG-1), personal bests on the workout summary (PRG-2), latest and best on the exercises list (PRG-3), progress on the exercise page (PRG-4), and the muscles worked this week on the history page (PRG-6). The suggested weight (PRG-5) is planned (see [direction](../direction.md)); its rules are a first draft and get firmed up, with acceptance criteria, when it's built. Builds on [exercises](exercises.md) and the sets in the [history](history.md).
 
 ## Stories
 
@@ -22,7 +22,7 @@ Built: latest and best on the exercises list (PRG-3), and progress on the exerci
 
 - **Weight**, where any set of it had a weight; otherwise **reps**, where it has any rep sets; otherwise (timed sets only) **time**. It's worked out from the sets logged, not from the exercise's "Reps" or "Timed".
 
-### Personal bests (PRG-4, and PRG-2 later)
+### Personal bests (PRG-4, PRG-2)
 
 - **Heaviest**: the heaviest weight lifted for at least 1 rep, with the most reps done at it, e.g. "100 kg × 5".
 - **Estimated one-rep max**, by the Epley formula: weight × (1 + reps ÷ 30), to the nearest 0.5 in the unit shown; a single rep is the weight itself. Shown with the set it came from, e.g. "116.5 kg, from 100 kg × 5". It isn't capped at the weight wheel's top.
@@ -51,15 +51,25 @@ Under the body map, a **Progress** section:
 - **Recent sessions**, newest first: the 5 latest, then "Show all N". Each has its date and workout, linking to it in the history (`/history?run=<id>`), and its sets as the history writes them.
 - Weights are in the unit chosen in settings.
 
+### Mid-workout: last time (PRG-1)
+
+- On a rep step linked to an exercise, under its reps and weight: the rep sets of that exercise from the most recent workout that had any, in the history's set format, e.g. "Last time: 10, 10, 8 @ 60 kg". A workout with two steps of it joins them with " + ".
+- Not the workout being done: it's in the history too once it's been ended (and taken back up) or the page closed, but its sets aren't "last time".
+- Timed sets don't count, and nothing is shown the first time, or on an unnamed rep step.
+
+### On the workout summary: personal bests (PRG-2)
+
+- Under the sets, **Personal bests** lists each best above that this workout set, e.g. "Heaviest: 100 kg × 5" and "Most reps: 12 @ 60 kg", across every exercise in it.
+- Only a **new** best counts: equalling one doesn't (the first time stands), and nor does doing an exercise for the first time, when everything would be a best.
+- Nothing shows when it set none, or when it wasn't logged (ended before its first step was done).
+
 ### In the history
 
 - Each set line's name links to its exercise's page, where it's linked to an exercise that's still there (see [history](history.md)).
+- **Muscles worked this week (PRG-6):** under "Last 7 days", the [exercises](exercises.md) body map, shaded by the sets of workouts started in the last 7 days: each set counts 1 for its exercise's main muscles and ½ for supporting ones. A muscle with 1 or more shades as main, under 1 as supporting, and the map's lists say which. Sets with no exercise, or of an exercise since deleted, don't count. Under it, the three most worked: "Most worked: Glutes (2 sets), Quads (2 sets), Adductors (1 set)", most first and A to Z on a tie. Not shown with no sets to count.
 
 ### Planned
 
-- **Last time (PRG-1):** the sets of that exercise from the most recent workout that had it, in the history's set format, e.g. "Last time: 10, 10, 8 @ 60 kg". Nothing is shown the first time.
-- **Personal bests on the summary (PRG-2):** the bests above, called out when a workout sets one.
-- **Muscles this week (PRG-6):** the [exercises](exercises.md) body map, shaded by sets in the last 7 days: each set counts 1 for its exercise's main muscles and ½ for supporting ones. Shown on the history page with "Last 7 days". As text too, e.g. "Most worked: quads (12 sets), chest (9). Not worked: hamstrings, calves."
 - **Suggested weight (PRG-5), later:** double progression: hit the target reps on every set → suggest one step up (2.5 kg, or 5 lb); otherwise suggest the same weight. Shown as a suggestion only; the weight can still be changed mid-workout (RUN-6).
 
 ## Acceptance criteria
@@ -71,10 +81,15 @@ Under the body map, a **Progress** section:
 - Given 7 sessions, then the 5 latest are listed, each linking to its workout in the history, and "Show all 7" lists them all.
 - Given 2 × 5 at 100 kg of back squats today, then its card says "Latest 2 × 5 @ 100 kg" and "Best 100 kg"; cards of exercises not done say neither.
 - Given a history entry with back squats and an unnamed rep step, then "Squats" links to /exercises/back-squat and the unnamed step isn't a link.
+- Given squats of 10, 10, 8 at 60 kg last time, when I reach a squats rep step, then it says "Last time: 10, 10, 8 @ 60 kg".
+- Given squats of 10 at 60 kg last week, when this workout is in the history too (ended and taken back up, or the page refreshed), then a squats rep step still says "Last time: 10 reps @ 60 kg", not this workout's sets.
+- Given 80 kg × 5 bench press last time, when I bench 100 kg × 5 and finish, then the summary lists "Personal bests" with "Heaviest: 100 kg × 5".
+- Given 80 kg × 5 bench press last time, when I bench 80 kg × 5 again, or bench for the first time, then the summary has no personal bests.
+- Given two sets of back squats and one of bench press in the last 7 days, and a plank 9 days ago, then the history shows "Muscles worked this week" with "Most worked: Glutes (2 sets), Quads (2 sets), Adductors (1 set)".
 
 ## Platform notes
 
-- **Web:** the sums are in `src/app/models/progress.ts` (`sessionsByExercise`, `progressMeasure`, `exerciseBests`, `sessionValue`) and the wording in `src/app/exercises/progress-format.ts`. The page's section is `ExerciseProgressComponent` (`src/app/exercises/exercise-page/exercise-progress/`), an inline SVG chart in the `--accent` colour. `/exercises` now waits for the history to load, as `/exercises/:id` and `/history` do.
+- **Web:** the sums are in `src/app/models/progress.ts` (`sessionsByExercise`, `progressMeasure`, `exerciseBests`, `sessionValue`) and the wording in `src/app/exercises/progress-format.ts`. The page's section is `ExerciseProgressComponent` (`src/app/exercises/exercise-page/exercise-progress/`), an inline SVG chart in the `--accent` colour. `/exercises` now waits for the history to load, as `/exercises/:id` and `/history` do. Last time is `WorkoutComponent.lastTime` (with `describeSets()` from `src/app/history/history-format.ts`), the summary's bests `WorkoutSummaryComponent.personalBests`, and the muscles this week `HistoryComponent.musclesWorked`, shown with `BodyMapComponent`.
 - **iOS:** Swift Charts (`LineMark` + `PointMark`, with `chartXSelection` for the readout) covers the chart; VoiceOver's audio graphs (`AXChartDescriptor`) can stand in for the arrow keys and the table.
 
 ## Open questions

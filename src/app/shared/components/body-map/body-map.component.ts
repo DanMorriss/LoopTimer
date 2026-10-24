@@ -15,7 +15,10 @@ let nextId = 0;
  * The figure is male or female, as chosen in settings (SET-5).
  *
  * With `tappable`, tapping a muscle on the figure says which it was, for picking muscles
- * with (the editor's chips do the same for keyboards and screen readers).
+ * with (the editor's chips do the same for keyboards and screen readers). With `toggles` as
+ * well, each muscle is a toggle button for keyboards and screen readers too, pressed when
+ * it's main: for a filter, where tapping turns a muscle on or off (the Exercises list).
+ * `removableLabels` gives each listed muscle a remove button.
  */
 @Component({
     selector: 'app-body-map',
@@ -28,6 +31,7 @@ export class BodyMapComponent {
     /** Muscles that help or hold steady. A muscle in both counts as main. */
     readonly supporting = input<readonly MuscleGroup[]>([]);
     readonly tappable = input(false);
+    readonly toggles = input(false);
     readonly removableLabels = input(false);
     readonly muscleTapped = output<MuscleGroup>();
     readonly muscleCleared = output<MuscleGroup>();
@@ -76,7 +80,7 @@ export class BodyMapComponent {
     }
 
     protected toggleByKey(event: KeyboardEvent, muscle: MuscleGroup | null): void {
-        if (!this.tappable() || muscle === null || (event.key !== 'Enter' && event.key !== ' ')) {
+        if (!this.toggles() || muscle === null || (event.key !== 'Enter' && event.key !== ' ')) {
             return;
         }
         event.preventDefault();

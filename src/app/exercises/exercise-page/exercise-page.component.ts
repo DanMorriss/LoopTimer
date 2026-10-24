@@ -50,13 +50,11 @@ export class ExercisePageComponent {
         this.route.paramMap.pipe(map((params) => params.get('id') ?? '')),
         { initialValue: '' }
     );
-    private readonly musclesQuery = computed(() =>
-        serialiseMusclesParam(parseMusclesParam(this.route.snapshot.queryParamMap.get('muscles')))
+    /** The Exercises list's muscle filter, from the link here, to go back to. */
+    private readonly musclesQuery = serialiseMusclesParam(
+        parseMusclesParam(this.route.snapshot.queryParamMap.get('muscles'))
     );
-    protected readonly backQueryParams = computed(() => {
-        const muscles = this.musclesQuery();
-        return muscles ? { muscles } : {};
-    });
+    protected readonly backQueryParams = this.musclesQuery ? { muscles: this.musclesQuery } : {};
 
     protected readonly exercise = computed(
         () =>
@@ -133,7 +131,7 @@ export class ExercisePageComponent {
             return;
         }
         this.exercises.deleteOwn(exercise.id);
-        void this.router.navigate(['/exercises'], { queryParams: this.backQueryParams() });
+        void this.router.navigate(['/exercises'], { queryParams: this.backQueryParams });
     }
 
     /** With history, it's hidden instead, so the history still has its name. */

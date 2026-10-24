@@ -112,6 +112,7 @@
             <app-body-map
                 [main]="selectedMuscles()"
                 [tappable]="true"
+                [toggles]="true"
                 [removableLabels]="true"
                 (muscleTapped)="pickFromMap($event)"
                 (muscleCleared)="pickMuscle($event)"

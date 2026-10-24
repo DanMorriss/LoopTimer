@@ -234,7 +234,7 @@ describe('ExerciseEditorComponent', () => {
                 return shapes.find((shape) => shape.getAttribute('d')!.startsWith(quadsPath()))!;
             };
             const tap = async () => {
-                quads().dispatchEvent(new MouseEvent('click'));
+                quads().dispatchEvent(new MouseEvent('click', { bubbles: true }));
                 fixture.detectChanges();
                 await fixture.whenStable();
             };

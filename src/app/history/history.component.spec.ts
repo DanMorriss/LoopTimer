@@ -227,7 +227,7 @@ describe('HistoryComponent', () => {
         expect(text('.history__muscles-title')).toEqual(['Muscles worked this week']);
         expect(fixture.nativeElement.querySelector('app-body-map')).not.toBeNull();
         expect(text('.history__muscles-most')).toEqual([
-            'Most worked: Quads (2 sets), Glutes (2 sets), Lower back (1 set)',
+            'Most worked: Glutes (2 sets), Quads (2 sets), Adductors (1 set)',
         ]);
     });
 

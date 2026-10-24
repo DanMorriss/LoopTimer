@@ -152,55 +152,59 @@ describe('BodyMapComponent', () => {
             return el().querySelectorAll('.body-map__shape')[before] as SVGPathElement;
         };
 
-        quads().dispatchEvent(new MouseEvent('click'));
+        quads().dispatchEvent(new MouseEvent('click', { bubbles: true }));
         expect(tapped).toEqual([]);
 
         fixture.componentRef.setInput('tappable', true);
         fixture.detectChanges();
-        quads().dispatchEvent(new MouseEvent('click'));
+        quads().dispatchEvent(new MouseEvent('click', { bubbles: true }));
         expect(tapped).toEqual(['quads']);
         expect(quads().classList).toContain('body-map__shape--tappable');
     });
 
-    it('makes tappable shapes keyboard reachable and labelled', () => {
+    it('keeps the drawing hidden when only tappable, as the chips do the same', () => {
         create(['quads']);
-
-        const shape = () => {
-            const index = BODY_FIGURES.male.front.shapes.findIndex((s) => s.muscle === 'quads');
-            const before = BODY_FIGURES.male.front.shapes
-                .slice(0, index)
-                .reduce((total, bodyShape) => total + bodyShape.paths.length, 0);
-            return el().querySelectorAll('.body-map__shape')[before] as SVGPathElement;
-        };
-
         fixture.componentRef.setInput('tappable', true);
         fixture.detectChanges();
 
-        expect(el().querySelector('.body-map__figures')!.getAttribute('aria-hidden')).toBeNull();
-        expect(shape().getAttribute('role')).toBe('button');
-        expect(shape().getAttribute('tabindex')).toBe('0');
-        expect(shape().getAttribute('aria-label')).toBe('Toggle Quads');
-        expect(shape().getAttribute('aria-pressed')).toBe('true');
+        expect(el().querySelector('.body-map__figures')!.getAttribute('aria-hidden')).toBe('true');
+        expect(el().querySelector('[role="button"]')).toBeNull();
+        expect(el().querySelector('[tabindex]')).toBeNull();
     });
 
-    it('toggles a tappable shape with Enter or Space', () => {
+    it('makes each muscle one labelled toggle, with toggles on', () => {
+        create(['quads'], ['glutes']);
+        fixture.componentRef.setInput('tappable', true);
+        fixture.componentRef.setInput('toggles', true);
+        fixture.detectChanges();
+
+        const toggle = (name: string) =>
+            el().querySelector(`g[aria-label="${name}"]`) as SVGGElement;
+        expect(el().querySelector('.body-map__figures')!.getAttribute('aria-hidden')).toBeNull();
+        expect(toggle('Quads').getAttribute('role')).toBe('button');
+        expect(toggle('Quads').getAttribute('tabindex')).toBe('0');
+        expect(toggle('Quads').getAttribute('aria-pressed')).toBe('true');
+        expect(toggle('Glutes').getAttribute('aria-pressed')).toBe('false');
+        // One stop per shape, however many paths it's drawn with
+        const shapes = (['front', 'back'] as const)
+            .flatMap((side) => BODY_FIGURES.male[side].shapes)
+            .filter((shape) => shape.muscle !== null).length;
+        expect(el().querySelectorAll('[tabindex="0"]').length).toBe(shapes);
+        expect(el().querySelectorAll('path[tabindex]').length).toBe(0);
+    });
+
+    it('toggles a muscle with Enter or Space, with toggles on', () => {
         create([]);
         const tapped: MuscleGroup[] = [];
         fixture.componentInstance.muscleTapped.subscribe((m) => tapped.push(m));
-        const quads = () => {
-            const index = BODY_FIGURES.male.front.shapes.findIndex((s) => s.muscle === 'quads');
-            const before = BODY_FIGURES.male.front.shapes
-                .slice(0, index)
-                .reduce((total, shape) => total + shape.paths.length, 0);
-            return el().querySelectorAll('.body-map__shape')[before] as SVGPathElement;
-        };
-
         fixture.componentRef.setInput('tappable', true);
+        fixture.componentRef.setInput('toggles', true);
         fixture.detectChanges();
+        const quads = el().querySelector('g[aria-label="Quads"]')!;
 
-        quads().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
-        quads().dispatchEvent(new KeyboardEvent('keydown', { key: ' ' }));
-        quads().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+        quads.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+        quads.dispatchEvent(new KeyboardEvent('keydown', { key: ' ' }));
+        quads.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
 
         expect(tapped).toEqual(['quads', 'quads']);
     });
@@ -216,7 +220,8 @@ describe('BodyMapComponent', () => {
             .reduce((total, shape) => total + shape.paths.length, 0);
         const absPath = el().querySelectorAll('.body-map__shape')[absPathsBefore] as SVGPathElement;
 
-        absPath.dispatchEvent(new MouseEvent('mouseenter'));
+        // Hovering a muscle is hovering its group of paths
+        absPath.parentElement!.dispatchEvent(new MouseEvent('mouseenter'));
         fixture.detectChanges();
 
         const highlighted = el().querySelectorAll('.body-map__shape--hovered').length;

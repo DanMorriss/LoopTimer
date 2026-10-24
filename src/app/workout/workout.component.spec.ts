@@ -1599,6 +1599,39 @@ describe('WorkoutComponent', () => {
             fixture.destroy();
         });
 
+        it("doesn't show this run's own sets as last time, once it's in the history", () => {
+            const squats = { name: 'Squats', exerciseId: 'exr:squat' };
+            const entry = (id: string, startedAt: number, reps: number) => ({
+                id,
+                workoutId: 'legs',
+                title: 'Legs',
+                startedAt,
+                endedAt: startedAt + 1000,
+                activeSeconds: 1,
+                roundsCompleted: 1,
+                totalRounds: 1,
+                outcome: 'stopped' as const,
+                sets: [{ round: 0, step: 1, reps, weight: 60, ...squats }],
+            });
+            const history = TestBed.inject(HistoryStore);
+            history.record(entry('older-legs', Date.now() - 60_000, 10));
+            start(
+                makeWorkout({
+                    steps: [work(3), { kind: 'reps', reps: 12, weight: 60, ...squats }],
+                    repeats: 2,
+                })
+            );
+            advance(3000);
+            // As when it's ended and taken back up, or the page is refreshed mid-run
+            history.record(entry(TestBed.inject(ActiveRunService).runId()!, Date.now(), 12));
+            fixture.detectChanges();
+
+            expect(
+                fixture.nativeElement.querySelector('.workout-face__last-time')!.textContent
+            ).toBe('Last time: 10 reps @ 60 kg');
+            fixture.destroy();
+        });
+
         it('swaps Pause for Done, with a smaller Pause to one side', () => {
             start(circuit());
             expect(mainButton().getAttribute('aria-label')).toBe('Pause');
@@ -2153,6 +2186,50 @@ describe('WorkoutComponent', () => {
             expect(component.summaryOpen()).toBe(true);
             expect(summaryText()).toContain('Personal bests');
             expect(summaryText()).toContain('Heaviest: 100 kg × 5');
+            fixture.destroy();
+        });
+
+        /** Benches `weight` × 5 once and opens the summary, after `before` in the history. */
+        function benchOnce(weight: number, before: number[]) {
+            const bench = { name: 'Bench press', exerciseId: 'builtin:barbell-bench-press' };
+            before.forEach((oldWeight, i) =>
+                TestBed.inject(HistoryStore).record({
+                    id: `old-run-${i}`,
+                    workoutId: 'old-workout',
+                    title: 'Old bench',
+                    startedAt: Date.now() - (i + 10) * 60 * 1000,
+                    endedAt: Date.now() - (i + 9) * 60 * 1000,
+                    activeSeconds: 60,
+                    roundsCompleted: 1,
+                    totalRounds: 1,
+                    outcome: 'finished',
+                    sets: [{ round: 0, step: 0, reps: 5, weight: oldWeight, ...bench }],
+                })
+            );
+            start(
+                makeWorkout({
+                    steps: [work(2), { kind: 'reps', reps: 5, weight, ...bench } as const],
+                    repeats: 1,
+                })
+            );
+            advance(2000);
+            (fixture.nativeElement.querySelector('[aria-label="Done"]') as HTMLElement).click();
+            fixture.detectChanges();
+        }
+
+        it("doesn't call equalling a best a new one", () => {
+            benchOnce(80, [80, 70]);
+
+            expect(component.summaryOpen()).toBe(true);
+            expect(summaryText()).not.toContain('Personal bests');
+            fixture.destroy();
+        });
+
+        it("doesn't call the first time doing an exercise a personal best", () => {
+            benchOnce(80, []);
+
+            expect(component.summaryOpen()).toBe(true);
+            expect(summaryText()).not.toContain('Personal bests');
             fixture.destroy();
         });
 

@@ -128,8 +128,8 @@ describe('ExerciseListComponent', () => {
         await create();
 
         const shapeFor = (muscle: string) => {
-            const label = `Toggle ${muscle.charAt(0).toUpperCase()}${muscle.slice(1)}`;
-            return el().querySelector(`[aria-label="${label}"]`) as SVGPathElement;
+            const label = `${muscle.charAt(0).toUpperCase()}${muscle.slice(1)}`;
+            return el().querySelector(`g[aria-label="${label}"]`) as SVGGElement;
         };
 
         shapeFor('quads').dispatchEvent(new MouseEvent('click'));
@@ -150,9 +150,7 @@ describe('ExerciseListComponent', () => {
     it('does not let the map pick abductors (no shape yet)', async () => {
         await create();
 
-        const abort =
-            (el().querySelector('[aria-label="Toggle Abductors"]') as SVGPathElement) ?? null;
-        expect(abort).toBeNull();
+        expect(el().querySelector('g[aria-label="Abductors"]')).toBeNull();
 
         expect(button('Abductors').getAttribute('aria-pressed')).toBe('false');
     });
@@ -161,8 +159,8 @@ describe('ExerciseListComponent', () => {
         await create();
 
         const shapeFor = (muscle: string) => {
-            const label = `Toggle ${muscle.charAt(0).toUpperCase()}${muscle.slice(1)}`;
-            return el().querySelector(`[aria-label="${label}"]`) as SVGPathElement;
+            const label = `${muscle.charAt(0).toUpperCase()}${muscle.slice(1)}`;
+            return el().querySelector(`g[aria-label="${label}"]`) as SVGGElement;
         };
 
         shapeFor('quads').dispatchEvent(new MouseEvent('click'));
