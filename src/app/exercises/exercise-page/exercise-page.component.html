@@ -71,6 +71,7 @@
 
             @if (editing()) {
                 <app-exercise-editor
+                    animate.leave="dialog-leave"
                     [exercise]="exercise"
                     (closed)="closeEditor()"
                     (saved)="closeEditor()"
@@ -79,6 +80,7 @@
 
             @if (deleteStep() === 'confirm-delete') {
                 <app-confirm-dialog
+                    animate.leave="dialog-leave"
                     [title]="'Delete ' + exercise.name + '?'"
                     (cancelled)="cancelDelete()"
                     (confirmed)="confirmDelete()"
@@ -88,6 +90,7 @@
             }
             @if (deleteStep() === 'confirm-hide') {
                 <app-confirm-dialog
+                    animate.leave="dialog-leave"
                     [title]="'Hide ' + exercise.name + '?'"
                     confirmLabel="Hide"
                     (cancelled)="cancelDelete()"

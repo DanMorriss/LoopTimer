@@ -76,6 +76,12 @@ for (const theme of ['dark', 'light'] as const) {
         }
 
         async function expectNoViolations() {
+            // Check what's seen once things have moved into place: a dialog fading in would
+            // otherwise read as low contrast. Looping ones (the logo's light) carry on.
+            document
+                .getAnimations()
+                .filter((animation) => animation.effect?.getTiming().iterations !== Infinity)
+                .forEach((animation) => animation.finish());
             const results = await axe.run(fixture.nativeElement as HTMLElement, {
                 runOnly: {
                     type: 'tag',

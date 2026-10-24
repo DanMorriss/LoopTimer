@@ -2488,6 +2488,98 @@ describe('WorkoutComponent', () => {
             fixture.destroy();
         });
 
+        describe('dragged by its grabber, on a phone', () => {
+            const grabber = () => summary()!.querySelector<HTMLElement>('.summary__grabber');
+            const sheet = () => summary()!.querySelector<HTMLElement>('.summary')!;
+            const offset = () => new DOMMatrix(getComputedStyle(sheet()).transform).m42;
+
+            /** Lets the sheet finish rising in. */
+            const settle = () =>
+                summary()!
+                    .getAnimations({ subtree: true })
+                    .forEach((animation) => animation.finish());
+
+            /** Presses the grabber, moves it `dy` px down (negative is up), and maybe lets go. */
+            function dragBy(dy: number, letGo = true) {
+                const at = (type: string, y: number) =>
+                    grabber()!.dispatchEvent(
+                        new PointerEvent(type, { pointerId: 1, clientY: y, bubbles: true })
+                    );
+                at('pointerdown', 100);
+                at('pointermove', 100 + dy / 2);
+                at('pointermove', 100 + dy);
+                if (letGo) {
+                    at('pointerup', 100 + dy);
+                }
+            }
+
+            it('goes back to the run once pulled past halfway down', async () => {
+                fakeReducedMotion(true);
+                endInRound2();
+
+                dragBy(sheet().offsetHeight * 0.75);
+                await vi.waitFor(() => {
+                    fixture.detectChanges();
+                    expect(summary()).toBeNull();
+                });
+
+                expect(component.isPaused()).toBe(true);
+            });
+
+            it('follows the finger down, and fades the dimming behind as it goes', () => {
+                endInRound2();
+                settle();
+
+                dragBy(120, false);
+
+                expect(offset()).toBe(120);
+                expect(Number(summary()!.style.getPropertyValue('--dim'))).toBeLessThan(1);
+            });
+
+            it('resists being pulled up, more the further it goes', () => {
+                endInRound2();
+                settle();
+
+                dragBy(-300, false);
+
+                expect(offset()).toBeLessThan(0);
+                expect(offset()).toBeGreaterThan(-300);
+            });
+
+            it('springs back home when let go above it, from where it was let go', () => {
+                endInRound2();
+                settle();
+
+                dragBy(-200);
+
+                const [spring] = sheet().getAnimations();
+                expect(spring).toBeDefined();
+                const [from, to] = (spring.effect as KeyframeEffect).getKeyframes();
+                expect(new DOMMatrix(String(from['transform'])).m42).toBeLessThan(0);
+                expect(new DOMMatrix(String(to['transform'])).m42).toBe(0);
+                expect(summary()).not.toBeNull();
+            });
+
+            it('catches it where it is when grabbed as it rises in', () => {
+                endInRound2();
+                const rising = offset();
+                expect(rising).toBeGreaterThan(0);
+
+                dragBy(0, false);
+
+                expect(offset()).toBeCloseTo(rising, -1);
+                expect(sheet().getAnimations()).toHaveLength(0);
+            });
+
+            it("isn't there for a finished workout, which has nothing to go back to", async () => {
+                start(makeWorkout({ workSeconds: 1, restSeconds: 0, repeats: 1 }));
+                advance(2000);
+
+                expect(summary()).not.toBeNull();
+                expect(grabber()).toBeNull();
+            });
+        });
+
         it('leaves the run alone on Space while it is open', () => {
             endInRound2();
 

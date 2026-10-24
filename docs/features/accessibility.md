@@ -28,7 +28,7 @@
 - Wheels: arrows move one, Page Up/Down move five, Home/End jump to the ends, and typing digits picks a number.
 - Steps can be reordered with **Move up/down** buttons as well as by dragging (the drag handle is hidden from screen readers).
 - Focus is always put somewhere sensible: into a dialog (starting on Cancel), back to the button that opened a menu or dialog, onto a new step's name box, onto Undo after deleting from the history, onto the step that takes a deleted one's place.
-- Escape closes menus, dialogs, tooltips and open wheels.
+- Escape closes menus, dialogs, tooltips and open wheels. Dialogs settle into place as the page dims behind them, and leave the way they came; taps reach the page as soon as one starts to close.
 
 ### Text
 
@@ -37,7 +37,7 @@
 
 ### Motion and colour
 
-- With **reduced motion**: looping animations stop (the "Next:" pulse too, leaving its coloured border, and the face's last-seconds pulse, leaving its tint), the logo shows drawn at once, wheels jump rather than glide, a new step or round crossfades rather than sliding, Pause and Resume swap rather than glide, the workout opens and closes without growing out of its bar, and themes change without a fade.
+- With **reduced motion**: looping animations stop (the "Next:" pulse too, leaving its coloured border, and the face's last-seconds pulse, leaving its tint), the logo shows drawn at once, wheels jump rather than glide, a new step or round crossfades rather than sliding, Pause and Resume swap rather than glide, the workout opens and closes without growing out of its bar, dialogs fade without growing or shrinking, the summary appears and goes without rising or sinking, and themes change without a fade.
 - **Pressing** a button shows at once, while the finger or mouse button is still down: buttons shrink a little, and menu and list rows light up. Hover looks only show where there's a mouse or trackpad, so on a phone they don't stick after a tap.
 - Every page meets **WCAG 2.1 AA** in both themes: text at least 4.5:1 against what it sits on, controls and the ring at least 3:1. Nothing relies on colour alone (e.g. switches say On or Off).
 

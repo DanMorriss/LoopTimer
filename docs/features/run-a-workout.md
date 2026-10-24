@@ -66,6 +66,8 @@
 
 - The face says "**You're finished!**", the controls go, and the **summary** opens over the page by itself. End workout opens the same summary (see [pause-and-stop](pause-and-stop.md)).
 - It's a sheet: the whole screen on a phone, a card in the middle on anything wider. Focus starts on its heading and stays inside it.
+- It **rises in** on a spring with no bounce (from the bottom of the screen on a phone, a little way on a wider one) as the page behind dims, and **sinks back out the same way** when it closes.
+- On a phone, a workout ended early can be **dragged down** by the grabber at the top of the sheet to go back to it, as Back to workout does. The sheet follows the finger, resists being pulled up, and the page behind brightens as it goes. On letting go, where the flick would carry it decides: past halfway it carries on down at the finger's speed and goes back to the workout; short of that it springs back up. It can be grabbed again mid-spring. A finished workout has no grabber, as there's nothing to go back to.
 - It shows:
     - "**Workout finished**", "**Time's up**" (a time limit that ran out) or "**Workout ended**", and the workout's title.
     - **Time** (as in the history, pauses left out) and **Rounds**, e.g. "1 of 3 rounds · stopped", or "7 rounds + 3 in 20:00" for a time limit.
@@ -100,6 +102,7 @@
 - Given a step at 40 kg, when I set the weight to –, then the step has no weight.
 - Given steps Squats (work), Rest, Plank (work), then Squats shows "step 1 of 3" and "Next: Rest · 00:15".
 - Given the workout finishes, then the summary opens with no Back to workout, and a note typed there is saved to it in the history.
+- Given a workout ended early, on a phone, when I drag the summary down past halfway (or flick it down), then it goes back to the workout, paused; when I let go above halfway, then it springs back up.
 - Given 20 push-ups at 40 kg in round 1 and the workout ended in round 2, when I change the set to 18 reps on the summary, then the history has 18; on "Yes, use next time" the saved workout starts from 18 at 40 kg, and on "No, just this time" it stays at 20.
 - Given a workout ended early, when I press Back to workout, then it is paused where it was ended, with focus on Resume.
 - Given work 0:20 then rest, then "Next: Rest" pulses in the rest colour from 00:05 left, and stops when paused.

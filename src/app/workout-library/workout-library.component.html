@@ -44,6 +44,7 @@
 
     @if (workoutPendingDelete(); as pendingWorkout) {
         <app-confirm-dialog
+            animate.leave="dialog-leave"
             title="Delete workout?"
             (cancelled)="cancelDelete()"
             (confirmed)="confirmDelete()"
