@@ -56,5 +56,6 @@ Filtering the Exercises list (EXR-6) by muscle, asked for by Dan on 2026-10-23:
 
 ## 3. Known issues
 
+- [ ] **Some stylesheets are over the 4 kB warning budget:** `ng build` warns for workout-setup (5.1 kB since #109), workout, exercise-list and exercise-progress. They're warnings, not errors (the limit is 8 kB). Fix by moving shared looks into `src/styles/` partials, as #109 did for the info tip, or raise the budget if the size is fine.
 - [ ] **The body map can't shade abductors:** react-native-body-highlighter has no abductor shapes on either figure, so exercises that work them (side plank, hip abduction) list them without shading. Fix by drawing the shapes ourselves, or swap to a diagram that has them.
 - [ ] **Two devices can each make the same exercise of their own:** typing "Sled push" on a phone and on a laptop makes two exercises with different ids, and importing one device's backup on the other keeps both (steps link to whichever was there first). Merge exercises of your own that share a name when importing, or before sync (SYN-3).

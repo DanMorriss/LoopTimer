@@ -18,7 +18,9 @@
 - The ring reports progress through the step as a percentage, or "Waiting for Done" on a rep step.
 - Icon buttons have names (Pause, Resume, Done, Options for …). Visible captions repeat them, hidden from screen readers.
 - Wheels are spin buttons named by their step, e.g. "Step 2, rest, Seconds", reporting their value and range.
-- Adding, moving or deleting a step is announced, e.g. "Moved squats to step 3".
+- Adding, moving, deleting or changing the kind of a step is announced, e.g. "Moved squats to step 3", "Step 2 is now rest".
+- A step's kind pill is a button named with its kind and step, e.g. "Reps, change type of step 1", saying whether its menu is open; the menu marks the current kind as pressed.
+- The (i) button by setup's Steps heading is described by its tip (`role="tooltip"`), so screen readers read the tip without opening it.
 
 ### Keyboard and focus
 
@@ -26,7 +28,7 @@
 - Wheels: arrows move one, Page Up/Down move five, Home/End jump to the ends, and typing digits picks a number.
 - Steps can be reordered with **Move up/down** buttons as well as by dragging (the drag handle is hidden from screen readers).
 - Focus is always put somewhere sensible: into a dialog (starting on Cancel), back to the button that opened a menu or dialog, onto a new step's name box, onto Undo after deleting from the history, onto the step that takes a deleted one's place.
-- Escape closes menus, dialogs and open wheels.
+- Escape closes menus, dialogs, tooltips and open wheels.
 
 ### Motion and colour
 
