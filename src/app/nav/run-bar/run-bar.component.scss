@@ -1,0 +1,142 @@
+@use 'interaction' as *;
+
+// The same frosted capsule as the tab bar, just above it
+:host {
+    display: block;
+    width: min(100%, 26rem);
+    pointer-events: auto;
+}
+
+// Rises into place when it appears, as if the workout page had folded down into it
+@keyframes run-bar-in {
+    from {
+        transform: translateY(0.75rem);
+        opacity: 0;
+    }
+}
+
+.run-bar {
+    --dot: var(--work);
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    box-sizing: border-box;
+    height: var(--run-bar-height);
+    padding: 0 0.3rem 0 0.4rem;
+    border: 1px solid var(--chrome-edge);
+    border-radius: 999px;
+    background: var(--chrome);
+    backdrop-filter: blur(20px) saturate(180%);
+    box-shadow:
+        inset 0 1px 0 var(--chrome-light),
+        0 10px 30px var(--shadow);
+    animation: run-bar-in var(--spring-duration) var(--ease-spring);
+
+    &[data-phase='rest'] {
+        --dot: var(--rest);
+    }
+
+    &[data-phase='reps'] {
+        --dot: var(--reps);
+    }
+
+    &[data-phase='paused'] {
+        --dot: var(--control-off);
+    }
+
+    &[data-phase='finished'] {
+        --dot: var(--glow);
+    }
+}
+
+// Everything but the button: opens the workout
+.run-bar__open {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: 0.6rem;
+    min-width: 0;
+    align-self: stretch;
+    padding: 0 0.6rem;
+    border-radius: 999px;
+    color: var(--text);
+    text-decoration: none;
+    transition:
+        background-color 0.2s ease,
+        scale 0.2s ease-out;
+
+    @include hover {
+        background: var(--control-hover);
+    }
+
+    @include pressed-scale(0.98) {
+        background: var(--control-hover);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: -2px;
+    }
+}
+
+// The step's colour, as on the ring
+.run-bar__dot {
+    flex-shrink: 0;
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 50%;
+    background: var(--dot);
+    box-shadow: 0 0 8px var(--dot);
+}
+
+.run-bar__text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.25;
+}
+
+.run-bar__title,
+.run-bar__status {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.run-bar__title {
+    color: var(--text-strong);
+    font-size: 0.85rem;
+}
+
+.run-bar__status {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.run-bar__pause {
+    flex-shrink: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .run-bar {
+        animation: none;
+    }
+
+    .run-bar__open {
+        transition: none;
+    }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+    .run-bar {
+        background: var(--raised);
+        backdrop-filter: none;
+    }
+}
+
+@media (prefers-contrast: more) {
+    .run-bar {
+        border-color: var(--border-strong);
+    }
+}

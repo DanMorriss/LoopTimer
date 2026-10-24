@@ -33,6 +33,11 @@
     --raised: rgba(15, 23, 42, 0.97);
     --overlay: rgba(2, 6, 23, 0.65);
     --shadow: rgba(2, 6, 23, 0.45);
+    // The bars floating over the page (the tab bar, the workout's bar): a frosted material
+    // the page scrolls under, with a bright top edge where light catches it
+    --chrome: rgba(15, 23, 42, 0.78);
+    --chrome-edge: rgba(148, 163, 184, 0.3);
+    --chrome-light: rgba(255, 255, 255, 0.08);
 
     // Lines
     --border: rgba(148, 163, 184, 0.45);
@@ -105,6 +110,9 @@
     --raised: #ffffff;
     --overlay: rgba(15, 23, 42, 0.35);
     --shadow: rgba(15, 23, 42, 0.12);
+    --chrome: rgba(255, 255, 255, 0.78);
+    --chrome-edge: rgba(71, 85, 105, 0.25);
+    --chrome-light: rgba(255, 255, 255, 0.9);
 
     --border: rgba(71, 85, 105, 0.55);
     --border-strong: rgba(51, 65, 85, 0.75);
@@ -149,12 +157,61 @@
     --muscle-outline: rgba(71, 85, 105, 0.55);
 }
 
+// Motion and the bars along the bottom, the same in both themes
+:root {
+    // Apple's critically damped spring (no bounce) with a 0.3s response, as a CSS easing: it
+    // settles in about 0.45s. Where linear() isn't supported the transition falls back to ease.
+    // For motion started from script, see src/app/shared/spring.ts.
+    --ease-spring: linear(
+        0,
+        0.114,
+        0.321,
+        0.517,
+        0.671,
+        0.783,
+        0.86,
+        0.911,
+        0.945,
+        0.966,
+        0.979,
+        0.987,
+        0.992,
+        0.995,
+        0.997,
+        0.998,
+        1
+    );
+    --spring-duration: 0.45s;
+
+    // The tab bar, and the workout's bar above it while one is going, float over the bottom
+    // of the page. --bars-height is how much of the page they cover, so pages can leave room
+    // (the main area's padding, the library's Add workout button).
+    --bar-gap: 0.5rem;
+    --tab-bar-height: 3.75rem;
+    --run-bar-height: 3.5rem;
+    --bars-bottom: max(0.75rem, env(safe-area-inset-bottom));
+    --bars-height: env(safe-area-inset-bottom, 0px);
+
+    &:has(.tab-bar) {
+        --bars-height: calc(var(--bars-bottom) + var(--tab-bar-height) + var(--bar-gap));
+    }
+
+    &:has(.tab-bar):has(.run-bar) {
+        --bars-height: calc(
+            var(--bars-bottom) + var(--tab-bar-height) + var(--run-bar-height) + 2 * var(--bar-gap)
+        );
+    }
+}
+
 html,
 body {
     height: 100%;
 }
 body {
     margin: 0;
+    // Clear of the notch and rounded corners in landscape (the page reaches the screen's
+    // edges, with viewport-fit=cover in index.html)
+    padding-inline: env(safe-area-inset-left, 0px) env(safe-area-inset-right, 0px);
     background-color: var(--page-bg);
     color: var(--text);
 }

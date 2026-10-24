@@ -33,7 +33,7 @@
 
 ### Carrying on
 
-- The run lives **outside the workout page**: its clock, alarms, vibration and history logging carry on on any page. The menu lists **Workout** first while a run is going, to get back to it.
+- The run lives **outside the workout page**: its clock, alarms, vibration and history logging carry on on any page. While a run is going it shows in a **bar above the tabs** on every other page, with its step, time and Pause; tapping it goes back to the workout (see [home-and-navigation](home-and-navigation.md)).
 - If the app is **reloaded**, the run carries on where it was, paused or not, rep steps and all. Alarms already past are skipped (only ones up to a second late still play).
 - If the app is **closed**, the run is logged as it stands (stopped, or finished if it was). If it's reloaded and carries on, that same history entry is updated when it later stops or finishes, rather than adding another.
 - A run is remembered **per tab** on the web, not across devices.

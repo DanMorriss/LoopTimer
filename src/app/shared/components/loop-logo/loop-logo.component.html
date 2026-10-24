@@ -1,0 +1,34 @@
+<!-- The loop. Kept in its own SVG so its glow filter isn't re-run while the dot moves -->
+<svg viewBox="0 0 200 100" class="infinity-svg">
+    <path
+        d="M 50 50 C 50 25, 75 25, 100 50 C 125 75, 150 75, 150 50 C 150 25, 125 25, 100 50 C 75 75, 50 75, 50 50 Z"
+        class="infinity-path"
+        fill="none"
+        stroke-width="4"
+    />
+</svg>
+
+<!-- The light, layered over the loop -->
+<svg viewBox="0 0 200 100" class="dot-svg">
+    <defs>
+        <radialGradient id="dotGlow">
+            <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.9" />
+            <stop offset="30%" stop-color="#06b6d4" stop-opacity="0.45" />
+            <stop offset="100%" stop-color="#06b6d4" stop-opacity="0" />
+        </radialGradient>
+    </defs>
+    <!-- With reduced motion, the dot rests where the loops cross instead of travelling round them -->
+    <g [attr.transform]="reducedMotion() ? 'translate(100 50)' : null">
+        @if (!reducedMotion()) {
+            <animateMotion
+                dur="1.5s"
+                repeatCount="indefinite"
+                path="M 50 50 C 50 25, 75 25, 100 50 C 125 75, 150 75, 150 50 C 150 25, 125 25, 100 50 C 75 75, 50 75, 50 50 Z"
+            />
+        }
+        <g class="light-dot">
+            <circle r="14" class="light-dot__halo" fill="url(#dotGlow)" />
+            <circle r="4" class="light-dot__core" />
+        </g>
+    </g>
+</svg>

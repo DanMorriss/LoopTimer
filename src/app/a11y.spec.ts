@@ -92,16 +92,29 @@ for (const theme of ['dark', 'light'] as const) {
             expect(report, 'axe violations').toEqual([]);
         }
 
-        it('home', async () => {
-            await open('/home');
-            await expectNoViolations();
-        });
+        describe('the bars along the bottom', () => {
+            it('the tabs, on a page under one (setup, under Library)', async () => {
+                await open('/setup');
+                expect(fixture.nativeElement.querySelector('.tab-bar')).not.toBeNull();
+                await expectNoViolations();
+            });
 
-        it('with the menu open', async () => {
-            await open('/library');
-            click('button[aria-label="Menu"]');
-            await settle(300); // past the menu's fade-in, which axe would see as low contrast
-            await expectNoViolations();
+            it('with a workout going, above the tabs', async () => {
+                store.setActiveWorkout(store.addWorkout(sprints));
+                await open('/history');
+                // Past the bar's rise into place, which axe would see as low contrast
+                await settle(600);
+                expect(fixture.nativeElement.querySelector('.run-bar')).not.toBeNull();
+                await expectNoViolations();
+            });
+
+            it('with that workout paused', async () => {
+                store.setActiveWorkout(store.addWorkout(sprints));
+                await open('/history');
+                click('.run-bar__pause');
+                await settle(600);
+                await expectNoViolations();
+            });
         });
 
         describe('setup', () => {

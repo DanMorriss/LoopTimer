@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { HistoryEntry } from './models/history';
 import { routes } from './app.routes';
@@ -24,6 +24,22 @@ describe('routes', () => {
         TestBed.configureTestingModule({ providers: [provideRouter(routes)] });
     });
     afterEach(() => localStorage.clear());
+
+    it('opens on the library, where workouts are started', async () => {
+        const harness = await RouterTestingHarness.create();
+
+        await harness.navigateByUrl('/');
+
+        expect(TestBed.inject(Router).url).toBe('/library');
+    });
+
+    it('sends the old home page to the library, for links and bookmarks to it', async () => {
+        const harness = await RouterTestingHarness.create();
+
+        await harness.navigateByUrl('/home');
+
+        expect(TestBed.inject(Router).url).toBe('/library');
+    });
 
     // It loads in the background, so the page would otherwise say there's nothing yet
     it('opens the history once the saved history has loaded', async () => {

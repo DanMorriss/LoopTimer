@@ -6,11 +6,10 @@ import { HistoryStore } from './shared/state/history-store.service';
 const historyLoaded: CanActivateFn = () => inject(HistoryStore).ready.then(() => true);
 
 export const routes: Routes = [
-    {
-        path: 'home',
-        loadComponent: () => import('./home/home.component').then((m) => m.HomeComponent),
-    },
-    { path: '', pathMatch: 'full', redirectTo: 'home' },
+    // The app opens on the library. Home (the ∞ logo with Create and Library) went when the
+    // tab bar came in, so links and bookmarks to it land there too.
+    { path: '', pathMatch: 'full', redirectTo: 'library' },
+    { path: 'home', redirectTo: 'library' },
     {
         path: 'setup',
         loadComponent: () =>

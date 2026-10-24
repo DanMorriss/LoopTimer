@@ -1,5 +1,3 @@
-@use 'interaction' as *;
-
 // body.mat-typography styles h1 with Material's Roboto heading font, which beats
 // the global font rule. Keep the site title in the app's font, as it was when it
 // was a <p> (with the 12px margin .mat-typography gives paragraphs).
@@ -8,7 +6,7 @@
     margin: 0 0 12px;
 }
 
-// The sides only ever hold the 44px menu button, so a long workout title gets the middle
+// The sides only ever hold the workout page's 44px back link, so a long title gets the middle
 .nav {
     grid-template-columns: 44px minmax(0, 1fr) 44px;
 }
@@ -30,113 +28,5 @@
             text-overflow: ellipsis;
             white-space: nowrap;
         }
-    }
-}
-
-.nav__menu-wrap {
-    position: relative;
-    // Above the page's own menus and cards
-    z-index: 40;
-}
-
-// The bars turn about their own centres to make the X
-.nav__bar {
-    transform-box: fill-box;
-    transform-origin: center;
-    transition:
-        transform 0.2s ease,
-        opacity 0.2s ease;
-}
-
-.nav__toggle--open {
-    .nav__bar--top {
-        transform: translateY(6px) rotate(45deg);
-    }
-
-    .nav__bar--middle {
-        opacity: 0;
-    }
-
-    .nav__bar--bottom {
-        transform: translateY(-6px) rotate(-45deg);
-    }
-}
-
-.nav__menu {
-    position: absolute;
-    top: calc(100% + 0.4rem);
-    left: 0;
-    min-width: 180px;
-    border: 1px solid var(--border);
-    border-radius: 0.75rem;
-    background: var(--raised);
-    box-shadow: 0 12px 28px var(--shadow);
-    // --raised is slightly see-through in the dark theme; blur the page text behind it
-    backdrop-filter: blur(12px);
-    overflow: hidden;
-    animation: nav-menu-in 0.16s ease-out;
-}
-
-.nav__list {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-
-    li + li {
-        border-top: 1px solid var(--border-soft);
-    }
-}
-
-.nav__link {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    min-height: 44px;
-    padding: 0 0.9rem;
-    color: var(--text);
-    text-decoration: none;
-
-    @include hover {
-        background: var(--control-hover);
-    }
-
-    @include pressed {
-        background: var(--control-hover);
-    }
-
-    &:focus-visible {
-        outline: 2px solid var(--accent);
-        outline-offset: -2px;
-    }
-}
-
-// The page you're on, marked by more than colour: an accent bar down its left edge
-.nav__link--current {
-    background: var(--accent-soft);
-    box-shadow: inset 3px 0 0 var(--accent);
-    color: var(--text-strong);
-}
-
-.nav__link-icon {
-    width: 20px;
-    height: 20px;
-    font-size: 20px;
-    line-height: 20px;
-}
-
-@keyframes nav-menu-in {
-    from {
-        opacity: 0;
-        transform: translateY(-4px);
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .nav__bar {
-        transition: none;
-    }
-
-    .nav__menu {
-        animation: none;
     }
 }

@@ -1,0 +1,24 @@
+@if (shown()) {
+    <nav
+        class="tab-bar"
+        aria-label="Main"
+        [style.--count]="tabs.length"
+        [style.--chosen]="chosen()"
+    >
+        @if (chosen() >= 0) {
+            <!-- The highlight behind the chosen tab, which slides between them -->
+            <span class="tab-bar__thumb" aria-hidden="true"></span>
+        }
+        @for (tab of tabs; track tab.path; let i = $index) {
+            <a
+                class="tab-bar__tab"
+                [class.tab-bar__tab--chosen]="i === chosen()"
+                [routerLink]="tab.path"
+                [attr.aria-current]="currentFor(i)"
+            >
+                <mat-icon class="tab-bar__icon" aria-hidden="true">{{ tab.icon }}</mat-icon>
+                <span class="tab-bar__label">{{ tab.label }}</span>
+            </a>
+        }
+    </nav>
+}

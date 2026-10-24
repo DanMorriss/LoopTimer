@@ -61,7 +61,7 @@ The component is built (`BodyMapComponent`); it goes on the exercise pages when 
 
 ### The Exercises list (EXR-6)
 
-In the menu as **Exercises**, after Library. Top to bottom:
+The **Exercises** tab, after Library. Top to bottom:
 
 - **Exercises** and a **New** button, which opens the exercise dialog for a new exercise of your own (see below). Saving it makes it and goes to its page; Cancel makes nothing.
 - **Search**: finds by name and other names, as the picker does (case, spaces and a plural "s" don't count), best match first. A match on another name says so on its card ("Also called Press-up").

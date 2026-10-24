@@ -5,6 +5,7 @@ import { AlarmService } from '../shared/alarms/alarm.service';
 import { BackupService, ImportResult } from '../shared/backup/backup.service';
 import { ToggleSwitchComponent } from '../shared/components/toggle-switch/toggle-switch.component';
 import { injectPrefersReducedMotion } from '../shared/reduced-motion';
+import { LoopLogoComponent } from '../shared/components/loop-logo/loop-logo.component';
 import { KeepAwakeService } from '../shared/run/keep-awake.service';
 import { SettingsStore, Theme } from '../shared/state/settings-store.service';
 import { AlarmKind } from '../workout/alarm-schedule';
@@ -20,7 +21,7 @@ const SWITCHING_CLASS = 'theme-switching';
 
 @Component({
     selector: 'app-settings',
-    imports: [ToggleSwitchComponent],
+    imports: [ToggleSwitchComponent, LoopLogoComponent],
     templateUrl: './settings.component.html',
     styleUrl: './settings.component.scss',
 })
