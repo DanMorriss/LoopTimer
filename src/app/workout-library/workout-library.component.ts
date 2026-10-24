@@ -28,7 +28,6 @@ export class WorkoutLibraryComponent {
     private host = inject<ElementRef<HTMLElement>>(ElementRef);
     private injector = inject(Injector);
     private readonly undo = inject(UndoService);
-    protected activeWorkoutCardId = signal<string | null>(null);
     protected openWorkoutMenuId = signal<string | null>(null);
 
     protected isExistingWorkouts = computed(() => this.workoutStore.workouts().length > 0);
@@ -40,7 +39,6 @@ export class WorkoutLibraryComponent {
     deleteWorkout(workout: Workout) {
         const index = this.workoutStore.workouts().findIndex((w) => w.id === workout.id);
         this.workoutStore.deleteWorkout(workout.id);
-        this.activeWorkoutCardId.set(null);
         this.openWorkoutMenuId.set(null);
         const name = workout.title.trim();
         this.undo.offerUndo({
@@ -59,17 +57,12 @@ export class WorkoutLibraryComponent {
         });
     }
 
-    setActiveWorkoutCard(workoutId: string) {
-        this.activeWorkoutCardId.set(workoutId);
-    }
-
-    clearActiveWorkoutCard() {
-        this.activeWorkoutCardId.set(null);
+    /** A click anywhere else on the page closes an open card's options. */
+    closeWorkoutMenus() {
         this.openWorkoutMenuId.set(null);
     }
 
     toggleWorkoutMenu(workoutId: string) {
-        this.activeWorkoutCardId.set(workoutId);
         this.openWorkoutMenuId.update((currentMenuId) =>
             currentMenuId === workoutId ? null : workoutId
         );
@@ -105,7 +98,6 @@ export class WorkoutLibraryComponent {
 
     navigateToEditWorkout(workoutId: string) {
         this.openWorkoutMenuId.set(null);
-        this.activeWorkoutCardId.set(null);
         this.router.navigate(['/setup'], { queryParams: { editId: workoutId } });
     }
 }

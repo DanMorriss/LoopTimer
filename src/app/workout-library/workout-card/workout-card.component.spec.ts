@@ -3,6 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Workout, UNTIL_STOPPED } from '../../models/workout';
 import { makeWorkout, reps, rest, work } from '../../shared/testing/make-workout';
 import { WorkoutCardComponent } from './workout-card.component';
+import { fakeReducedMotion } from '../../shared/testing/fake-reduced-motion';
 
 const sprints = makeWorkout({
     id: 'workout-7',
@@ -21,9 +22,7 @@ const sprints = makeWorkout({
             <li
                 appWorkoutCard
                 [workout]="workout()"
-                [active]="active()"
                 [menuOpen]="menuOpen()"
-                (selected)="events.push('selected')"
                 (started)="events.push('started')"
                 (menuToggled)="events.push('menuToggled')"
                 (menuClosed)="events.push('menuClosed')"
@@ -35,7 +34,6 @@ const sprints = makeWorkout({
 })
 class HostComponent {
     workout = signal(sprints);
-    active = signal(false);
     menuOpen = signal(false);
     events: string[] = [];
 }
@@ -52,9 +50,10 @@ describe('WorkoutCardComponent', () => {
 
     const card = (): HTMLElement => fixture.nativeElement.querySelector('li');
     const el = (selector: string): HTMLElement => card().querySelector(selector)!;
-    const set = (changes: Partial<{ workout: Workout; active: boolean; menuOpen: boolean }>) => {
+    /** What screen readers hear about it, after its name. */
+    const spoken = () => card().querySelector('.sr-only')!.textContent!.trim().replace(/\s+/g, ' ');
+    const set = (changes: Partial<{ workout: Workout; menuOpen: boolean }>) => {
         if (changes.workout) host.workout.set(changes.workout);
-        if (changes.active !== undefined) host.active.set(changes.active);
         if (changes.menuOpen !== undefined) host.menuOpen.set(changes.menuOpen);
         fixture.detectChanges();
     };
@@ -63,45 +62,35 @@ describe('WorkoutCardComponent', () => {
         set({ workout: { ...sprints, repeats: UNTIL_STOPPED, timeLimitSeconds: 1200 } });
 
         expect(el('.workout-card__summary').textContent).toContain('01:05 - 00:20 in 20:00');
-        expect(el('.workout-card__summary').getAttribute('aria-label')).toBe(
-            'Timed 01:05, rest 00:20, as many rounds as possible in 20:00'
-        );
+        expect(spoken()).toBe('Timed 01:05, rest 00:20, as many rounds as possible in 20:00');
     });
 
     it('is a list item showing the title and padded times', () => {
         expect(card().classList).toContain('workout-card');
         expect(el('.workout-card__title').textContent?.trim()).toBe('Sprints');
         expect(el('.workout-card__summary').textContent).toContain('01:05 - 00:20 x 4');
-        expect(el('.workout-card__summary').getAttribute('aria-label')).toBe(
-            'Timed 01:05, rest 00:20, repeated 4 times'
-        );
+        expect(spoken()).toBe('Timed 01:05, rest 00:20, repeated 4 times');
     });
 
     it('shows ∞ for a workout that runs until stopped', () => {
         set({ workout: { ...sprints, repeats: UNTIL_STOPPED } });
 
         expect(el('.workout-card__summary').textContent).toContain('01:05 - 00:20 x ∞');
-        expect(el('.workout-card__summary').getAttribute('aria-label')).toBe(
-            'Timed 01:05, rest 00:20, repeated until stopped'
-        );
+        expect(spoken()).toBe('Timed 01:05, rest 00:20, repeated until stopped');
     });
 
     it('sums up an unnamed round of several steps by their count and total time', () => {
         set({ workout: { ...sprints, steps: [work(30), work(45), rest(20)] } });
 
         expect(el('.workout-card__summary').textContent).toContain('3 steps · 01:35 x 4');
-        expect(el('.workout-card__summary').getAttribute('aria-label')).toBe(
-            '3 steps, 01:35 a round, repeated 4 times'
-        );
+        expect(spoken()).toBe('3 steps, 01:35 a round, repeated 4 times');
     });
 
     it('adds "+ reps" to the time of an unnamed round with rep steps', () => {
         set({ workout: { ...sprints, steps: [work(30), reps(20), rest(20)] } });
 
         expect(el('.workout-card__summary').textContent).toContain('3 steps · 00:50 + reps x 4');
-        expect(el('.workout-card__summary').getAttribute('aria-label')).toBe(
-            '3 steps, 00:50 a round plus reps, repeated 4 times'
-        );
+        expect(spoken()).toBe('3 steps, 00:50 a round plus reps, repeated 4 times');
     });
 
     it('lists the named exercises in the round when the workout has them', () => {
@@ -120,18 +109,14 @@ describe('WorkoutCardComponent', () => {
         expect(el('.workout-card__summary').textContent).toContain(
             'Squats, Bench press + 1 more x 4'
         );
-        expect(el('.workout-card__summary').getAttribute('aria-label')).toBe(
-            'Squats, Bench press + 1 more, repeated 4 times'
-        );
+        expect(spoken()).toBe('Squats, Bench press + 1 more, repeated 4 times');
     });
 
     it('says "reps" alone for a round with no timed steps', () => {
         set({ workout: { ...sprints, steps: [reps(10)] } });
 
         expect(el('.workout-card__summary').textContent).toContain('1 step · reps x 4');
-        expect(el('.workout-card__summary').getAttribute('aria-label')).toBe(
-            '1 step, all reps, repeated 4 times'
-        );
+        expect(spoken()).toBe('1 step, all reps, repeated 4 times');
     });
 
     it('shows a workout with no rest as rest 00:00, as before', () => {
@@ -144,47 +129,24 @@ describe('WorkoutCardComponent', () => {
         set({ workout: { ...sprints, title: '  ' } });
 
         expect(el('.workout-card__title').textContent?.trim()).toBe('Untitled workout');
-        expect(el('.workout-card__overlay-play').getAttribute('aria-label')).toBe('Start workout');
+        expect(el('.workout-card__start').getAttribute('aria-label')).toBe('Start workout');
     });
 
-    it('shows the selected state and play button only when active with the menu closed', () => {
-        expect(card().classList).not.toContain('workout-card--active');
-        expect(el('.workout-card__overlay-play').classList).not.toContain(
-            'workout-card__overlay-play--visible'
-        );
-
-        set({ active: true });
-        expect(card().classList).toContain('workout-card--active');
-        expect(el('.workout-card__overlay-play').classList).toContain(
-            'workout-card__overlay-play--visible'
-        );
-
-        set({ menuOpen: true });
-        expect(card().classList).toContain('workout-card--menu-open');
-        expect(el('.workout-card__overlay-play').classList).not.toContain(
-            'workout-card__overlay-play--visible'
-        );
-    });
-
-    it('reports being selected by a click or by focusing its play button', () => {
-        card().click();
-        el('.workout-card__overlay-play').dispatchEvent(new FocusEvent('focus'));
-
-        expect(host.events).toEqual(['selected', 'selected']);
-    });
-
-    it('reports start without also reporting a selection', () => {
-        el('.workout-card__overlay-play').click();
+    it('starts the workout in one press of the card, which says what it is', () => {
+        el('.workout-card__start').click();
 
         expect(host.events).toEqual(['started']);
+        expect(el('.workout-card__start').getAttribute('aria-label')).toBe('Start Sprints');
+        expect(spoken()).toBe('Timed 01:05, rest 00:20, repeated 4 times');
     });
 
-    it('toggles its options, which offer edit and delete', () => {
+    it('toggles its options, which offer edit and delete, without starting', () => {
         el('.workout-card__action--menu').click();
         expect(host.events).toEqual(['menuToggled']);
         expect(el('.workout-card__action--menu').getAttribute('aria-expanded')).toBe('false');
 
         set({ menuOpen: true });
+        expect(card().classList).toContain('workout-card--menu-open');
         expect(el('.workout-card__action--menu').getAttribute('aria-expanded')).toBe('true');
         el('.workout-card__menu-item--edit').click();
         el('.workout-card__menu-item--danger').click();
@@ -200,5 +162,127 @@ describe('WorkoutCardComponent', () => {
         );
 
         expect(host.events).toEqual(['menuClosed']);
+    });
+
+    describe('gestures', () => {
+        const face = () => el('.workout-card__face');
+        const offset = () => new DOMMatrix(getComputedStyle(face()).transform).m41;
+
+        function pointer(type: string, x: number, y = 100) {
+            face().dispatchEvent(
+                new PointerEvent(type, {
+                    pointerId: 1,
+                    pointerType: 'touch',
+                    clientX: x,
+                    clientY: y,
+                    bubbles: true,
+                })
+            );
+        }
+
+        /** Presses at x = 300, moves `dx` across (and `dy` down), and maybe lets go. */
+        function swipe(dx: number, { dy = 0, letGo = true } = {}) {
+            pointer('pointerdown', 300);
+            pointer('pointermove', 300 + dx / 2, 100 + dy / 2);
+            pointer('pointermove', 300 + dx, 100 + dy);
+            if (letGo) {
+                pointer('pointerup', 300 + dx, 100 + dy);
+            }
+            fixture.detectChanges();
+        }
+
+        it('follows a swipe to the left, showing Delete behind as it goes', () => {
+            swipe(-80, { letGo: false });
+
+            expect(offset()).toBe(-80);
+            expect(card().style.getPropertyValue('--reveal')).toBe('80px');
+            expect(card().classList).not.toContain('workout-card--past-delete');
+        });
+
+        it('says when letting go would delete it, once past halfway', () => {
+            swipe(-card().offsetWidth * 0.6, { letGo: false });
+
+            expect(card().classList).toContain('workout-card--past-delete');
+        });
+
+        it('deletes once swiped past halfway and let go', async () => {
+            fakeReducedMotion(true);
+            swipe(-card().offsetWidth * 0.6);
+
+            await vi.waitFor(() => expect(host.events).toEqual(['deleteRequested']));
+        });
+
+        it('deletes on a short, fast flick, by where it would carry', async () => {
+            fakeReducedMotion(true);
+            // Moves this close together read as a fast flick
+            swipe(-60);
+
+            await vi.waitFor(() => expect(host.events).toEqual(['deleteRequested']));
+        });
+
+        it('springs back, without deleting or starting, when let go short of halfway', async () => {
+            swipe(-60, { letGo: false });
+            // A pause before letting go, so it's let go slowly rather than flicked
+            await new Promise((resolve) => setTimeout(resolve, 120));
+            pointer('pointerup', 240);
+            el('.workout-card__start').click();
+
+            const [spring] = face().getAnimations();
+            const [from, to] = (spring.effect as KeyframeEffect).getKeyframes();
+            expect(new DOMMatrix(String(from['transform'])).m41).toBe(-60);
+            expect(new DOMMatrix(String(to['transform'])).m41).toBe(0);
+            expect(host.events).toEqual([]);
+        });
+
+        it('resists a swipe to the right, where there is nothing to show', () => {
+            swipe(200, { letGo: false });
+
+            expect(offset()).toBeGreaterThan(0);
+            expect(offset()).toBeLessThan(200);
+        });
+
+        it('leaves up and down to the page, still a tap away from starting', () => {
+            swipe(4, { dy: 80 });
+
+            expect(offset()).toBe(0);
+            el('.workout-card__start').click();
+            expect(host.events).toEqual(['started']);
+        });
+
+        it('opens its options when held, without starting on letting go', () => {
+            vi.useFakeTimers();
+            try {
+                pointer('pointerdown', 300);
+                vi.advanceTimersByTime(500);
+                pointer('pointerup', 300);
+                el('.workout-card__start').click();
+
+                expect(host.events).toEqual(['menuToggled']);
+            } finally {
+                vi.useRealTimers();
+            }
+        });
+
+        it("doesn't open its options if let go before the hold", () => {
+            vi.useFakeTimers();
+            try {
+                pointer('pointerdown', 300);
+                vi.advanceTimersByTime(200);
+                pointer('pointerup', 300);
+                vi.advanceTimersByTime(500);
+
+                expect(host.events).toEqual([]);
+            } finally {
+                vi.useRealTimers();
+            }
+        });
+
+        it('opens its options on a right-click, in place of the browser menu', () => {
+            const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
+            el('.workout-card__start').dispatchEvent(event);
+
+            expect(event.defaultPrevented).toBe(true);
+            expect(host.events).toEqual(['menuToggled']);
+        });
     });
 });

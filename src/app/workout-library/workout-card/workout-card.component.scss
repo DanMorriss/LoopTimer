@@ -1,62 +1,121 @@
 @use 'interaction' as *;
 
+// The list item holds the card (the face, which slides with a swipe) and what's behind it
 :host {
     list-style: none;
     position: relative;
     z-index: 0;
-    border-radius: 0.9rem;
-    border: 1px solid var(--border);
-    background: var(--card);
-    box-shadow: 0 10px 30px var(--shadow);
-    padding: 0.9rem 0.8rem;
-    backdrop-filter: blur(8px);
-    cursor: pointer;
-}
-
-:host(.workout-card--active)::before {
-    content: '';
-    position: absolute;
-    offset-path: inset(0.5px round 0.9rem);
-    offset-distance: 0%;
-    animation: card-edge-orbit 2.6s linear infinite;
-    offset-rotate: auto;
-    // Own layer, so the glow is drawn once and just moved each frame instead of redrawn
-    will-change: transform;
-    pointer-events: none;
-    z-index: 3;
-    width: 36px;
-    height: 8px;
-    border-radius: 999px;
-    background: rgba(56, 189, 248, 0.42);
-    filter: blur(0.35px);
-    box-shadow:
-        0 0 4px rgba(34, 211, 238, 0.28),
-        0 0 8px rgba(34, 211, 238, 0.18);
-}
-
-:host(.workout-card--menu-open)::before {
-    display: none;
 }
 
 :host(.workout-card--menu-open) {
     z-index: 30;
 }
 
-.workout-card__content {
+// Behind the card, showing as much as a swipe to the left leaves (--reveal, set while it
+// moves): red, with Delete at its right, coming fully on once letting go would delete
+.workout-card__delete {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.35rem;
+    padding-right: 1.25rem;
+    border-radius: 0.9rem;
+    background: var(--danger-soft);
+    color: var(--text-danger);
+    font-weight: 600;
+    clip-path: inset(0 0 0 calc(100% - var(--reveal, 0px)) round 0.9rem);
     transition:
-        opacity 0.2s ease,
-        filter 0.2s ease;
+        background-color 0.15s ease,
+        color 0.15s ease;
+
+    .mat-icon {
+        width: 1.4rem;
+        height: 1.4rem;
+        font-size: 1.4rem;
+    }
+
+    :host(.workout-card--past-delete) & {
+        background: var(--danger-strong);
+        color: #fff;
+    }
 }
 
-.workout-card__content--muted {
-    opacity: 0.35;
-    filter: grayscale(0.25);
+.workout-card__face {
+    position: relative;
+    border-radius: 0.9rem;
+    border: 1px solid var(--border);
+    background: var(--card);
+    box-shadow: 0 10px 30px var(--shadow);
+    backdrop-filter: blur(8px);
+    // Up and down scroll the page; left and right are the card's to swipe
+    touch-action: pan-y;
+    // A long press opens the card's options, not the phone's text selection or link menu
+    user-select: none;
+    -webkit-touch-callout: none;
+}
+
+// The whole card is the button that starts the workout
+.workout-card__start {
+    display: grid;
+    grid-template-columns: 44px 1fr 44px;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    min-height: 5.5rem;
+    padding: 0.9rem 0.8rem;
+    border: 0;
+    border-radius: inherit;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+        background-color 0.2s ease,
+        scale 0.2s ease-out;
+
+    @include hover {
+        background: var(--control);
+    }
+
+    // Pressed: the card dips, as a button does
+    &:active {
+        background: var(--control);
+        scale: 0.98;
+        transition-duration: 0.08s;
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+    }
+}
+
+// What pressing the card does, at its left, balancing the ⋮ at its right
+.workout-card__play {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--glow-text);
+    font-size: 28px;
+    line-height: 44px;
+}
+
+.workout-card__text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
 }
 
 // The workout's name, semibold above its summary
 .workout-card__title {
-    margin: 0 0 0.5rem;
-    text-align: center;
     font-size: 1.0625rem;
     font-weight: 600;
     color: var(--text-strong);
@@ -65,39 +124,16 @@
     white-space: nowrap;
 }
 
+// An untitled workout keeps the line, so its card is the same height, but shows nothing on it
 .workout-card__title--placeholder {
     visibility: hidden;
 }
 
-.workout-card__row {
-    display: grid;
-    grid-template-columns: 44px 1fr 44px;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.workout-card__spacer {
-    width: 44px;
-    height: 44px;
-}
-
 .workout-card__summary {
-    margin: 0;
-    text-align: center;
     color: var(--text);
-    font-size: 1.03rem;
-    letter-spacing: 0.03em;
+    font-size: 1rem;
     // A long summary ("3 steps · 00:50 + reps x 4") wraps into two even lines, not one word on its own
     text-wrap: balance;
-}
-
-// The options button is a shared .btn-icon; this is the play button that appears over the card
-.workout-card__overlay-play {
-    border-radius: 999px;
-    display: inline-grid;
-    place-items: center;
-    padding: 0;
-    cursor: pointer;
 }
 
 .workout-card__action-icon {
@@ -123,55 +159,9 @@
     z-index: 9;
 }
 
-.workout-card__overlay-play {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    width: 78px;
-    height: 78px;
-    border: 1px solid var(--accent-line);
-    background: var(--raised);
-    box-shadow: 0 14px 28px var(--shadow);
-    z-index: 2;
-    opacity: 0;
-    pointer-events: none;
-    transition: scale 0.2s ease-out;
-
-    @include pressed-scale(0.92);
-}
-
-.workout-card__overlay-play--visible {
-    opacity: 1;
-    pointer-events: auto;
-}
-
-.workout-card__overlay-icon {
-    width: 42px;
-    height: 42px;
-    font-size: 42px;
-    line-height: 42px;
-    color: var(--accent);
-}
-
-.workout-card__overlay-play:focus-visible {
-    opacity: 1;
-    pointer-events: auto;
-    outline: 2px solid var(--text);
-    outline-offset: 2px;
-}
-
-@keyframes card-edge-orbit {
-    0% {
-        offset-distance: 0%;
-    }
-    100% {
-        offset-distance: 100%;
-    }
-}
-
 @media (prefers-reduced-motion: reduce) {
-    :host(.workout-card--active)::before {
-        animation: none;
+    .workout-card__start,
+    .workout-card__delete {
+        transition: none;
     }
 }

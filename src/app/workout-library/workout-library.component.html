@@ -1,4 +1,4 @@
-<div class="library-screen p-4 text-(--text-strong)" (click)="clearActiveWorkoutCard()">
+<div class="library-screen p-4 text-(--text-strong)" (click)="closeWorkoutMenus()">
     @let existingWorkouts = isExistingWorkouts();
     @if (!existingWorkouts) {
         <div class="flex flex-col items-center justify-center">
@@ -18,9 +18,7 @@
             <li
                 appWorkoutCard
                 [workout]="workout"
-                [active]="activeWorkoutCardId() === workout.id"
                 [menuOpen]="openWorkoutMenuId() === workout.id"
-                (selected)="setActiveWorkoutCard(workout.id)"
                 (started)="startWorkout(workout)"
                 (menuToggled)="toggleWorkoutMenu(workout.id)"
                 (menuClosed)="closeWorkoutMenu(workout.id)"
