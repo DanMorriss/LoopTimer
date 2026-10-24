@@ -1,6 +1,7 @@
 @if (shown()) {
     <aside class="run-bar" aria-label="Workout in progress" [attr.data-phase]="phase()">
-        <a class="run-bar__open" routerLink="/workout">
+        <!-- Grows into the workout page as it opens (WorkoutMorph) -->
+        <a class="run-bar__open" href="/workout" (click)="morph.follow($event, '/workout')">
             <span class="run-bar__dot" aria-hidden="true"></span>
             <span class="run-bar__text">
                 <span class="run-bar__title">{{ title() }}</span>

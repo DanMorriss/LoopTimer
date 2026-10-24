@@ -1,0 +1,90 @@
+// The workout growing out of its bar above the tabs, and folding back into it (WorkoutMorph,
+// src/app/nav/workout-morph.ts). The bar and the workout page share a view-transition-name,
+// so the browser moves and sizes one into the other along the same path both ways; the tab
+// bar slides down out of the way, and back up. Names only apply while it runs.
+
+:root.workout-morphing {
+    .run-bar,
+    .workout-page {
+        view-transition-name: workout;
+    }
+
+    .tab-bar {
+        view-transition-name: tab-bar;
+    }
+
+    // The morph moves it into place, so not its own rise as well
+    .run-bar {
+        animation: none;
+    }
+}
+
+// The move itself, on the app's no-bounce spring
+::view-transition-group(workout) {
+    animation-duration: var(--spring-duration);
+    animation-timing-function: var(--ease-spring);
+}
+
+// The moving box is the bar's frosted material (the browser carries the bar's backdrop blur
+// over to it), growing to fill the screen with the workout fading in on it, and shrinking
+// back: the material itself arrives, rather than one see-through picture over another. Its
+// rounded corners clip both pictures, as the bar's are.
+::view-transition-image-pair(workout) {
+    overflow: hidden;
+    border-radius: 1.75rem;
+    background: var(--chrome);
+}
+
+// The workout page's picture fills the moving box, cropped from the top, rather than being
+// squashed to the bar's shape; the bar's keeps its own size at the bottom of the box, where
+// the bar is, rather than being blown up to the page's
+::view-transition-old(workout),
+::view-transition-new(workout) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+}
+
+:root.workout-morphing--open::view-transition-old(workout),
+:root.workout-morphing--close::view-transition-new(workout) {
+    object-fit: none;
+    object-position: center bottom;
+}
+
+// Swap the pictures early, so neither is seen at the wrong size for long
+::view-transition-old(workout) {
+    animation: morph-fade-out 0.15s ease-out both;
+}
+
+::view-transition-new(workout) {
+    animation: morph-fade-in 0.2s ease-out 0.05s both;
+}
+
+@keyframes morph-fade-out {
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes morph-fade-in {
+    from {
+        opacity: 0;
+    }
+}
+
+// The tab bar: only in the old picture when the workout opens, only in the new one when it
+// folds away, so it leaves downwards and comes back up the same way
+::view-transition-old(tab-bar):only-child {
+    animation: tab-bar-down var(--spring-duration) var(--ease-spring) both;
+}
+
+::view-transition-new(tab-bar):only-child {
+    animation: tab-bar-down var(--spring-duration) var(--ease-spring) reverse both;
+}
+
+@keyframes tab-bar-down {
+    to {
+        transform: translateY(calc(100% + var(--bars-bottom)));
+    }
+}
