@@ -53,7 +53,7 @@
 
 ### Delete and Undo
 
-- **Delete** removes the entry at once and shows "Deleted Sprints. **Undo**". Undo puts it back, note and all.
+- **Delete** removes the entry at once, and the **Undo bar** says "Deleted Sprints" with **Undo** (see [home-and-navigation](home-and-navigation.md#undo)). Undo puts it back, note and all.
 - A deleted entry **stays deleted** even if its run is still going and later finishes, or the app is closed (which would otherwise log it again). Only Undo brings it back.
 
 ## Acceptance criteria

@@ -25,7 +25,7 @@
                 (menuToggled)="toggleWorkoutMenu(workout.id)"
                 (menuClosed)="closeWorkoutMenu(workout.id)"
                 (editRequested)="navigateToEditWorkout(workout.id)"
-                (deleteRequested)="requestDelete(workout)"
+                (deleteRequested)="deleteWorkout(workout)"
             ></li>
         }
     </ul>
@@ -40,20 +40,5 @@
             <mat-icon aria-hidden="true">add</mat-icon>
             Add workout
         </button>
-    }
-
-    @if (workoutPendingDelete(); as pendingWorkout) {
-        <app-confirm-dialog
-            animate.leave="dialog-leave"
-            title="Delete workout?"
-            (cancelled)="cancelDelete()"
-            (confirmed)="confirmDelete()"
-        >
-            @if (pendingWorkout.title.trim()) {
-                This will remove "{{ pendingWorkout.title }}" from your workout library.
-            } @else {
-                This will remove this workout from your workout library.
-            }
-        </app-confirm-dialog>
     }
 </div>

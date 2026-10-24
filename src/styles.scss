@@ -185,23 +185,37 @@
     );
     --spring-duration: 0.45s;
 
-    // The tab bar, and the workout's bar above it while one is going, float over the bottom
-    // of the page. --bars-height is how much of the page they cover, so pages can leave room
-    // (the main area's padding, the library's Add workout button).
+    // The bars floating over the bottom of the page: the tabs, the workout's bar above them
+    // while one is going, and the Undo bar above that after a delete. --bars-height is how
+    // much of the page they cover, so pages can leave room (the main area's padding, the
+    // library's Add workout button): each bar adds its own height and a gap while it shows.
     --bar-gap: 0.5rem;
     --tab-bar-height: 3.75rem;
     --run-bar-height: 3.5rem;
+    --undo-bar-height: 3.25rem;
     --bars-bottom: max(0.75rem, env(safe-area-inset-bottom));
-    --bars-height: env(safe-area-inset-bottom, 0px);
+    --bars-base: env(safe-area-inset-bottom, 0px);
+    --tab-bar-space: 0px;
+    --run-bar-space: 0px;
+    --undo-bar-space: 0px;
+    --bars-height: calc(
+        var(--bars-base) + var(--tab-bar-space) + var(--run-bar-space) + var(--undo-bar-space)
+    );
 
-    &:has(.tab-bar) {
-        --bars-height: calc(var(--bars-bottom) + var(--tab-bar-height) + var(--bar-gap));
+    &:has(.bottom-bars :is(.tab-bar, .run-bar, .undo-bar)) {
+        --bars-base: var(--bars-bottom);
     }
 
-    &:has(.tab-bar):has(.run-bar) {
-        --bars-height: calc(
-            var(--bars-bottom) + var(--tab-bar-height) + var(--run-bar-height) + 2 * var(--bar-gap)
-        );
+    &:has(.tab-bar) {
+        --tab-bar-space: calc(var(--tab-bar-height) + var(--bar-gap));
+    }
+
+    &:has(.run-bar) {
+        --run-bar-space: calc(var(--run-bar-height) + var(--bar-gap));
+    }
+
+    &:has(.undo-bar) {
+        --undo-bar-space: calc(var(--undo-bar-height) + var(--bar-gap));
     }
 }
 

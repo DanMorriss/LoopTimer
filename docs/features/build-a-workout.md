@@ -41,7 +41,7 @@
 - **Add step** (shown as "+ Step") adds a **rep step** at the end, opens it (closing the others) and puts the cursor in its name box.
 - **Changing kind:** a step's kind pill (e.g. "REPS") opens a menu of Reps, Timed and Rest, with the current one ticked. Picking one changes the step, open or collapsed, and focus goes back to the pill. The step keeps its name, exercise and numbers, so changing back finds them; only those its kind uses are saved. Escape, a click elsewhere or tabbing away closes the menu.
 - A step can be moved up or down one place with buttons, or dragged by its handle. The first step can't move up; the last can't move down.
-- **Deleting** an empty step (no name, no time or reps) happens at once. A step with a name, time or reps asks first: "This will remove Step 2, Squats, set to 00:45." Cancel keeps it.
+- **Deleting** a step happens at once. For one with a name, time or reps, the **Undo bar** says "Deleted Step 2, Squats, 00:45" with **Undo**, which puts it back where it was (see [home-and-navigation](home-and-navigation.md#undo)); an empty one (no name, no time or reps) has nothing to undo.
 
 ### Collapsing
 
@@ -86,7 +86,7 @@
 - Given a workout with only rep steps, when I start, then it starts (reps count as work).
 - Given 20 steps, then "+ Step" is disabled, with the reason shown.
 - Given one step, when I delete it, then there are none, the hint shows, and focus goes to "Add step".
-- Given a step named "Squats" at 0:45, when I delete it, then I'm asked first, naming it and its time.
+- Given a step named "Squats" at 0:45, when I delete it, then it goes at once and "Deleted Step 1, Squats, 00:45" offers Undo; when I press Undo, then it's back in its place.
 - Given steps A, B, C, when I move C up, then the order is A, C, B, and C keeps its name and time.
 - Given the Until stopped switch is turned on after picking 5 rounds, when it's turned off, then rounds go back to 5.
 - Given I edit a saved workout, then it opens with its steps collapsed, and saving updates it rather than adding another.

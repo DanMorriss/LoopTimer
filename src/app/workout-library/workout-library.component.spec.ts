@@ -3,6 +3,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { Workout } from '../models/workout';
 import { WorkoutStore } from '../shared/state/workout-store.service';
+import { DeletionStore } from '../shared/state/deletion-store.service';
+import { UndoService } from '../shared/undo/undo.service';
 import { makeWorkout as baseWorkout, SimpleWorkout } from '../shared/testing/make-workout';
 import { WorkoutLibraryComponent } from './workout-library.component';
 
@@ -210,121 +212,69 @@ describe('WorkoutLibraryComponent', () => {
         });
 
         describe('deleting', () => {
-            function requestDelete(index: number) {
+            const undo = () => TestBed.inject(UndoService);
+
+            function deleteFromMenu(index: number) {
                 click(card(index).querySelector('.workout-card__action--menu'));
                 click(card(index).querySelector('.workout-card__menu-item--danger'));
             }
 
-            it('asks for confirmation, naming the workout', () => {
-                requestDelete(0);
-
-                expect(el('[role="dialog"]')).not.toBeNull();
-                expect(el('[role="dialog"]')?.textContent).toContain('"Sprints"');
-                expect(store.workouts()).toHaveLength(2);
-            });
-
-            it('describes an untitled workout without empty quotes', () => {
-                store.updateWorkout(store.workouts()[0].id, {
-                    ...store.workouts()[0],
-                    title: '  ',
-                });
-                fixture.detectChanges();
-
-                requestDelete(0);
-
-                expect(el('[role="dialog"]')?.textContent).toContain(
-                    'This will remove this workout from your workout library.'
-                );
-            });
-
-            it('keeps the workout when cancelled', () => {
-                requestDelete(0);
-
-                click(el('.confirm-dialog__button--cancel'));
-
-                expect(el('[role="dialog"]')).toBeNull();
-                expect(store.workouts()).toHaveLength(2);
-            });
-
-            it('keeps the workout when clicking the backdrop', () => {
-                requestDelete(0);
-
-                click(el('.confirm-overlay'));
-
-                expect(el('[role="dialog"]')).toBeNull();
-                expect(store.workouts()).toHaveLength(2);
-            });
-
-            it('removes the workout when confirmed', () => {
-                requestDelete(0);
-
-                click(el('.confirm-dialog__button--delete'));
+            it('deletes straight away, without asking, and offers Undo naming it', () => {
+                deleteFromMenu(0);
 
                 expect(el('[role="dialog"]')).toBeNull();
                 expect(store.workouts()).toEqual([second]);
                 expect(all('.workout-card')).toHaveLength(1);
                 expect(JSON.parse(localStorage.getItem('workouts')!)).toEqual([second]);
+                expect(undo().offer()?.message).toBe('Deleted "Sprints"');
+            });
+
+            it('describes an untitled workout without empty quotes', () => {
+                deleteFromMenu(1);
+
+                expect(undo().offer()?.message).toBe('Deleted a workout');
+            });
+
+            it('puts it back where it was on Undo, with focus on its menu', async () => {
+                deleteFromMenu(0);
+
+                undo().undo();
+                await settle();
+
+                expect(store.workouts()).toEqual([first, second]);
+                expect(JSON.parse(localStorage.getItem('workouts')!)).toEqual([first, second]);
+                expect(
+                    TestBed.inject(DeletionStore).deletedAt('workout', first.id)
+                ).toBeUndefined();
+                expect(document.activeElement).toBe(
+                    card(0).querySelector('.workout-card__action--menu')
+                );
             });
 
             it('shows the empty message once the last workout is deleted', () => {
-                requestDelete(0);
-                click(el('.confirm-dialog__button--delete'));
-                requestDelete(0);
-                click(el('.confirm-dialog__button--delete'));
+                deleteFromMenu(0);
+                deleteFromMenu(0);
 
                 expect(text()).toContain('Nothing in the library yet');
+                expect(undo().offer()?.message).toBe('Deleted a workout');
             });
 
-            describe('keyboard and focus', () => {
-                it('moves focus into the dialog, starting on Cancel', async () => {
-                    requestDelete(0);
-                    await settle();
+            describe('closing the offer without undoing', () => {
+                it('moves focus to "Add workout"', async () => {
+                    deleteFromMenu(0);
 
-                    expect(document.activeElement).toBe(el('.confirm-dialog__button--cancel'));
-                });
-
-                it('closes on Escape without deleting', async () => {
-                    requestDelete(0);
-                    await settle();
-
-                    document.activeElement!.dispatchEvent(
-                        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })
-                    );
-                    fixture.detectChanges();
-
-                    expect(el('[role="dialog"]')).toBeNull();
-                    expect(store.workouts()).toHaveLength(2);
-                });
-
-                it("returns focus to the workout's options button when cancelled", async () => {
-                    requestDelete(1);
-                    await settle();
-
-                    click(el('.confirm-dialog__button--cancel'));
-                    await settle();
-
-                    expect(document.activeElement).toBe(
-                        card(1).querySelector('.workout-card__action--menu')
-                    );
-                });
-
-                it('moves focus to "Add Workout" after deleting', async () => {
-                    requestDelete(0);
-                    await settle();
-
-                    click(el('.confirm-dialog__button--delete'));
+                    undo().dismiss();
                     await settle();
 
                     expect(document.activeElement).toBe(el('.library-add-button'));
                 });
 
-                it('moves focus to "Create a workout" after deleting the last workout', async () => {
-                    for (let i = 0; i < 2; i++) {
-                        requestDelete(0);
-                        await settle();
-                        click(el('.confirm-dialog__button--delete'));
-                        await settle();
-                    }
+                it('moves focus to "Create a workout" once the library is empty', async () => {
+                    deleteFromMenu(0);
+                    deleteFromMenu(0);
+
+                    undo().dismiss();
+                    await settle();
 
                     expect(document.activeElement).toBe(el('.library-create-button'));
                 });

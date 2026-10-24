@@ -1,7 +1,7 @@
 @use 'interaction' as *;
 @use 'type' as *;
 
-// Over the page like the confirm dialog, but taller, so it scrolls within itself
+// Over the page, and tall, so it scrolls within itself
 .editor-overlay {
     position: fixed;
     inset: 0;

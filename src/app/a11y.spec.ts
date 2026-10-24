@@ -195,13 +195,14 @@ for (const theme of ['dark', 'light'] as const) {
                 await expectNoViolations();
             });
 
-            it('asking before deleting a step', async () => {
+            it('after deleting a step, with Undo offered', async () => {
                 const saved = store.addWorkout(sprints);
                 await open('/setup?editId=' + saved.id);
                 click('.step__toggle');
                 await settle();
                 click('.step__action--delete');
                 await settle();
+                expect(fixture.nativeElement.querySelector('.undo-bar')).not.toBeNull();
                 await expectNoViolations();
             });
 
@@ -268,13 +269,14 @@ for (const theme of ['dark', 'light'] as const) {
                 await expectNoViolations();
             });
 
-            it('with the delete dialog open', async () => {
+            it('after deleting a workout, with Undo offered', async () => {
                 store.addWorkout(sprints);
                 await open('/library');
                 click('.workout-card__action--menu');
                 await settle();
                 click('.workout-card__menu-item--danger');
                 await settle();
+                expect(fixture.nativeElement.querySelector('.undo-bar')).not.toBeNull();
                 await expectNoViolations();
             });
         });
@@ -330,20 +332,25 @@ for (const theme of ['dark', 'light'] as const) {
                 await expectNoViolations();
             });
 
-            it('your own exercise, asking before deleting it, and in use', async () => {
+            it("your own exercise in use, saying why it can't be deleted", async () => {
                 const mine = TestBed.inject(ExerciseStore).addOwn('Sled push', 'reps');
-                await open(`/exercises/${mine.id}`);
-                click('#exercise-page-delete');
-                await settle();
-                await expectNoViolations();
-                click('.confirm-dialog__button--cancel');
                 store.addWorkout(
                     makeWorkout({
                         steps: [{ kind: 'reps', reps: 5, name: 'Sled push', exerciseId: mine.id }],
                     })
                 );
+                await open(`/exercises/${mine.id}`);
                 click('#exercise-page-delete');
                 await settle();
+                await expectNoViolations();
+            });
+
+            it('your own exercise deleted, with Undo offered on the list', async () => {
+                const mine = TestBed.inject(ExerciseStore).addOwn('Sled push', 'reps');
+                await open(`/exercises/${mine.id}`);
+                click('#exercise-page-delete');
+                await settle(300);
+                expect(fixture.nativeElement.querySelector('.undo-bar')).not.toBeNull();
                 await expectNoViolations();
             });
 
@@ -398,6 +405,7 @@ for (const theme of ['dark', 'light'] as const) {
                 await settle();
                 click('.entry__delete');
                 await settle();
+                expect(fixture.nativeElement.querySelector('.undo-bar')).not.toBeNull();
                 await expectNoViolations();
             });
         });

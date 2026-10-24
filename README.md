@@ -77,7 +77,7 @@ src/app/
     components/wheel-picker/        iPhone-style number wheel (a Signal Forms control)
     components/infinity-switch/     The ∞ (until stopped) switch in setup
     components/toggle-switch/       On/off switch used in settings
-    components/confirm-dialog/      "Delete …?" dialog (library workouts, setup steps)
+    undo/undo.service.ts            Undo after a delete, shown in the Undo bar (nav/undo-bar/)
     reduced-motion.ts               Follows the system reduced-motion setting
   a11y.spec.ts       axe checks across the whole app
 src/styles/

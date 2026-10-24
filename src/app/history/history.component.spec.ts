@@ -3,6 +3,7 @@ import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { HistoryEntry, LoggedSet } from '../models/history';
 import { HistoryStore } from '../shared/state/history-store.service';
+import { UndoService } from '../shared/undo/undo.service';
 import { describeRounds, describeSets, formatDuration } from './history-format';
 import { SettingsStore } from '../shared/state/settings-store.service';
 import { ExerciseStore } from '../shared/state/exercise-store.service';
@@ -239,7 +240,7 @@ describe('HistoryComponent', () => {
         fixture.detectChanges();
     }
 
-    it('deletes a workout from its menu, then offers to undo, with focus on Undo', () => {
+    it('deletes a workout from its menu straight away, then offers to undo', () => {
         create(
             makeEntry({ title: 'Sprints' }),
             makeEntry({ startedAt: NOW - 2 * HOUR, title: 'Plank' })
@@ -249,20 +250,19 @@ describe('HistoryComponent', () => {
 
         expect(text('.entry__title')).toEqual(['Plank']);
         expect(history.entries()).toHaveLength(1);
-        expect(text('[role="status"]')).toEqual(['Deleted Sprints. Undo']);
-        expect(document.activeElement).toBe(button('Undo'));
+        expect(TestBed.inject(UndoService).offer()?.message).toBe('Deleted Sprints');
     });
 
     it('puts a deleted workout back on Undo, note and all, and focus back on its menu', () => {
         create(makeEntry({ title: 'Sprints', note: 'Felt strong' }));
         choose('Sprints at 11:00 AM', 'Delete');
 
-        button('Undo').click();
+        TestBed.inject(UndoService).undo();
         fixture.detectChanges();
+        TestBed.tick();
 
         expect(text('.entry__title')).toEqual(['Sprints']);
         expect(text('.entry__note')).toEqual(['Note: Felt strong']);
-        expect(text('[role="status"]')).toEqual(['']);
         expect(document.activeElement).toBe(button('Options for Sprints at 11:00 AM'));
     });
 

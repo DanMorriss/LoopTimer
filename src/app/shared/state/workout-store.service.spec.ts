@@ -502,6 +502,31 @@ describe('WorkoutStore', () => {
                 { kind: 'workout', id: workout.id, deletedAt: 9000 },
             ]);
         });
+
+        it('puts one back where it was on restore, e.g. on Undo, forgetting its deletion', () => {
+            const store = createStore();
+            const first = store.addWorkout(makeWorkout({ title: 'First' }));
+            const middle = store.addWorkout(makeWorkout({ title: 'Middle' }));
+            const last = store.addWorkout(makeWorkout({ title: 'Last' }));
+            store.deleteWorkout(middle.id);
+
+            store.restoreWorkout(middle, 1);
+
+            expect(store.workouts()).toEqual([first, middle, last]);
+            expect(savedWorkouts()).toEqual([first, middle, last]);
+            expect(JSON.parse(localStorage.getItem('deleted')!)).toEqual([]);
+        });
+
+        it('restores a workout only once', () => {
+            const store = createStore();
+            const workout = store.addWorkout(makeWorkout());
+            store.deleteWorkout(workout.id);
+
+            store.restoreWorkout(workout, 0);
+            store.restoreWorkout(workout, 0);
+
+            expect(store.workouts()).toEqual([workout]);
+        });
     });
 
     describe('mergeWorkouts', () => {
