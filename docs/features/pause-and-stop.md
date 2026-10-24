@@ -20,6 +20,7 @@
 - Pausing **freezes** the countdown and the ring where they are, and stops the last-seconds pulse. However long it's paused, it doesn't move on.
 - The ring **greys out**, and the round line, your note and Next turn the muted text colour. In the middle of the ring the face shows "**Paused · 00:23**" (or "Paused · 20 reps" on a rep step), a big **Resume** button, and **End workout** under it. The controls under the ring go while paused.
 - Focus moves to Resume on pause, and back to Pause (or Done) on resume, as the button just pressed has gone.
+- **Pause becomes Resume**: the button glides up from where Pause was into the middle of the ring as Resume, and back down again on resume, along the same path (from the smaller Pause beside Done on a rep step). It moves on a spring with no bounce (Apple's 0.4s response) and is a real button the whole way, so it can be pressed mid-glide, and it turns straight round from wherever it is. With reduced motion it's just swapped.
 - Resuming carries on from exactly where it was. The time spent paused **doesn't count** as time spent in the history.
 - Alarms booked ahead are cancelled on pause and booked again on resume. **An alarm that already sounded before the pause doesn't sound again** on resume, even if the pause came less than a second after it.
 - Done on a rep step while paused carries on running.
@@ -44,6 +45,7 @@
 - Given a run paused, when the app reloads, then it's still paused at the same point.
 - Given a run 4.5s in, when the app reloads, then it carries on from 4.5s, and only alarms still to come are booked.
 - Given a run going, then the only control is Pause; when paused, then Resume and End workout show over the greyed ring, and Escape resumes.
+- Given a run going, when I press Pause, then Resume glides from Pause's place up into the ring; when I press Resume before it gets there, then Pause glides back from where Resume was.
 - Given a run on its first step, when I end it, then nothing is logged, and the summary says "Nothing to log".
 - Given a run in round 2 of 3, when I end it, then it's logged as stopped, "1 of 3 rounds", with the time spent less pauses.
 - Given a run going, when I open History, then the alarms carry on, and it's logged when it finishes even though I'm not on the workout page.
@@ -52,5 +54,5 @@
 
 ## Platform notes
 
-- **Web:** `ActiveRunService` (`src/app/shared/run/active-run.service.ts`) owns the run; `WorkoutStore` (`src/app/shared/state/workout-store.service.ts`) saves the run's state in `sessionStorage` (see [data](data.md)). Closing the tab is caught with `pagehide`.
-- **iOS:** the same few values (workout id, run start, adjusted start, paused at, rep steps done, rep time) saved to `UserDefaults` give "carry on after relaunch". There's no reliable "app is closing" hook on iOS, so log the run as it stands whenever the app goes to the background (`scenePhase` → `.background`), which covers being swiped away. The lock-screen controls of a Live Activity could offer Pause and Stop too.
+- **Web:** `ActiveRunService` (`src/app/shared/run/active-run.service.ts`) owns the run; `WorkoutStore` (`src/app/shared/state/workout-store.service.ts`) saves the run's state in `sessionStorage` (see [data](data.md)). Closing the tab is caught with `pagehide`. The glide between Pause and Resume is a FLIP animation (`WorkoutComponent.glideFrom()`) with a spring easing from `src/app/shared/spring.ts`, rather than a view transition, which would block taps while it ran.
+- **iOS:** the same few values (workout id, run start, adjusted start, paused at, rep steps done, rep time) saved to `UserDefaults` give "carry on after relaunch". There's no reliable "app is closing" hook on iOS, so log the run as it stands whenever the app goes to the background (`scenePhase` → `.background`), which covers being swiped away. The lock-screen controls of a Live Activity could offer Pause and Stop too. The glide is a `matchedGeometryEffect` between the two buttons with `.spring(response: 0.4, dampingFraction: 1)`.
