@@ -7,6 +7,7 @@ import { BodyMapComponent } from '../shared/components/body-map/body-map.compone
 import { injectPrefersReducedMotion } from '../shared/reduced-motion';
 import { ExerciseStore } from '../shared/state/exercise-store.service';
 import { HistoryStore } from '../shared/state/history-store.service';
+import { UndoService } from '../shared/undo/undo.service';
 import { HistoryEntryComponent } from './history-entry/history-entry.component';
 import { entryName, formatDuration } from './history-format';
 
@@ -126,8 +127,7 @@ export class HistoryComponent {
         };
     });
 
-    /** The workout just deleted, which can be put back. */
-    protected readonly deleted = signal<HistoryEntry | null>(null);
+    private readonly undo = inject(UndoService);
     /** Whose menu is open, and whose note is being edited: one of each at most. */
     protected readonly openMenuId = signal<string | null>(null);
     protected readonly editingId = signal<string | null>(null);
@@ -171,22 +171,18 @@ export class HistoryComponent {
         }
     }
 
+    /** Deletes a workout from the history, and offers to put it back, note and all. */
     protected delete(entry: HistoryEntry) {
         this.openMenuId.set(null);
         this.closeNote(entry.id);
         this.history.delete(entry.id);
-        this.deleted.set(entry);
-        this.focusAfterRender('history-undo');
-    }
-
-    protected undo() {
-        const entry = this.deleted();
-        if (!entry) {
-            return;
-        }
-        this.history.restore(entry);
-        this.deleted.set(null);
-        this.focusAfterRender(`menu-${entry.id}`);
+        this.undo.offerUndo({
+            message: `Deleted ${entryName(entry)}`,
+            undo: () => {
+                this.history.restore(entry);
+                this.focusAfterRender(`menu-${entry.id}`);
+            },
+        });
     }
 
     /**

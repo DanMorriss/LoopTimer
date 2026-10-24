@@ -6,8 +6,10 @@
     <router-outlet></router-outlet>
 </main>
 
-<!-- Floating over the bottom of every page: the workout going (if one is), then the tabs -->
+<!-- Floating over the bottom of every page: Undo after a delete, the workout going (if one
+     is), then the tabs -->
 <div class="bottom-bars">
+    <app-undo-bar />
     <app-run-bar />
     <app-tab-bar />
 </div>

@@ -256,6 +256,23 @@ describe('ExerciseStore', () => {
             expect(store.byId('builtin:plank')).toBeDefined();
             expect(saved('deleted')).toBeNull();
         });
+
+        it('puts one back as it was on restore, e.g. on Undo: note, hidden and all', () => {
+            const store = createStore();
+            const mine = store.addOwn('Sled push', 'reps');
+            store.setNote(mine.id, 'Heavy');
+            store.setHidden(mine.id, true);
+            store.deleteOwn(mine.id);
+
+            store.restoreOwn(mine, 'Heavy', true);
+
+            expect(store.byId(mine.id)).toEqual(mine);
+            expect(store.noteFor(mine.id)).toBe('Heavy');
+            expect(store.isHidden(mine.id)).toBe(true);
+            expect(saved(EXERCISES_KEY)).toEqual([mine]);
+            // None of it is deleted any more, so a backup won't take it away again
+            expect(saved('deleted')).toEqual([]);
+        });
     });
 
     describe('hiding from the picker', () => {

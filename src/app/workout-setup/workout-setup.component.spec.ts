@@ -14,6 +14,7 @@ import { Workout, WorkoutFields, UNTIL_STOPPED } from '../models/workout';
 import { SettingsStore } from '../shared/state/settings-store.service';
 import { WorkoutStore } from '../shared/state/workout-store.service';
 import { ExerciseStore } from '../shared/state/exercise-store.service';
+import { UndoService } from '../shared/undo/undo.service';
 import { reps, rest, unlinked, unlinkedWorkout, work } from '../shared/testing/make-workout';
 import { MAX_STEPS, WorkoutSetupComponent } from './workout-setup.component';
 
@@ -551,7 +552,7 @@ describe('WorkoutSetupComponent', () => {
                     ]);
                 });
 
-                it('shows it with the reps once collapsed, and when asking before deleting', async () => {
+                it('shows it with the reps once collapsed, and when offering to undo deleting it', async () => {
                     await addStep();
                     chooseReps(2, '10');
                     chooseWeight(2, '60');
@@ -561,32 +562,30 @@ describe('WorkoutSetupComponent', () => {
 
                     await press('Step 3, reps, 10 reps @ 60 kg');
                     await press('Delete Step 3, reps');
-                    expect(
-                        fixture.nativeElement.querySelector('app-confirm-dialog')?.textContent
-                    ).toContain('This will remove Step 3, reps, set to 10 reps @ 60 kg.');
+                    expect(TestBed.inject(UndoService).offer()?.message).toBe(
+                        'Deleted Step 3, reps, 10 reps @ 60 kg'
+                    );
                 });
 
-                it('asks before deleting a step with only a weight', async () => {
+                it('offers to undo deleting a step with only a weight', async () => {
                     await addStep();
                     chooseWeight(2, '20');
 
                     await press('Delete Step 3, reps');
 
-                    expect(
-                        fixture.nativeElement.querySelector('app-confirm-dialog')
-                    ).not.toBeNull();
+                    expect(TestBed.inject(UndoService).offer()).not.toBeNull();
                 });
             });
 
-            it('names the reps when asking before deleting', async () => {
+            it('names the reps when offering to undo deleting it', async () => {
                 await addStep();
                 chooseReps(2, '20');
 
                 await press('Delete Step 3, reps');
 
-                expect(
-                    fixture.nativeElement.querySelector('app-confirm-dialog')?.textContent
-                ).toContain('This will remove Step 3, reps, set to 20 reps.');
+                expect(TestBed.inject(UndoService).offer()?.message).toBe(
+                    'Deleted Step 3, reps, 20 reps'
+                );
             });
         });
 
@@ -678,59 +677,64 @@ describe('WorkoutSetupComponent', () => {
 
         describe('deleting a step with something in it', () => {
             const dialog = () => el('[role="dialog"]');
+            const undo = () => TestBed.inject(UndoService);
 
             beforeEach(() => {
                 typeName(1, 'Breathe');
                 chooseTime(1, 'seconds', '20');
             });
 
-            it('deletes an empty step without asking', async () => {
+            it('deletes an empty step, with nothing to undo', async () => {
                 await press('Delete Step 1, timed');
 
                 expect(dialog()).toBeNull();
                 expect(steps()).toHaveLength(1);
+                expect(undo().offer()).toBeNull();
             });
 
-            it('asks first, naming the step and its time', async () => {
+            it('deletes straight away, without asking, and offers Undo naming the step', async () => {
                 await press('Delete Step 2, Breathe');
-
-                expect(dialog()?.textContent).toContain('Delete step?');
-                expect(dialog()?.textContent).toContain(
-                    'This will remove Step 2, Breathe, set to 00:20.'
-                );
-                expect(steps()).toHaveLength(2);
-            });
-
-            it('asks about a step with only a name, or only a time', async () => {
-                typeName(0, 'Squats');
-                await press('Delete Step 1, Squats');
-                expect(dialog()).not.toBeNull();
-                await press('Cancel');
-
-                typeName(0, '');
-                chooseTime(0, 'seconds', '5');
-                await press('Delete Step 1, timed');
-                expect(dialog()).not.toBeNull();
-            });
-
-            it('keeps the step when cancelled, and returns focus to its delete button', async () => {
-                await press('Delete Step 2, Breathe');
-
-                await press('Cancel');
-
-                expect(dialog()).toBeNull();
-                expect(shown().steps[1]).toEqual({ kind: 'Rest', name: 'Breathe', time: '0:20' });
-                expect(document.activeElement).toBe(button('Delete Step 2, Breathe'));
-            });
-
-            it('deletes the step when confirmed', async () => {
-                await press('Delete Step 2, Breathe');
-
-                await press('Delete');
 
                 expect(dialog()).toBeNull();
                 expect(shown().steps.map((s) => s.kind)).toEqual(['Timed']);
                 expect(said()).toBe('Deleted step 2');
+                expect(undo().offer()?.message).toBe('Deleted Step 2, Breathe, 00:20');
+            });
+
+            it('offers Undo for a step with only a name', async () => {
+                typeName(0, 'Squats');
+                await press('Delete Step 1, Squats');
+
+                expect(undo().offer()?.message).toBe('Deleted Step 1, Squats');
+            });
+
+            it('offers Undo for a step with only a time', async () => {
+                chooseTime(0, 'seconds', '5');
+                await press('Delete Step 1, timed');
+
+                expect(undo().offer()?.message).toBe('Deleted Step 1, timed, 00:05');
+            });
+
+            it('puts the step back where it was on Undo, with focus on its delete button', async () => {
+                await press('Delete Step 2, Breathe');
+
+                undo().undo();
+                fixture.detectChanges();
+                await fixture.whenStable();
+
+                expect(shown().steps[1]).toEqual({ kind: 'Rest', name: 'Breathe', time: '0:20' });
+                expect(said()).toBe('Step 2 is back');
+                expect(document.activeElement).toBe(button('Delete Step 2, Breathe'));
+            });
+
+            it('moves focus to the step before when the offer for the last one is closed', async () => {
+                await press('Delete Step 2, Breathe');
+
+                undo().dismiss();
+                fixture.detectChanges();
+                await fixture.whenStable();
+
+                expect(document.activeElement).toBe(button('Delete Step 1, timed'));
             });
         });
 

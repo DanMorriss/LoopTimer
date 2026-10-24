@@ -10,16 +10,16 @@ import {
 import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
 import { Workout } from '../models/workout';
-import { ConfirmDialogComponent } from '../shared/components/confirm-dialog/confirm-dialog.component';
 import { WorkoutCardComponent } from './workout-card/workout-card.component';
 import { ActiveRunService } from '../shared/run/active-run.service';
 import { WorkoutStore } from '../shared/state/workout-store.service';
+import { UndoService } from '../shared/undo/undo.service';
 
 @Component({
     selector: 'app-workout-library',
     templateUrl: './workout-library.component.html',
     styleUrl: './workout-library.component.scss',
-    imports: [ConfirmDialogComponent, WorkoutCardComponent, MatIconModule],
+    imports: [WorkoutCardComponent, MatIconModule],
 })
 export class WorkoutLibraryComponent {
     workoutStore = inject(WorkoutStore);
@@ -27,40 +27,36 @@ export class WorkoutLibraryComponent {
     private readonly run = inject(ActiveRunService);
     private host = inject<ElementRef<HTMLElement>>(ElementRef);
     private injector = inject(Injector);
-    protected workoutPendingDelete = signal<Workout | null>(null);
+    private readonly undo = inject(UndoService);
     protected activeWorkoutCardId = signal<string | null>(null);
     protected openWorkoutMenuId = signal<string | null>(null);
 
     protected isExistingWorkouts = computed(() => this.workoutStore.workouts().length > 0);
 
-    requestDelete(workout: Workout) {
-        this.activeWorkoutCardId.set(null);
-        this.openWorkoutMenuId.set(null);
-        this.workoutPendingDelete.set(workout);
-    }
-
-    cancelDelete() {
-        const workout = this.workoutPendingDelete();
-        this.workoutPendingDelete.set(null);
-        if (workout) {
-            this.focusAfterRender(`[data-menu-for="${workout.id}"]`);
-        }
-    }
-
-    confirmDelete() {
-        const workout = this.workoutPendingDelete();
-        if (!workout) {
-            return;
-        }
-
+    /**
+     * Deletes a workout straight away, and offers to put it back (UndoService) rather than
+     * asking first. Undo puts it back where it was, with focus on its menu.
+     */
+    deleteWorkout(workout: Workout) {
+        const index = this.workoutStore.workouts().findIndex((w) => w.id === workout.id);
         this.workoutStore.deleteWorkout(workout.id);
-        this.workoutPendingDelete.set(null);
         this.activeWorkoutCardId.set(null);
         this.openWorkoutMenuId.set(null);
-        // "Add workout" goes once the library is empty, and "Create a workout" takes its place
-        this.focusAfterRender(
-            this.workoutStore.workouts().length ? '.library-add-button' : '.library-create-button'
-        );
+        const name = workout.title.trim();
+        this.undo.offerUndo({
+            message: name ? `Deleted "${name}"` : 'Deleted a workout',
+            undo: () => {
+                this.workoutStore.restoreWorkout(workout, index);
+                this.focusAfterRender(`[data-menu-for="${workout.id}"]`);
+            },
+            // "Add workout" goes once the library is empty, and "Create a workout" takes its place
+            dismissed: () =>
+                this.focusAfterRender(
+                    this.workoutStore.workouts().length
+                        ? '.library-add-button'
+                        : '.library-create-button'
+                ),
+        });
     }
 
     setActiveWorkoutCard(workoutId: string) {

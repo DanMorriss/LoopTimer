@@ -3,19 +3,16 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { MatIconModule } from '@angular/material/icon';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
-import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { ExerciseDetailsComponent } from '../../shared/components/exercise-details/exercise-details.component';
 import { ExerciseEditorComponent } from '../../shared/components/exercise-editor/exercise-editor.component';
 import { ExerciseProgressComponent } from './exercise-progress/exercise-progress.component';
-import { isBuiltIn } from '../../models/exercise';
+import { Exercise, exercisePath, isBuiltIn } from '../../models/exercise';
 import { exerciseUsage } from '../../models/exercise-links';
 import { parseMusclesParam, serialiseMusclesParam } from '../muscle-filter-query';
 import { ExerciseStore } from '../../shared/state/exercise-store.service';
 import { HistoryStore } from '../../shared/state/history-store.service';
 import { WorkoutStore } from '../../shared/state/workout-store.service';
-
-/** What Delete leads to: a question to confirm, or why it can't be done. */
-type DeleteStep = 'confirm-delete' | 'confirm-hide' | 'in-use' | null;
+import { UndoService } from '../../shared/undo/undo.service';
 
 /**
  * One exercise (EXR-7, EXR-8): what it needs, its description and your note on it, the
@@ -32,7 +29,6 @@ type DeleteStep = 'confirm-delete' | 'confirm-hide' | 'in-use' | null;
         MatIconModule,
         RouterLink,
         ExerciseDetailsComponent,
-        ConfirmDialogComponent,
         ExerciseEditorComponent,
         ExerciseProgressComponent,
     ],
@@ -91,7 +87,9 @@ export class ExercisePageComponent {
     });
 
     protected readonly editing = signal(false);
-    protected readonly deleteStep = signal<DeleteStep>(null);
+    /** Delete was pressed while a workout uses it, so it says why it can't be deleted. */
+    protected readonly inUse = signal(false);
+    private readonly undo = inject(UndoService);
 
     protected openEditor() {
         this.editing.set(true);
@@ -109,38 +107,52 @@ export class ExercisePageComponent {
         }
     }
 
-    /** Deleting your own exercise: asks first, or says why it can't be deleted. */
-    protected askToDelete() {
-        const usage = this.usage();
-        if (usage.workouts.length > 0) {
-            this.deleteStep.set('in-use');
-        } else {
-            this.deleteStep.set(usage.inHistory ? 'confirm-hide' : 'confirm-delete');
-        }
-    }
-
-    protected cancelDelete() {
-        this.deleteStep.set(null);
-        document.getElementById('exercise-page-delete')?.focus();
-    }
-
-    protected confirmDelete() {
+    /**
+     * Deletes your own exercise straight away and offers to put it back (UndoService), rather
+     * than asking first; or says why it can't be deleted, if a workout uses it. One with
+     * history is hidden instead, so the history still has its name.
+     */
+    protected delete() {
         const exercise = this.exercise();
-        this.deleteStep.set(null);
-        if (!exercise) {
+        if (!exercise || isBuiltIn(exercise)) {
             return;
         }
+        const usage = this.usage();
+        this.inUse.set(usage.workouts.length > 0);
+        if (this.inUse()) {
+            return;
+        }
+        if (usage.inHistory) {
+            this.hideInstead(exercise);
+            return;
+        }
+        // As it was, to put back on Undo: your note on it, and whether it was hidden
+        const note = this.note();
+        const hidden = this.hidden();
         this.exercises.deleteOwn(exercise.id);
-        void this.router.navigate(['/exercises'], { queryParams: this.backQueryParams });
+        void this.router.navigate(['/exercises'], { queryParams: this.backQueryParams }).then(() =>
+            this.undo.offerUndo({
+                message: `Deleted ${exercise.name}`,
+                // Back as it was, and back on its page, where it was deleted from
+                undo: () => {
+                    this.exercises.restoreOwn(exercise, note, hidden);
+                    void this.router.navigateByUrl(exercisePath(exercise));
+                },
+            })
+        );
     }
 
-    /** With history, it's hidden instead, so the history still has its name. */
-    protected confirmHide() {
-        const exercise = this.exercise();
-        this.deleteStep.set(null);
-        if (exercise) {
-            this.exercises.setHidden(exercise.id, true);
-        }
-        document.getElementById('exercise-page-hide')?.focus();
+    /** It's in the history: hidden from the picker instead, with Undo. */
+    private hideInstead(exercise: Exercise) {
+        const wasHidden = this.hidden();
+        this.exercises.setHidden(exercise.id, true);
+        this.undo.offerUndo({
+            message: `${exercise.name} is in your history, so it's hidden from the picker instead`,
+            undo: () => {
+                this.exercises.setHidden(exercise.id, wasHidden);
+                document.getElementById('exercise-page-delete')?.focus();
+            },
+            dismissed: () => document.getElementById('exercise-page-hide')?.focus(),
+        });
     }
 }

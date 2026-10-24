@@ -4,23 +4,6 @@
     >
         <h2 class="history__title">History</h2>
 
-        <!-- After a delete: says so, and offers to put it back -->
-        <div class="history__status" role="status">
-            @if (deleted(); as entry) {
-                <div class="history__undo">
-                    <span>Deleted {{ entryName(entry) }}.</span>
-                    <button
-                        type="button"
-                        id="history-undo"
-                        class="btn-pill history__button"
-                        (click)="undo()"
-                    >
-                        Undo
-                    </button>
-                </div>
-            }
-        </div>
-
         @if (groups().length === 0) {
             <div class="history__empty">
                 <p>No workouts yet. Finished and stopped workouts show up here.</p>

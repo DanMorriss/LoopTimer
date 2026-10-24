@@ -547,17 +547,6 @@
     </div>
 </div>
 
-@if (stepPendingDelete(); as pending) {
-    <app-confirm-dialog
-        animate.leave="dialog-leave"
-        title="Delete step?"
-        (cancelled)="cancelDeleteStep()"
-        (confirmed)="confirmDeleteStep()"
-    >
-        {{ pending.description }}
-    </app-confirm-dialog>
-}
-
 @if (exerciseInDetails(); as opened) {
     <app-exercise-details-dialog
         animate.leave="dialog-leave"

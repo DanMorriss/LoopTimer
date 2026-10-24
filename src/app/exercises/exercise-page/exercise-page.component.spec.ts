@@ -5,6 +5,8 @@ import { BUILT_IN_EXERCISES } from '../../models/built-in-exercises';
 import { ExerciseStore } from '../../shared/state/exercise-store.service';
 import { HistoryStore } from '../../shared/state/history-store.service';
 import { WorkoutStore } from '../../shared/state/workout-store.service';
+import { DeletionStore } from '../../shared/state/deletion-store.service';
+import { UndoService } from '../../shared/undo/undo.service';
 import { makeWorkout } from '../../shared/testing/make-workout';
 import { ExercisePageComponent } from './exercise-page.component';
 
@@ -41,6 +43,7 @@ describe('ExercisePageComponent', () => {
     }
 
     const el = (): HTMLElement => fixture.nativeElement;
+    const undo = () => TestBed.inject(UndoService);
     const text = (selector: string) => el().querySelector(selector)?.textContent!.trim();
     const all = (selector: string) =>
         Array.from(el().querySelectorAll(selector)).map((e) => e.textContent!.trim());
@@ -131,16 +134,38 @@ describe('ExercisePageComponent', () => {
             expect(text('.body-map__none')).toBe('No muscles listed.');
         });
 
-        it('deletes it, once asked, and goes back to the list', async () => {
+        it('deletes it straight away, goes back to the list, and offers Undo', async () => {
             const mine = exercises.addOwn('Sled push', 'reps');
             await open(`/exercises/${mine.id}`);
 
             await click('#exercise-page-delete');
-            expect(text('#confirm-dialog-title')).toBe('Delete Sled push?');
-            await click('.confirm-dialog__button--delete');
+            await vi.waitFor(() => expect(undo().offer()).not.toBeNull());
 
+            expect(el().querySelector('[role="dialog"]')).toBeNull();
             expect(exercises.byId(mine.id)).toBeUndefined();
             expect(TestBed.inject(Router).url).toBe('/exercises');
+            expect(undo().offer()?.message).toBe('Deleted Sled push');
+            // Offered on the list, so it's still there once it's opened
+            expect(undo().offer()?.url).toBe('/exercises');
+        });
+
+        it('puts it back on Undo, note and all, and goes back to its page', async () => {
+            const mine = exercises.addOwn('Sled push', 'reps');
+            exercises.setNote(mine.id, 'Low hips');
+            exercises.setHidden(mine.id, true);
+            await open(`/exercises/${mine.id}`);
+            await click('#exercise-page-delete');
+            await vi.waitFor(() => expect(undo().offer()).not.toBeNull());
+
+            undo().undo();
+            await vi.waitFor(() =>
+                expect(TestBed.inject(Router).url).toBe(`/exercises/${mine.id}`)
+            );
+
+            expect(exercises.byId(mine.id)?.name).toBe('Sled push');
+            expect(exercises.noteFor(mine.id)).toBe('Low hips');
+            expect(exercises.isHidden(mine.id)).toBe(true);
+            expect(TestBed.inject(DeletionStore).deletedAt('exercise', mine.id)).toBeUndefined();
         });
 
         it('keeps the picked muscle when deleting and returning to the list', async () => {
@@ -148,7 +173,7 @@ describe('ExercisePageComponent', () => {
             await open(`/exercises/${mine.id}?muscles=glutes`);
 
             await click('#exercise-page-delete');
-            await click('.confirm-dialog__button--delete');
+            await vi.waitFor(() => expect(undo().offer()).not.toBeNull());
 
             expect(exercises.byId(mine.id)).toBeUndefined();
             expect(TestBed.inject(Router).url).toBe('/exercises?muscles=glutes');
@@ -159,7 +184,7 @@ describe('ExercisePageComponent', () => {
             await open(`/exercises/${mine.id}?muscles=quads,glutes`);
 
             await click('#exercise-page-delete');
-            await click('.confirm-dialog__button--delete');
+            await vi.waitFor(() => expect(undo().offer()).not.toBeNull());
 
             expect(exercises.byId(mine.id)).toBeUndefined();
             expect(TestBed.inject(Router).url).toBe('/exercises?muscles=quads,glutes');
@@ -177,7 +202,8 @@ describe('ExercisePageComponent', () => {
 
             await click('#exercise-page-delete');
 
-            expect(el().querySelector('app-confirm-dialog')).toBeNull();
+            expect(el().querySelector('[role="dialog"]')).toBeNull();
+            expect(undo().offer()).toBeNull();
             expect(text('[role="status"]')).toBe(
                 "Sled push is in Legs, so it can't be deleted. Take it out of that workout first, or hide it from the picker."
             );
@@ -201,11 +227,16 @@ describe('ExercisePageComponent', () => {
             await open(`/exercises/${mine.id}`);
 
             await click('#exercise-page-delete');
-            expect(text('#confirm-dialog-title')).toBe('Hide Sled push?');
-            await click('.confirm-dialog__button--delete');
 
+            expect(el().querySelector('[role="dialog"]')).toBeNull();
             expect(exercises.byId(mine.id)).toBeDefined();
             expect(exercises.isHidden(mine.id)).toBe(true);
+            expect(undo().offer()?.message).toBe(
+                "Sled push is in your history, so it's hidden from the picker instead"
+            );
+
+            undo().undo();
+            expect(exercises.isHidden(mine.id)).toBe(false);
         });
     });
 

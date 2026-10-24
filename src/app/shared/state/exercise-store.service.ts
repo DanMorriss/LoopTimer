@@ -136,6 +136,23 @@ export class ExerciseStore {
         this.setHidden(id, false);
     }
 
+    /**
+     * Puts an exercise of your own back as it was before deleteOwn(), e.g. on Undo: with your
+     * note on it, and hidden from the picker if it was.
+     */
+    restoreOwn(exercise: OwnExercise, note: string | undefined, hidden: boolean) {
+        if (this._own().some((own) => own.id === exercise.id)) {
+            return;
+        }
+        this.deletions.remove('exercise', exercise.id);
+        this._own.update((own) => [...own, exercise]);
+        this.saveOwn();
+        if (note) {
+            this.setNote(exercise.id, note);
+        }
+        this.setHidden(exercise.id, hidden);
+    }
+
     /** Whether an exercise is hidden from the picker in Create. */
     isHidden(exerciseId: string): boolean {
         return this.hiddenIds().has(exerciseId);

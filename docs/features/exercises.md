@@ -98,8 +98,8 @@ A link to an exercise that isn't there (deleted, or mistyped) says "Exercise not
 - Which are hidden is your data: saved, exported and synced. Showing one again leaves a deletion, so that reaches other copies too.
 - **Deleting** is for your own exercises only:
     - one a saved workout (or the one running) uses can't be deleted: "Sled push is in Legs, so it can't be deleted. Take it out of that workout first, or hide it from the picker." (with every such workout named, an untitled one as "an untitled workout")
-    - one in the history (a set of it was logged) is **hidden instead**, so the history keeps its name: "Hide Sled push?", "It's in your history, so it's kept for that. Hiding it takes it out of the picker in Create."
-    - otherwise it asks "Delete Sled push?" ("It goes for good, with your note on it."), and deleting it takes away your note on it too, and goes back to the list. Deletions are left behind for each.
+    - one in the history (a set of it was logged) is **hidden instead**, at once, so the history keeps its name: "Sled push is in your history, so it's hidden from the picker instead", with **Undo**.
+    - otherwise it's deleted at once, with your note on it, and you're back on the list, where "Deleted Sled push" offers **Undo**: that puts it back, note and hidden state and all, and opens its page again. Deletions are left behind for each (and taken back on Undo).
 
 ### Picking an exercise (EXR-2)
 
@@ -183,8 +183,8 @@ Past logged sets are linked the same way. Unnamed steps stay unnamed and aren't 
 - Given my own exercise, when I write two steps on separate lines in the dialog, then its page lists them as How to do it, in order.
 - Given my own exercise's dialog, when I tap the quads on the figure three times, then they're main, then supporting, then not worked.
 - Given my own exercise in the workout "Legs", when I press Delete, then it isn't deleted and I'm told it's in Legs.
-- Given my own exercise with a set in the history and in no workout, when I press Delete, then I'm asked to hide it instead.
-- Given my own exercise in no workout and not in the history, when I delete it, then it's gone, with my note on it, and the list shows.
+- Given my own exercise with a set in the history and in no workout, when I press Delete, then it's hidden instead, with Undo.
+- Given my own exercise in no workout and not in the history, when I delete it, then it's gone, with my note on it, and the list shows with Undo; when I press Undo, then it's back with my note, on its page.
 
 ## Platform notes
 

@@ -27,7 +27,7 @@
 - Everything works with a keyboard. Space pauses, resumes, and presses Done; Escape resumes. Focus moves to Resume on pause and back on resume (see [pause-and-stop](pause-and-stop.md)).
 - Wheels: arrows move one, Page Up/Down move five, Home/End jump to the ends, and typing digits picks a number.
 - Steps can be reordered with **Move up/down** buttons as well as by dragging (the drag handle is hidden from screen readers).
-- Focus is always put somewhere sensible: into a dialog (starting on Cancel), back to the button that opened a menu or dialog, onto a new step's name box, onto Undo after deleting from the history, onto the step that takes a deleted one's place.
+- Focus is always put somewhere sensible: into a dialog, back to the button that opened a menu or dialog, onto a new step's name box, onto **Undo** after any delete (and back to what was put back on Undo, or the step that took a deleted one's place if the offer is closed).
 - Escape closes menus, dialogs, tooltips and open wheels. Dialogs settle into place as the page dims behind them, and leave the way they came; taps reach the page as soon as one starts to close.
 
 ### Text
@@ -45,7 +45,7 @@
 
 - Given a run of 3 rounds, then a screen reader hears "Timed, round 1 of 3", "Rest", "Timed, round 2 of 3", …, "Finished", and nothing between.
 - Given a run paused, then it hears "Paused", and on resume, which phase it's back in.
-- Given the delete dialog opens, then focus starts on Cancel, and Escape closes it without deleting.
+- Given I delete something, then focus is on Undo, and Escape closes the offer without undoing.
 - Given reduced motion is on, then nothing loops.
 - Given any page in either theme, then an automated accessibility check (axe) finds nothing.
 

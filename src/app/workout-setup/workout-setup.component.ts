@@ -38,7 +38,7 @@ import { ExerciseDetailsDialogComponent } from './exercise-details-dialog/exerci
 import { ExerciseStore } from '../shared/state/exercise-store.service';
 import { ExercisePickerComponent } from './exercise-picker/exercise-picker.component';
 import { InfinitySwitchComponent } from '../shared/components/infinity-switch/infinity-switch.component';
-import { ConfirmDialogComponent } from '../shared/components/confirm-dialog/confirm-dialog.component';
+import { UndoService } from '../shared/undo/undo.service';
 import {
     WheelPickerComponent,
     WheelPickerOption,
@@ -131,7 +131,6 @@ const NAME_EXAMPLES: Record<StepKind, string> = {
         FormField,
         WheelPickerComponent,
         InfinitySwitchComponent,
-        ConfirmDialogComponent,
         ExercisePickerComponent,
         ExerciseEditorComponent,
         ExerciseDetailsDialogComponent,
@@ -224,12 +223,7 @@ export class WorkoutSetupComponent {
 
     /** Read out by screen readers after a step is added, moved, changed or deleted. */
     protected readonly stepAnnouncement = signal('');
-
-    /** A step with something in it, waiting for the user to confirm deleting it. */
-    protected readonly stepPendingDelete = signal<{
-        index: number;
-        description: string;
-    } | null>(null);
+    private readonly undo = inject(UndoService);
 
     /** The exercise open in the editor, and the step it was opened from. */
     /** The exercise whose details are showing, and the step they were opened from. */
@@ -275,7 +269,6 @@ export class WorkoutSetupComponent {
     /** Fills the form from a saved workout, or empties it for a new one. */
     private load(workoutToEdit: Workout | null) {
         this.editingWorkoutId.set(workoutToEdit?.id ?? null);
-        this.stepPendingDelete.set(null);
         this.kindMenuFor.set(null);
         if (workoutToEdit) {
             const limit = workoutToEdit.timeLimitSeconds;
@@ -523,44 +516,46 @@ export class WorkoutSetupComponent {
         return moved;
     }
 
-    /** The X button: deletes an empty step straight away, and asks first about anything else. */
+    /**
+     * The X button: deletes the step straight away. One with anything in it can be put back:
+     * the Undo bar offers it (UndoService), rather than a question first.
+     */
     protected deleteStep(index: number) {
         const step = this.model().steps[index];
         const isSet = hasAmount(step);
+        const title = this.stepTitle(index);
         if (!step.name.trim() && !isSet) {
             this.removeStep(index);
-        } else {
-            const time = isSet ? `, set to ${this.amountText(step)}` : '';
-            this.stepPendingDelete.set({
-                index,
-                description: `This will remove ${this.stepTitle(index)}${time}.`,
-            });
+            this.focusAfterDelete(index);
+            return;
         }
-    }
-
-    protected confirmDeleteStep() {
-        const pending = this.stepPendingDelete();
-        this.stepPendingDelete.set(null);
-        if (pending) {
-            this.removeStep(pending.index);
-        }
-    }
-
-    protected cancelDeleteStep() {
-        const pending = this.stepPendingDelete();
-        this.stepPendingDelete.set(null);
-        if (pending) {
-            this.focusAfterRender(`step-${this.model().steps[pending.index].key}-delete`);
-        }
+        this.removeStep(index);
+        const time = isSet ? `, ${this.amountText(step)}` : '';
+        this.undo.offerUndo({
+            message: `Deleted ${title}${time}`,
+            undo: () => {
+                this.updateSteps((all) => [...all.slice(0, index), step, ...all.slice(index)]);
+                this.stepAnnouncement.set(`Step ${index + 1} is back`);
+                this.focusAfterRender(
+                    `step-${step.key}-${this.isExpanded(step.key) ? 'delete' : 'toggle'}`
+                );
+            },
+            dismissed: () => this.focusAfterDelete(index),
+        });
     }
 
     private removeStep(index: number) {
         const deleted = this.model().steps[index];
         this.updateSteps((all) => all.filter((step) => step.key !== deleted.key));
         this.stepAnnouncement.set(`Deleted step ${index + 1}`);
-        // Focus the step that took its place, or the one before if it was last: its delete
-        // button, or its open button if it's collapsed (and so has no delete button). With
-        // none left, the Add button.
+    }
+
+    /**
+     * After step `index` goes, focus the step that took its place, or the one before if it was
+     * last: its delete button, or its open button if it's collapsed (and so has no delete
+     * button). With none left, the Add button.
+     */
+    private focusAfterDelete(index: number) {
         const remaining = this.model().steps;
         const next = remaining[Math.min(index, remaining.length - 1)];
         if (!next) {

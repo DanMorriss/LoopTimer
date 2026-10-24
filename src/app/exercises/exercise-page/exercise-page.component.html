@@ -52,7 +52,7 @@
                         type="button"
                         id="exercise-page-delete"
                         class="btn-pill btn-pill--danger"
-                        (click)="askToDelete()"
+                        (click)="delete()"
                     >
                         <mat-icon aria-hidden="true">delete</mat-icon>
                         Delete
@@ -60,7 +60,7 @@
                 }
             </div>
             <div class="exercise__status" role="status">
-                @if (deleteStep() === 'in-use') {
+                @if (inUse()) {
                     <p class="exercise__in-use">
                         {{ exercise.name }} is in {{ usedIn() }}, so it can't be deleted. Take it
                         out of {{ usage().workouts.length === 1 ? 'that workout' : 'those' }}
@@ -76,29 +76,6 @@
                     (closed)="closeEditor()"
                     (saved)="closeEditor()"
                 />
-            }
-
-            @if (deleteStep() === 'confirm-delete') {
-                <app-confirm-dialog
-                    animate.leave="dialog-leave"
-                    [title]="'Delete ' + exercise.name + '?'"
-                    (cancelled)="cancelDelete()"
-                    (confirmed)="confirmDelete()"
-                >
-                    It goes for good, with your note on it.
-                </app-confirm-dialog>
-            }
-            @if (deleteStep() === 'confirm-hide') {
-                <app-confirm-dialog
-                    animate.leave="dialog-leave"
-                    [title]="'Hide ' + exercise.name + '?'"
-                    confirmLabel="Hide"
-                    (cancelled)="cancelDelete()"
-                    (confirmed)="confirmHide()"
-                >
-                    It's in your history, so it's kept for that. Hiding it takes it out of the
-                    picker in Create.
-                </app-confirm-dialog>
             }
         } @else {
             <div class="exercise__missing">

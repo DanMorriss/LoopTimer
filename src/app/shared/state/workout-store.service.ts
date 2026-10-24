@@ -186,6 +186,20 @@ export class WorkoutStore {
         this.deletions.add({ kind: 'workout', id: workoutId, deletedAt: Date.now() });
     }
 
+    /** Puts a deleted workout back where it was in the library, e.g. on Undo. */
+    restoreWorkout(workout: Workout, index: number) {
+        if (this.findWorkoutById(workout.id)) {
+            return;
+        }
+        this.deletions.remove('workout', workout.id);
+        this._workouts.update((workouts) => [
+            ...workouts.slice(0, index),
+            workout,
+            ...workouts.slice(index),
+        ]);
+        this.saveWorkouts();
+    }
+
     findWorkoutById(workoutId: string): Workout | null {
         return this._workouts().find((workout) => workout.id === workoutId) ?? null;
     }
