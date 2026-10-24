@@ -54,8 +54,29 @@ Filtering the Exercises list (EXR-6) by muscle, asked for by Dan on 2026-10-23:
 
 - [ ] **A different look per step type on the workout page:** timed, rep and rest steps could each have their own look or motion (e.g. the "Next:" line rising into the ring and becoming the new label). The slides are in (`workout-motion.scss`), so this can be picked up whenever Dan wants.
 
+### Apple-style design review
+
+From a review against Apple's WWDC design talks (Designing Fluid Interfaces, Principles of Great Design) on 2026-10-24, highest impact first:
+
+- [x] **Calmer workout screen:** the face holds a steady tint and pulses only in a step's last seconds, with "Next:"; the Pause button has no light band, and elsewhere the band crosses once rather than every few seconds.
+- [x] **Press feedback on phones:** every button shrinks a little the moment it's pressed, and menu and list rows light up; hover looks only show where there's a mouse, so they don't stick after a tap (`src/styles/_interaction.scss`).
+- [ ] **Pause grows from its button:** Resume appears in the middle of the ring, growing from the ring's centre, though Pause was under it. Give the main button and Resume one `view-transition-name`, so the button moves into the ring and back out along the same path.
+- [ ] **A tab bar on phones:** six pages sit behind ☰, and Home is an extra stop. A translucent bottom tab bar (Library, Exercises, History, Settings), hidden while a workout runs, says where you are and where you can go. If the ∞ home stays, give Create and Library a visible button shape. Prototype it first.
+- [ ] **Type:** Audiowide is on everything at one weight. Keep it for titles and big numbers, and use `system-ui` for body text, labels and lists so weight can build hierarchy. The countdown on the face has no `tabular-nums`, so its digits shift each second. Letter spacing should change with size too (tighter on large text).
+- [ ] **Sheets and dialogs leave the way they came:** the confirm, exercise editor and details dialogs have no enter or exit motion, and the summary has none on exit (`animate.leave`). On a phone, make the summary a bottom sheet that drags down to close, with rubber-banding and the flick's speed deciding close or snap back.
+- [ ] **Undo rather than "are you sure?":** the library and exercise pages confirm deletes, while History deletes with Undo. Use Undo everywhere it can be; swipe left on a library card to delete, long-press for Edit, in place of ⋮.
+- [ ] **One tap to start from the library:** a card takes a tap to select, then a tap on Play.
+- [ ] **Reduced transparency and more contrast:** under `prefers-reduced-transparency`, make `--panel`, `--card` and `--raised` solid with no blur; under `prefers-contrast: more`, stronger borders. Tokens only, in `styles.scss`.
+- [ ] **Small things:**
+    - `viewport-fit=cover` (without it the `env(safe-area-inset-*)` already used is always 0), a `theme-color` per theme, and a manifest so it looks installed from the Home Screen.
+    - Momentum when a wheel is flicked with a mouse (touch already has it).
+    - Lift a dragged step (a slight grow and a deeper shadow).
+    - Make Done feel finished: fill the ring, with the sound and a vibration on the same frame.
+    - Check the beep, vibration and the face's slide all fire from the same tick in `ActiveRunService`.
+
 ## 3. Known issues
 
-- [ ] **Some stylesheets are over the 4 kB warning budget:** `ng build` warns for workout-setup (5.1 kB since #109), workout, exercise-list and exercise-progress. They're warnings, not errors (the limit is 8 kB). Fix by moving shared looks into `src/styles/` partials, as #109 did for the info tip, or raise the budget if the size is fine.
+- [ ] **Some stylesheets are over the 4 kB warning budget:** `ng build` warns for workout-setup (5.6 kB), workout (5.6 kB), exercise-list and exercise-progress (4.6 kB each); the hover and press styles added a little to each. They're warnings, not errors (the limit is 8 kB). Fix by moving shared looks into `src/styles/` partials, as #109 did for the info tip (a component can now `@use` one by name, e.g. `@use 'interaction' as *;`, as `src/styles` is on the Sass include path), or raise the budget if the size is fine.
+- [ ] **The initial bundle is over its 500 kB warning budget:** `ng build` says 524 kB (523 kB before the press styles, so it was already over). A warning, not an error (the limit is 1 MB). Look at what's loaded up front (Angular Material, the fonts' CSS) or raise the budget.
 - [ ] **The body map can't shade abductors:** react-native-body-highlighter has no abductor shapes on either figure, so exercises that work them (side plank, hip abduction) list them without shading. Fix by drawing the shapes ourselves, or swap to a diagram that has them.
 - [ ] **Two devices can each make the same exercise of their own:** typing "Sled push" on a phone and on a laptop makes two exercises with different ids, and importing one device's backup on the other keeps both (steps link to whichever was there first). Merge exercises of your own that share a name when importing, or before sync (SYN-3).

@@ -1,3 +1,5 @@
+@use 'interaction' as *;
+
 .infinity-container {
     min-height: 80vh;
 }
@@ -21,8 +23,10 @@
     will-change: filter;
 }
 
-.infinity-logo:hover .infinity-svg {
-    filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.5));
+@media (hover: hover) {
+    .infinity-logo:hover .infinity-svg {
+        filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.5));
+    }
 }
 
 // No CSS filters on the dot: it moves every frame, so a filter here would
@@ -55,7 +59,6 @@
 .light-dot__halo {
     animation: glow-pulse 1s ease-in-out infinite 3.5s;
 }
-
 .interaction-zone {
     position: absolute;
     // Big enough to tap on the smallest phones, scaling with the logo above that
@@ -65,7 +68,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: transform 0.3s ease;
+    // `scale` rather than `transform`, which holds each zone's placement below
+    transition: scale 0.3s ease-out;
     background: transparent;
 
     cursor: pointer;
@@ -77,13 +81,18 @@
         outline-offset: 4px;
     }
 
-    &:hover {
-        transform: scale(1.2);
-        border-color: var(--border-strong);
+    // Grows under a mouse, and dips when pressed: on a phone straight from its own size, as
+    // there's no hover to grow from (and a hover that stuck after a tap left it big)
+    @include hover {
+        scale: 1.2;
     }
 
-    &:active {
-        transform: scale(1.1);
+    @include pressed-scale(0.95);
+
+    @media (hover: hover) {
+        &:active:not(:disabled) {
+            scale: 1.1;
+        }
     }
 }
 
@@ -91,28 +100,12 @@
     top: 50%;
     left: 25%;
     transform: translateY(-50%) translateX(-50%);
-
-    &:hover {
-        transform: translateY(-50%) translateX(-50%) scale(1.2);
-    }
-
-    &:active {
-        transform: translateY(-50%) translateX(-50%) scale(1.1);
-    }
 }
 
 .right-zone {
     top: 50%;
     right: 25%;
     transform: translateY(-50%) translateX(50%);
-
-    &:hover {
-        transform: translateY(-50%) translateX(50%) scale(1.2);
-    }
-
-    &:active {
-        transform: translateY(-50%) translateX(50%) scale(1.1);
-    }
 }
 
 .zone-label {
@@ -133,10 +126,17 @@
     }
 }
 
-.interaction-zone:hover .zone-label,
-.interaction-zone:focus-visible .zone-label {
+.interaction-zone:focus-visible .zone-label,
+.interaction-zone:active .zone-label {
     opacity: 1;
     text-shadow: 0 0 15px rgba(139, 92, 246, 0.8);
+}
+
+@media (hover: hover) {
+    .interaction-zone:hover .zone-label {
+        opacity: 1;
+        text-shadow: 0 0 15px rgba(139, 92, 246, 0.8);
+    }
 }
 
 .title-text {

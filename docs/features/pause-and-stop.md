@@ -17,7 +17,7 @@
 
 ### Pause
 
-- Pausing **freezes** the countdown, the ring and the flash where they are. However long it's paused, it doesn't move on.
+- Pausing **freezes** the countdown and the ring where they are, and stops the last-seconds pulse. However long it's paused, it doesn't move on.
 - The ring **greys out**, and the round line, your note and Next turn the muted text colour. In the middle of the ring the face shows "**Paused · 00:23**" (or "Paused · 20 reps" on a rep step), a big **Resume** button, and **End workout** under it. The controls under the ring go while paused.
 - Focus moves to Resume on pause, and back to Pause (or Done) on resume, as the button just pressed has gone.
 - Resuming carries on from exactly where it was. The time spent paused **doesn't count** as time spent in the history.

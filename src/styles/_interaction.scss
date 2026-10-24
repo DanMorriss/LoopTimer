@@ -1,0 +1,44 @@
+// How controls answer a pointer. Use these rather than writing :hover or :active by hand:
+//
+//   @use 'interaction' as *;
+//   .thing {
+//       transition: background-color 0.2s ease, scale 0.2s ease-out;
+//       @include hover { background: var(--control-hover); }
+//       @include pressed-scale;
+//   }
+//
+// hover          Only where the pointer can hover (a mouse or trackpad). On a touch screen
+//                :hover sticks after a tap, so a button would stay highlighted until you
+//                tapped something else.
+// pressed        Feedback the moment a finger or button goes down, not when it lifts.
+// pressed-scale  The same, as a small shrink, plus any styles you pass it (usually the hover
+//                look, as a touch screen has no hover). It uses the `scale` property rather
+//                than `transform`, so it adds to any transform the control already has. Put
+//                `scale 0.2s ease-out` in the control's transition: it shrinks quickly on
+//                the press and grows back a touch slower, like pressing something real.
+
+@mixin hover {
+    @media (hover: hover) {
+        &:hover {
+            @content;
+        }
+    }
+}
+
+@mixin pressed {
+    -webkit-tap-highlight-color: transparent;
+
+    &:active:not(:disabled) {
+        @content;
+    }
+}
+
+@mixin pressed-scale($amount: 0.96) {
+    -webkit-tap-highlight-color: transparent;
+
+    &:active:not(:disabled) {
+        scale: $amount;
+        transition-duration: 0.08s;
+        @content;
+    }
+}

@@ -695,17 +695,15 @@ describe('WorkoutComponent', () => {
             fixture.destroy();
         });
 
-        it('freezes the ring sweep and the flash while paused, without restarting them', () => {
+        it('freezes the ring sweep while paused, without restarting it', () => {
             start(makeWorkout({ workSeconds: 10 }));
             const sweep = fixture.nativeElement.querySelector('.workout-ring__sweep');
             const fill = () =>
                 fixture.nativeElement.querySelector('.workout-ring__fill') as HTMLElement;
-            const face = () => fixture.nativeElement.querySelector('.workout-face') as HTMLElement;
 
             press('Pause');
             expect(ring().classList).toContain('workout-ring--paused');
             expect(getComputedStyle(fill()).animationPlayState).toBe('paused');
-            expect(getComputedStyle(face(), '::before').animationPlayState).toBe('paused');
 
             press('Resume');
             expect(ring().classList).not.toContain('workout-ring--paused');
@@ -2141,6 +2139,22 @@ describe('WorkoutComponent', () => {
             // Rest's own last 5 seconds come long after its first
             advance(5000);
             expect(pulsing()).toBe(false);
+            fixture.destroy();
+        });
+
+        it('holds the face at a steady tint, pulsing it only with "Next:"', () => {
+            start(makeWorkout({ workSeconds: 20, restSeconds: 30 }));
+            const faceAnimation = () => getComputedStyle(face(), '::before').animationName;
+
+            advance(14_000);
+            expect(faceAnimation()).toBe('none');
+            expect(getComputedStyle(face(), '::before').opacity).toBe('0.5');
+
+            advance(1000);
+            expect(pulsing()).toBe(true);
+            expect(face().classList).toContain('workout-face--soon');
+            // Angular prefixes a component's keyframes with its own id
+            expect(faceAnimation()).toMatch(/face-tick$/);
             fixture.destroy();
         });
 

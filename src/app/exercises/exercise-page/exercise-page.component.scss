@@ -1,3 +1,5 @@
+@use 'interaction' as *;
+
 :host {
     display: block;
 }
@@ -12,7 +14,7 @@
     font-size: 0.85rem;
     text-decoration: none;
 
-    &:hover {
+    @include hover {
         text-decoration: underline;
     }
 

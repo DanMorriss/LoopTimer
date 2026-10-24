@@ -1,3 +1,5 @@
+@use 'interaction' as *;
+
 // The small menu a ⋮ button opens (a library card's options, a history entry's): a raised
 // panel of full-width items. The page places it; these are the looks.
 
@@ -30,7 +32,12 @@
         border-bottom: 0;
     }
 
-    &:hover {
+    // A row lights up while pressed, as a list row does on a phone, rather than shrinking
+    @include hover {
+        background: var(--control-hover);
+    }
+
+    @include pressed {
         background: var(--control-hover);
     }
 

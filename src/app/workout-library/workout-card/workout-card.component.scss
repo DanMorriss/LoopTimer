@@ -1,3 +1,5 @@
+@use 'interaction' as *;
+
 :host {
     list-style: none;
     position: relative;
@@ -133,16 +135,14 @@
     z-index: 2;
     opacity: 0;
     pointer-events: none;
+    transition: scale 0.2s ease-out;
+
+    @include pressed-scale(0.92);
 }
 
 .workout-card__overlay-play--visible {
     opacity: 1;
     pointer-events: auto;
-}
-
-.workout-card__overlay-play:hover {
-    background: var(--raised);
-    border-color: var(--accent-line);
 }
 
 .workout-card__overlay-icon {

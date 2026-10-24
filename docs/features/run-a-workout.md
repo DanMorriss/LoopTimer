@@ -43,7 +43,7 @@
     - "round 3 of ∞" for a workout that runs until stopped.
     - "round 3" for a time limit, with the **time left** under it, e.g. "12:34 left", in the accent colour for its last 10 seconds. Screen readers hear it with the round as each round starts, e.g. "Timed, round 3, 12:34 left"; the time left itself isn't read out as it ticks.
     - Nothing for a single-round workout.
-- **Ring**: fills as the step goes by. Timed steps fill clockwise in pink, rest fills anticlockwise in blue. The face behind the time flashes in the phase colour.
+- **Ring**: fills as the step goes by. Timed steps fill clockwise in pink, rest fills anticlockwise in blue. The face behind the time is tinted in the phase colour, and holds still for most of the step.
 - **Face**:
     - The step's name. Unnamed work shows just the time; unnamed rest says "Rest"; unnamed reps say "Reps".
     - The time left as mm:ss, e.g. "00:45", or the reps.
@@ -53,6 +53,7 @@
 - **Your note** on the step's exercise (EXR-10), if you've written one, in a box under the ring, e.g. "Pause at the bottom". Any work or rep step linked to an exercise shows it; screen readers hear it with the step, e.g. "Push-ups, 20 reps, your note: Elbows in".
 - **Next**: "Next: Plank · 00:45", "Next: Push-ups · 20 reps", "Next: Squats · 10 reps @ 60 kg", or "Next: finish" before the last step. Unnamed steps use their kind ("Timed", "Rest", "Reps").
     - In the **last 5 seconds** of a timed step (the last 3 for a step under 15 seconds), "Next:" becomes a pill in the next step's colour (pink for timed, blue for rest, violet for reps, the accent colour for finish) that swells and glows once a second, to get ready. Not on a rep step, where Done is the cue, and not while paused.
+    - In the same seconds the **face** flares to full colour on each second and eases back to its tint, in time with "Next:": one "get ready" cue, rather than a flash all step long.
 
 ### Changing reps or weight mid-workout (RUN-6)
 
@@ -104,6 +105,7 @@
 - Given work 0:20 then rest, then "Next: Rest" pulses in the rest colour from 00:05 left, and stops when paused.
 - Given work 0:10, then "Next:" pulses only from 00:03 left.
 - Given a rep step, then "Next:" never pulses.
+- Given work 0:20, then the face holds a steady pink tint until 00:05 left, then flares once a second with "Next:".
 - Given a new step in the same round, then its text slides in from below; given round 2 starting, then the text and "round 2 of 3" slide in from the right.
 - Given work 0:03, rest 0:02 and a time limit of 1:04, then 12s in it says "round 3" and "00:52 left", and screen readers heard "Timed, round 1, 01:04 left" at the start.
 - Given that workout, when 1:04 has gone by, then it finishes with "Time's up" and "12 rounds + 1 in 1:04", logged as finished with 12 rounds and 1 step.

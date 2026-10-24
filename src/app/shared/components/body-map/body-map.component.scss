@@ -1,3 +1,5 @@
+@use 'interaction' as *;
+
 :host {
     display: flex;
     flex-direction: column;
@@ -50,7 +52,7 @@
     &--tappable {
         cursor: pointer;
 
-        &:hover {
+        @include hover {
             stroke: var(--accent);
         }
     }
@@ -137,7 +139,11 @@
     line-height: 1;
     cursor: pointer;
 
-    &:hover {
+    @include hover {
+        background: color-mix(in oklab, currentColor 16%, transparent);
+    }
+
+    @include pressed {
         background: color-mix(in oklab, currentColor 16%, transparent);
     }
 

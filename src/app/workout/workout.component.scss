@@ -1,3 +1,5 @@
+@use 'interaction' as *;
+
 // Everything that animates for the length of a workout only animates `transform`
 // or `opacity`, which the browser can run without repainting each frame.
 
@@ -9,16 +11,8 @@ $face-color: oklch(97.7% 0.013 236.62);
 $track-color: #334155; // slate-700: dark, so both phase colours stand out (3:1 minimum)
 // The ring keeps these colours in both themes: its dark track is what makes work and rest stand out
 
-// Flashing face: fade a coloured layer in and out rather than animating background-color
-
-@keyframes flash {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
-}
+// The face: a steady tint in the phase colour, on a layer of its own so its opacity can
+// pulse in a step's last seconds (workout-motion.scss) without repainting the background
 
 .flash-fade,
 .flash-fade-blue {
@@ -33,9 +27,7 @@ $track-color: #334155; // slate-700: dark, so both phase colours stand out (3:1 
         z-index: -1;
         border-radius: inherit;
         background: var(--flash-color);
-        opacity: 0;
-        animation: flash 1s ease-in-out infinite;
-        will-change: opacity;
+        opacity: 0.5;
     }
 }
 
@@ -137,15 +129,6 @@ $track-color: #334155; // slate-700: dark, so both phase colours stand out (3:1 
         border-radius: 0 100% 100% 0 / 0 50% 50% 0;
         transform-origin: 0 50%;
         animation-delay: var(--second-half-delay);
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    // The flash is decoration, so hold it at a steady tint. The ring shows progress, so it keeps moving.
-    .flash-fade::before,
-    .flash-fade-blue::before {
-        animation: none;
-        opacity: 0.5;
     }
 }
 
@@ -330,7 +313,12 @@ $track-color: #334155; // slate-700: dark, so both phase colours stand out (3:1 
     border-color: $track-color;
     color: black;
 
-    &:hover {
+    @include hover {
+        border-color: black;
+        background-color: rgb(0 0 0 / 0.06);
+    }
+
+    @include pressed {
         border-color: black;
         background-color: rgb(0 0 0 / 0.06);
     }

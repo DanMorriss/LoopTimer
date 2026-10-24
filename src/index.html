@@ -28,7 +28,9 @@
         />
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
     </head>
-    <body class="mat-typography">
+    <!-- The empty touchstart handler makes iPhones show :active styles while a finger is
+         down: Safari skips them on pages that listen for no touches -->
+    <body class="mat-typography" ontouchstart="">
         <app-root></app-root>
     </body>
 </html>

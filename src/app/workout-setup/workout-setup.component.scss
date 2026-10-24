@@ -1,3 +1,5 @@
+@use 'interaction' as *;
+
 // body.mat-typography gives headings Material's Roboto and margins; keep the app's font
 .setup-heading {
     margin: 1.5rem 0 0.25rem;
@@ -93,7 +95,11 @@
     font-size: 0.8rem;
     cursor: pointer;
 
-    &:hover {
+    @include hover {
+        background: var(--control);
+    }
+
+    @include pressed {
         background: var(--control);
     }
 
@@ -207,7 +213,12 @@
     text-align: left;
     cursor: pointer;
 
-    &:hover {
+    @include hover {
+        border-color: var(--border);
+        background: var(--control);
+    }
+
+    @include pressed {
         border-color: var(--border);
         background: var(--control);
     }
@@ -307,7 +318,11 @@
     cursor: grab;
     touch-action: none;
 
-    &:hover {
+    @include hover {
+        background: var(--control-hover);
+    }
+
+    @include pressed {
         background: var(--control-hover);
     }
 
