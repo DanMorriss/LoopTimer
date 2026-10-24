@@ -17,6 +17,9 @@ import { ExerciseStore } from '../shared/state/exercise-store.service';
 import { reps, rest, unlinked, unlinkedWorkout, work } from '../shared/testing/make-workout';
 import { MAX_STEPS, WorkoutSetupComponent } from './workout-setup.component';
 
+/** The step a new workout starts with, as `shown()` reads it. */
+const blankStep = { kind: 'Reps', name: '', time: '0 reps' };
+
 const savedWorkout: WorkoutFields = {
     title: 'Saved workout',
     steps: [work(135, 'Squats'), rest(45)],
@@ -53,17 +56,33 @@ describe('WorkoutSetupComponent', () => {
     }
 
     /**
-     * Opens the page. A new workout starts empty, so most tests add an empty timed step and
-     * rest step first, both open, to have something to work on; `empty` leaves it as it opens.
+     * Opens the page. A new workout starts with one empty rep step, so most tests turn it into
+     * a timed step and add a rest step, both open, to have something to work on; `empty`
+     * leaves it as it opens.
      */
     async function create({ empty = false } = {}) {
         fixture = TestBed.createComponent(WorkoutSetupComponent);
         fixture.detectChanges();
         await fixture.whenStable();
-        if (!empty && steps().length === 0) {
-            await press('Add timed');
-            await press('Add rest');
+        if (!empty && !submitButton().textContent!.includes('Save')) {
+            await changeKind(0, 'Timed');
+            await addStep('Rest');
             await press('Step 1, timed, 00:00');
+        }
+    }
+
+    /** Picks a kind from a step's kind menu, opened from its pill. */
+    async function changeKind(step: number, kind: 'Timed' | 'Rest' | 'Reps') {
+        el<HTMLButtonElement>('.step__kind-button', steps()[step]).click();
+        fixture.detectChanges();
+        await press(kind);
+    }
+
+    /** "+ Step", which adds a rep step, then changes it to another kind if asked. */
+    async function addStep(kind: 'Timed' | 'Rest' | 'Reps' = 'Reps') {
+        await press('Add step');
+        if (kind !== 'Reps') {
+            await changeKind(steps().length - 1, kind);
         }
     }
 
@@ -85,7 +104,7 @@ describe('WorkoutSetupComponent', () => {
         return {
             title: el<HTMLInputElement>('#title').value,
             steps: steps().map((step) => {
-                const kind = el('.step__badge', step).textContent!.trim();
+                const kind = el('.step__kind-label', step).textContent!.trim();
                 // A rep step shows its count, e.g. "20 reps", on its one wheel or in one line
                 if (kind === 'Reps') {
                     const count = isCollapsed(step)
@@ -154,16 +173,19 @@ describe('WorkoutSetupComponent', () => {
     const typeTitle = (value: string) => typeInto(el('#title'), value);
     const typeName = (step: number, value: string) => typeInto(el('input', steps()[step]), value);
 
-    /** A button by its accessible name, e.g. "Add timed" or "Move Step 2, rest up". */
+    /** A button by its accessible name, e.g. "Add step" or "Move Step 2, rest up". */
     function button(name: string): HTMLButtonElement {
         const all = Array.from(
             fixture.nativeElement.querySelectorAll('button')
         ) as HTMLButtonElement[];
-        // Icon fonts put the icon's name in the text ("add"), so leave <mat-icon> out
+        // Icon fonts put the icon's name in the text ("add"), so leave <mat-icon> out, and
+        // the comments Angular leaves where an @if goes
         const accessibleName = (b: HTMLButtonElement) =>
             b.getAttribute('aria-label') ??
             Array.from(b.childNodes)
-                .filter((node) => node.nodeName !== 'MAT-ICON')
+                .filter(
+                    (node) => node.nodeName !== 'MAT-ICON' && node.nodeType !== Node.COMMENT_NODE
+                )
                 .map((node) => node.textContent)
                 .join('')
                 .trim();
@@ -197,17 +219,65 @@ describe('WorkoutSetupComponent', () => {
             await create();
         });
 
-        it('starts with no steps, just the Add buttons and a hint, and nothing to start', async () => {
+        it('starts with one open rep step, and nothing to start', async () => {
             await create({ empty: true });
 
-            expect(shown()).toEqual({ title: '', steps: [], repeats: '1' });
-            expect(fixture.nativeElement.textContent).toContain('Add a step to start.');
+            expect(shown()).toEqual({ title: '', steps: [blankStep], repeats: '1' });
+            expect(collapsed()).toEqual([false]);
+            expect(fixture.nativeElement.textContent).not.toContain('Add a step to start.');
+            // Nothing's been put in yet, so it's too soon to say there's no work
             expect(fixture.nativeElement.textContent).not.toContain('Workout needs');
-            expect(fixture.nativeElement.textContent).not.toContain('Collapse all');
-            expect(button('Add timed').disabled).toBe(false);
+            expect(button('Add step').disabled).toBe(false);
             expect(submitButton().disabled).toBe(true);
             expect(submitButton().textContent).toContain('Start workout');
             expect(submitButton().textContent).not.toContain('Save');
+        });
+
+        describe('the info button by Steps', () => {
+            const tip = () => el('#steps-info-tip');
+            const isShowing = () => tip().classList.contains('info__tip--open');
+            const info = () => el<HTMLButtonElement>('#steps-info');
+
+            function fire(target: Element, type: string, init: EventInit = {}) {
+                target.dispatchEvent(new Event(type, init));
+                fixture.detectChanges();
+            }
+
+            it('is described by the tip, which is hidden to begin with', () => {
+                expect(info().getAttribute('aria-label')).toBe('About steps');
+                expect(info().getAttribute('aria-describedby')).toBe('steps-info-tip');
+                expect(tip().getAttribute('role')).toBe('tooltip');
+                expect(tip().textContent).toContain(
+                    'Each round runs these in order. Steps left at 00:00 or 0 reps are skipped.'
+                );
+                expect(isShowing()).toBe(false);
+            });
+
+            it('shows the tip on hover, and hides it when the pointer leaves', () => {
+                fire(el('.info'), 'mouseenter');
+                expect(isShowing()).toBe(true);
+
+                fire(el('.info'), 'mouseleave');
+                expect(isShowing()).toBe(false);
+            });
+
+            it('shows the tip on focus or a tap, and hides it on Escape or a click elsewhere', () => {
+                info().focus();
+                fixture.detectChanges();
+                expect(isShowing()).toBe(true);
+
+                info().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+                fixture.detectChanges();
+                expect(isShowing()).toBe(false);
+
+                info().click();
+                fixture.detectChanges();
+                expect(isShowing()).toBe(true);
+
+                el('#title').click();
+                fixture.detectChanges();
+                expect(isShowing()).toBe(false);
+            });
         });
 
         it('will not start a workout with no work time', async () => {
@@ -280,7 +350,7 @@ describe('WorkoutSetupComponent', () => {
 
             await submit();
 
-            expect(shown()).toEqual({ title: '', steps: [], repeats: '1' });
+            expect(shown()).toEqual({ title: '', steps: [blankStep], repeats: '1' });
         });
     });
 
@@ -292,18 +362,112 @@ describe('WorkoutSetupComponent', () => {
 
         const said = () => el('[aria-live="polite"]').textContent!.trim();
 
-        it('adds work and rest steps at the end, focusing the new name box', async () => {
-            await press('Add timed');
-            await press('Add rest');
+        it('adds a rep step at the end with "+ Step", focusing its name box', async () => {
+            await press('Add step');
 
-            expect(shown().steps.map((s) => s.kind)).toEqual(['Timed', 'Rest', 'Timed', 'Rest']);
-            expect(document.activeElement).toBe(el('input', steps()[3]));
-            expect(said()).toBe('Added a rest step, step 4');
+            expect(shown().steps.map((s) => s.kind)).toEqual(['Timed', 'Rest', 'Reps']);
+            expect(document.activeElement).toBe(el('input', steps()[2]));
+            expect(said()).toBe('Added a rep step, step 3');
+        });
+
+        describe('changing kind', () => {
+            const pill = (step: number) =>
+                el<HTMLButtonElement>('.step__kind-button', steps()[step]);
+            const menu = () => el('.step__kind-menu');
+
+            async function openMenu(step: number) {
+                pill(step).click();
+                fixture.detectChanges();
+                await fixture.whenStable();
+            }
+
+            it('opens a menu of the kinds from the pill, marking the one it is', async () => {
+                expect(pill(1).getAttribute('aria-label')).toBe('Rest, change type of step 2');
+                expect(pill(1).getAttribute('aria-expanded')).toBe('false');
+
+                await openMenu(1);
+
+                expect(pill(1).getAttribute('aria-expanded')).toBe('true');
+                expect(pill(1).getAttribute('aria-controls')).toBe(menu().id);
+                const options = Array.from(menu().querySelectorAll('button'));
+                expect(options.map((o) => o.textContent!.replace('check', '').trim())).toEqual([
+                    'Reps',
+                    'Timed',
+                    'Rest',
+                ]);
+                expect(options.map((o) => o.getAttribute('aria-pressed'))).toEqual([
+                    'false',
+                    'false',
+                    'true',
+                ]);
+            });
+
+            it('changes the step, says so and goes back to the pill', async () => {
+                await changeKind(1, 'Reps');
+
+                expect(shown().steps.map((s) => s.kind)).toEqual(['Timed', 'Reps']);
+                expect(steps()[1].classList).toContain('step--reps');
+                expect(menu()).toBeNull();
+                expect(said()).toBe('Step 2 is now reps');
+                expect(document.activeElement).toBe(pill(1));
+            });
+
+            it('keeps the name and numbers, so changing back finds them', async () => {
+                typeName(0, 'Squats');
+                chooseTime(0, 'seconds', '30');
+
+                await changeKind(0, 'Reps');
+                expect(shown().steps[0]).toEqual({ kind: 'Reps', name: 'Squats', time: '0 reps' });
+
+                await changeKind(0, 'Timed');
+                expect(shown().steps[0]).toEqual({ kind: 'Timed', name: 'Squats', time: '0:30' });
+            });
+
+            it('saves only what the new kind uses', async () => {
+                chooseTime(0, 'seconds', '30');
+                await changeKind(0, 'Reps');
+                chooseReps(0, '10');
+
+                await submit();
+
+                expect(unlinked(store.workouts()[0].steps)).toEqual([reps(10)]);
+            });
+
+            it('closes on Escape, back on the pill', async () => {
+                await openMenu(0);
+                el('.step__kind-option', menu()).dispatchEvent(
+                    new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })
+                );
+                fixture.detectChanges();
+
+                expect(menu()).toBeNull();
+                expect(document.activeElement).toBe(pill(0));
+            });
+
+            it('closes on a click elsewhere, or on the pill again', async () => {
+                await openMenu(0);
+                el('#title').click();
+                fixture.detectChanges();
+                expect(menu()).toBeNull();
+
+                await openMenu(0);
+                await openMenu(0);
+                expect(menu()).toBeNull();
+            });
+
+            it('can change a collapsed step', async () => {
+                await press('Step 1, timed, 00:00');
+
+                await changeKind(0, 'Rest');
+
+                expect(shown().steps[0].kind).toBe('Rest');
+                expect(collapsed()[0]).toBe(true);
+            });
         });
 
         describe('rep steps', () => {
             it('adds one with Reps and Weight wheels, focusing its name box', async () => {
-                await press('Add reps');
+                await addStep();
 
                 expect(shown().steps[2]).toEqual({ kind: 'Reps', name: '', time: '0 reps' });
                 const step = steps()[2];
@@ -321,7 +485,7 @@ describe('WorkoutSetupComponent', () => {
 
             it('saves the reps, in order with the other steps', async () => {
                 chooseTime(0, 'seconds', '30');
-                await press('Add reps');
+                await addStep();
                 typeName(2, 'Push-ups');
                 chooseReps(2, '20');
 
@@ -335,7 +499,7 @@ describe('WorkoutSetupComponent', () => {
 
             it('leaves out a rep step left at 0 reps', async () => {
                 chooseTime(0, 'seconds', '30');
-                await press('Add reps');
+                await addStep();
 
                 await submit();
 
@@ -343,7 +507,7 @@ describe('WorkoutSetupComponent', () => {
             });
 
             it('counts reps as work, so a workout of only reps can start', async () => {
-                await press('Add reps');
+                await addStep();
                 expect(submitButton().disabled).toBe(true);
 
                 chooseReps(2, '10');
@@ -362,7 +526,7 @@ describe('WorkoutSetupComponent', () => {
                 }
 
                 it('starts at none, read out as "none", and goes up in halves', async () => {
-                    await press('Add reps');
+                    await addStep();
                     const wheel = steps()[2].querySelectorAll('app-wheel-picker')[1];
                     const spin = el('[role="spinbutton"]', wheel);
 
@@ -372,11 +536,11 @@ describe('WorkoutSetupComponent', () => {
                 });
 
                 it('saves the weight in kg, and none for a step left at –', async () => {
-                    await press('Add reps');
+                    await addStep();
                     typeName(2, 'Squats');
                     chooseReps(2, '10');
                     chooseWeight(2, '22.5');
-                    await press('Add reps');
+                    await addStep();
                     chooseReps(3, '20');
 
                     await submit();
@@ -388,7 +552,7 @@ describe('WorkoutSetupComponent', () => {
                 });
 
                 it('shows it with the reps once collapsed, and when asking before deleting', async () => {
-                    await press('Add reps');
+                    await addStep();
                     chooseReps(2, '10');
                     chooseWeight(2, '60');
 
@@ -403,7 +567,7 @@ describe('WorkoutSetupComponent', () => {
                 });
 
                 it('asks before deleting a step with only a weight', async () => {
-                    await press('Add reps');
+                    await addStep();
                     chooseWeight(2, '20');
 
                     await press('Delete Step 3, reps');
@@ -415,7 +579,7 @@ describe('WorkoutSetupComponent', () => {
             });
 
             it('names the reps when asking before deleting', async () => {
-                await press('Add reps');
+                await addStep();
                 chooseReps(2, '20');
 
                 await press('Delete Step 3, reps');
@@ -429,7 +593,7 @@ describe('WorkoutSetupComponent', () => {
         it('runs a round of several steps, saved in order with their names', async () => {
             typeName(0, 'Squats');
             chooseTime(0, 'seconds', '30');
-            await press('Add timed');
+            await addStep('Timed');
             typeName(2, 'Plank');
             chooseTime(2, 'seconds', '45');
             await press('Step 2, rest, 00:00');
@@ -463,7 +627,7 @@ describe('WorkoutSetupComponent', () => {
         it('moves a step dropped by drag and drop, and says so', async () => {
             typeName(0, 'Squats');
             chooseTime(0, 'seconds', '30');
-            await press('Add timed');
+            await addStep('Timed');
             typeName(2, 'Plank');
 
             // What the CDK reports when Squats is dragged from first to last
@@ -492,7 +656,7 @@ describe('WorkoutSetupComponent', () => {
         });
 
         it('deletes a step, focusing the step that takes its place', async () => {
-            await press('Add timed');
+            await addStep('Timed');
             typeName(2, 'Plank');
             await press('Step 2, rest, 00:00');
 
@@ -570,23 +734,22 @@ describe('WorkoutSetupComponent', () => {
             });
         });
 
-        it('deletes every step if asked, then focuses "Add timed"', async () => {
+        it('deletes every step if asked, then focuses "Add step"', async () => {
             await press('Delete Step 2, rest');
             await press('Delete Step 1, timed');
 
             expect(steps()).toHaveLength(0);
             expect(fixture.nativeElement.textContent).toContain('Add a step to start.');
-            expect(document.activeElement).toBe(button('Add timed'));
+            expect(document.activeElement).toBe(button('Add step'));
         });
 
         it(`stops adding at ${MAX_STEPS} steps, and says why`, async () => {
             for (let i = 2; i < MAX_STEPS; i++) {
-                await press('Add timed');
+                await press('Add step');
             }
 
             expect(steps()).toHaveLength(MAX_STEPS);
-            expect(button('Add timed').disabled).toBe(true);
-            expect(button('Add rest').disabled).toBe(true);
+            expect(button('Add step').disabled).toBe(true);
             expect(fixture.nativeElement.textContent).toContain(
                 `That's the most steps a workout can have (${MAX_STEPS})`
             );
@@ -594,7 +757,7 @@ describe('WorkoutSetupComponent', () => {
 
         describe('collapsing', () => {
             it('opens only the step just added, closing the others', async () => {
-                await press('Add timed');
+                await addStep('Timed');
 
                 expect(collapsed()).toEqual([true, true, false]);
             });
@@ -633,7 +796,7 @@ describe('WorkoutSetupComponent', () => {
             });
 
             it('collapses and expands every step at once', async () => {
-                await press('Add timed');
+                await addStep('Timed');
 
                 await press('Collapse all');
                 expect(collapsed()).toEqual([true, true, true]);
@@ -1079,7 +1242,7 @@ describe('WorkoutSetupComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(shown()).toEqual({ title: '', steps: [], repeats: '1' });
+            expect(shown()).toEqual({ title: '', steps: [blankStep], repeats: '1' });
             expect(submitButton().textContent).not.toContain('Save');
         });
 

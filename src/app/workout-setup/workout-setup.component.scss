@@ -8,6 +8,19 @@
     text-align: center;
 }
 
+// The Steps heading, with its info button (styles/_info.scss) just to the right of it
+.steps-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    margin: 1.5rem 0 0.5rem;
+
+    .setup-heading {
+        margin: 0;
+    }
+}
+
 .setup-hint {
     margin: 0 0 0.75rem;
     font-size: 0.85rem;
@@ -57,12 +70,76 @@
 
 .step__badge {
     padding: 0.15rem 0.6rem;
+    background: transparent;
     border: 1px solid var(--step-color);
     border-radius: 999px;
     color: var(--step-color);
     font-size: 0.8rem;
     letter-spacing: 0.06em;
     text-transform: uppercase;
+}
+
+// The kind pill opens a menu of the kinds, under it
+.step__kind {
+    position: relative;
+}
+
+.step__kind-button {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    padding-right: 0.3rem;
+    font: inherit;
+    font-size: 0.8rem;
+    cursor: pointer;
+
+    &:hover {
+        background: var(--control);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+    }
+}
+
+.step__kind-arrow {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+    line-height: 18px;
+}
+
+// A shared .menu (styles/_menu.scss); above the steps below it
+.step__kind-menu {
+    position: absolute;
+    top: calc(100% + 0.2rem);
+    left: 0;
+    z-index: 10;
+}
+
+.step__kind-option {
+    --step-color: var(--work);
+
+    &--rest {
+        --step-color: var(--rest);
+    }
+
+    &--reps {
+        --step-color: var(--reps);
+    }
+}
+
+.step__kind-dot {
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 999px;
+    background: var(--step-color);
+}
+
+.step__kind-check {
+    margin-left: auto;
+    color: var(--accent);
 }
 
 .step__number {
@@ -211,8 +288,6 @@
 
 .add-steps {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.75rem;
     margin: 0.75rem 0;
 }
 

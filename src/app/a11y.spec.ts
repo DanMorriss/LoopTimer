@@ -105,34 +105,50 @@ for (const theme of ['dark', 'light'] as const) {
         });
 
         describe('setup', () => {
-            it('new workout, with no steps', async () => {
+            it('new workout, with its one empty rep step', async () => {
                 await open('/setup');
                 await expectNoViolations();
             });
 
-            it('with an empty step (and the "needs a timed step" error)', async () => {
+            it('with a named step and no work (and the "needs a timed step" error)', async () => {
                 await open('/setup');
-                click('.add-step');
+                const box = fixture.nativeElement.querySelector('.step input');
+                box.value = 'Squats';
+                box.dispatchEvent(new Event('input'));
+                await settle();
+                expect(fixture.nativeElement.textContent).toContain('Workout needs');
+                await expectNoViolations();
+            });
+
+            it('with the info tip by Steps showing', async () => {
+                await open('/setup');
+                click('#steps-info');
+                await settle(300); // past the tip's fade-in
+                await expectNoViolations();
+            });
+
+            it("with a step's kind menu open", async () => {
+                await open('/setup');
+                click('.step__kind-button');
                 await settle();
                 await expectNoViolations();
             });
 
-            it('with several steps, one of them moved', async () => {
+            it('with several steps of each kind, one of them moved', async () => {
                 await open('/setup');
                 click('.add-step');
                 await settle();
-                click('.add-step--rest');
+                click('.step:nth-child(2) .step__kind-button');
+                await settle();
+                click('.step__kind-option--rest');
                 await settle();
                 click('.add-step');
+                await settle();
+                click('.step:nth-child(3) .step__kind-button');
+                await settle();
+                click('.step__kind-option--work');
                 await settle();
                 click('.step:nth-child(3) .step__action');
-                await settle();
-                await expectNoViolations();
-            });
-
-            it('with a rep step added', async () => {
-                await open('/setup');
-                click('.add-step--reps');
                 await settle();
                 await expectNoViolations();
             });

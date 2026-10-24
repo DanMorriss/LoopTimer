@@ -118,6 +118,9 @@ const NAME_EXAMPLES: Record<StepKind, string> = {
     selector: 'app-workout-setup',
     templateUrl: './workout-setup.component.html',
     styleUrl: './workout-setup.component.scss',
+    host: {
+        '(document:click)': 'closePopups($event)',
+    },
     imports: [
         CdkDropList,
         CdkDrag,
@@ -148,6 +151,8 @@ export class WorkoutSetupComponent {
 
     protected readonly maxSteps = MAX_STEPS;
     protected readonly kindName = kindName;
+    /** In the order the kind menu lists them. */
+    protected readonly kinds: readonly StepKind[] = ['reps', 'work', 'rest'];
     protected readonly editingWorkoutId = signal<string | null>(null);
     protected readonly minuteOptions = pickerOptions(0, 99, padded);
     protected readonly secondOptions = pickerOptions(0, 59, padded);
@@ -211,7 +216,13 @@ export class WorkoutSetupComponent {
     // The last number of rounds picked, so turning the switch off goes back to it
     private lastRounds = 1;
 
-    /** Read out by screen readers after a step is added, moved or deleted. */
+    /** Whether the tooltip by the Steps heading is showing. */
+    protected readonly infoOpen = signal(false);
+
+    /** The key of the step whose kind menu is open, if one is. */
+    protected readonly kindMenuFor = signal<number | null>(null);
+
+    /** Read out by screen readers after a step is added, moved, changed or deleted. */
     protected readonly stepAnnouncement = signal('');
 
     /** A step with something in it, waiting for the user to confirm deleting it. */
@@ -235,9 +246,9 @@ export class WorkoutSetupComponent {
             .find((error) => error.kind === 'noTimeLimit')
     );
 
-    // With no steps yet, the hint to add one says enough
+    // Not until something's been put in a step: a new workout opens with an empty one
     protected readonly noTimeError = computed(() =>
-        this.stepCount() === 0
+        this.model().steps.every((step) => !step.name.trim() && !hasAmount(step))
             ? undefined
             : this.workoutForm()
                   .errors()
@@ -265,6 +276,7 @@ export class WorkoutSetupComponent {
     private load(workoutToEdit: Workout | null) {
         this.editingWorkoutId.set(workoutToEdit?.id ?? null);
         this.stepPendingDelete.set(null);
+        this.kindMenuFor.set(null);
         if (workoutToEdit) {
             const limit = workoutToEdit.timeLimitSeconds;
             this.model.set({
@@ -416,20 +428,65 @@ export class WorkoutSetupComponent {
         this.expandedKeys.set(expanded ? this.allKeys() : new Set());
     }
 
-    protected addStep(kind: StepKind) {
+    /** Adds a rep step, the most common kind; its kind pill changes it. */
+    protected addStep() {
         if (this.stepCount() >= MAX_STEPS) {
             return;
         }
-        const step = this.stepModel(
-            kind === 'reps' ? { kind, reps: 0, name: '' } : { kind, seconds: 0, name: '' }
-        );
+        const step = this.newStep();
         this.updateSteps((steps) => [...steps, step]);
         // Only the new step is opened, keeping the rest of the list short
         this.expandedKeys.set(new Set([step.key]));
-        this.stepAnnouncement.set(
-            `Added a ${{ work: 'timed', rest: 'rest', reps: 'rep' }[kind]} step, step ${this.stepCount()}`
-        );
+        this.stepAnnouncement.set(`Added a rep step, step ${this.stepCount()}`);
         this.focusAfterRender(`step-${step.key}-name`);
+    }
+
+    protected toggleKindMenu(key: number) {
+        this.kindMenuFor.update((open) => (open === key ? null : key));
+    }
+
+    /** Escape: closes the menu and goes back to its pill. */
+    protected closeKindMenu(key: number) {
+        if (this.kindMenuFor() === key) {
+            this.kindMenuFor.set(null);
+            document.getElementById(`step-${key}-kind`)?.focus();
+        }
+    }
+
+    /** Tabbing out of a kind menu closes it. */
+    protected kindMenuFocusOut(event: FocusEvent) {
+        const wrap = event.currentTarget as HTMLElement;
+        if (event.relatedTarget instanceof Node && !wrap.contains(event.relatedTarget)) {
+            this.kindMenuFor.set(null);
+        }
+    }
+
+    /**
+     * Changes a step's kind. Its name, exercise and numbers stay, so changing it back
+     * finds them again; only those for its new kind are used.
+     */
+    protected setStepKind(index: number, kind: StepKind) {
+        const changed = this.model().steps[index];
+        this.kindMenuFor.set(null);
+        this.focusAfterRender(`step-${changed.key}-kind`);
+        if (changed.kind === kind) {
+            return;
+        }
+        this.updateSteps((steps) =>
+            steps.map((step) => (step.key === changed.key ? { ...step, kind } : step))
+        );
+        this.stepAnnouncement.set(`Step ${index + 1} is now ${kindName(kind).toLowerCase()}`);
+    }
+
+    /** A click anywhere outside the open kind menu or the tooltip closes it. */
+    protected closePopups(event: MouseEvent) {
+        const target = event.target instanceof Element ? event.target : null;
+        if (!target?.closest('.step__kind')) {
+            this.kindMenuFor.set(null);
+        }
+        if (!target?.closest('.info')) {
+            this.infoOpen.set(false);
+        }
     }
 
     /** The up and down buttons, for keyboard and screen reader users (and anyone else). */
@@ -469,10 +526,7 @@ export class WorkoutSetupComponent {
     /** The X button: deletes an empty step straight away, and asks first about anything else. */
     protected deleteStep(index: number) {
         const step = this.model().steps[index];
-        const isSet =
-            step.kind === 'reps'
-                ? step.reps > 0 || step.weight > 0
-                : step.minutes > 0 || step.seconds > 0;
+        const isSet = hasAmount(step);
         if (!step.name.trim() && !isSet) {
             this.removeStep(index);
         } else {
@@ -506,11 +560,11 @@ export class WorkoutSetupComponent {
         this.stepAnnouncement.set(`Deleted step ${index + 1}`);
         // Focus the step that took its place, or the one before if it was last: its delete
         // button, or its open button if it's collapsed (and so has no delete button). With
-        // none left, the first Add button.
+        // none left, the Add button.
         const remaining = this.model().steps;
         const next = remaining[Math.min(index, remaining.length - 1)];
         if (!next) {
-            this.focusAfterRender('add-timed');
+            this.focusAfterRender('add-step');
             return;
         }
         this.focusAfterRender(
@@ -546,11 +600,15 @@ export class WorkoutSetupComponent {
         };
     }
 
-    // A new workout starts with no steps, just the Add buttons
+    private newStep(): StepModel {
+        return this.stepModel({ kind: 'reps', reps: 0, name: '' });
+    }
+
+    // A new workout starts with one rep step, ready to fill in or change to another kind
     private emptySetup(): WorkoutSetupModel {
         return {
             title: '',
-            steps: [],
+            steps: [this.newStep()],
             repeats: 1,
             repeatMode: 'rounds',
             limitMinutes: DEFAULT_TIME_LIMIT_MINUTES,
@@ -587,6 +645,13 @@ export class WorkoutSetupComponent {
         this.run.start(savedWorkout);
         await this.router.navigate(['/workout']);
     }
+}
+
+/** Whether a step has a time, reps or a weight, as its kind uses. */
+function hasAmount(step: StepModel): boolean {
+    return step.kind === 'reps'
+        ? step.reps > 0 || step.weight > 0
+        : step.minutes > 0 || step.seconds > 0;
 }
 
 function timeLimitSeconds(setup: WorkoutSetupModel): number {
