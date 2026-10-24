@@ -120,45 +120,22 @@ describe('WorkoutLibraryComponent', () => {
         });
 
         describe('starting a workout', () => {
-            const playButton = (index: number) =>
-                card(index).querySelector<HTMLElement>('.workout-card__overlay-play')!;
-            const isShown = (button: HTMLElement) =>
-                button.classList.contains('workout-card__overlay-play--visible');
+            const startButton = (index: number) =>
+                card(index).querySelector<HTMLElement>('.workout-card__start')!;
 
-            it('shows a play button only on the selected card', () => {
-                expect(all('.workout-card__overlay-play--visible')).toHaveLength(0);
-
-                click(card(0));
-
-                expect(card(0).classList).toContain('workout-card--active');
-                expect(isShown(playButton(0))).toBe(true);
-                expect(isShown(playButton(1))).toBe(false);
-            });
-
-            it('lets keyboard users reach the play button, selecting its card on focus', () => {
-                playButton(1).focus();
-                fixture.detectChanges();
-
-                expect(document.activeElement).toBe(playButton(1));
-                expect(card(1).classList).toContain('workout-card--active');
-                expect(isShown(playButton(1))).toBe(true);
-            });
-
-            it('makes the workout active and goes to the workout page', () => {
-                click(card(0));
-                click(el('.workout-card__overlay-play'));
+            it('starts in one press of its card, and goes to the workout page', () => {
+                click(startButton(0));
 
                 expect(store.activeWorkout()).toEqual(first);
                 expect(navigate).toHaveBeenCalledWith(['/workout']);
             });
 
-            it('clears the selection when clicking outside the cards', () => {
-                click(card(0));
+            it('lets keyboard users start one, each card being a button named for it', () => {
+                startButton(1).focus();
 
-                click(el('.library-screen'));
-
-                expect(el('.workout-card--active')).toBeNull();
-                expect(all('.workout-card__overlay-play--visible')).toHaveLength(0);
+                expect(document.activeElement).toBe(startButton(1));
+                expect(startButton(0).getAttribute('aria-label')).toBe('Start Sprints');
+                expect(startButton(1).getAttribute('aria-label')).toBe('Start workout');
             });
         });
 
@@ -183,6 +160,14 @@ describe('WorkoutLibraryComponent', () => {
 
                 expect(all('.workout-card__menu')).toHaveLength(1);
                 expect(card(1).querySelector('.workout-card__menu')).not.toBeNull();
+            });
+
+            it('closes on a click elsewhere on the page', () => {
+                click(menuButton(0));
+
+                click(el('.library-screen'));
+
+                expect(all('.workout-card__menu')).toHaveLength(0);
             });
 
             it('edits the workout by going to setup with its id', () => {

@@ -58,13 +58,12 @@ There are around 140 unit tests, run with [Vitest](https://vitest.dev) in browse
 
 ```
 src/app/
-  home/                Landing page with the infinity logo (Create / Library)
-  nav/                 Header: settings, site title, history and home buttons
+  nav/                 The header, and the bars along the bottom: tabs, the workout's bar, Undo
   history/             Past workouts by day, with delete and undo
   settings/            Sound and vibration switches, and alarm previews
   workout-setup/       Create or edit a workout (Signal Forms)
   workout-library/     Saved workouts
-    workout-card/      One workout in the list: start, edit, delete
+    workout-card/      One workout: tap to start, swipe to delete, hold for options
   workout/             The running workout: ring, countdown, announcements
     workout-state.ts   Works out phase, time left and round from elapsed time
     alarm-schedule.ts  When each alarm is due
