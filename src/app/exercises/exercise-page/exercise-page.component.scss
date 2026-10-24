@@ -1,3 +1,5 @@
+@use 'type' as *;
+
 @use 'interaction' as *;
 
 :host {
@@ -24,10 +26,10 @@
     }
 }
 
-// body.mat-typography gives headings Material's Roboto and margins; keep the app's font
+// The exercise's name: the page's title, in the display face
 .exercise__name {
     margin: 0 0 0.5rem;
-    font-family: 'Audiowide', sans-serif;
+    @include display;
     font-size: 1.6rem;
     color: var(--text-strong);
 }

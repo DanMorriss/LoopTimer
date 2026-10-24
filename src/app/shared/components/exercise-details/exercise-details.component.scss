@@ -9,10 +9,9 @@
     margin-bottom: 1rem;
 }
 
-// body.mat-typography gives headings Material's Roboto and margins; keep the app's font
+// Section headings: the reading face, semibold, as all headings are
 .exercise__heading {
     margin: 0;
-    font-family: 'Audiowide', sans-serif;
     font-size: 1rem;
     color: var(--text-strong);
 }

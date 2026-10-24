@@ -232,10 +232,30 @@ body::before {
     pointer-events: none;
 }
 
-* {
-    font-family: 'Audiowide', sans-serif;
-    font-weight: 400;
-    font-style: normal;
+// Type (see styles/_type.scss): the system's face for reading, Audiowide for display
+:root {
+    --font-text: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --font-display: 'Audiowide', var(--font-text);
+}
+
+// Set once on the page and inherited, so a part in the display face (`@include display`) is
+// in it all the way down. Material's typography sets 14px Roboto on the page and its own
+// fonts on headings: reading size is 16px, in rem so it follows the browser's text size,
+// and headings are the system's face, semibold. Form controls inherit it (Tailwind's reset).
+html,
+body.mat-typography {
+    font-family: var(--font-text);
+}
+
+body.mat-typography {
+    font-size: 1rem;
+    line-height: 1.45;
+}
+
+.mat-typography :is(h1, h2, h3, h4, h5, h6) {
+    font-family: var(--font-text);
+    font-weight: 600;
+    letter-spacing: normal;
 }
 
 // Changing the theme in settings fades the page between the old colours and the new, with a

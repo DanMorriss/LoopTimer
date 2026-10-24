@@ -30,6 +30,11 @@
 - Focus is always put somewhere sensible: into a dialog (starting on Cancel), back to the button that opened a menu or dialog, onto a new step's name box, onto Undo after deleting from the history, onto the step that takes a deleted one's place.
 - Escape closes menus, dialogs, tooltips and open wheels.
 
+### Text
+
+- Reading text is the **system's own face** (San Francisco on Apple devices), at 16px in `rem`, so it follows the browser's text size; headings are semibold. Audiowide, the app's display face, is only for page titles and the workout's big numbers.
+- The countdown's digits each sit in a **cell of the same width**, so the time doesn't shift as it ticks; screen readers hear it as one piece of text, e.g. "00:41". Other ticking numbers (time left, the workout's bar, the wheels) use the system face's fixed-width digits.
+
 ### Motion and colour
 
 - With **reduced motion**: looping animations stop (the "Next:" pulse too, leaving its coloured border, and the face's last-seconds pulse, leaving its tint), the logo shows drawn at once, wheels jump rather than glide, a new step or round crossfades rather than sliding, Pause and Resume swap rather than glide, the workout opens and closes without growing out of its bar, and themes change without a fade.
@@ -47,4 +52,4 @@
 ## Platform notes
 
 - **Web:** checked by axe over every page and state (`src/app/a11y.spec.ts`) and colour contrast tests (`src/app/shared/theme/theme-contrast.spec.ts`).
-- **iOS:** VoiceOver announcements via `AccessibilityNotification.Announcement`; spin buttons map onto adjustable elements (`accessibilityAdjustableAction`); honour `accessibilityReduceMotion` and Dynamic Type. Press feedback comes from a `ButtonStyle` reading `configuration.isPressed`; there's no hover to worry about on a phone. Xcode's Accessibility Inspector audit plays the part of axe.
+- **iOS:** VoiceOver announcements via `AccessibilityNotification.Announcement`; spin buttons map onto adjustable elements (`accessibilityAdjustableAction`); honour `accessibilityReduceMotion` and Dynamic Type. Reading text is SF Pro with Dynamic Type text styles (`.body`, `.headline`); Audiowide stays for titles and the timer, with `.monospacedDigit()`-style cells for its countdown. Press feedback comes from a `ButtonStyle` reading `configuration.isPressed`; there's no hover to worry about on a phone. Xcode's Accessibility Inspector audit plays the part of axe.

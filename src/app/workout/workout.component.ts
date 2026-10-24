@@ -13,6 +13,7 @@ import { MAX_REPS, RepStep, runsUntilStopped, Step } from '../models/workout';
 import { formatWeight, weightIn, weightOptions, weightToKg } from '../models/weight';
 import { WheelPickerComponent } from '../shared/components/wheel-picker/wheel-picker.component';
 import { WorkoutSummaryComponent } from './workout-summary/workout-summary.component';
+import { ClockDigitsComponent } from './clock-digits/clock-digits.component';
 import { AlarmService } from '../shared/alarms/alarm.service';
 import { MatIconModule } from '@angular/material/icon';
 import { formatTime } from '../shared/format-time';
@@ -43,9 +44,15 @@ const MAX_ROUND_DOTS = 15;
  */
 @Component({
     selector: 'app-workout',
-    imports: [RouterLink, MatIconModule, WheelPickerComponent, WorkoutSummaryComponent],
+    imports: [
+        RouterLink,
+        MatIconModule,
+        WheelPickerComponent,
+        WorkoutSummaryComponent,
+        ClockDigitsComponent,
+    ],
     templateUrl: './workout.component.html',
-    styleUrls: ['./workout.component.scss', './workout-motion.scss'],
+    styleUrls: ['./workout.component.scss', './workout-motion.scss', './workout-type.scss'],
     host: {
         '(document:keydown.space)': 'onSpace($event)',
         '(document:keydown.escape)': 'onEscape()',

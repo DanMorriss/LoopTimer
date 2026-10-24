@@ -53,12 +53,13 @@
     filter: grayscale(0.25);
 }
 
+// The workout's name, semibold above its summary
 .workout-card__title {
     margin: 0 0 0.5rem;
     text-align: center;
-    font-size: 1rem;
-    color: var(--text);
-    letter-spacing: 0.02em;
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: var(--text-strong);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

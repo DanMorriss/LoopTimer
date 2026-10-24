@@ -133,7 +133,7 @@
                                             <p class="workout-face__last-time">{{ lastTime() }}</p>
                                         }
                                     } @else {
-                                        <p>{{ slide.time }}</p>
+                                        <p><app-clock-digits [time]="slide.time" /></p>
                                     }
                                     @if (slide.step) {
                                         <p class="workout-face__step">

@@ -1,12 +1,14 @@
-// body.mat-typography gives headings Material's Roboto and margins; keep the app's font
+@use 'type' as *;
+
+// The page's title in the display face; its sections' headings in the reading face, semibold
 .settings__title,
 .settings__heading {
-    font-family: 'Audiowide', sans-serif;
     margin: 0;
     color: var(--text-strong);
 }
 
 .settings__title {
+    @include display;
     margin-bottom: 1rem;
     font-size: 1.5rem;
     text-align: center;

@@ -1154,10 +1154,13 @@ describe('WorkoutComponent', () => {
         // Squats 3s, Plank 2s, rest 2s; 2 rounds
         const circuit = () =>
             makeWorkout({ steps: [work(3, 'Squats'), work(2, 'Plank'), rest(2)], repeats: 2 });
-        const face = () =>
-            (fixture.nativeElement.querySelector('.workout-face') as HTMLElement)
-                .textContent!.replace(/\s+/g, ' ')
-                .trim();
+        // As it's read out: the countdown's clock cells are hidden from screen readers, which
+        // get the time as one piece of text instead
+        const face = () => {
+            const copy = fixture.nativeElement.querySelector('.workout-face').cloneNode(true);
+            copy.querySelectorAll('[aria-hidden="true"]').forEach((el: Element) => el.remove());
+            return copy.textContent.replace(/\s+/g, ' ').trim();
+        };
         const next = () =>
             fixture.nativeElement
                 .querySelector('.workout-next')
@@ -1233,7 +1236,8 @@ describe('WorkoutComponent', () => {
         it('keeps a plain work-and-rest workout free of step numbers', () => {
             start(makeWorkout({ workSeconds: 3, restSeconds: 2, repeats: 3 }));
 
-            expect(face()).toBe('Timed 00:03');
+            // Unnamed work shows just the time (its "Timed" placeholder is invisible and unread)
+            expect(face()).toBe('00:03');
             expect(said()).toBe('Timed, round 1 of 3');
             fixture.destroy();
         });
