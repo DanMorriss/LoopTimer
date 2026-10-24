@@ -38,8 +38,9 @@ export class WorkoutCardComponent {
     /** Used in accessible names, e.g. "Start Sprints" or "Start workout". */
     protected readonly name = computed(() => this.title() || 'workout');
     /**
-     * A one-line summary: "01:05 - 00:20" for one work step (and maybe one rest), as
-     * workouts have always shown, or "5 steps · 02:15" with the length of a round. Rep steps
+     * A one-line summary: its exercises, the steps' names in order, e.g. "Squats, Bench press
+     * + 1 more". With no step named, "01:05 - 00:20" for one work step (and maybe one rest),
+     * as workouts have always shown, or "5 steps · 02:15" with the length of a round. Rep steps
      * take as long as they take, so a round with some is "4 steps · 01:30 + reps", or
      * "2 steps · reps" with no timed steps at all.
      */

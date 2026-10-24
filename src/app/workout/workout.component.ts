@@ -84,13 +84,20 @@ export class WorkoutComponent {
         const step = this.state()?.step;
         return step?.kind === 'reps' ? this.weightText(step) : '';
     });
-    /** The sets from the most recent workout with this exercise, in the same format as history. */
+    /**
+     * The sets from the most recent workout with this exercise, in the same format as history
+     * (PRG-1). Not this run's: it's in the history too once it's been ended or the page closed.
+     */
     lastTime = computed(() => {
         const step = this.state()?.step;
         if (step?.kind !== 'reps' || step.exerciseId === undefined) {
             return '';
         }
+        const runId = this.run.runId();
         for (const entry of this.history.entries()) {
+            if (entry.id === runId) {
+                continue;
+            }
             const sets = (entry.sets ?? []).filter(
                 (set) => !('seconds' in set) && set.exerciseId === step.exerciseId
             );

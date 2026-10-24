@@ -1,35 +1,38 @@
-<!-- The labels below say the same in words for non-interactive maps -->
-<div class="body-map__figures" [attr.aria-hidden]="tappable() ? null : 'true'">
+<!-- Unless its shapes are toggles, the labels below say the same in words, so the drawing is hidden from screen readers -->
+<div class="body-map__figures" [attr.aria-hidden]="toggles() ? null : 'true'">
     @for (side of sides(); track side.name) {
         <figure class="body-map__figure">
             <svg class="body-map__svg" [attr.viewBox]="side.viewBox" focusable="false">
                 @for (shape of side.shapes; track $index) {
-                    @for (d of shape.paths; track $index) {
-                        <path
-                            [attr.d]="d"
-                            [class]="'body-map__shape body-map__shape--' + shape.shade"
-                            [class.body-map__shape--tappable]="tappable() && shape.muscle"
-                            [class.body-map__shape--hovered]="
-                                !!shape.muscle && hoveredMuscle() === shape.muscle
-                            "
-                            [attr.role]="tappable() && shape.muscle ? 'button' : null"
-                            [attr.tabindex]="tappable() && shape.muscle ? '0' : null"
-                            [attr.aria-label]="
-                                tappable() && shape.muscle
-                                    ? 'Toggle ' + muscleLabel(shape.muscle)
-                                    : null
-                            "
-                            [attr.aria-pressed]="
-                                tappable() && shape.muscle ? shape.shade === 'main' : null
-                            "
-                            (click)="tapMuscle(shape.muscle)"
-                            (keydown)="toggleByKey($event, shape.muscle)"
-                            (mouseenter)="setHover(shape.muscle)"
-                            (mouseleave)="setHover(null)"
-                            (focus)="setHover(shape.muscle)"
-                            (blur)="setHover(null)"
-                        />
-                    }
+                    <!-- A muscle's paths are one toggle, so it's one stop for the keyboard -->
+                    <g
+                        [class.body-map__toggle]="toggles() && shape.muscle"
+                        [attr.role]="toggles() && shape.muscle ? 'button' : null"
+                        [attr.tabindex]="toggles() && shape.muscle ? '0' : null"
+                        [attr.aria-label]="
+                            toggles() && shape.muscle ? muscleLabel(shape.muscle) : null
+                        "
+                        [attr.aria-pressed]="
+                            toggles() && shape.muscle ? shape.shade === 'main' : null
+                        "
+                        (click)="tapMuscle(shape.muscle)"
+                        (keydown)="toggleByKey($event, shape.muscle)"
+                        (mouseenter)="setHover(shape.muscle)"
+                        (mouseleave)="setHover(null)"
+                        (focus)="setHover(shape.muscle)"
+                        (blur)="setHover(null)"
+                    >
+                        @for (d of shape.paths; track $index) {
+                            <path
+                                [attr.d]="d"
+                                [class]="'body-map__shape body-map__shape--' + shape.shade"
+                                [class.body-map__shape--tappable]="tappable() && shape.muscle"
+                                [class.body-map__shape--hovered]="
+                                    !!shape.muscle && hoveredMuscle() === shape.muscle
+                                "
+                            />
+                        }
+                    </g>
                 }
                 <path class="body-map__outline" [attr.d]="side.outline" />
             </svg>

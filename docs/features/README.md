@@ -62,12 +62,12 @@ Status: ✅ done, ◐ partly, — not started. The iOS column fills in as a port
 | EXR-9  | Make my own exercise, with a description and its muscles                 | ✅  | —   | [exercises](exercises.md)                     |
 | EXR-10 | Add my own note to any exercise, built-in ones included                  | ✅  | —   | [exercises](exercises.md)                     |
 | EXR-11 | See an exercise's details while building a workout                       | ✅  | —   | [exercises](exercises.md)                     |
-| PRG-1  | See what I did last time, mid-workout                                    | —   | —   | [progress](progress.md)                       |
-| PRG-2  | Be told about personal bests when I finish                               | —   | —   | [progress](progress.md)                       |
+| PRG-1  | See what I did last time, mid-workout                                    | ✅  | —   | [progress](progress.md)                       |
+| PRG-2  | Be told about personal bests when I finish                               | ✅  | —   | [progress](progress.md)                       |
 | PRG-3  | See a list of my exercises with their latest and best                    | ✅  | —   | [progress](progress.md)                       |
 | PRG-4  | See an exercise's chart, bests and recent sessions                       | ✅  | —   | [progress](progress.md)                       |
 | PRG-5  | Get a suggested next weight                                              | —   | —   | [progress](progress.md)                       |
-| PRG-6  | See which muscles I've worked this week, on the body map                 | —   | —   | [progress](progress.md)                       |
+| PRG-6  | See which muscles I've worked this week, on the body map                 | ✅  | —   | [progress](progress.md)                       |
 | SYN-1  | Export all my data to a file                                             | ✅  | —   | [backup-and-sync](backup-and-sync.md)         |
 | SYN-2  | Import a backup without losing what's there                              | ✅  | —   | [backup-and-sync](backup-and-sync.md)         |
 | SYN-3  | Sign in and have the same data on every device                           | —   | —   | [backup-and-sync](backup-and-sync.md)         |

@@ -11,7 +11,8 @@
 - Each card shows:
     - The **title**, or "Untitled workout".
     - A **summary of one round**:
-        - "01:05 - 00:20" (timed - rest) for a workout of one timed step and at most one rest step. With no rest it shows "- 00:00".
+        - Its **exercises** when any step is named: the work and rep steps' names in order, each once, e.g. "Squats, Bench press", or "Squats, Bench press + 1 more" with more than two. This replaces the times below, so the card says what's in it.
+        - With no step named, "01:05 - 00:20" (timed - rest) for a workout of one timed step and at most one rest step. With no rest it shows "- 00:00".
         - "5 steps · 02:15" otherwise, with the length of one round.
         - "4 steps · 01:30 + reps" when a round has rep steps, since they take as long as they take, or "2 steps · reps" when there are no timed steps at all.
     - The **rounds**: the number, or ∞.
@@ -23,7 +24,8 @@
 
 - Given no workouts, then the empty message and "Create a workout" show, and no "Add Workout".
 - Given a workout with work 1:05 and rest 0:20 for 3 rounds, then its card shows "01:05 - 00:20" and 3.
-- Given a workout of five steps, two of them reps, then its card shows "5 steps · mm:ss + reps".
+- Given a workout of five unnamed steps, two of them reps, then its card shows "5 steps · mm:ss + reps".
+- Given a workout of Squats, Bench press, Rows and a rest, then its card shows "Squats, Bench press + 1 more".
 - Given a workout that runs until stopped, then its card shows ∞.
 - Given I select a card and press its play button, then that workout starts and the workout page opens.
 - Given I delete a workout and cancel, then it's kept; given I confirm, then it's gone, and when it was the last one, the empty message shows.

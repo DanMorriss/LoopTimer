@@ -80,40 +80,32 @@ export class WorkoutSummaryComponent {
     protected readonly setLines = computed(() =>
         describeSets(this.run.sets(), this.weightUnit(), this.exerciseName)
     );
+    /**
+     * The bests this run set (PRG-2), e.g. "Heaviest: 80 kg × 5". Equalling a best isn't
+     * one, and nor is doing an exercise for the first time.
+     */
     protected readonly personalBests = computed(() => {
         const entry = this.entry();
-        if (!entry || !entry.sets?.length) {
-            return [] as string[];
+        if (!entry?.sets?.length) {
+            return [];
         }
-        const previous = this.history
-            .entries()
-            .filter((other) => other.id !== entry.id)
-            .map((other) => ({ ...other, sets: other.sets ?? [] }));
-        const byExercise = sessionsByExercise(previous);
-        const exerciseIds = new Set(
-            entry.sets.filter((set) => set.exerciseId !== undefined).map((set) => set.exerciseId!)
+        const before = sessionsByExercise(
+            this.history.entries().filter((other) => other.id !== entry.id)
         );
         const lines: string[] = [];
-
-        for (const exerciseId of exerciseIds) {
-            const before = byExercise.get(exerciseId) ?? [];
-            const after = [
-                ...before,
-                {
-                    entryId: entry.id,
-                    startedAt: entry.startedAt,
-                    title: entry.title,
-                    sets: entry.sets.filter((set) => set.exerciseId === exerciseId),
-                },
-            ];
-            const current = bestLines(exerciseBests(after), this.weightUnit());
-            for (const line of current) {
-                if (line.at === entry.startedAt) {
+        for (const [exerciseId, [session]] of sessionsByExercise([entry])) {
+            const earlier = before.get(exerciseId);
+            if (!earlier) {
+                continue;
+            }
+            // Newest first, as the history is, so on a tie the earlier best stands
+            const bests = exerciseBests([session, ...earlier]);
+            for (const line of bestLines(bests, this.weightUnit())) {
+                if (line.entryId === entry.id) {
                     lines.push(`${line.label}: ${line.text}`);
                 }
             }
         }
-
         return lines;
     });
 

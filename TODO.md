@@ -17,7 +17,7 @@ Making it clearer which part of the workout is happening, as agreed with Dan on 
 
 ### Phase 3: Progress pages
 
-Timed sets are logged now (a set per timed work step of an exercise that runs to its end), so timed exercises have a history for the longest hold and the muscles worked; workouts from before have rep sets only. PRG-3 and PRG-4 are done (the exercises list's latest and best, and the exercise page's bests, chart and recent sessions; history set lines link there). PRG-1 and PRG-2 are left for now (Dan, 2026-10-23). Next:
+Timed sets are logged now (a set per timed work step of an exercise that runs to its end), so timed exercises have a history for the longest hold and the muscles worked; workouts from before have rep sets only. PRG-3 and PRG-4 are done (the exercises list's latest and best, and the exercise page's bests, chart and recent sessions; history set lines link there), and so is PRG-6:
 
 - [x] **Muscles worked this week (PRG-6):** the body map on the history page, shaded by sets in the last 7 days.
 

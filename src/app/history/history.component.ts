@@ -78,7 +78,11 @@ export class HistoryComponent {
         };
     });
 
-    /** Which muscles have been used in the last seven days. */
+    /**
+     * Which muscles have been used in the last seven days (PRG-6): each set counts 1 for its
+     * exercise's main muscles and ½ for supporting ones. A score of 1 or more shades as main.
+     * Most worked first, A to Z on a tie.
+     */
     protected readonly musclesWorked = computed(() => {
         const recent = this.history
             .entries()
@@ -102,7 +106,7 @@ export class HistoryComponent {
 
         const sorted = [...counts.entries()].sort(
             ([muscleA, scoreA], [muscleB, scoreB]) =>
-                scoreB - scoreA || MUSCLE_LABELS[muscleB].localeCompare(MUSCLE_LABELS[muscleA])
+                scoreB - scoreA || MUSCLE_LABELS[muscleA].localeCompare(MUSCLE_LABELS[muscleB])
         );
 
         const main = sorted.filter(([, score]) => score >= 1).map(([muscle]) => muscle);
