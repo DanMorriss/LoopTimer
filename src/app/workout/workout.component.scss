@@ -284,7 +284,8 @@ $track-color: #334155; // slate-700: dark, so both phase colours stand out (3:1 
     margin-top: 1rem;
 }
 
-// Grows into place: scale only, as fading would leave it faint for a moment
+// The label and End workout grow into place: scale only, as fading would leave them faint for
+// a moment. Not Resume, which glides up from the Pause button instead (WorkoutComponent)
 @keyframes paused-in {
     from {
         transform: scale(0.92);
@@ -299,6 +300,10 @@ $track-color: #334155; // slate-700: dark, so both phase colours stand out (3:1 
     align-items: center;
     justify-content: center;
     gap: 1rem;
+}
+
+.workout-paused__label,
+.workout-paused__end {
     animation: paused-in 0.2s ease-out;
 }
 
@@ -347,7 +352,8 @@ $track-color: #334155; // slate-700: dark, so both phase colours stand out (3:1 
         transition: none;
     }
 
-    .workout-paused {
+    .workout-paused__label,
+    .workout-paused__end {
         animation: none;
     }
 }

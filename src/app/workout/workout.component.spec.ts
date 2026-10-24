@@ -9,6 +9,7 @@ import { AlarmService } from '../shared/alarms/alarm.service';
 import { ActiveRunService } from '../shared/run/active-run.service';
 import { KeepAwakeService } from '../shared/run/keep-awake.service';
 import { contrastRatio } from '../shared/testing/contrast';
+import { fakeReducedMotion } from '../shared/testing/fake-reduced-motion';
 import { FakeAudioContext, provideFakeAudioContext } from '../shared/testing/fake-audio-context';
 import {
     makeWorkout as baseWorkout,
@@ -643,6 +644,85 @@ describe('WorkoutComponent', () => {
             TestBed.tick();
             expect(document.activeElement).toBe(button('Pause'));
             fixture.destroy();
+        });
+
+        describe('the button gliding between its places', () => {
+            /** Where a button's glide starts from, relative to its own place, or null if none. */
+            function glideStart(label: string): { x: number; y: number } | null {
+                const animation = button(label)!.getAnimations()[0];
+                if (!animation) {
+                    return null;
+                }
+                const [first] = (animation.effect as KeyframeEffect).getKeyframes();
+                const [, x, y] = /translate\((-?[\d.e-]+)px, (-?[\d.e-]+)px\)/
+                    .exec(String(first['transform']))!
+                    .map(Number);
+                return { x, y };
+            }
+
+            it('glides Resume up into the ring from Pause, and Pause back down from Resume', () => {
+                start(makeWorkout({ workSeconds: 10 }));
+
+                press('Pause');
+                TestBed.tick();
+                // Resume sits in the ring, above where Pause was, so it starts below its place
+                expect(glideStart('Resume')!.y).toBeGreaterThan(0);
+
+                // Let it settle, so Pause glides from where Resume came to rest
+                button('Resume')!
+                    .getAnimations()
+                    .forEach((animation) => animation.finish());
+                press('Resume');
+                TestBed.tick();
+                expect(glideStart('Pause')!.y).toBeLessThan(0);
+                fixture.destroy();
+            });
+
+            it('turns straight round when pressed mid-glide, from where it is on screen', () => {
+                start(makeWorkout({ workSeconds: 10 }));
+
+                press('Pause');
+                TestBed.tick();
+                // Resume has only just left Pause's place, so Pause hardly has to move
+                press('Resume');
+                TestBed.tick();
+
+                const back = glideStart('Pause')!;
+                expect(Math.abs(back.x)).toBeLessThan(2);
+                expect(Math.abs(back.y)).toBeLessThan(2);
+                fixture.destroy();
+            });
+
+            it('glides from the smaller Pause beside Done on a rep step, and back to it', () => {
+                start(makeWorkout({ steps: [reps(10, 'Squats'), work(30)] }));
+
+                press('Pause');
+                TestBed.tick();
+                expect(glideStart('Resume')).not.toBeNull();
+
+                button('Resume')!
+                    .getAnimations()
+                    .forEach((animation) => animation.finish());
+                press('Resume');
+                TestBed.tick();
+                expect(glideStart('Pause')).not.toBeNull();
+                expect(glideStart('Done')).toBeNull();
+                fixture.destroy();
+            });
+
+            it('just swaps them with reduced motion', () => {
+                fakeReducedMotion(true);
+                start(makeWorkout({ workSeconds: 10 }));
+
+                press('Pause');
+                TestBed.tick();
+                expect(glideStart('Resume')).toBeNull();
+
+                press('Resume');
+                TestBed.tick();
+                expect(glideStart('Pause')).toBeNull();
+                fixture.destroy();
+            });
         });
 
         it('resumes on Escape', () => {

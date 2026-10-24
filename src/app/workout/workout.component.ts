@@ -22,6 +22,8 @@ import { SettingsStore } from '../shared/state/settings-store.service';
 import { WorkoutStore } from '../shared/state/workout-store.service';
 import { ExerciseStore } from '../shared/state/exercise-store.service';
 import { describeSets } from '../history/history-format';
+import { injectPrefersReducedMotion } from '../shared/reduced-motion';
+import { criticallyDampedSpring } from '../shared/spring';
 
 // Space on one of these already does something, e.g. presses the focused button
 const SPACE_HANDLED_BY =
@@ -381,18 +383,58 @@ export class WorkoutComponent {
     pausedOn = computed(() => (this.isRepsActive() ? `${this.reps()} reps` : this.time()));
 
     private readonly mainButton = viewChild<ElementRef<HTMLButtonElement>>('mainButton');
+    private readonly sidePauseButton = viewChild<ElementRef<HTMLButtonElement>>('sidePauseButton');
     private readonly resumeButton = viewChild<ElementRef<HTMLButtonElement>>('resumeButton');
+    private readonly reducedMotion = injectPrefersReducedMotion();
+    /** Apple's spring for moving something about: no bounce, a 0.4s response. */
+    private readonly glide = criticallyDampedSpring(0.4);
+
+    /** The button that pauses: the big one, or on a rep step the smaller one beside Done. */
+    private pauseButton(): HTMLElement | undefined {
+        return (this.isRepsActive() ? this.sidePauseButton() : this.mainButton())?.nativeElement;
+    }
 
     /**
      * Pausing swaps the controls for Resume and End workout over the ring, and resuming swaps
-     * them back, so the button just pressed is gone: focus moves to the one that took its place.
+     * them back, so the button just pressed is gone: focus moves to the one that took its
+     * place, and that one glides there from where the pressed one was.
      */
     togglePause() {
+        // Where it is on screen now, mid-glide included, so a press mid-glide turns it round
+        const pressed = this.isPaused() ? this.resumeButton()?.nativeElement : this.pauseButton();
+        const from = pressed?.getBoundingClientRect();
         this.run.togglePause();
         afterNextRender(
-            () =>
-                (this.isPaused() ? this.resumeButton() : this.mainButton())?.nativeElement.focus(),
+            () => {
+                (this.isPaused() ? this.resumeButton() : this.mainButton())?.nativeElement.focus();
+                const arrived = this.isPaused()
+                    ? this.resumeButton()?.nativeElement
+                    : this.pauseButton();
+                if (from && arrived) {
+                    this.glideFrom(arrived, from);
+                }
+            },
             { injector: this.injector }
+        );
+    }
+
+    /**
+     * Moves a button that has just appeared from where `from` was to its own place: Pause
+     * carries on up into the ring as Resume, and Resume back down as Pause, along the same
+     * path. A spring rather than a set curve, and the button is real throughout, so it can be
+     * pressed while it moves. With reduced motion it's just there.
+     */
+    private glideFrom(button: HTMLElement, from: DOMRect) {
+        if (this.reducedMotion()) {
+            return;
+        }
+        const to = button.getBoundingClientRect();
+        const x = from.left + from.width / 2 - (to.left + to.width / 2);
+        const y = from.top + from.height / 2 - (to.top + to.height / 2);
+        const scale = to.width ? from.width / to.width : 1;
+        button.animate(
+            [{ transform: `translate(${x}px, ${y}px) scale(${scale})` }, { transform: 'none' }],
+            { duration: this.glide.duration, easing: this.glide.easing }
         );
     }
 
