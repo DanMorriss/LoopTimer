@@ -16,8 +16,10 @@
         - "5 steps · 02:15" otherwise, with the length of one round.
         - "4 steps · 01:30 + reps" when a round has rep steps, since they take as long as they take, or "2 steps · reps" when there are no timed steps at all.
     - The **rounds**: the number, or ∞; or the time limit, e.g. "Squats, Push-ups in 20:00", read as "as many rounds as possible in 20:00".
-- **Starting**: tapping a card selects it (one at a time) and shows a play button on it; the play button starts the workout from the beginning and opens the workout page. Tapping outside the cards clears the selection. If a workout is already going, it's ended and logged as stopped first.
-- **Options** (⋮ on each card, one open at a time): **Edit** opens the workout in setup (see [build-a-workout](build-a-workout.md), BLD-6); **Delete** removes it from the library at once, and the **Undo bar** says "Deleted "Legs day"" with **Undo**, which puts it back where it was (see [home-and-navigation](home-and-navigation.md#undo)). Its history entries stay, under the title it had.
+- **Starting**: **one tap on a card** starts the workout from the beginning and opens the workout page; a play glyph at the card's left says so. The whole card is a button, "Start Legs day", so keyboards reach it and screen readers hear its summary with it. If a workout is already going, it's ended and logged as stopped first.
+- **Swipe to delete**: a card swiped to the left follows the finger, showing **Delete** behind it in red, which turns solid once letting go would delete it. On letting go, where the swipe would carry it decides: past halfway it carries on off the card and deletes it, with the Undo bar; short of that it springs back. A swipe to the right resists. Up and down scroll the page as usual; a swipe never starts the workout.
+- **Hold for options**: holding a card still for half a second (or right-clicking it) opens its options, as ⋮ does.
+- **Options** (⋮ on each card, or a hold; one open at a time, and a tap elsewhere closes it): **Edit** opens the workout in setup (see [build-a-workout](build-a-workout.md), BLD-6); **Delete** removes it from the library at once, and the **Undo bar** says "Deleted "Legs day"" with **Undo**, which puts it back where it was (see [home-and-navigation](home-and-navigation.md#undo)). Its history entries stay, under the title it had.
 - **Empty library**: "Nothing in the library yet, best go make a workout." with a **Create a workout** button. With workouts, there's an **Add Workout** button instead (one main button per screen).
 
 ## Acceptance criteria
@@ -28,11 +30,13 @@
 - Given a workout of Squats, Bench press, Rows and a rest, then its card shows "Squats, Bench press + 1 more".
 - Given a workout that runs until stopped, then its card shows ∞.
 - Given a workout with a 20:00 time limit, then its card shows "in 20:00" in place of the rounds.
-- Given I select a card and press its play button, then that workout starts and the workout page opens.
+- Given a card, when I tap it, then that workout starts and the workout page opens.
+- Given a card, when I swipe it left past halfway (or flick it), then it's deleted with Undo; when I let go short of halfway, then it springs back.
+- Given a card, when I hold it, then its options open, and letting go doesn't start it.
 - Given I delete a workout, then it's gone at once, and when it was the last one, the empty message shows; when I press Undo, then it's back where it was.
 
 ## Platform notes
 
-- **Web:** `WorkoutLibraryComponent` and `WorkoutCardComponent` (`src/app/workout-library/`), at `/library`. Workouts are saved by `WorkoutStore`.
-- **iOS:** a `List` where tapping a row starts it would be more usual than select-then-play; swipe actions for Edit and Delete, with the same Undo.
+- **Web:** `WorkoutLibraryComponent` and `WorkoutCardComponent` (`src/app/workout-library/`), at `/library`. The card's swipe uses `project()`, `rubberband()` and `VelocityTracker` from `src/app/shared/gesture.ts`, and springs with `criticallyDampedSpring()` from `src/app/shared/spring.ts`. Workouts are saved by `WorkoutStore`.
+- **iOS:** a `List` where tapping a row starts it, with `.swipeActions` for Delete (a full swipe deletes), a `.contextMenu` for Edit and Delete on a hold, and the same Undo.
 - **Open question:** deleting the workout that's running doesn't stop the run on the web; after a reload the run is gone. Decide what a port should do.
