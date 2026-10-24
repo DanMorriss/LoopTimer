@@ -1,0 +1,71 @@
+// An (i) button that shows a short tip under it on hover, focus or a tap (setup's Steps).
+// The page shows and hides the tip with .info__tip--open; these are the looks.
+
+.info {
+    position: relative;
+    display: inline-flex;
+}
+
+.info__button {
+    display: inline-grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+
+    &:hover {
+        background: var(--control);
+        color: var(--text);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+    }
+
+    .mat-icon {
+        width: 20px;
+        height: 20px;
+        font-size: 20px;
+        line-height: 20px;
+    }
+}
+
+// Under the button, centred on it; hidden rather than removed, so the button can point to it
+.info__tip {
+    position: absolute;
+    top: calc(100% + 0.35rem);
+    left: 50%;
+    z-index: 10;
+    width: max-content;
+    max-width: min(16rem, 70vw);
+    padding: 0.55rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 0.6rem;
+    background: var(--raised);
+    box-shadow: 0 10px 24px var(--shadow);
+    color: var(--text);
+    font-size: 0.85rem;
+    line-height: 1.35;
+    text-align: center;
+    visibility: hidden;
+    opacity: 0;
+    transform: translateX(-50%);
+    transition:
+        opacity 0.15s ease,
+        visibility 0.15s;
+
+    &--open {
+        visibility: visible;
+        opacity: 1;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        transition: none;
+    }
+}

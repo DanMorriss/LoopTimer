@@ -20,7 +20,7 @@
 - Or a time limit: as many rounds as fit in it (BLD-8; running it is RUN-8).
 - Steps run in order to make one round; then the round repeats.
 - **Rest at the end of the last round is skipped**: every rest step after the last timed or rep step of the round is left out of the final round, since the workout is over. Rest at the start or middle of a round is kept.
-- A workout must have **some work**: at least one timed step with time, or one rep step with reps. Otherwise it can't be started, and once it has a step the form says "Workout needs a timed step or some reps".
+- A workout must have **some work**: at least one timed step with time, or one rep step with reps. Otherwise it can't be started, and once something has been put in a step (a name, a time, reps or a weight) the form says "Workout needs a timed step or some reps".
 
 ### Steps
 
@@ -30,14 +30,16 @@
     - **Reps**: a count, 1 to 100, and an optional **weight**. No countdown; the workout waits until Done (see [run-a-workout](run-a-workout.md)).
 - Each step has an optional **name**, up to 40 characters, trimmed when saved. The name box suggests "e.g. Squats" (timed), "e.g. Catch your breath" (rest) or "e.g. Push-ups" (reps).
 - A timed or rep step's name box is labelled **Exercise (optional)** and finds exercises as you type, or makes a new one (EXR-2, see [exercises](exercises.md#picking-an-exercise-exr-2)). A rest step's is a plain name box.
-- **Up to 20 steps.** At 20, the add buttons are disabled and the page says "That's the most steps a workout can have (20)."
-- A new workout starts with **no steps**, just the Add buttons and the hint "Add a step to start." Every step can be deleted, which brings the hint back.
+- **Up to 20 steps.** At 20, the **+ Step** button is disabled and the page says "That's the most steps a workout can have (20)."
+- A new workout starts with **one open rep step** at 0 reps. Every step can be deleted, which shows the hint "Add a step to start."
+- An **(i) button** beside the Steps heading shows the tip "Each round runs these in order. Steps left at 00:00 or 0 reps are skipped." on hover, focus or a tap, and hides it on Escape, when the pointer or focus leaves, or on a click elsewhere.
 - Steps left at **0:00 or 0 reps are left out** when the workout is saved.
 - Back-to-back steps of the same kind stay separate steps (each gets its own alarm and countdown).
 
 ### Adding, moving and deleting
 
-- **Add timed**, **Add rest** and **Add reps** (shown as "+ Timed", "+ Rest", "+ Reps") add a step at the end, open it (closing the others) and put the cursor in its name box.
+- **Add step** (shown as "+ Step") adds a **rep step** at the end, opens it (closing the others) and puts the cursor in its name box.
+- **Changing kind:** a step's kind pill (e.g. "REPS") opens a menu of Reps, Timed and Rest, with the current one ticked. Picking one changes the step, open or collapsed, and focus goes back to the pill. The step keeps its name, exercise and numbers, so changing back finds them; only those its kind uses are saved. Escape, a click elsewhere or tabbing away closes the menu.
 - A step can be moved up or down one place with buttons, or dragged by its handle. The first step can't move up; the last can't move down.
 - **Deleting** an empty step (no name, no time or reps) happens at once. A step with a name, time or reps asks first: "This will remove Step 2, Squats, set to 00:45." Cancel keeps it.
 
@@ -76,12 +78,14 @@
 
 ## Acceptance criteria
 
-- Given a new workout, then it has no steps and 1 round, and can't be started.
+- Given a new workout, then it has one open rep step at 0 reps and 1 round, shows no error, and can't be started.
+- Given a rep step, when I pick Timed from its kind pill, then it's a timed step with Minutes and Seconds wheels, and focus is on the pill.
+- Given a timed step "Squats" at 0:30, when I change it to Reps and back, then it's "Squats" at 0:30 again; saved as Reps with 10 reps, it's saved with just the reps.
 - Given every step is 0:00, when I try to start, then it won't, and says it needs a timed step or some reps.
 - Given timed 0:45 and rest 0:00, when I start, then the saved workout has just the timed step.
 - Given a workout with only rep steps, when I start, then it starts (reps count as work).
-- Given 20 steps, then the add buttons are disabled, with the reason shown.
-- Given one step, when I delete it, then there are none, the hint shows, and focus goes to "Add timed".
+- Given 20 steps, then "+ Step" is disabled, with the reason shown.
+- Given one step, when I delete it, then there are none, the hint shows, and focus goes to "Add step".
 - Given a step named "Squats" at 0:45, when I delete it, then I'm asked first, naming it and its time.
 - Given steps A, B, C, when I move C up, then the order is A, C, B, and C keeps its name and time.
 - Given the Until stopped switch is turned on after picking 5 rounds, when it's turned off, then rounds go back to 5.
