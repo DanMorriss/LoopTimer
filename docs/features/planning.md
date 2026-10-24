@@ -5,13 +5,13 @@ Planned, after progress and sync (see [direction](../direction.md)). Kept simple
 ## Stories
 
 - **PLN-1** As a user I want to set which workouts I do on which days of the week.
-- **PLN-2** As a user I want the home page to show what's due today, ready to start.
+- **PLN-2** As a user I want the library to show what's due today, ready to start.
 - **PLN-3** As a user I want to see whether I kept to the plan this week.
 
 ## Rules (draft)
 
 - A plan is a list of weekdays, each with any number of workouts. One plan at a time.
-- **Due today (PLN-2):** today's workouts, minus any already done today. With nothing planned, the home page is as it is now.
+- **Due today (PLN-2):** today's workouts, minus any already done today. At the top of the library; with nothing planned, the library is as it is now.
 - **This week (PLN-3):** planned workouts done or not, Monday to Sunday, shown with the history's "Last 7 days" summary.
 
 ## Open questions

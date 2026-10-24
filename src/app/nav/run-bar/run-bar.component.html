@@ -1,0 +1,21 @@
+@if (shown()) {
+    <aside class="run-bar" aria-label="Workout in progress" [attr.data-phase]="phase()">
+        <a class="run-bar__open" routerLink="/workout">
+            <span class="run-bar__dot" aria-hidden="true"></span>
+            <span class="run-bar__text">
+                <span class="run-bar__title">{{ title() }}</span>
+                <span class="run-bar__status">{{ status() }}</span>
+            </span>
+        </a>
+        @if (!finished()) {
+            <button
+                type="button"
+                class="btn-icon run-bar__pause"
+                [attr.aria-label]="isPaused() ? 'Resume' : 'Pause'"
+                (click)="togglePause()"
+            >
+                <mat-icon aria-hidden="true">{{ isPaused() ? 'play_arrow' : 'pause' }}</mat-icon>
+            </button>
+        }
+    </aside>
+}

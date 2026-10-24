@@ -1,3 +1,26 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+// Room under the page for the bars floating over its bottom, so the last of it can be
+// scrolled clear of them (--bars-height, in styles.scss)
+main {
+    display: block;
+    padding-bottom: var(--bars-height);
+}
+
+// Stacked from the bottom, clear of an iPhone's home bar. The strip itself lets taps through
+// to the page; only the bars take them.
+.bottom-bars {
+    position: fixed;
+    z-index: 30;
+    left: 0;
+    right: 0;
+    bottom: var(--bars-bottom);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--bar-gap);
+    padding-inline: max(0.75rem, env(safe-area-inset-left)) max(0.75rem, env(safe-area-inset-right));
+    pointer-events: none;
+}

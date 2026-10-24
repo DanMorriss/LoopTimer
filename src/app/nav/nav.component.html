@@ -1,56 +1,19 @@
-<!-- Three columns with equal sides, so the title stays centred with the menu button beside it -->
+<!-- Three columns with equal sides, so the title stays centred with the back link beside it -->
 <div class="nav grid w-full items-center gap-2 p-4">
-    <div class="nav__menu-wrap" (focusout)="onFocusOut($event)">
-        <button
-            #menuButton
-            type="button"
-            class="btn-icon nav__toggle"
-            [class.nav__toggle--open]="open()"
-            [attr.aria-expanded]="open()"
-            aria-controls="site-menu"
-            aria-label="Menu"
-            title="Menu"
-            (click)="toggle()"
+    @if (onWorkoutPage()) {
+        <!-- Down, as the workout folds away into the bar above the tabs; it keeps running -->
+        <a
+            class="btn-icon nav__back"
+            [routerLink]="back().path"
+            [queryParams]="back().queryParams"
+            [attr.aria-label]="back().label"
+            [title]="back().label"
         >
-            <!-- Three bars that cross into an X while the menu is open -->
-            <svg
-                class="nav__bars h-6 w-6"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                aria-hidden="true"
-            >
-                <line class="nav__bar nav__bar--top" x1="4" y1="6" x2="20" y2="6" />
-                <line class="nav__bar nav__bar--middle" x1="4" y1="12" x2="20" y2="12" />
-                <line class="nav__bar nav__bar--bottom" x1="4" y1="18" x2="20" y2="18" />
-            </svg>
-        </button>
-
-        @if (open()) {
-            <nav id="site-menu" class="nav__menu" aria-label="Main">
-                <ul class="nav__list">
-                    @for (page of pages(); track page.path) {
-                        <li>
-                            <a
-                                class="nav__link"
-                                [routerLink]="page.path"
-                                routerLinkActive="nav__link--current"
-                                ariaCurrentWhenActive="page"
-                                (click)="open.set(false)"
-                            >
-                                <mat-icon class="nav__link-icon" aria-hidden="true">{{
-                                    page.icon
-                                }}</mat-icon>
-                                {{ page.label }}
-                            </a>
-                        </li>
-                    }
-                </ul>
-            </nav>
-        }
-    </div>
+            <mat-icon aria-hidden="true">expand_more</mat-icon>
+        </a>
+    } @else {
+        <div aria-hidden="true"></div>
+    }
     <!-- On a phone, the workout page shows the workout's own title here instead of the app's name -->
     <h1
         class="site-title pt-2 text-center text-2xl text-(--text-strong)"

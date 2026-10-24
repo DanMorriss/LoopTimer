@@ -52,8 +52,10 @@ export class ActiveRunService {
     /** How long the workout has run, in ms, or null if there's no workout. */
     readonly elapsedMs = computed(() => {
         const startedAt = this.store.activeWorkoutStartedAt();
-        // While paused, time stands still at the moment of the pause
-        const at = this.store.activeWorkoutPausedAt() ?? this.now();
+        // While paused, time stands still at the moment of the pause. The clock only moves on
+        // a tick, so a run started since the last one could look a moment short of its
+        // start (e.g. 20:01 left of 20:00): it never counts from before it began.
+        const at = this.store.activeWorkoutPausedAt() ?? Math.max(this.now(), startedAt ?? 0);
         return this.workout() && startedAt !== null ? at - startedAt : null;
     });
 

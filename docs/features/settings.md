@@ -25,6 +25,7 @@
 - Changes are **saved at once** and apply at once, mid-workout too (e.g. turning sound off silences alarms already booked).
 - **Play** plays that alarm straight away, even with Sound turned off (it was asked for), without touching any booked alarms.
 - Switching theme **fades** from one to the other, unless reduced motion is on, when it changes at once.
+- **About**, last: the ∞ logo (the home page until the tab bar came in), drawing itself in with a light travelling round it, and "LoopTimer: build a workout, then let it loop."
 
 ## Acceptance criteria
 
