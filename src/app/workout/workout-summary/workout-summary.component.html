@@ -10,7 +10,7 @@
     <div class="summary__body">
         <!-- Focus starts here, so it's read from the top -->
         <h2 id="summary-heading" class="summary__heading" tabindex="-1" cdkFocusInitial>
-            {{ finished() ? 'Workout finished' : 'Workout ended' }}
+            {{ heading() }}
         </h2>
         @if (title()) {
             <p class="summary__title">{{ title() }}</p>
@@ -27,6 +27,38 @@
                     <dd>{{ rounds() }}</dd>
                 </div>
             </dl>
+
+            <!-- Time ran out part-way through a rep step: how much of it was done? -->
+            @if (lastSet(); as last) {
+                <section class="summary__last-set" aria-labelledby="summary-last-set">
+                    <p id="summary-last-set">
+                        Time ran out during {{ last.name }}. How many reps did you get?
+                    </p>
+                    <div class="summary__last-set-row">
+                        <app-wheel-picker
+                            [value]="lastSetReps()"
+                            (valueChange)="lastSetReps.set($event)"
+                            [options]="repOptions"
+                            labelledBy="summary-last-set"
+                        />
+                        <button type="button" class="btn-pill" (click)="logLastSet()">
+                            <mat-icon aria-hidden="true">add</mat-icon>
+                            Add set
+                        </button>
+                    </div>
+                </section>
+            }
+
+            @if (personalBests().length) {
+                <div class="summary__bests" aria-live="polite">
+                    <h3>Personal bests</h3>
+                    <ul>
+                        @for (best of personalBests(); track best) {
+                            <li>{{ best }}</li>
+                        }
+                    </ul>
+                </div>
+            }
 
             @if (setLines().length) {
                 <section class="summary__section" aria-labelledby="summary-sets">
@@ -119,17 +151,6 @@
                             </ul>
                         }
                     </div>
-
-                    @if (personalBests().length) {
-                        <div class="summary__bests" aria-live="polite">
-                            <h3>Personal bests</h3>
-                            <ul>
-                                @for (best of personalBests(); track best) {
-                                    <li>{{ best }}</li>
-                                }
-                            </ul>
-                        </div>
-                    }
 
                     <!-- Changing what was done can carry over to the saved workout, if wanted -->
                     <div class="summary__next-time" aria-live="polite">

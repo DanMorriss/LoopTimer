@@ -19,7 +19,15 @@
                         animate.enter="slide-in-sideways"
                         animate.leave="slide-out-sideways"
                     >
-                        @if (slide.untilStopped) {
+                        @if (slide.timeLimited) {
+                            <p class="text-2xl">round {{ slide.round }}</p>
+                            <p
+                                class="workout-status__time-left"
+                                [class.workout-status__time-left--nearly-up]="slide.timeNearlyUp"
+                            >
+                                {{ slide.timeLeft }} left
+                            </p>
+                        } @else if (slide.untilStopped) {
                             <p class="text-2xl">
                                 round {{ slide.round }} of
                                 <span class="symbol-infinity" aria-hidden="true">∞</span>

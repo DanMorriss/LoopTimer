@@ -1,4 +1,5 @@
 import { HistoryEntry, isTimedSet, LoggedSet, RepSet, TimedSet } from '../models/history';
+import { roundsScore, RoundsScore } from '../models/progress';
 import { WeightUnit, weightIn } from '../models/weight';
 
 /** e.g. 75 → "1:15", 3725 → "1:02:05" */
@@ -9,9 +10,19 @@ export function formatDuration(seconds: number): string {
     return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${s}` : `${m}:${s}`;
 }
 
-/** e.g. "3 rounds", "2 of 5 rounds · stopped", "12 rounds · until stopped" */
+/**
+ * e.g. "3 rounds", "2 of 5 rounds · stopped", "12 rounds · until stopped"; with a time limit,
+ * "7 rounds + 3 in 20:00", or "4 rounds · stopped before 20:00"
+ */
 export function describeRounds(entry: HistoryEntry): string {
     const rounds = (n: number) => `${n} ${n === 1 ? 'round' : 'rounds'}`;
+    if (entry.timeLimitSeconds !== undefined) {
+        const limit = formatDuration(entry.timeLimitSeconds);
+        const score = roundsScore(entry);
+        return score
+            ? `${describeScore(score)} in ${limit}`
+            : `${rounds(entry.roundsCompleted)} · stopped before ${limit}`;
+    }
     if (entry.totalRounds === 0) {
         return `${rounds(entry.roundsCompleted)} · until stopped`;
     }
@@ -19,6 +30,12 @@ export function describeRounds(entry: HistoryEntry): string {
         return `${entry.roundsCompleted} of ${rounds(entry.totalRounds)} · stopped`;
     }
     return rounds(entry.roundsCompleted);
+}
+
+/** e.g. "7 rounds + 3": full rounds, and the steps done of the next, if any. */
+export function describeScore({ rounds, steps }: RoundsScore): string {
+    const full = `${rounds} ${rounds === 1 ? 'round' : 'rounds'}`;
+    return steps > 0 ? `${full} + ${steps}` : full;
 }
 
 /** The workout's title as it ran, or "Untitled workout". */

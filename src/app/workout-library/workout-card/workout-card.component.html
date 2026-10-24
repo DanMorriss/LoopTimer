@@ -10,7 +10,7 @@
             class="workout-card__summary"
             [attr.aria-label]="summary().spoken + ', ' + spokenRounds()"
         >
-            {{ summary().text }} x {{ rounds() }}
+            {{ summary().text }} {{ rounds() }}
         </p>
 
         <div class="workout-card__spacer" aria-hidden="true"></div>

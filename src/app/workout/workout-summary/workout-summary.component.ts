@@ -4,7 +4,12 @@ import { form, FormField, maxLength } from '@angular/forms/signals';
 import { MatIconModule } from '@angular/material/icon';
 import { isBuiltIn } from '../../models/exercise';
 import { MAX_NOTE_LENGTH, RepSet } from '../../models/history';
-import { exerciseBests, sessionsByExercise } from '../../models/progress';
+import {
+    exerciseBests,
+    isMostRounds,
+    roundsScore,
+    sessionsByExercise,
+} from '../../models/progress';
 import { MAX_REPS } from '../../models/workout';
 import { weightIn, weightOptions, weightToKg } from '../../models/weight';
 import { WheelPickerComponent } from '../../shared/components/wheel-picker/wheel-picker.component';
@@ -15,6 +20,7 @@ import { SettingsStore } from '../../shared/state/settings-store.service';
 import { WorkoutStore } from '../../shared/state/workout-store.service';
 import {
     describeRounds,
+    describeScore,
     describeSets,
     entryName,
     formatDuration,
@@ -55,6 +61,26 @@ export class WorkoutSummaryComponent {
     readonly viewHistory = output<void>();
 
     protected readonly finished = this.run.isComplete;
+    protected readonly heading = computed(() => {
+        if (!this.finished()) {
+            return 'Workout ended';
+        }
+        return this.run.workout()?.timeLimitSeconds === undefined
+            ? 'Workout finished'
+            : "Time's up";
+    });
+    /** The rep step time ran out on, to log how much of it was done; null otherwise. */
+    protected readonly lastSet = computed(() => {
+        const last = this.run.unloggedLastSet();
+        if (!last) {
+            return null;
+        }
+        const { exerciseId, name } = last.step;
+        const current = exerciseId === undefined ? undefined : this.exerciseName(exerciseId);
+        return { name: current || name.trim() || 'the reps', reps: last.step.reps };
+    });
+    /** Starts at the step's reps, as most of a set is likely done by then. */
+    protected readonly lastSetReps = linkedSignal(() => this.lastSet()?.reps ?? 1);
     /** This run in the history; missing when it ended before its first step was done. */
     protected readonly entry = computed(() => {
         const id = this.run.runId();
@@ -81,18 +107,22 @@ export class WorkoutSummaryComponent {
         describeSets(this.run.sets(), this.weightUnit(), this.exerciseName)
     );
     /**
-     * The bests this run set (PRG-2), e.g. "Heaviest: 80 kg × 5". Equalling a best isn't
-     * one, and nor is doing an exercise for the first time.
+     * The bests this run set (PRG-2), e.g. "Heaviest: 80 kg × 5", and "Most rounds" for a
+     * time limit (PRG-7). Equalling a best isn't one, and nor is doing it for the first time.
      */
     protected readonly personalBests = computed(() => {
         const entry = this.entry();
-        if (!entry?.sets?.length) {
+        if (!entry) {
             return [];
         }
         const before = sessionsByExercise(
             this.history.entries().filter((other) => other.id !== entry.id)
         );
         const lines: string[] = [];
+        const score = roundsScore(entry);
+        if (score && isMostRounds(entry, this.history.entries())) {
+            lines.push(`Most rounds: ${describeScore(score)}`);
+        }
         for (const [exerciseId, [session]] of sessionsByExercise([entry])) {
             const earlier = before.get(exerciseId);
             if (!earlier) {
@@ -108,6 +138,10 @@ export class WorkoutSummaryComponent {
         }
         return lines;
     });
+
+    protected logLastSet() {
+        this.run.logLastSet(this.lastSetReps());
+    }
 
     // Correcting the rep sets, e.g. the last one was 8 reps, not 10. Timed ones ran as set.
     protected readonly changingSets = signal(false);

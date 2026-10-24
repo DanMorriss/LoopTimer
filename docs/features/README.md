@@ -22,6 +22,7 @@ Status: ✅ done, ◐ partly, — not started. The iOS column fills in as a port
 | BLD-5  | Reorder and delete steps                                                 | ✅  | —   | [build-a-workout](build-a-workout.md)         |
 | BLD-6  | Edit a saved workout                                                     | ✅  | —   | [build-a-workout](build-a-workout.md)         |
 | BLD-7  | Add a weight to a rep step, in kg or lb                                  | ✅  | —   | [build-a-workout](build-a-workout.md)         |
+| BLD-8  | Give a workout a time limit, for as many rounds as possible              | ✅  | —   | [build-a-workout](build-a-workout.md)         |
 | RUN-1  | See where I am in the workout at a glance                                | ✅  | —   | [run-a-workout](run-a-workout.md)             |
 | RUN-2  | See what's next                                                          | ✅  | —   | [run-a-workout](run-a-workout.md)             |
 | RUN-3  | Tap Done when a set of reps is finished                                  | ✅  | —   | [run-a-workout](run-a-workout.md)             |
@@ -29,6 +30,7 @@ Status: ✅ done, ◐ partly, — not started. The iOS column fills in as a port
 | RUN-5  | Keep accurate time whatever the device does                              | ✅  | —   | [run-a-workout](run-a-workout.md)             |
 | RUN-6  | Change the reps or weight mid-workout, e.g. going up a weight            | ✅  | —   | [run-a-workout](run-a-workout.md)             |
 | RUN-7  | See a summary when I finish or end a workout, and correct its sets       | ✅  | —   | [run-a-workout](run-a-workout.md)             |
+| RUN-8  | Run to a time limit: rounds counting up, time left, the score at the end | ✅  | —   | [run-a-workout](run-a-workout.md)             |
 | CTL-1  | Pause and resume                                                         | ✅  | —   | [pause-and-stop](pause-and-stop.md)           |
 | CTL-2  | Stop a workout early                                                     | ✅  | —   | [pause-and-stop](pause-and-stop.md)           |
 | CTL-3  | Pick up where I was if the app is closed or reloaded                     | ✅  | —   | [pause-and-stop](pause-and-stop.md)           |
@@ -68,6 +70,7 @@ Status: ✅ done, ◐ partly, — not started. The iOS column fills in as a port
 | PRG-4  | See an exercise's chart, bests and recent sessions                       | ✅  | —   | [progress](progress.md)                       |
 | PRG-5  | Get a suggested next weight                                              | —   | —   | [progress](progress.md)                       |
 | PRG-6  | See which muscles I've worked this week, on the body map                 | ✅  | —   | [progress](progress.md)                       |
+| PRG-7  | Be told when I've done the most rounds yet in a time limit               | ✅  | —   | [progress](progress.md)                       |
 | SYN-1  | Export all my data to a file                                             | ✅  | —   | [backup-and-sync](backup-and-sync.md)         |
 | SYN-2  | Import a backup without losing what's there                              | ✅  | —   | [backup-and-sync](backup-and-sync.md)         |
 | SYN-3  | Sign in and have the same data on every device                           | —   | —   | [backup-and-sync](backup-and-sync.md)         |

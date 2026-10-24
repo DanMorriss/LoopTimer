@@ -235,6 +235,15 @@ $track-color: #334155; // slate-700: dark, so both phase colours stand out (3:1 
     color: var(--glow-text);
 }
 
+.workout-status__time-left {
+    font-size: 1.1rem;
+    font-variant-numeric: tabular-nums;
+
+    &--nearly-up {
+        color: var(--glow-text);
+    }
+}
+
 .round-dots {
     display: flex;
     gap: 0.4rem;

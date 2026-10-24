@@ -1,5 +1,6 @@
 import { computed, DestroyRef, inject, Service, signal } from '@angular/core';
 import { HistoryEntry, isLoggedSet, MAX_NOTE_LENGTH } from '../../models/history';
+import { MAX_TIME_LIMIT_SECONDS } from '../../models/workout';
 import { Deletion, mergeRecords } from '../../models/sync';
 import { DeletionStore } from './deletion-store.service';
 import { openDatabase, readAll, write } from './history-database';
@@ -245,8 +246,19 @@ export function readHistoryEntry(value: unknown): HistoryEntry | null {
     if (!isHistoryEntry(value)) {
         return null;
     }
-    const entry = withUsableSets(value);
+    const entry = withUsableTimeLimit(withUsableSets(value));
     return isWholeNumber(entry.updatedAt) ? entry : { ...entry, updatedAt: entry.endedAt };
+}
+
+// A broken time limit or score is dropped, leaving the rounds as the record of it
+function withUsableTimeLimit(entry: HistoryEntry): HistoryEntry {
+    const { timeLimitSeconds, stepsIntoRound, ...rest } = entry;
+    if (!isWholeNumber(timeLimitSeconds, 1) || timeLimitSeconds > MAX_TIME_LIMIT_SECONDS) {
+        return rest;
+    }
+    return isWholeNumber(stepsIntoRound)
+        ? { ...rest, timeLimitSeconds, stepsIntoRound }
+        : { ...rest, timeLimitSeconds };
 }
 
 // A broken set is dropped rather than the whole workout; with none left, so are the sets

@@ -59,6 +59,15 @@ describe('WorkoutCardComponent', () => {
         fixture.detectChanges();
     };
 
+    it('shows a time limit in place of the rounds', () => {
+        set({ workout: { ...sprints, repeats: UNTIL_STOPPED, timeLimitSeconds: 1200 } });
+
+        expect(el('.workout-card__summary').textContent).toContain('01:05 - 00:20 in 20:00');
+        expect(el('.workout-card__summary').getAttribute('aria-label')).toBe(
+            'Timed 01:05, rest 00:20, as many rounds as possible in 20:00'
+        );
+    });
+
     it('is a list item showing the title and padded times', () => {
         expect(card().classList).toContain('workout-card');
         expect(el('.workout-card__title').textContent?.trim()).toBe('Sprints');

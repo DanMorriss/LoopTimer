@@ -95,7 +95,7 @@ describe('BackupService', () => {
             expect(link.href).toBe('blob:backup');
             const file: BackupFile = JSON.parse(await blob!.text());
             expect(file.app).toBe('LoopTimer');
-            expect(file.version).toBe(5);
+            expect(file.version).toBe(6);
             expect(file.workouts).toEqual(workouts().workouts());
             expect(file.history).toEqual(history().entries());
             expect(file.deleted).toEqual([

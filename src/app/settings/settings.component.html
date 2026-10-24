@@ -7,53 +7,53 @@
         <section class="settings__section" aria-labelledby="appearance-heading">
             <h3 class="settings__heading" id="appearance-heading">Appearance</h3>
 
-            <fieldset class="theme-picker">
+            <fieldset class="segmented">
                 <legend class="setting__name">Theme</legend>
-                <div class="theme-picker__options" [style.--chosen]="chosenIndex()">
+                <div class="segmented__options" [style.--chosen]="chosenIndex()">
                     <!-- The highlight behind the chosen option, which slides between them -->
-                    <span class="theme-picker__thumb" aria-hidden="true"></span>
+                    <span class="segmented__thumb settings__theme-thumb" aria-hidden="true"></span>
                     @for (option of themes; track option.value; let i = $index) {
                         <label
-                            class="theme-picker__option"
-                            [class.theme-picker__option--chosen]="i === chosenIndex()"
+                            class="segmented__option"
+                            [class.segmented__option--chosen]="i === chosenIndex()"
                         >
                             <input
                                 type="radio"
                                 name="theme"
-                                class="theme-picker__input"
+                                class="segmented__input"
                                 [value]="option.value"
                                 [checked]="settings.theme() === option.value"
                                 (change)="chooseTheme(option.value)"
                             />
-                            <span class="theme-picker__label">{{ option.label }}</span>
+                            <span class="segmented__label">{{ option.label }}</span>
                         </label>
                     }
                 </div>
             </fieldset>
 
             <!-- Which figure the body map on exercise pages draws -->
-            <fieldset class="theme-picker settings__picker" aria-describedby="figure-hint">
+            <fieldset class="segmented settings__picker" aria-describedby="figure-hint">
                 <legend class="setting__name">Body figure</legend>
                 <div
-                    class="theme-picker__options"
+                    class="segmented__options"
                     [style.--count]="figures.length"
                     [style.--chosen]="chosenFigureIndex()"
                 >
-                    <span class="theme-picker__thumb" aria-hidden="true"></span>
+                    <span class="segmented__thumb" aria-hidden="true"></span>
                     @for (option of figures; track option.value; let i = $index) {
                         <label
-                            class="theme-picker__option"
-                            [class.theme-picker__option--chosen]="i === chosenFigureIndex()"
+                            class="segmented__option"
+                            [class.segmented__option--chosen]="i === chosenFigureIndex()"
                         >
                             <input
                                 type="radio"
                                 name="bodyFigure"
-                                class="theme-picker__input"
+                                class="segmented__input"
                                 [value]="option.value"
                                 [checked]="settings.bodyFigure() === option.value"
                                 (change)="settings.update({ bodyFigure: option.value })"
                             />
-                            <span class="theme-picker__label">{{ option.label }}</span>
+                            <span class="segmented__label">{{ option.label }}</span>
                         </label>
                     }
                 </div>
@@ -65,28 +65,28 @@
             <h3 class="settings__heading" id="units-heading">Units</h3>
 
             <!-- Weights are always saved in kg, so switching loses nothing -->
-            <fieldset class="theme-picker">
+            <fieldset class="segmented">
                 <legend class="setting__name">Weight</legend>
                 <div
-                    class="theme-picker__options"
+                    class="segmented__options"
                     [style.--count]="weightUnits.length"
                     [style.--chosen]="chosenUnitIndex()"
                 >
-                    <span class="theme-picker__thumb" aria-hidden="true"></span>
+                    <span class="segmented__thumb" aria-hidden="true"></span>
                     @for (option of weightUnits; track option.value; let i = $index) {
                         <label
-                            class="theme-picker__option"
-                            [class.theme-picker__option--chosen]="i === chosenUnitIndex()"
+                            class="segmented__option"
+                            [class.segmented__option--chosen]="i === chosenUnitIndex()"
                         >
                             <input
                                 type="radio"
                                 name="weightUnit"
-                                class="theme-picker__input"
+                                class="segmented__input"
                                 [value]="option.value"
                                 [checked]="settings.weightUnit() === option.value"
                                 (change)="settings.update({ weightUnit: option.value })"
                             />
-                            <span class="theme-picker__label">{{ option.label }}</span>
+                            <span class="segmented__label">{{ option.label }}</span>
                         </label>
                     }
                 </div>

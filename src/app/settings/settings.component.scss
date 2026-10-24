@@ -59,94 +59,18 @@
     fill: currentColor;
 }
 
-// Theme: native radio buttons, drawn as one segmented control
-.theme-picker {
-    margin: 0;
-    padding: 0.75rem 0 0;
-    border: 0;
-
-    legend {
-        margin-bottom: 0.6rem;
-        padding: 0;
-    }
+// The pickers' look is shared (styles/_segmented.scss); here, their spacing in a section
+.segmented {
+    padding-top: 0.75rem;
 }
 
-.theme-picker__options {
-    --gap: 0.2rem;
-    position: relative;
-    // How many options there are; three for the theme
-    --count: 3;
-    display: grid;
-    grid-template-columns: repeat(var(--count), 1fr);
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    background: var(--control);
-    padding: var(--gap);
-    gap: var(--gap);
-}
-
-// One option wide, moved along by --chosen (0, 1, …) option widths plus the gaps between
-.theme-picker__thumb {
-    position: absolute;
-    top: var(--gap);
-    bottom: var(--gap);
-    left: var(--gap);
-    width: calc((100% - (var(--count) + 1) * var(--gap)) / var(--count));
-    border: 1px solid var(--glow);
-    border-radius: 999px;
-    // The lighter tint, so the label keeps 4.5:1 in the light theme
-    background: var(--accent-soft);
-    transform: translateX(calc(var(--chosen) * (100% + var(--gap))));
-    transition: transform 0.25s ease;
-    pointer-events: none;
-    // Its own layer in the theme fade, which moves it from the old option to the new
+// The theme's highlight is its own layer in the theme fade, which moves it from the old
+// option to the new (only this one: a name used twice on a page stops the fade)
+.settings__theme-thumb {
     view-transition-name: theme-thumb;
 
     // During the fade, jump straight to the new option so the fade can do the sliding
     :host-context(.theme-switching) & {
-        transition: none;
-    }
-}
-
-.theme-picker__option {
-    position: relative;
-    display: flex;
-}
-
-// Visually hidden, but still the real, focusable radio button
-.theme-picker__input {
-    position: absolute;
-    inset: 0;
-    margin: 0;
-    opacity: 0;
-    cursor: pointer;
-}
-
-.theme-picker__label {
-    position: relative;
-    flex: 1;
-    padding: 0.5rem 0.4rem;
-    border: 1px solid transparent;
-    border-radius: 999px;
-    color: var(--text-muted);
-    font-size: 0.85rem;
-    text-align: center;
-    pointer-events: none;
-    transition: color 0.2s ease;
-
-    .theme-picker__option--chosen & {
-        color: var(--glow-text);
-    }
-
-    .theme-picker__input:focus-visible + & {
-        outline: 2px solid var(--accent);
-        outline-offset: 2px;
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .theme-picker__thumb,
-    .theme-picker__label {
         transition: none;
     }
 }

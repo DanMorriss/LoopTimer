@@ -9,13 +9,15 @@
 - **BLD-5** As a user I want to add, reorder and delete steps, to build a circuit.
 - **BLD-6** As a user I want to edit a saved workout, so I don't have to build it again to change it.
 - **BLD-7** As a user I want to add a weight to a rep step (e.g. 10 squats at 60 kg), so I know what to lift.
+- **BLD-8** As a user I want a workout with a time limit (e.g. 20 minutes) in which I do as many rounds as I can, so I can work to the clock rather than to a count.
 
 ## Rules
 
 ### A workout
 
-- A workout has a **title** (optional), a list of **steps** that make one round, and a number of **rounds**.
+- A workout has a **title** (optional), a list of **steps** that make one round, and a number of **rounds** or a **time limit**.
 - Rounds: **1 to 30**, or **∞** (until stopped). A new workout starts at 1.
+- Or a time limit: as many rounds as fit in it (BLD-8; running it is RUN-8).
 - Steps run in order to make one round; then the round repeats.
 - **Rest at the end of the last round is skipped**: every rest step after the last timed or rep step of the round is left out of the final round, since the workout is over. Rest at the start or middle of a round is kept.
 - A workout must have **some work**: at least one timed step with time, or one rep step with reps. Otherwise it can't be started, and once it has a step the form says "Workout needs a timed step or some reps".
@@ -50,6 +52,14 @@
 - Times, reps, weights and rounds are picked on **wheels** like iPhone pickers: swipe, scroll or drag, tap a number, or type one. Whatever sits in the middle is selected.
 - The rounds wheel ends with **∞** after 30. Next to it, an **Until stopped** switch turns the wheel to ∞; turning it off goes back to the number of rounds picked before.
 
+### Time limit (BLD-8)
+
+- Under **Repeat**, a choice of **Rounds** or **Time limit**, as a row of two (radio buttons for keyboards and screen readers). Rounds to begin with, and for a workout saved with rounds.
+- **Time limit** swaps the rounds wheel and the Until stopped switch for **Minutes** and **Seconds** wheels, 00:00 to 99:59, at **20:00** to begin with, and the hint "As many rounds as you can before time's up."
+- 00:00 won't start: "Time limit needs to be longer than 00:00".
+- Going back to Rounds keeps the time picked, and the other way round, until the workout's saved: it saves only the one picked.
+- Saved, a time limit is `timeLimitSeconds` with rounds until stopped (see [data](data.md)). Editing a workout with one opens on Time limit, with its time.
+
 ### Weights (BLD-7)
 
 - A rep step has a **Weight** wheel beside its Reps wheel, labelled with the unit chosen in settings: "Weight (kg)" or "Weight (lb)".
@@ -76,11 +86,15 @@
 - Given steps A, B, C, when I move C up, then the order is A, C, B, and C keeps its name and time.
 - Given the Until stopped switch is turned on after picking 5 rounds, when it's turned off, then rounds go back to 5.
 - Given I edit a saved workout, then it opens with its steps collapsed, and saving updates it rather than adding another.
+- Given Time limit is picked, then the wheels show 20:00; when I pick 12:30 and start, then the workout is saved with a time limit of 750 seconds and rounds until stopped.
+- Given Time limit at 00:00, then it won't start, and says the time limit needs to be longer than 00:00.
+- Given 5 rounds, when I pick Time limit and then Rounds again and start, then it's saved with 5 rounds and no time limit.
+- Given a saved workout with a time limit of 20:30, when I edit it, then Time limit is picked, at 20:30.
 - Given a rep step of 10 reps at 22.5 kg, when I start, then it's saved with weight 22.5; given one left at –, then it's saved with no weight.
 - Given weights in lb, when I pick 135, then it's saved as 61.235 kg, and shows as 135 lb.
 - Given a step saved at 20.412 kg (45 lb), when I edit only the title, then the weight stays 20.412.
 
 ## Platform notes
 
-- **Web:** the form is `WorkoutSetupComponent` (`src/app/workout-setup/`), at `/setup`, or `/setup?editId=<id>` to edit. The wheels are `WheelPickerComponent`. Rules for what counts as a valid workout are in `src/app/models/workout.ts`.
+- **Web:** the form is `WorkoutSetupComponent` (`src/app/workout-setup/`), at `/setup`, or `/setup?editId=<id>` to edit. The wheels are `WheelPickerComponent`. Rounds or Time limit is the shared segmented control (`src/styles/_segmented.scss`, also settings' theme). Rules for what counts as a valid workout are in `src/app/models/workout.ts`.
 - **iOS:** the wheels map directly onto `Picker` with `.wheel` style. Drag to reorder maps onto `List` with `onMove`; swipe to delete is the iOS habit, but keep the "ask first if it has something in it" rule.

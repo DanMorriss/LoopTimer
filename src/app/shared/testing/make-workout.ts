@@ -1,4 +1,4 @@
-import { Step, Workout } from '../../models/workout';
+import { Step, UNTIL_STOPPED, Workout } from '../../models/workout';
 
 /** A workout described the simple way: one work time and one rest time. */
 export interface SimpleWorkout {
@@ -12,6 +12,8 @@ export interface SimpleWorkout {
     repeats: number;
     /** Use these steps instead of the work and rest times. */
     steps: Step[];
+    /** A time limit in seconds, which makes the rounds UNTIL_STOPPED. */
+    timeLimitSeconds?: number;
 }
 
 /**
@@ -43,8 +45,10 @@ export function makeWorkout(overrides: Partial<SimpleWorkout> = {}): Workout {
         id: simple.id,
         title: simple.title,
         steps,
-        repeats: simple.repeats,
         updatedAt: simple.updatedAt,
+        ...(simple.timeLimitSeconds === undefined
+            ? { repeats: simple.repeats }
+            : { repeats: UNTIL_STOPPED, timeLimitSeconds: simple.timeLimitSeconds }),
     };
 }
 

@@ -16,8 +16,8 @@
 - Each entry keeps:
     - the workout's title **as it ran** (renaming or deleting the workout later doesn't change it)
     - when it started, and when it ended
-    - the **time spent**, in whole seconds: pauses don't count, time on rep steps does. A finished workout counts its full length plus rep time.
-    - the full **rounds done**, and the rounds it was set to (or "until stopped")
+    - the **time spent**, in whole seconds: pauses don't count, time on rep steps does. A finished workout counts its full length plus rep time, and one whose time limit ran out counts the time limit.
+    - the full **rounds done**, and the rounds it was set to (or "until stopped"), or its **time limit**, and when that ran out, the steps done of the round it ran out in (RUN-8)
     - finished or stopped
     - an optional note
     - the **sets** done (HIS-5), in order:
@@ -32,7 +32,7 @@
 - At the top: "**Last 7 days:** 4 workouts · 1:15:30": the count and total time spent of workouts started in the last 7 × 24 hours.
 - Each entry shows its title (or "Untitled workout") and a line: start time · time spent · rounds, e.g. "9:05 AM · 12:30 · 3 rounds".
     - Time spent is m:ss, or h:mm:ss over an hour.
-    - Rounds: "3 rounds" when finished, "2 of 5 rounds · stopped" when stopped, "12 rounds · until stopped" for a workout that runs until stopped.
+    - Rounds: "3 rounds" when finished, "2 of 5 rounds · stopped" when stopped, "12 rounds · until stopped" for a workout that runs until stopped. With a time limit, "7 rounds + 3 in 20:00" (the steps done of the next round, if any), or "4 rounds · stopped before 20:00" when ended before time was up.
 - **Sets**, one line per step, under the entry, in the unit chosen in settings, e.g.:
     - "Squats: 3 × 10 @ 60 kg": the same every set
     - "Squats: 10, 10, 8 @ 60 kg": the reps changed
@@ -64,6 +64,7 @@
 - Given an unnamed 30-second work step, then no set is logged for it.
 - Given workouts today, yesterday and last Tuesday, then they're grouped under Today, Yesterday and the date, newest first.
 - Given a finished 3-round workout of 12:30 started at 9:05 AM, then it shows "9:05 AM · 12:30 · 3 rounds".
+- Given a 20:00 time limit that ran out 3 steps into round 8, then it shows "7 rounds + 3 in 20:00"; ended after 4 rounds, "4 rounds · stopped before 20:00".
 - Given a workout stopped in round 3 of 5, then it shows "2 of 5 rounds · stopped".
 - Given three workouts this week totalling 45 minutes and one 8 days ago, then the summary says "3 workouts · 45:00".
 - Given a note of 200 characters, then it's cut to 120.

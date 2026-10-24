@@ -390,29 +390,85 @@
                 <p class="setup-hint">That's the most steps a workout can have ({{ maxSteps }}).</p>
             }
 
-            <h2 class="setup-heading">Repeat</h2>
+            <h2 class="setup-heading" id="repeat-heading">Repeat</h2>
 
-            <!-- The switch and the ∞ at the end of the wheel are two ways to set the same thing -->
-            <div class="picker-row mb-4">
-                <div class="picker-field">
-                    <span class="picker-field__label" id="repeats-label">Rounds</span>
-                    <app-wheel-picker
-                        id="repeats"
-                        [formField]="workoutForm.repeats"
-                        [options]="repeatOptions"
-                        labelledBy="repeats-label"
-                    />
+            <!-- A number of rounds, or as many as fit in a time limit -->
+            <fieldset class="segmented mb-4" aria-labelledby="repeat-heading">
+                <div
+                    class="segmented__options"
+                    [style.--count]="repeatModes.length"
+                    [style.--chosen]="chosenRepeatIndex()"
+                >
+                    <span class="segmented__thumb" aria-hidden="true"></span>
+                    @for (mode of repeatModes; track mode.value; let i = $index) {
+                        <label
+                            class="segmented__option"
+                            [class.segmented__option--chosen]="i === chosenRepeatIndex()"
+                        >
+                            <input
+                                type="radio"
+                                name="repeatMode"
+                                class="segmented__input"
+                                [value]="mode.value"
+                                [checked]="repeatMode() === mode.value"
+                                (change)="setRepeatMode(mode.value)"
+                            />
+                            <span class="segmented__label">{{ mode.label }}</span>
+                        </label>
+                    }
                 </div>
+            </fieldset>
 
-                <div class="picker-field">
-                    <span class="picker-field__label" id="untilStopped-label">Until stopped</span>
-                    <app-infinity-switch
-                        [checked]="untilStopped()"
-                        (checkedChange)="setUntilStopped($event)"
-                        labelledBy="untilStopped-label"
-                    />
+            @if (repeatMode() === 'time') {
+                <div class="picker-row mb-2">
+                    <div class="picker-field">
+                        <span class="picker-field__label" id="limit-minutes-label"> Minutes </span>
+                        <app-wheel-picker
+                            id="limit-minutes"
+                            [formField]="workoutForm.limitMinutes"
+                            [options]="minuteOptions"
+                            labelledBy="limit-minutes-label"
+                        />
+                    </div>
+                    <div class="picker-field">
+                        <span class="picker-field__label" id="limit-seconds-label"> Seconds </span>
+                        <app-wheel-picker
+                            id="limit-seconds"
+                            [formField]="workoutForm.limitSeconds"
+                            [options]="secondOptions"
+                            labelledBy="limit-seconds-label"
+                        />
+                    </div>
                 </div>
-            </div>
+                <p class="setup-hint mb-4">As many rounds as you can before time's up.</p>
+                @if (noTimeLimitError(); as error) {
+                    <mat-error>{{ error.message }}</mat-error>
+                }
+            } @else {
+                <!-- The switch and the ∞ at the end of the wheel are two ways to set the same thing -->
+                <div class="picker-row mb-4">
+                    <div class="picker-field">
+                        <span class="picker-field__label" id="repeats-label">Rounds</span>
+                        <app-wheel-picker
+                            id="repeats"
+                            [formField]="workoutForm.repeats"
+                            [options]="repeatOptions"
+                            labelledBy="repeats-label"
+                        />
+                    </div>
+
+                    <div class="picker-field">
+                        <span class="picker-field__label" id="untilStopped-label"
+                            >Until stopped</span
+                        >
+                        <app-infinity-switch
+                            [checked]="untilStopped()"
+                            (checkedChange)="setUntilStopped($event)"
+                            labelledBy="untilStopped-label"
+                        />
+                    </div>
+                </div>
+            }
 
             @if (noTimeError(); as error) {
                 <mat-error>{{ error.message }}</mat-error>

@@ -78,14 +78,23 @@ export class WorkoutCardComponent {
             ? { text: `${count} · ${round} + reps`, spoken: `${count}, ${round} a round plus reps` }
             : { text: `${count} · reps`, spoken: `${count}, all reps` };
     });
-    protected readonly rounds = computed(() =>
-        runsUntilStopped(this.workout()) ? '∞' : String(this.workout().repeats)
-    );
-    protected readonly spokenRounds = computed(() =>
-        runsUntilStopped(this.workout())
+    /** How long it goes on: "x 4" rounds, "x ∞" until stopped, or "in 20:00" for a time limit. */
+    protected readonly rounds = computed(() => {
+        const { repeats, timeLimitSeconds } = this.workout();
+        if (timeLimitSeconds !== undefined) {
+            return `in ${clock(timeLimitSeconds)}`;
+        }
+        return runsUntilStopped(this.workout()) ? 'x ∞' : `x ${repeats}`;
+    });
+    protected readonly spokenRounds = computed(() => {
+        const { repeats, timeLimitSeconds } = this.workout();
+        if (timeLimitSeconds !== undefined) {
+            return `as many rounds as possible in ${clock(timeLimitSeconds)}`;
+        }
+        return runsUntilStopped(this.workout())
             ? 'repeated until stopped'
-            : `repeated ${this.workout().repeats} times`
-    );
+            : `repeated ${repeats} times`;
+    });
     protected readonly showPlay = computed(() => this.active() && !this.menuOpen());
 
     protected onCardClick(event: Event) {

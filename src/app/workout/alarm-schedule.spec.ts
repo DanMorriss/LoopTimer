@@ -35,7 +35,12 @@ describe('alarmEvents', () => {
 
     it('lines up with the phase changes in workoutStateAt()', () => {
         const workout = makeWorkout({ workSeconds: 7, restSeconds: 3, repeats: 4 });
-        const phaseFor = { work: 'work', rest: 'rest', finish: 'complete' } as const;
+        const phaseFor = {
+            work: 'work',
+            rest: 'rest',
+            finish: 'complete',
+            countdown: null,
+        } as const;
 
         for (const event of alarmEvents(workout, 0)) {
             expect(workoutStateAt(workout, event.at).phase).toBe(phaseFor[event.kind]);
@@ -90,7 +95,12 @@ describe('alarmEvents', () => {
         });
 
         it('lines up with the step changes in workoutStateAt()', () => {
-            const kinds = { work: 'work', rest: 'rest', finish: 'complete' } as const;
+            const kinds = {
+                work: 'work',
+                rest: 'rest',
+                finish: 'complete',
+                countdown: null,
+            } as const;
 
             for (const event of alarmEvents(circuit, 0)) {
                 const state = workoutStateAt(circuit, event.at);
@@ -128,5 +138,42 @@ describe('alarmEvents', () => {
             expect(events.map((event) => event.kind)).toEqual(['work', 'rest', 'work', 'finish']);
             expect(events.at(-1)!.at).toBe(25_000);
         });
+    });
+});
+
+describe('alarmEvents with a time limit', () => {
+    it('stops the steps where time runs out, with a countdown, then the finish', () => {
+        // 30s work, 10s rest, 100s: work at 0, 40 and 80, rest at 30 and 70
+        const amrap = makeWorkout({ timeLimitSeconds: 100 });
+        expect(alarmEvents(amrap, 0)).toEqual([
+            { kind: 'work', at: 0 },
+            { kind: 'rest', at: 30_000 },
+            { kind: 'work', at: 40_000 },
+            { kind: 'rest', at: 70_000 },
+            { kind: 'work', at: 80_000 },
+            { kind: 'countdown', at: 90_000 },
+            { kind: 'countdown', at: 97_000 },
+            { kind: 'countdown', at: 98_000 },
+            { kind: 'countdown', at: 99_000 },
+            { kind: 'finish', at: 100_000 },
+        ]);
+    });
+
+    it('books the end while a rep step is waited on, less the time on rep steps done', () => {
+        // 10s work, 20 reps, 5s rest, 60s. One rep step done in 20s, so the start moved on
+        // 20s, and the end is still 60s after the real start
+        const circuit = makeWorkout({ steps: [work(10), reps(20), rest(5)], timeLimitSeconds: 60 });
+        const events = alarmEvents(circuit, 20_000, 0, 100, 1, 20_000);
+        expect(events).toEqual([
+            { kind: 'work', at: 20_000 },
+            { kind: 'rest', at: 30_000 },
+            { kind: 'work', at: 35_000 },
+            { kind: 'work', at: 45_000 },
+            { kind: 'countdown', at: 50_000 },
+            { kind: 'countdown', at: 57_000 },
+            { kind: 'countdown', at: 58_000 },
+            { kind: 'countdown', at: 59_000 },
+            { kind: 'finish', at: 60_000 },
+        ]);
     });
 });

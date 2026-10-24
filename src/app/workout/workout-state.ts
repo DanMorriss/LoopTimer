@@ -1,8 +1,8 @@
 import { LoggedSet, RepSet, TimedSet } from '../models/history';
 import {
+    endlessRounds,
     repStepsPerRound,
     roundSeconds,
-    runsUntilStopped,
     Step,
     stepSeconds,
     Workout,
@@ -15,15 +15,24 @@ export interface WorkoutState {
     phase: WorkoutPhase;
     /** The step in progress (null once complete). */
     step: Step | null;
-    /** Which step of the round is in progress, starting at 0 (0 once complete). */
+    /**
+     * Which step of the round is in progress, starting at 0. Once complete, 0; or, when time
+     * ran out, the step it was on, which isn't done.
+     */
     stepIndex: number;
     /** Whole seconds left in the current step (0 for reps, and once complete). */
     remainingSeconds: number;
     /** Length of the current step in seconds (0 for reps, and once complete). */
     phaseSeconds: number;
-    /** Rounds left, counting the one in progress (0 once complete, Infinity until stopped). */
+    /**
+     * Rounds left, counting the one in progress (0 once complete; Infinity until stopped, or
+     * with a time limit).
+     */
     roundsLeft: number;
-    /** Which round is in progress, starting at 0 (equal to repeats once complete). */
+    /**
+     * Which round is in progress, starting at 0. Once complete, equal to repeats; or, when
+     * time ran out, the round it was in, so it's also how many full rounds were done.
+     */
     round: number;
     /** Exact time spent in the current step so far, in ms (0 once complete). */
     phaseElapsedMs: number;
@@ -35,7 +44,8 @@ export interface WorkoutState {
  *
  * Each round runs the workout's steps in order, and rounds repeat `repeats` times. Rest at
  * the end of the last round is skipped, and a workout that runs until stopped never
- * completes.
+ * completes. One with a time limit completes when the time's up: the clock plus `repMs`,
+ * the time spent on rep steps already done (the one being waited on is still on the clock).
  *
  * A rep step takes no time on this clock: the workout stops at the first one not yet done
  * and stays there however long it runs, until Done adds it to `repStepsDone` and moves the
@@ -47,9 +57,21 @@ export interface WorkoutState {
 export function workoutStateAt(
     workout: Workout,
     elapsedMs: number,
-    repStepsDone = 0
+    repStepsDone = 0,
+    repMs = 0
 ): WorkoutState {
     const elapsedMsClamped = Math.max(0, elapsedMs);
+
+    // Time's up: complete, where it had got to the moment it ran out
+    if (workout.timeLimitSeconds !== undefined) {
+        const limitMs = workout.timeLimitSeconds * 1000;
+        if (elapsedMsClamped + repMs >= limitMs) {
+            const { timeLimitSeconds: _limit, ...untimed } = workout;
+            const cut = workoutStateAt(untimed, limitMs - repMs, repStepsDone);
+            return complete(cut.round, cut.stepIndex);
+        }
+    }
+
     const elapsed = Math.floor(elapsedMsClamped / 1000);
     const roundLength = roundSeconds(workout);
 
@@ -62,23 +84,14 @@ export function workoutStateAt(
             stepIndex: repStep.stepIndex,
             remainingSeconds: 0,
             phaseSeconds: 0,
-            roundsLeft: runsUntilStopped(workout) ? Infinity : workout.repeats - repStep.round,
+            roundsLeft: endlessRounds(workout) ? Infinity : workout.repeats - repStep.round,
             round: repStep.round,
             phaseElapsedMs: elapsedMsClamped - repStep.atMs,
         };
     }
 
     if (elapsed >= workoutSeconds(workout)) {
-        return {
-            phase: 'complete',
-            step: null,
-            stepIndex: 0,
-            remainingSeconds: 0,
-            phaseSeconds: 0,
-            roundsLeft: 0,
-            round: workout.repeats,
-            phaseElapsedMs: 0,
-        };
+        return complete(workout.repeats, 0);
     }
 
     // Short of the next rep step (if any), so every rep step passed is done and takes no
@@ -103,9 +116,22 @@ export function workoutStateAt(
         stepIndex,
         remainingSeconds: stepStart + length - intoRound,
         phaseSeconds: length,
-        roundsLeft: runsUntilStopped(workout) ? Infinity : workout.repeats - round,
+        roundsLeft: endlessRounds(workout) ? Infinity : workout.repeats - round,
         round,
         phaseElapsedMs: elapsedMsClamped - stepStartMs,
+    };
+}
+
+function complete(round: number, stepIndex: number): WorkoutState {
+    return {
+        phase: 'complete',
+        step: null,
+        stepIndex,
+        remainingSeconds: 0,
+        phaseSeconds: 0,
+        roundsLeft: 0,
+        round,
+        phaseElapsedMs: 0,
     };
 }
 
@@ -122,7 +148,7 @@ export function nextRepStep(
         return null;
     }
     const round = Math.floor(repStepsDone / perRound);
-    if (!runsUntilStopped(workout) && round >= workout.repeats) {
+    if (!endlessRounds(workout) && round >= workout.repeats) {
         return null;
     }
     // Which rep step of the round it is, then which step of the round that is
@@ -141,6 +167,14 @@ export function nextRepStep(
 }
 
 /**
+ * How many steps of the round time ran out in were done, rests left out: the 3 of
+ * "7 rounds + 3". The step it was on isn't done.
+ */
+export function stepsIntoRound(workout: Pick<Workout, 'steps'>, state: WorkoutState): number {
+    return workout.steps.slice(0, state.stepIndex).filter((step) => step.kind !== 'rest').length;
+}
+
+/**
  * The sets a run has done by `state`: its rep sets, as logged on Done, and a timed set for
  * each work step of an exercise that has run to its end, in the order they were done.
  */
@@ -150,7 +184,8 @@ export function setsDone(
     repSets: readonly RepSet[]
 ): LoggedSet[] {
     const timed: TimedSet[] = [];
-    // Once complete, `round` is the rounds there were and `stepIndex` 0, so all of them count
+    // Once complete, `round` is the rounds there were and `stepIndex` 0, so all of them count;
+    // when time ran out, the steps before the one it was on count, and that one doesn't
     for (let round = 0; round <= state.round; round++) {
         const stepsDone = round < state.round ? workout.steps.length : state.stepIndex;
         workout.steps.slice(0, stepsDone).forEach((step, stepIndex) => {

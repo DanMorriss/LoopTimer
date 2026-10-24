@@ -3,7 +3,9 @@ import {
     hasWork,
     MAX_REPS,
     MAX_STEP_SECONDS,
+    MAX_TIME_LIMIT_SECONDS,
     Step,
+    UNTIL_STOPPED,
     Workout,
     WorkoutFields,
 } from '../../models/workout';
@@ -274,6 +276,15 @@ export class WorkoutStore {
         sessionStorage.setItem('activeSets', JSON.stringify(this._activeSets()));
     }
 
+    /** Adds a set without moving the workout on, e.g. the one time ran out in. */
+    addActiveSet(set: RepSet) {
+        if (!this._activeWorkout()) {
+            return;
+        }
+        this._activeSets.update((sets) => [...sets, set]);
+        sessionStorage.setItem('activeSets', JSON.stringify(this._activeSets()));
+    }
+
     /** Corrects a set already done, e.g. its reps or weight changed on the summary. */
     updateActiveSet(index: number, set: RepSet) {
         if (!this._activeSets()[index]) {
@@ -428,7 +439,12 @@ function sameWorkout(a: Workout, b: Workout): boolean {
     // By what the steps are, not the exercises they happen to be linked to
     const steps = (workout: Workout) =>
         JSON.stringify(workout.steps.map((step) => ({ ...copyStep(step), exerciseId: undefined })));
-    return a.title === b.title && a.repeats === b.repeats && steps(a) === steps(b);
+    return (
+        a.title === b.title &&
+        a.repeats === b.repeats &&
+        a.timeLimitSeconds === b.timeLimitSeconds &&
+        steps(a) === steps(b)
+    );
 }
 
 /**
@@ -454,11 +470,20 @@ export function readWorkout(value: unknown): Workout | null {
     if (!steps?.every((step) => isStep(step)) || !hasWork(steps)) {
         return null;
     }
+    // A time limit runs as many rounds as fit, so it only goes with UNTIL_STOPPED
+    const limit = saved['timeLimitSeconds'];
+    const timeLimit =
+        saved['repeats'] === UNTIL_STOPPED &&
+        isWholeNumber(limit, 1) &&
+        (limit as number) <= MAX_TIME_LIMIT_SECONDS
+            ? { timeLimitSeconds: limit as number }
+            : {};
     return {
         id: saved['id'],
         title: saved['title'],
         steps: steps.map(copyStep),
         repeats: saved['repeats'] as number,
+        ...timeLimit,
         // Missing only if saved oddly: older than any real change, so any other copy wins
         updatedAt: isWholeNumber(saved['updatedAt'], 0) ? (saved['updatedAt'] as number) : 0,
     };

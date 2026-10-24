@@ -25,7 +25,8 @@ interface Note {
 }
 
 // Simple beeps for now, until there are proper sound files. Each alarm sounds different:
-// two short high beeps for work, one long low tone for rest, three rising notes to finish.
+// two short high beeps for work, one long low tone for rest, three rising notes to finish,
+// and one short tick counting down to a time limit.
 const SOUNDS: Record<AlarmKind, Note[]> = {
     work: [
         { frequency: 880, offset: 0, length: 0.15 },
@@ -37,6 +38,7 @@ const SOUNDS: Record<AlarmKind, Note[]> = {
         { frequency: 659.25, offset: 0.2, length: 0.18 },
         { frequency: 783.99, offset: 0.4, length: 0.6 },
     ],
+    countdown: [{ frequency: 660, offset: 0, length: 0.08 }],
 };
 
 // Vibration patterns (on, off, on... in ms) to match each sound
@@ -44,6 +46,7 @@ const VIBRATIONS: Record<AlarmKind, number[]> = {
     work: [150, 100, 150],
     rest: [500],
     finish: [180, 20, 180, 20, 600],
+    countdown: [60],
 };
 
 const VOLUME = 0.3;

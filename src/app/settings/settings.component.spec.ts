@@ -87,7 +87,7 @@ describe('SettingsComponent', () => {
             create();
             const thumb = () =>
                 (
-                    fixture.nativeElement.querySelector('.theme-picker__options') as HTMLElement
+                    fixture.nativeElement.querySelector('.segmented__options') as HTMLElement
                 ).style.getPropertyValue('--chosen');
             expect(thumb()).toBe('0');
 
@@ -97,7 +97,7 @@ describe('SettingsComponent', () => {
 
             expect(startViewTransition).toHaveBeenCalledTimes(1);
             expect(thumb()).toBe('2');
-            const chosen = fixture.nativeElement.querySelector('.theme-picker__option--chosen');
+            const chosen = fixture.nativeElement.querySelector('.segmented__option--chosen');
             expect(chosen.textContent.trim()).toBe('System');
         });
 
@@ -192,7 +192,7 @@ describe('SettingsComponent', () => {
         expect(audio.scheduledNotes()).toEqual([expect.stringMatching(/^440@/)]);
     });
 
-    it('offers a preview of the work, rest and finish alarms', () => {
+    it('offers a preview of the work, rest, finish and time limit alarms', () => {
         create();
         const labels = Array.from(
             fixture.nativeElement.querySelectorAll('.play-button') as NodeListOf<HTMLElement>
@@ -202,6 +202,7 @@ describe('SettingsComponent', () => {
             'Play the timed alarm',
             'Play the rest alarm',
             'Play the finish alarm',
+            'Play the time limit alarm',
         ]);
     });
 

@@ -73,12 +73,22 @@ interface StepModel {
     savedWeight: number | null;
 }
 
+/** How a workout goes on: a number of rounds (or until stopped), or a time limit. */
+export type RepeatMode = 'rounds' | 'time';
+
 /** The form's values. */
 interface WorkoutSetupModel {
     title: string;
     steps: StepModel[];
     repeats: number;
+    repeatMode: RepeatMode;
+    /** The time limit, kept while Rounds is picked, so going back to Time limit finds it. */
+    limitMinutes: number;
+    limitSeconds: number;
 }
+
+/** A new time limit, until one's picked: a common length for as many rounds as possible. */
+const DEFAULT_TIME_LIMIT_MINUTES = 20;
 
 /** Enough for a long circuit, while keeping the page manageable. */
 export const MAX_STEPS = 20;
@@ -167,6 +177,12 @@ export class WorkoutSetupComponent {
                     ? undefined
                     : { kind: 'noTime', message: 'Workout needs a timed step or some reps' }
             );
+            // ...and that a time limit has some time in it
+            validate(setup, ({ value }) =>
+                value().repeatMode === 'time' && timeLimitSeconds(value()) === 0
+                    ? { kind: 'noTimeLimit', message: 'Time limit needs to be longer than 00:00' }
+                    : undefined
+            );
         },
         {
             submission: {
@@ -184,6 +200,14 @@ export class WorkoutSetupComponent {
         return this.model().steps.some((step) => expanded.has(step.key));
     });
     protected readonly untilStopped = computed(() => this.model().repeats === UNTIL_STOPPED);
+    protected readonly repeatMode = computed(() => this.model().repeatMode);
+    protected readonly repeatModes: { value: RepeatMode; label: string }[] = [
+        { value: 'rounds', label: 'Rounds' },
+        { value: 'time', label: 'Time limit' },
+    ];
+    protected readonly chosenRepeatIndex = computed(() =>
+        this.repeatModes.findIndex((mode) => mode.value === this.repeatMode())
+    );
     // The last number of rounds picked, so turning the switch off goes back to it
     private lastRounds = 1;
 
@@ -203,6 +227,12 @@ export class WorkoutSetupComponent {
     );
     protected readonly exerciseInEditor = signal<{ exercise: Exercise; stepKey: number } | null>(
         null
+    );
+
+    protected readonly noTimeLimitError = computed(() =>
+        this.workoutForm()
+            .errors()
+            .find((error) => error.kind === 'noTimeLimit')
     );
 
     // With no steps yet, the hint to add one says enough
@@ -236,10 +266,16 @@ export class WorkoutSetupComponent {
         this.editingWorkoutId.set(workoutToEdit?.id ?? null);
         this.stepPendingDelete.set(null);
         if (workoutToEdit) {
+            const limit = workoutToEdit.timeLimitSeconds;
             this.model.set({
                 title: workoutToEdit.title,
                 steps: workoutToEdit.steps.map((step) => this.stepModel(step)),
-                repeats: workoutToEdit.repeats,
+                // A time limit is saved with UNTIL_STOPPED, which Rounds shouldn't start on
+                repeats: limit === undefined ? workoutToEdit.repeats : 1,
+                repeatMode: limit === undefined ? 'rounds' : 'time',
+                limitMinutes:
+                    limit === undefined ? DEFAULT_TIME_LIMIT_MINUTES : Math.floor(limit / 60),
+                limitSeconds: limit === undefined ? 0 : limit % 60,
             });
             // A saved workout opens as a list of summaries, so the whole workout fits on screen
             this.expandedKeys.set(new Set());
@@ -247,6 +283,10 @@ export class WorkoutSetupComponent {
             this.model.set(this.emptySetup());
             this.expandedKeys.set(this.allKeys());
         }
+    }
+
+    protected setRepeatMode(repeatMode: RepeatMode) {
+        this.model.update((setup) => ({ ...setup, repeatMode }));
     }
 
     protected setUntilStopped(on: boolean) {
@@ -508,7 +548,14 @@ export class WorkoutSetupComponent {
 
     // A new workout starts with no steps, just the Add buttons
     private emptySetup(): WorkoutSetupModel {
-        return { title: '', steps: [], repeats: 1 };
+        return {
+            title: '',
+            steps: [],
+            repeats: 1,
+            repeatMode: 'rounds',
+            limitMinutes: DEFAULT_TIME_LIMIT_MINUTES,
+            limitSeconds: 0,
+        };
     }
 
     private findWorkoutToEdit(params: ParamMap): Workout | null {
@@ -517,8 +564,18 @@ export class WorkoutSetupComponent {
     }
 
     private async saveAndStart(): Promise<void> {
-        const { title, steps, repeats } = this.model();
-        const workout: WorkoutFields = { title, steps: toSteps(steps, this.weightUnit), repeats };
+        const setup = this.model();
+        const { title, steps } = setup;
+        // A time limit runs as many rounds as fit, so its rounds are UNTIL_STOPPED
+        const workout: WorkoutFields =
+            setup.repeatMode === 'time'
+                ? {
+                      title,
+                      steps: toSteps(steps, this.weightUnit),
+                      repeats: UNTIL_STOPPED,
+                      timeLimitSeconds: timeLimitSeconds(setup),
+                  }
+                : { title, steps: toSteps(steps, this.weightUnit), repeats: setup.repeats };
 
         const editingId = this.editingWorkoutId();
         const savedWorkout = editingId
@@ -530,6 +587,10 @@ export class WorkoutSetupComponent {
         this.run.start(savedWorkout);
         await this.router.navigate(['/workout']);
     }
+}
+
+function timeLimitSeconds(setup: WorkoutSetupModel): number {
+    return setup.limitMinutes * 60 + setup.limitSeconds;
 }
 
 /**
