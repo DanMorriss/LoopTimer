@@ -62,6 +62,22 @@
     }
 }
 
+// The face, steady in the phase colour for most of a step, flares to full colour on each of
+// its last seconds and eases back, in time with the "Next:" pulse: one "get ready" cue, only
+// when it's needed, rather than a flash all step long.
+.workout-face--soon::before {
+    animation: face-tick 1s ease-out infinite;
+}
+
+@keyframes face-tick {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0.5;
+    }
+}
+
 // A new step glides in from below as the last one glides off the top, like the number
 // wheels; a new round goes right to left instead. With reduced motion, a short crossfade.
 $glide: 0.5s cubic-bezier(0.22, 1, 0.36, 1);
@@ -126,7 +142,8 @@ $glide: 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 
 @media (prefers-reduced-motion: reduce) {
     .workout-next--soon,
-    .workout-next--soon::before {
+    .workout-next--soon::before,
+    .workout-face--soon::before {
         animation: none;
     }
 

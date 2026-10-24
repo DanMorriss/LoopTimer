@@ -1,3 +1,5 @@
+@use 'interaction' as *;
+
 :host {
     display: block;
 }
@@ -83,7 +85,7 @@
     text-align: left;
     cursor: pointer;
 
-    &:hover {
+    @include hover {
         text-decoration: underline;
     }
 
@@ -146,7 +148,11 @@
     white-space: nowrap;
     cursor: pointer;
 
-    &:hover {
+    @include hover {
+        background: var(--control-hover);
+    }
+
+    @include pressed {
         background: var(--control-hover);
     }
 
@@ -222,7 +228,11 @@
     text-decoration: none;
     transition: background-color 0.2s ease;
 
-    &:hover {
+    @include hover {
+        background: var(--control-hover);
+    }
+
+    @include pressed {
         background: var(--control-hover);
     }
 

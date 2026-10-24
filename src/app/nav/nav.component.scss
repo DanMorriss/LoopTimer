@@ -1,3 +1,5 @@
+@use 'interaction' as *;
+
 // body.mat-typography styles h1 with Material's Roboto heading font, which beats
 // the global font rule. Keep the site title in the app's font, as it was when it
 // was a <p> (with the 12px margin .mat-typography gives paragraphs).
@@ -94,7 +96,11 @@
     color: var(--text);
     text-decoration: none;
 
-    &:hover {
+    @include hover {
+        background: var(--control-hover);
+    }
+
+    @include pressed {
         background: var(--control-hover);
     }
 

@@ -1,3 +1,5 @@
+@use 'interaction' as *;
+
 // Over the page like the confirm dialog, but taller, so it scrolls within itself
 .editor-overlay {
     position: fixed;
@@ -122,7 +124,11 @@
     font-size: 0.85rem;
     cursor: pointer;
 
-    &:hover {
+    @include hover {
+        background: var(--control-hover);
+    }
+
+    @include pressed {
         background: var(--control-hover);
     }
 

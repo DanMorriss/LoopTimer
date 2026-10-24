@@ -1,3 +1,5 @@
+@use 'interaction' as *;
+
 :host {
     display: flex;
     flex-direction: column;
@@ -75,7 +77,7 @@
     text-decoration-color: var(--border);
     text-underline-offset: 2px;
 
-    &:hover {
+    @include hover {
         text-decoration-color: currentColor;
     }
 

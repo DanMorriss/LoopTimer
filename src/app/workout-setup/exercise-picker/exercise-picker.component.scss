@@ -1,3 +1,5 @@
+@use 'interaction' as *;
+
 :host {
     position: relative;
     display: block;
@@ -36,8 +38,15 @@
     color: var(--text);
     cursor: pointer;
 
-    &:hover,
     &--active {
+        background: var(--control-hover);
+    }
+
+    @include hover {
+        background: var(--control-hover);
+    }
+
+    @include pressed {
         background: var(--control-hover);
     }
 

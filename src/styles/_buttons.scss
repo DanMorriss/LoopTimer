@@ -1,8 +1,13 @@
+@use 'interaction' as *;
+
 // The app's buttons, in one place so every page uses the same few. Pick by role:
 //
 // .btn-main   The one main action on a screen (Start workout, Add workout, Create a workout):
-//             a raised glowing pill that a band of light crosses every few seconds.
-//             .btn-main--round makes it a circle for an icon (the workout's Pause/Resume).
+//             a raised glowing pill that a band of light crosses once, soon after the
+//             screen opens. .btn-main--round makes it a circle for an icon (the workout's
+//             Pause/Resume), with no band: nothing should catch the eye mid-workout.
+//
+// Every button shrinks a little the moment it's pressed (see _interaction.scss).
 // .btn-pill   Any smaller action (Play, Collapse all, Cancel, links that act like buttons).
 //             Add .btn-pill--danger for Delete.
 // .btn-icon   An icon on its own: a 44px outlined circle. Add .btn-icon--danger for delete
@@ -39,7 +44,7 @@
     white-space: nowrap;
     cursor: pointer;
     transition:
-        transform 0.12s ease,
+        scale 0.2s ease-out,
         box-shadow 0.2s ease,
         filter 0.2s ease;
 
@@ -52,7 +57,9 @@
         color: inherit;
     }
 
-    // The light band, crossing every few seconds and resting off to the left in between
+    // The light band: crosses once, soon after the screen opens, to point out the main
+    // action, then rests off to the left. A band crossing every few seconds forever was
+    // motion asking for attention long after it had it.
     &::after {
         content: '';
         position: absolute;
@@ -60,11 +67,11 @@
         z-index: -1;
         background: linear-gradient(105deg, transparent 35%, var(--cta-sheen) 50%, transparent 65%);
         transform: translateX(-120%);
-        animation: btn-main-sweep 4.5s ease-in-out infinite;
+        animation: btn-main-sweep 2.4s ease-in-out both;
         pointer-events: none;
     }
 
-    &:hover {
+    @include hover {
         filter: brightness(1.06);
         box-shadow:
             inset 0 1px 0 var(--cta-edge),
@@ -73,8 +80,9 @@
             0 18px 40px -6px var(--cta-near);
     }
 
+    @include pressed-scale(0.96);
+
     &:active {
-        transform: translateY(1px);
         box-shadow:
             inset 0 1px 0 var(--cta-shade),
             0 1px 3px var(--cta-near),
@@ -90,7 +98,6 @@
         filter: saturate(0.2);
         opacity: 0.5;
         box-shadow: none;
-        transform: none;
         cursor: not-allowed;
 
         &::after {
@@ -99,13 +106,21 @@
     }
 }
 
-// The round version, for an icon on its own (the workout's Pause/Resume)
+// The round version, for an icon on its own (the workout's Pause/Resume). The most pressed
+// button in the app, so it gives a deeper press; and no light band, as the workout's own
+// cues (the ring, and the pulse before the next step) are the only motion there should be.
 .btn-main--round {
     width: 80px;
     min-height: 0;
     height: 80px;
     padding: 0;
     border-radius: 50%;
+
+    @include pressed-scale(0.92);
+
+    &::after {
+        display: none;
+    }
 
     .mat-icon {
         width: 2.75rem;
@@ -114,12 +129,12 @@
     }
 }
 
+// A short wait, so the page has settled before the band crosses
 @keyframes btn-main-sweep {
     0%,
-    62% {
+    35% {
         transform: translateX(-120%);
     }
-    92%,
     100% {
         transform: translateX(120%);
     }
@@ -143,9 +158,15 @@
     cursor: pointer;
     transition:
         border-color 0.2s ease,
-        background-color 0.2s ease;
+        background-color 0.2s ease,
+        scale 0.2s ease-out;
 
-    &:hover {
+    @include hover {
+        border-color: var(--border-strong);
+        background-color: var(--control);
+    }
+
+    @include pressed-scale {
         border-color: var(--border-strong);
         background-color: var(--control);
     }
@@ -172,7 +193,12 @@
         background-color: var(--danger-soft);
         color: var(--text-danger);
 
-        &:hover {
+        @include hover {
+            border-color: var(--text-danger);
+            background-color: var(--danger-soft);
+        }
+
+        &:active:not(:disabled) {
             border-color: var(--text-danger);
             background-color: var(--danger-soft);
         }
@@ -194,9 +220,17 @@
     cursor: pointer;
     transition:
         border-color 0.2s ease,
-        background-color 0.2s ease;
+        background-color 0.2s ease,
+        scale 0.2s ease-out;
 
-    &:hover:not(:disabled) {
+    @include hover {
+        &:not(:disabled) {
+            border-color: var(--border-strong);
+            background: var(--control-hover);
+        }
+    }
+
+    @include pressed-scale(0.92) {
         border-color: var(--border-strong);
         background: var(--control-hover);
     }
@@ -230,6 +264,9 @@
     color: var(--btn-add-color);
     font: inherit;
     cursor: pointer;
+    transition:
+        background-color 0.2s ease,
+        scale 0.2s ease-out;
 
     &--rest {
         --btn-add-color: var(--rest);
@@ -239,7 +276,14 @@
         --btn-add-color: var(--reps);
     }
 
-    &:hover:not(:disabled) {
+    @include hover {
+        &:not(:disabled) {
+            background: var(--control);
+        }
+    }
+
+    // A wide button, so a smaller shrink reads the same as the small ones'
+    @include pressed-scale(0.98) {
         background: var(--control);
     }
 
@@ -257,7 +301,8 @@
 @media (prefers-reduced-motion: reduce) {
     .btn-main,
     .btn-pill,
-    .btn-icon {
+    .btn-icon,
+    .btn-add {
         transition: none;
     }
 

@@ -1,3 +1,5 @@
+@use 'interaction' as *;
+
 // An (i) button that shows a short tip under it on hover, focus or a tap (setup's Steps).
 // The page shows and hides the tip with .info__tip--open; these are the looks.
 
@@ -17,8 +19,14 @@
     background: transparent;
     color: var(--text-muted);
     cursor: pointer;
+    transition: scale 0.2s ease-out;
 
-    &:hover {
+    @include hover {
+        background: var(--control);
+        color: var(--text);
+    }
+
+    @include pressed-scale(0.92) {
         background: var(--control);
         color: var(--text);
     }
