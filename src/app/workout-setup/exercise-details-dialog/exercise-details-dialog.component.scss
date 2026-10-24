@@ -1,3 +1,5 @@
+@use 'type' as *;
+
 // Over the page like the exercise editor, scrolling within itself
 .details-overlay {
     position: fixed;
@@ -21,10 +23,10 @@
     padding: 1.2rem;
 }
 
-// body.mat-typography gives headings Material's Roboto and margins; keep the app's font
+// The exercise's name, in the display face
 .details__title {
     margin: 0 0 0.5rem;
-    font-family: 'Audiowide', sans-serif;
+    @include display;
     font-size: 1.3rem;
     color: var(--text-strong);
 

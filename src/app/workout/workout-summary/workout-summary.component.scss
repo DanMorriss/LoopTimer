@@ -1,3 +1,5 @@
+@use 'type' as *;
+
 // A sheet over the workout: the whole screen on a phone, a card in the middle on anything wider
 :host {
     position: fixed;
@@ -50,6 +52,7 @@
 
 .summary__heading {
     margin: 0;
+    @include display;
     color: var(--text-strong);
     font-size: 1.6rem;
     text-align: center;
@@ -85,8 +88,10 @@
         letter-spacing: 0.04em;
     }
 
+    // The workout's numbers, in the display face
     dd {
         margin: 0.2rem 0 0;
+        @include display;
         color: var(--text-strong);
         font-size: 1.15rem;
     }

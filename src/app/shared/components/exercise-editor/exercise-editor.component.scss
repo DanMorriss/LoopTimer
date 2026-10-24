@@ -1,4 +1,5 @@
 @use 'interaction' as *;
+@use 'type' as *;
 
 // Over the page like the confirm dialog, but taller, so it scrolls within itself
 .editor-overlay {
@@ -29,9 +30,9 @@
     gap: 0.75rem;
 }
 
+// The dialog's title, in the display face, as the exercise's name is on its page
 .editor__title {
-    font-family: inherit;
-    font-weight: 600;
+    @include display;
     margin: 0;
     font-size: 1.2rem;
     color: var(--text-strong);

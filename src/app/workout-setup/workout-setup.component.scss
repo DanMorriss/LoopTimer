@@ -1,11 +1,9 @@
 @use 'interaction' as *;
 
-// body.mat-typography gives headings Material's Roboto and margins; keep the app's font
+// A section's heading (Steps, Repeat): the reading face, semibold, as all headings are
 .setup-heading {
     margin: 1.5rem 0 0.25rem;
-    font-family: 'Audiowide', sans-serif;
     font-size: 1rem;
-    font-weight: 700;
     color: var(--text-strong);
     text-align: center;
 }
@@ -345,7 +343,6 @@
     background: var(--raised);
     box-shadow: 0 12px 28px var(--shadow);
     color: var(--text);
-    font-family: 'Audiowide', sans-serif;
 
     &.step--rest {
         --step-color: var(--rest);

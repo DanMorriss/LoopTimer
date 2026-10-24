@@ -1,3 +1,5 @@
+@use 'type' as *;
+
 @use 'interaction' as *;
 
 :host {
@@ -12,10 +14,10 @@
     margin-bottom: 1rem;
 }
 
-// body.mat-typography gives headings Material's Roboto and margins; keep the app's font
+// The page's title, in the display face
 .exercises__title {
     margin: 0;
-    font-family: 'Audiowide', sans-serif;
+    @include display;
     font-size: 1.5rem;
     color: var(--text-strong);
 }

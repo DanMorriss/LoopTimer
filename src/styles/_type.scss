@@ -1,0 +1,19 @@
+// The app's two faces (--font-text and --font-display, in styles.scss), and how to use them:
+//
+//   Reading text   Everything by default: the system's own face (San Francisco on Apple
+//                  devices), tuned by the system for every size. Hierarchy comes from size
+//                  and weight together: headings are semibold.
+//   Display        `@include display;` for page titles and the workout's big numbers only:
+//                  Audiowide, the app's character. It has one weight, so it's never bolded
+//                  (that would be a smeared, faked bold), and large sizes are tracked in a
+//                  little, as wide letters read too far apart as they grow.
+//
+// Numbers that tick (a countdown, the time left) want `font-variant-numeric: tabular-nums`
+// in the system face, so the digits don't shift. Audiowide has no such digits: the workout's
+// countdown gives each one a fixed-width cell instead (ClockDigitsComponent).
+
+@mixin display($tracking: -0.01em) {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: $tracking;
+}
