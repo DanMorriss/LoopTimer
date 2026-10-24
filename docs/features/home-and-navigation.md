@@ -25,6 +25,7 @@
 - **Pause** (or **Resume**) is at its right. The rest of the bar opens the workout.
 - Once the workout has finished, the bar says "Finished: see how it went", with no Pause, and opens the summary.
 - The bar rises into place as it appears.
+- **The workout grows out of the bar** when it's pressed: the bar's frosted panel grows to fill the screen with the workout fading in on it, on a spring with no bounce, while the tab bar slides down out of the way. **⌄ folds it back** the same way: the panel shrinks into the bar and the tab bar comes back up. Every other change of page is instant, as switching tabs is. With reduced motion, it changes page at once too.
 - The **workout page** has no tab bar. A **⌄** button at its top left goes back to the page you came from (with its address, e.g. a muscle filter), named for it, e.g. "Back to History". The workout keeps running, in the bar. Opened straight from an address, it goes back to the Library.
 - On the workout page on a phone, the workout's title takes the place of "LoopTimer" in the header. An untitled workout keeps "LoopTimer".
 
@@ -36,8 +37,9 @@
 - Given a workout going, when I press ⌄ on its page, then I'm back where I came from, with the bar above the tabs showing the step and its time; pressing the bar's Pause pauses it, and pressing the bar opens the workout again.
 - Given a workout finishes while I'm on History, then the bar says "Finished: see how it went" and opens the summary.
 - Given the workout page, then there's no tab bar.
+- Given a workout going, when I press its bar, then the workout grows out of the bar to fill the screen; when I press ⌄, then it shrinks back into the bar and the tabs slide back up.
 
 ## Platform notes
 
-- **Web:** `TabBarComponent` (`src/app/nav/tab-bar/`, tabs in `tabs.ts`), `RunBarComponent` (`src/app/nav/run-bar/`), the header and its back link in `NavComponent` (`src/app/nav/`), and the logo in `LoopLogoComponent` (`src/app/shared/components/loop-logo/`). Routes in `src/app/app.routes.ts`. How much of the page the bars cover is `--bars-height`, worked out in `styles.scss` with `:has()` from which bars are showing; pages use it to leave room. `viewport-fit=cover` in `index.html` makes `env(safe-area-inset-*)` work, for the gap above an iPhone's home bar.
-- **iOS:** a `TabView` with the same four tabs. The workout in progress is a bar above the tabs (`tabViewBottomAccessory`, as Music's mini player), opening the workout full screen; and a **Live Activity** on the lock screen and Dynamic Island, which also serves ALM-2 and CTL-1.
+- **Web:** `TabBarComponent` (`src/app/nav/tab-bar/`, tabs in `tabs.ts`), `RunBarComponent` (`src/app/nav/run-bar/`), the header and its back link in `NavComponent` (`src/app/nav/`), and the logo in `LoopLogoComponent` (`src/app/shared/components/loop-logo/`). Routes in `src/app/app.routes.ts`. How much of the page the bars cover is `--bars-height`, worked out in `styles.scss` with `:has()` from which bars are showing; pages use it to leave room. `viewport-fit=cover` in `index.html` makes `env(safe-area-inset-*)` work, for the gap above an iPhone's home bar. The morph is `WorkoutMorph` (`src/app/nav/workout-morph.ts`): the bar and ⌄ start a view transition around their own navigation (the router makes none, so other pages change at once), and `src/styles/_workout-morph.scss` pairs the bar with the workout page by view-transition-name, only while it runs.
+- **iOS:** a `TabView` with the same four tabs. The workout in progress is a bar above the tabs (`tabViewBottomAccessory`, as Music's mini player), opening the workout full screen with a zoom transition from the bar (`.navigationTransition(.zoom(sourceID:in:))`); and a **Live Activity** on the lock screen and Dynamic Island, which also serves ALM-2 and CTL-1.

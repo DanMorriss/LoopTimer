@@ -4,10 +4,10 @@
         <!-- Down, as the workout folds away into the bar above the tabs; it keeps running -->
         <a
             class="btn-icon nav__back"
-            [routerLink]="back().path"
-            [queryParams]="back().queryParams"
+            [href]="back().url"
             [attr.aria-label]="back().label"
             [title]="back().label"
+            (click)="morph.follow($event, back().url)"
         >
             <mat-icon aria-hidden="true">expand_more</mat-icon>
         </a>

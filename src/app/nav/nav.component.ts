@@ -1,11 +1,12 @@
 import { Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatIconModule } from '@angular/material/icon';
-import { NavigationEnd, Router, RouterLink } from '@angular/router';
+import { NavigationEnd, Router } from '@angular/router';
 import { filter, map } from 'rxjs';
 import { WorkoutStore } from '../shared/state/workout-store.service';
 import { injectCurrentUrl, isOnPage } from './current-url';
 import { TABS } from './tab-bar/tabs';
+import { WorkoutMorph } from './workout-morph';
 
 /** Where the workout page's back link goes if it was opened straight from an address. */
 const FALLBACK = '/library';
@@ -17,13 +18,14 @@ const FALLBACK = '/library';
  */
 @Component({
     selector: 'app-nav',
-    imports: [MatIconModule, RouterLink],
+    imports: [MatIconModule],
     templateUrl: './nav.component.html',
     styleUrl: './nav.component.scss',
 })
 export class NavComponent {
     private readonly activeWorkout = inject(WorkoutStore).activeWorkout;
     private readonly url = injectCurrentUrl();
+    protected readonly morph = inject(WorkoutMorph);
 
     protected readonly onWorkoutPage = computed(() => isOnPage(this.url(), '/workout'));
 
@@ -49,11 +51,8 @@ export class NavComponent {
         const tab = TABS.find(
             (tab) => isOnPage(url, tab.path) || tab.holds.some((path) => isOnPage(url, path))
         );
-        // routerLink wants the path and the query apart
-        const [path, query = ''] = url.split('?');
         return {
-            path,
-            queryParams: Object.fromEntries(new URLSearchParams(query)),
+            url,
             label: `Back to ${tab?.label ?? 'Library'}`,
         };
     });

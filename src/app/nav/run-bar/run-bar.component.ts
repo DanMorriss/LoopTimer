@@ -1,9 +1,9 @@
 import { Component, computed, inject } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
-import { RouterLink } from '@angular/router';
 import { ActiveRunService } from '../../shared/run/active-run.service';
 import { formatTime } from '../../shared/format-time';
 import { injectCurrentUrl, isOnPage } from '../current-url';
+import { WorkoutMorph } from '../workout-morph';
 
 /**
  * The workout in progress, in a bar above the tabs on every page but its own, like a music
@@ -12,13 +12,14 @@ import { injectCurrentUrl, isOnPage } from '../current-url';
  */
 @Component({
     selector: 'app-run-bar',
-    imports: [MatIconModule, RouterLink],
+    imports: [MatIconModule],
     templateUrl: './run-bar.component.html',
     styleUrl: './run-bar.component.scss',
 })
 export class RunBarComponent {
     private readonly run = inject(ActiveRunService);
     private readonly url = injectCurrentUrl();
+    protected readonly morph = inject(WorkoutMorph);
 
     protected readonly shown = computed(
         () => !!this.run.workout() && !isOnPage(this.url(), '/workout')

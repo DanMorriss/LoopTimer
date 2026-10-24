@@ -32,7 +32,7 @@
 
 ### Motion and colour
 
-- With **reduced motion**: looping animations stop (the "Next:" pulse too, leaving its coloured border, and the face's last-seconds pulse, leaving its tint), the logo shows drawn at once, wheels jump rather than glide, a new step or round crossfades rather than sliding, Pause and Resume swap rather than glide, and themes change without a fade.
+- With **reduced motion**: looping animations stop (the "Next:" pulse too, leaving its coloured border, and the face's last-seconds pulse, leaving its tint), the logo shows drawn at once, wheels jump rather than glide, a new step or round crossfades rather than sliding, Pause and Resume swap rather than glide, the workout opens and closes without growing out of its bar, and themes change without a fade.
 - **Pressing** a button shows at once, while the finger or mouse button is still down: buttons shrink a little, and menu and list rows light up. Hover looks only show where there's a mouse or trackpad, so on a phone they don't stick after a tap.
 - Every page meets **WCAG 2.1 AA** in both themes: text at least 4.5:1 against what it sits on, controls and the ring at least 3:1. Nothing relies on colour alone (e.g. switches say On or Off).
 
