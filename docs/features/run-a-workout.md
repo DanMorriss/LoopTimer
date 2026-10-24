@@ -9,6 +9,7 @@
 - **RUN-5** As a user I want the countdown to stay right even if my phone sleeps or I switch apps.
 - **RUN-6** As a user I want to change the reps or weight while I'm on a rep step (e.g. going up a weight, or managing fewer reps), so what I log is what I did, and next time starts from there.
 - **RUN-7** As a user I want a summary of how a workout went when I finish or end it, where I can correct a set, add a note, and go back to the workout if I ended it early.
+- **RUN-8** As a user I want a workout with a time limit to count my rounds up, show the time left, warn me as it runs out, and stop when time's up, so I can just keep going until then.
 
 ## Rules
 
@@ -19,6 +20,13 @@
 - A workout that runs **until stopped never finishes** on its own.
 - The countdown is worked out **from the clock** (now minus when it started, less any pauses), never by counting ticks. If the app is held up, it shows the right time as soon as it can, rather than running slow.
 - Whole workout length = rounds × (sum of timed steps in a round) − (rest at the end of a round). Rep steps add whatever time they take on top.
+
+### A time limit (RUN-8)
+
+- Rounds go on one after another, **as many as fit**. Time's up when the countdown plus the time spent on rep steps reaches the limit: **reps and rests count**, pauses don't.
+- When time's up the workout **finishes at once**, part-way through a step or not, as if it ran to its end: "Time's up" on the summary, the finish alarm, and logged as finished.
+- **The score** is the full rounds done, and the steps done of the round it ran out in, rests left out: "7 rounds + 3". The step it ran out in isn't done, so a timed set of it isn't logged.
+- **Alarms**: the steps' alarms as usual, up to the end; a short tick (see [alarms](alarms.md)) at 10 seconds left, and at 3, 2 and 1; then the finish. The end is known even while a rep step is waited on, so it's booked then too.
 
 ### Rep steps
 
@@ -33,6 +41,7 @@
     - "round 2 of 5" for a workout of more than one round, with a dot per round (done, current, to go) when there are 15 rounds or fewer.
     - "**Last one!**" in place of the count in the final round.
     - "round 3 of ∞" for a workout that runs until stopped.
+    - "round 3" for a time limit, with the **time left** under it, e.g. "12:34 left", in the accent colour for its last 10 seconds. Screen readers hear it with the round as each round starts, e.g. "Timed, round 3, 12:34 left"; the time left itself isn't read out as it ticks.
     - Nothing for a single-round workout.
 - **Ring**: fills as the step goes by. Timed steps fill clockwise in pink, rest fills anticlockwise in blue. The face behind the time flashes in the phase colour.
 - **Face**:
@@ -57,8 +66,10 @@
 - The face says "**You're finished!**", the controls go, and the **summary** opens over the page by itself. End workout opens the same summary (see [pause-and-stop](pause-and-stop.md)).
 - It's a sheet: the whole screen on a phone, a card in the middle on anything wider. Focus starts on its heading and stays inside it.
 - It shows:
-    - "**Workout finished**" or "**Workout ended**", and the workout's title.
-    - **Time** (as in the history, pauses left out) and **Rounds**, e.g. "1 of 3 rounds · stopped".
+    - "**Workout finished**", "**Time's up**" (a time limit that ran out) or "**Workout ended**", and the workout's title.
+    - **Time** (as in the history, pauses left out) and **Rounds**, e.g. "1 of 3 rounds · stopped", or "7 rounds + 3 in 20:00" for a time limit.
+    - When time ran out part-way through a rep step: "**Time ran out during Push-ups. How many reps did you get?**", with a Reps wheel (starting at the step's reps) and **Add set**, which logs that many reps at the step's weight. It's a set like any other after that, and can be changed with the rest, but it doesn't make the score "+ 1", as the step wasn't finished, and "Use these settings next time?" leaves it out.
+    - **Personal bests** this workout set (PRG-2), and "Most rounds: 7 rounds + 3" for a time limit beaten (PRG-7; see [progress](progress.md)).
     - **Sets**, one line per step as in the history, e.g. "Squats: 10, 10, 8 @ 60 kg" or "Plank: 3 × 0:45".
     - A **Note** box, saved to this workout in the history as you leave it.
     - Buttons: **Done** (the main one: on to the library), **View history** (opens the history with this workout highlighted), and **Back to workout** for a workout ended early or one that runs until stopped. Escape does the same as Back to workout, where there is one.
@@ -94,8 +105,12 @@
 - Given work 0:10, then "Next:" pulses only from 00:03 left.
 - Given a rep step, then "Next:" never pulses.
 - Given a new step in the same round, then its text slides in from below; given round 2 starting, then the text and "round 2 of 3" slide in from the right.
+- Given work 0:03, rest 0:02 and a time limit of 1:04, then 12s in it says "round 3" and "00:52 left", and screen readers heard "Timed, round 1, 01:04 left" at the start.
+- Given that workout, when 1:04 has gone by, then it finishes with "Time's up" and "12 rounds + 1 in 1:04", logged as finished with 12 rounds and 1 step.
+- Given work 0:03 then 10 push-ups and a time limit of 0:20, when the push-ups take 12 seconds, then after Done 00:05 are left.
+- Given time runs out while push-ups are waited on, then the summary asks how many reps I got; Add set with 6 logs 6 push-ups, and the score stays as it was.
 
 ## Platform notes
 
-- **Web:** the maths is pure and has no Angular in it, so it can be ported line for line: `workoutStateAt()` in `src/app/workout/workout-state.ts` (where a workout is after so many ms, given the rep steps done) and the helpers in `src/app/models/workout.ts`. The run itself is `ActiveRunService` (`src/app/shared/run/`), and the page is `WorkoutComponent` (`src/app/workout/`).
+- **Web:** the maths is pure and has no Angular in it, so it can be ported line for line: `workoutStateAt()` in `src/app/workout/workout-state.ts` (where a workout is after so many ms, given the rep steps done and, for a time limit, the time they took; `stepsIntoRound()` gives the score's steps) and the helpers in `src/app/models/workout.ts`. The run itself is `ActiveRunService` (`src/app/shared/run/`), and the page is `WorkoutComponent` (`src/app/workout/`).
 - **iOS:** keep the same "work it out from the clock" design: store when the run started (moved on by pauses and rep steps) and derive everything else. That's also what makes a relaunch carry on correctly (see [pause-and-stop](pause-and-stop.md)). A `TimelineView` or a display-link tick only needs to redraw.

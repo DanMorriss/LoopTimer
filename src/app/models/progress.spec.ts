@@ -1,8 +1,10 @@
 import { HistoryEntry, LoggedSet } from './history';
 import {
+    compareScores,
     estimatedOneRepMax,
     exerciseBests,
     ExerciseSession,
+    isMostRounds,
     progressMeasure,
     sessionsByExercise,
     sessionValue,
@@ -43,6 +45,37 @@ function entry(startedAt: number, sets: LoggedSet[], title = 'Legs'): HistoryEnt
 function session(startedAt: number, sets: LoggedSet[]): ExerciseSession {
     return { entryId: `${startedAt}-w`, startedAt, title: 'Legs', sets };
 }
+
+describe('most rounds in a time limit', () => {
+    const run = (startedAt: number, rounds: number, steps: number, overrides = {}) => ({
+        ...entry(startedAt, []),
+        totalRounds: 0,
+        timeLimitSeconds: 1200,
+        roundsCompleted: rounds,
+        stepsIntoRound: steps,
+        ...overrides,
+    });
+
+    it('compares by rounds, then by steps into the next', () => {
+        expect(compareScores({ rounds: 7, steps: 0 }, { rounds: 6, steps: 5 })).toBeGreaterThan(0);
+        expect(compareScores({ rounds: 7, steps: 2 }, { rounds: 7, steps: 3 })).toBeLessThan(0);
+    });
+
+    it('is a best only when it beats every other run of the same workout and limit', () => {
+        const today = run(3, 7, 3);
+        expect(isMostRounds(today, [today, run(2, 7, 1), run(1, 6, 4)])).toBe(true);
+        // A tie isn't a best, and nor is the first time
+        expect(isMostRounds(today, [today, run(2, 7, 3)])).toBe(false);
+        expect(isMostRounds(today, [today])).toBe(false);
+        // Other limits, other workouts and runs stopped early don't count
+        expect(isMostRounds(today, [today, run(2, 9, 0, { timeLimitSeconds: 600 })])).toBe(false);
+        expect(isMostRounds(today, [today, run(2, 9, 0, { workoutId: 'other' })])).toBe(false);
+        expect(isMostRounds(today, [today, run(2, 9, 0, { outcome: 'stopped' })])).toBe(false);
+        expect(
+            isMostRounds(today, [today, run(2, 9, 0, { outcome: 'stopped' }), run(1, 5, 0)])
+        ).toBe(true);
+    });
+});
 
 describe('progress', () => {
     describe('sessionsByExercise', () => {

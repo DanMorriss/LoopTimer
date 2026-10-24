@@ -11,15 +11,17 @@
 
 ### Sounds
 
-| Alarm  | Plays at                            | Sound                                                                               | Vibration (on, off, … in ms) |
-| ------ | ----------------------------------- | ----------------------------------------------------------------------------------- | ---------------------------- |
-| Timed  | the start of each timed or rep step | two short high beeps: 880 Hz, 0.15s each, the second at 0.25s                       | 150, 100, 150                |
-| Rest   | the start of each rest step         | one long low tone: 440 Hz, 0.5s                                                     | 500                          |
-| Finish | the end of the workout              | three rising notes: 523.25, 659.25, 783.99 Hz at 0s, 0.2s, 0.4s; the last held 0.6s | 180, 20, 180, 20, 600        |
+| Alarm      | Plays at                                                    | Sound                                                                               | Vibration (on, off, … in ms) |
+| ---------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------- | ---------------------------- |
+| Timed      | the start of each timed or rep step                         | two short high beeps: 880 Hz, 0.15s each, the second at 0.25s                       | 150, 100, 150                |
+| Rest       | the start of each rest step                                 | one long low tone: 440 Hz, 0.5s                                                     | 500                          |
+| Finish     | the end of the workout                                      | three rising notes: 523.25, 659.25, 783.99 Hz at 0s, 0.2s, 0.4s; the last held 0.6s | 180, 20, 180, 20, 600        |
+| Time limit | 10, 3, 2 and 1 seconds before a time limit runs out (RUN-8) | one short tick: 660 Hz, 0.08s                                                       | 60                           |
 
 - Notes are triangle waves at 30% volume, faded in over 10 ms and out over 30 ms so they don't click. They're placeholders until proper sound files arrive.
 - A **rep step** sounds the work alarm as it starts.
 - No rest alarm at the end of the last round (that rest is skipped), and no finish alarm for a workout that runs until stopped.
+- With a **time limit**, no step alarm at or after the moment it runs out; the finish sounds then, part-way through a step or not. The ticks and the finish are booked even while a rep step is waited on, as the end doesn't move: Done moves the countdown's start on by just the time it adds to the time on rep steps.
 
 ### Timing
 
@@ -42,6 +44,7 @@
 ## Acceptance criteria
 
 - Given work 0:03, rest 0:02, 2 rounds, then alarms sound: work at 0s, rest at 3s, work at 5s, finish at 8s.
+- Given work 0:30, rest 0:10 and a time limit of 1:40, then alarms sound: work at 0s, 40s and 80s, rest at 30s and 70s, ticks at 90s, 97s, 98s and 99s, and the finish at 100s.
 - Given rest of 0:00, then there are no rest alarms.
 - Given a rep step, then the work alarm sounds as it starts and nothing is booked after it until Done.
 - Given an alarm due 0.5s ago, then it plays at once; given one due 1.5s ago, then it's skipped.

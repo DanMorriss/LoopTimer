@@ -43,11 +43,17 @@ export type Step = TimedStep | RepStep;
  * A saved workout: `steps` run in order to make one round, and the round repeats `repeats`
  * times (or until stopped). Rest steps at the end of the last round are skipped, since
  * the workout is over by then.
+ *
+ * With a time limit, rounds repeat as many times as fit in it (`repeats` is UNTIL_STOPPED,
+ * so an app from before time limits runs it until stopped), and it's over when time's up,
+ * part-way through a step or not.
  */
 export interface Workout extends Synced {
     title: string;
     steps: Step[];
     repeats: number;
+    /** The time limit, in whole seconds, rep steps and rests included. Missing for none. */
+    timeLimitSeconds?: number;
 }
 
 /** What's set up to make a workout: everything but what the store keeps (its id and dates). */
@@ -58,6 +64,9 @@ export const UNTIL_STOPPED = 0;
 
 /** The longest a step can be: 99:59, the most the setup wheels go up to. */
 export const MAX_STEP_SECONDS = 99 * 60 + 59;
+
+/** The longest time limit, the most the same wheels go up to. */
+export const MAX_TIME_LIMIT_SECONDS = MAX_STEP_SECONDS;
 
 /** The most reps a step can have, the most the setup wheel goes up to. */
 export const MAX_REPS = 100;
@@ -72,7 +81,16 @@ export function repStepsPerRound(workout: Pick<Workout, 'steps'>): number {
     return workout.steps.filter((step) => step.kind === 'reps').length;
 }
 
-export function runsUntilStopped(workout: Pick<Workout, 'repeats'>): boolean {
+/** Rounds go on until it's stopped by hand: no number of rounds, and no time limit. */
+export function runsUntilStopped(workout: Pick<Workout, 'repeats' | 'timeLimitSeconds'>): boolean {
+    return endlessRounds(workout) && workout.timeLimitSeconds === undefined;
+}
+
+/**
+ * Rounds don't end by being counted: it runs until stopped, or until its time limit. What
+ * the clock goes by, where `runsUntilStopped()` is what the workout is shown as.
+ */
+export function endlessRounds(workout: Pick<Workout, 'repeats'>): boolean {
     return workout.repeats === UNTIL_STOPPED;
 }
 
@@ -95,11 +113,11 @@ export function trailingRestSeconds(workout: Pick<Workout, 'steps'>): number {
 }
 
 /**
- * Seconds of countdown in the whole workout, or Infinity for one that runs until stopped.
- * Time spent on rep steps comes on top.
+ * Seconds of countdown in the whole workout, or Infinity for one whose rounds don't end by
+ * being counted (until stopped, or a time limit). Time spent on rep steps comes on top.
  */
 export function workoutSeconds(workout: Workout): number {
-    if (runsUntilStopped(workout)) {
+    if (endlessRounds(workout)) {
         return Infinity;
     }
     return workout.repeats * roundSeconds(workout) - trailingRestSeconds(workout);

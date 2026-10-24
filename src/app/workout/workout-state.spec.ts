@@ -1,7 +1,7 @@
 import { RepSet, TimedSet } from '../models/history';
 import { Step, UNTIL_STOPPED } from '../models/workout';
 import { makeWorkout, reps, rest, work } from '../shared/testing/make-workout';
-import { nextRepStep, setsDone, workoutStateAt } from './workout-state';
+import { nextRepStep, setsDone, stepsIntoRound, workoutStateAt } from './workout-state';
 
 describe('workoutStateAt', () => {
     const workout = makeWorkout(); // 30s work, 10s rest, 3 rounds = 30 + 10 + 30 + 10 + 30 = 110s
@@ -346,5 +346,73 @@ describe('setsDone', () => {
         const unnamed = makeWorkout({ steps: [work(30)], repeats: 2 });
 
         expect(setsDone(unnamed, workoutStateAt(unnamed, 100_000), [])).toEqual([]);
+    });
+});
+
+describe('a time limit', () => {
+    // 30s work, 10s rest, as many rounds as fit in 100s: two full rounds, then 20s of work
+    const amrap = makeWorkout({ timeLimitSeconds: 100 });
+
+    it('runs rounds on, counting up, with no rounds left to count', () => {
+        const state = workoutStateAt(amrap, 85_000);
+        expect(state.phase).toBe('work');
+        expect(state.round).toBe(2);
+        expect(state.roundsLeft).toBe(Infinity);
+        expect(state.remainingSeconds).toBe(25);
+    });
+
+    it("is complete when time's up, part-way through a step, which isn't done", () => {
+        const state = workoutStateAt(amrap, 100_000);
+        expect(state.phase).toBe('complete');
+        expect(state.step).toBeNull();
+        expect(state.round).toBe(2);
+        expect(state.stepIndex).toBe(0);
+        expect(stepsIntoRound(amrap, state)).toBe(0);
+        expect(workoutStateAt(amrap, 99_999).phase).toBe('work');
+    });
+
+    it('counts a round time ran out at the end of as done', () => {
+        const state = workoutStateAt(makeWorkout({ timeLimitSeconds: 80 }), 80_000);
+        expect(state.phase).toBe('complete');
+        expect(state.round).toBe(2);
+        expect(state.stepIndex).toBe(0);
+    });
+
+    describe('with rep steps, whose time counts too', () => {
+        // 10s work, 20 reps, 5s rest, as many rounds as fit in 60s
+        const circuit = makeWorkout({ steps: [work(10), reps(20), rest(5)], timeLimitSeconds: 60 });
+
+        it('counts the time on rep steps done towards it', () => {
+            // One round's rep step took 30s: 15s of clock + 30s of reps, so 15s are left
+            expect(workoutStateAt(circuit, 15_000, 1, 30_000).phase).toBe('work');
+            expect(workoutStateAt(circuit, 29_999, 1, 30_000).phase).toBe('reps');
+            const state = workoutStateAt(circuit, 30_000, 1, 30_000);
+            expect(state.phase).toBe('complete');
+            // Waiting on round 2's rep step when time ran out: the work before it was done
+            expect(state.round).toBe(1);
+            expect(state.stepIndex).toBe(1);
+            expect(stepsIntoRound(circuit, state)).toBe(1);
+        });
+
+        it('runs out while a rep step is waited on', () => {
+            // The first rep step started at 10s and is still going at 60s
+            expect(workoutStateAt(circuit, 59_999).phase).toBe('reps');
+            const state = workoutStateAt(circuit, 60_000);
+            expect(state.phase).toBe('complete');
+            expect(state.round).toBe(0);
+            expect(state.stepIndex).toBe(1);
+        });
+    });
+
+    it('logs the timed sets before the step time ran out in, and not that one', () => {
+        const plank = {
+            kind: 'work' as const,
+            seconds: 30,
+            name: 'Plank',
+            exerciseId: 'builtin:plank',
+        };
+        const workout = makeWorkout({ steps: [plank, rest(10)], timeLimitSeconds: 100 });
+        const sets = setsDone(workout, workoutStateAt(workout, 100_000), []);
+        expect(sets.map((set) => set.round)).toEqual([0, 1]);
     });
 });

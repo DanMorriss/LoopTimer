@@ -25,8 +25,11 @@ import { readWorkout } from '../state/workout-store.service';
  *    of `timerId` in the history and of the kind `timer` in `deleted`.
  * 5: `hiddenExercises`, the exercises hidden from the picker, and your equipment in
  *    `settings`.
+ * 6: time limits, `timeLimitSeconds` on workouts and history entries (with
+ *    `stepsIntoRound`). Nothing to convert; an older app turns the file down rather than
+ *    running a time limit until stopped.
  */
-export const BACKUP_VERSION = 5;
+export const BACKUP_VERSION = 6;
 
 /** Far more than years of workouts take (about 1 KB each), so a bigger file isn't a backup. */
 export const MAX_BACKUP_BYTES = 50 * 1024 * 1024;

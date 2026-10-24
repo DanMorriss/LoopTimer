@@ -9,10 +9,10 @@ import {
     signal,
     untracked,
 } from '@angular/core';
-import { HistoryEntry, historyId } from '../../models/history';
+import { HistoryEntry, historyId, RepSet } from '../../models/history';
 import { RepStep, Workout, workoutSeconds } from '../../models/workout';
 import { alarmEvents } from '../../workout/alarm-schedule';
-import { setsDone, workoutStateAt } from '../../workout/workout-state';
+import { setsDone, stepsIntoRound, workoutStateAt } from '../../workout/workout-state';
 import { AlarmService } from '../alarms/alarm.service';
 import { HistoryStore } from '../state/history-store.service';
 import { SettingsStore } from '../state/settings-store.service';
@@ -61,7 +61,12 @@ export class ActiveRunService {
         const workout = this.workout();
         const elapsedMs = this.elapsedMs();
         return workout && elapsedMs !== null
-            ? workoutStateAt(workout, elapsedMs, this.store.activeRepStepsDone())
+            ? workoutStateAt(
+                  workout,
+                  elapsedMs,
+                  this.store.activeRepStepsDone(),
+                  this.store.activeRepMs()
+              )
             : null;
     });
 
@@ -74,9 +79,12 @@ export class ActiveRunService {
             return null;
         }
         const stepEndMs = elapsedMs - state.phaseElapsedMs + state.phaseSeconds * 1000;
-        // A rep step ends with Done, which adds one to the rep steps done
-        const repStepsDone = this.store.activeRepStepsDone() + (state.phase === 'reps' ? 1 : 0);
-        return workoutStateAt(workout, stepEndMs, repStepsDone);
+        // A rep step ends with Done, which adds one to the rep steps done, and its wait to
+        // the time on rep steps
+        const reps = state.phase === 'reps';
+        const repStepsDone = this.store.activeRepStepsDone() + (reps ? 1 : 0);
+        const repMs = this.store.activeRepMs() + (reps ? state.phaseElapsedMs : 0);
+        return workoutStateAt(workout, stepEndMs, repStepsDone, repMs);
     });
 
     /** The sets done so far, rep and timed, in the order they were done. */
@@ -86,7 +94,39 @@ export class ActiveRunService {
         return workout && state ? setsDone(workout, state, this.store.activeSets()) : [];
     });
 
+    /**
+     * Time left of a time limit, in ms, rep steps and rests included: the clock plus the time
+     * on rep steps done. Null without a time limit (or a run).
+     */
+    readonly timeLeftMs = computed(() => {
+        const limit = this.workout()?.timeLimitSeconds;
+        const elapsedMs = this.elapsedMs();
+        if (limit === undefined || elapsedMs === null) {
+            return null;
+        }
+        return Math.max(0, limit * 1000 - elapsedMs - this.store.activeRepMs());
+    });
+
     readonly isComplete = computed(() => this.state()?.phase === 'complete');
+
+    /**
+     * The rep step time ran out on, part-way through, while its set hasn't been logged with
+     * logLastSet(); null otherwise. Its reps are the step's, as a starting point.
+     */
+    readonly unloggedLastSet = computed(() => {
+        const workout = this.workout();
+        const state = this.state();
+        if (workout?.timeLimitSeconds === undefined || state?.phase !== 'complete') {
+            return null;
+        }
+        const step = workout.steps[state.stepIndex];
+        const logged = this.store
+            .activeSets()
+            .some((set) => set.round === state.round && set.step === state.stepIndex);
+        return step?.kind === 'reps' && !logged
+            ? { step, round: state.round, stepIndex: state.stepIndex }
+            : null;
+    });
     /** End workout was pressed: the summary is open over the run, which waits, paused. */
     readonly ending = signal(false);
     /** The summary shows once the run is finished, or ended with End workout. */
@@ -120,7 +160,8 @@ export class ActiveRunService {
                   startedAt,
                   fromRound,
                   ALARM_WINDOW,
-                  this.store.activeRepStepsDone()
+                  this.store.activeRepStepsDone(),
+                  this.store.activeRepMs()
               ).filter((event) => event.at > resumedAt)
             : [];
     });
@@ -304,15 +345,48 @@ export class ActiveRunService {
     }
 
     /**
+     * Logs the set time ran out in (see unloggedLastSet), with how many reps were done of it
+     * and the step's weight, and updates the history entry.
+     */
+    logLastSet(reps: number) {
+        const last = this.unloggedLastSet();
+        if (!last || reps < 1) {
+            return;
+        }
+        const { name, weight, exerciseId } = last.step;
+        this.store.addActiveSet({
+            round: last.round,
+            step: last.stepIndex,
+            name,
+            reps,
+            ...(weight === undefined ? {} : { weight }),
+            ...(exerciseId === undefined ? {} : { exerciseId }),
+        });
+        this.recordRun('finished');
+    }
+
+    /**
      * Makes each rep step of the saved workout start next time from its last set in this run,
-     * e.g. after the summary's sets were corrected.
+     * e.g. after the summary's sets were corrected. A set cut short by a time limit doesn't
+     * count, as it wasn't all of the step.
      */
     useSetsNextTime() {
         const workout = this.workout();
+        const state = this.state();
         if (!workout) {
             return;
         }
-        const lastSets = new Map(this.store.activeSets().map((set) => [set.step, set]));
+        const cutShort = (set: RepSet) =>
+            workout.timeLimitSeconds !== undefined &&
+            state?.phase === 'complete' &&
+            set.round === state.round &&
+            set.step === state.stepIndex;
+        const lastSets = new Map(
+            this.store
+                .activeSets()
+                .filter((set) => !cutShort(set))
+                .map((set) => [set.step, set])
+        );
         for (const [stepIndex, set] of lastSets) {
             const step = workout.steps[stepIndex];
             if (step?.kind !== 'reps') {
@@ -369,10 +443,22 @@ export class ActiveRunService {
         }
         // A finish is dated when the workout actually ended, even if the page only notices
         // later (e.g. it was in the background); startedAt has moved on by any pauses and by
-        // the time spent on rep steps, which the clock leaves out
-        const countdownMs = finished ? workoutSeconds(workout) * 1000 : elapsedMs;
-        const activeSeconds = Math.floor((countdownMs + this.store.activeRepMs()) / 1000);
+        // the time spent on rep steps, which the clock leaves out. A time limit ends when the
+        // clock and the time on rep steps add up to it.
+        const limit = workout.timeLimitSeconds;
+        const repMs = this.store.activeRepMs();
+        const finishMs =
+            limit === undefined ? workoutSeconds(workout) * 1000 : limit * 1000 - repMs;
+        const countdownMs = finished ? finishMs : elapsedMs;
+        const activeSeconds = Math.floor((countdownMs + repMs) / 1000);
         const sets = this.sets();
+        const timeLimit =
+            limit === undefined
+                ? {}
+                : {
+                      timeLimitSeconds: limit,
+                      ...(finished ? { stepsIntoRound: stepsIntoRound(workout, state) } : {}),
+                  };
         this.history.record({
             id,
             workoutId: workout.id,
@@ -380,9 +466,11 @@ export class ActiveRunService {
             startedAt: this.store.activeRunStartedAt()!,
             endedAt: finished ? startedAt + countdownMs : Date.now(),
             activeSeconds,
-            roundsCompleted: finished ? workout.repeats : state.round,
+            // When time ran out, the round it was in is the full rounds done
+            roundsCompleted: finished && limit === undefined ? workout.repeats : state.round,
             totalRounds: workout.repeats,
             outcome,
+            ...timeLimit,
             ...(sets.length > 0 ? { sets } : {}),
         });
     }

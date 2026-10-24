@@ -65,6 +65,7 @@ export class SettingsComponent {
         { kind: 'work', name: 'Timed', description: 'Two short high beeps' },
         { kind: 'rest', name: 'Rest', description: 'One long low tone' },
         { kind: 'finish', name: 'Finish', description: 'Three rising notes' },
+        { kind: 'countdown', name: 'Time limit', description: 'One short tick' },
     ];
 
     /** What the last export or import did, read out as it changes. */

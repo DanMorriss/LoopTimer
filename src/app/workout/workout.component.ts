@@ -145,6 +145,22 @@ export class WorkoutComponent {
         const workout = this.workout();
         return workout !== null && runsUntilStopped(workout);
     });
+    /** As many rounds as fit in a time limit, rather than a number of them. */
+    timeLimited = computed(() => this.workout()?.timeLimitSeconds !== undefined);
+    /** Time left of the time limit, e.g. "12:34", or '' without one. */
+    timeLeft = computed(() => {
+        const ms = this.run.timeLeftMs();
+        if (ms === null) {
+            return '';
+        }
+        const seconds = Math.ceil(ms / 1000);
+        return formatTime(Math.floor(seconds / 60), seconds % 60);
+    });
+    /** The last 10 seconds of a time limit, as the countdown beeps. */
+    timeNearlyUp = computed(() => {
+        const ms = this.run.timeLeftMs();
+        return ms !== null && ms <= 10_000;
+    });
     /** The round in progress, counting from 1. */
     roundNumber = computed(() => (this.state()?.round ?? 0) + 1);
 
@@ -232,6 +248,9 @@ export class WorkoutComponent {
             key: `${this.workoutStore.activeRunStartedAt()}-${this.roundNumber()}`,
             round: this.roundNumber(),
             untilStopped: this.untilStopped(),
+            timeLimited: this.timeLimited(),
+            timeLeft: this.timeLeft(),
+            timeNearlyUp: this.timeNearlyUp(),
             totalRounds: this.totalRounds(),
             last: this.repeats() === 1,
             dots: this.roundDots(),
@@ -248,7 +267,7 @@ export class WorkoutComponent {
         formatTime(Math.floor(this.remaining() / 60), this.remaining() % 60)
     );
 
-    /** How many rounds the workout runs for (0 when it runs until stopped). */
+    /** How many rounds the workout runs for (0 when it runs until stopped or to a time limit). */
     totalRounds = computed(() => (this.untilStopped() ? 0 : (this.workout()?.repeats ?? 0)));
 
     /** One dot per round, for workouts short enough for a row of them to fit on a phone. */
@@ -340,7 +359,9 @@ export class WorkoutComponent {
         }
         // The round is given as each round starts
         if (state.stepIndex === 0) {
-            if (this.untilStopped()) {
+            if (this.timeLimited()) {
+                parts.push(`round ${state.round + 1}, ${this.timeLeft()} left`);
+            } else if (this.untilStopped()) {
                 parts.push(`round ${state.round + 1}`);
             } else if (state.roundsLeft === 1 && workout.repeats > 1) {
                 parts.push('last round');

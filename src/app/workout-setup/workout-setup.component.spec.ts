@@ -874,6 +874,97 @@ describe('WorkoutSetupComponent', () => {
         });
     });
 
+    describe('time limit', () => {
+        beforeEach(async () => {
+            await setup();
+            await create();
+        });
+
+        const mode = (label: string) =>
+            Array.from(
+                fixture.nativeElement.querySelectorAll(
+                    'input[name="repeatMode"]'
+                ) as NodeListOf<HTMLInputElement>
+            ).find((input) => input.parentElement!.textContent!.trim() === label)!;
+        const chooseMode = (label: string) => {
+            mode(label).click();
+            fixture.detectChanges();
+        };
+        const chooseLimit = (wheel: 'minutes' | 'seconds', value: string) => {
+            el(`#limit-${wheel} [data-value="${value}"]`).click();
+            fixture.detectChanges();
+        };
+        const limitSaid = (wheel: 'minutes' | 'seconds') =>
+            el(`#limit-${wheel} [role="spinbutton"]`).getAttribute('aria-valuenow');
+
+        it('offers Rounds or Time limit, Rounds to begin with', () => {
+            expect(mode('Rounds').checked).toBe(true);
+            expect(mode('Time limit').checked).toBe(false);
+            expect(fixture.nativeElement.querySelector('#limit-minutes')).toBeNull();
+        });
+
+        it('swaps the rounds for minutes and seconds wheels, at 20:00 to begin with', () => {
+            chooseMode('Time limit');
+
+            expect(fixture.nativeElement.querySelector('#repeats')).toBeNull();
+            expect(limitSaid('minutes')).toBe('20');
+            expect(limitSaid('seconds')).toBe('0');
+        });
+
+        it('saves the time limit, with rounds until stopped', async () => {
+            chooseTime(0, 'seconds', '30');
+            chooseMode('Time limit');
+            chooseLimit('minutes', '12');
+            chooseLimit('seconds', '30');
+
+            await submit();
+
+            const saved = store.workouts()[0];
+            expect(saved.repeats).toBe(UNTIL_STOPPED);
+            expect(saved.timeLimitSeconds).toBe(750);
+        });
+
+        it("won't save a time limit of 00:00", () => {
+            chooseTime(0, 'seconds', '30');
+            chooseMode('Time limit');
+            chooseLimit('minutes', '0');
+
+            expect(fixture.nativeElement.textContent).toContain(
+                'Time limit needs to be longer than 00:00'
+            );
+            expect(submitButton().disabled).toBe(true);
+        });
+
+        it('saves rounds again, and no time limit, when Rounds is picked back', async () => {
+            chooseTime(0, 'seconds', '30');
+            chooseRounds('5');
+            chooseMode('Time limit');
+            chooseMode('Rounds');
+
+            await submit();
+
+            expect(store.workouts()[0].repeats).toBe(5);
+            expect('timeLimitSeconds' in store.workouts()[0]).toBe(false);
+        });
+    });
+
+    describe('editing a workout with a time limit', () => {
+        it('opens on Time limit with its time', async () => {
+            await setup({ editId: 'workout-1' });
+            store.addWorkout({ ...savedWorkout, repeats: UNTIL_STOPPED, timeLimitSeconds: 1230 });
+            await create();
+
+            const timeLimit = el<HTMLInputElement>('input[name="repeatMode"][value="time"]');
+            expect(timeLimit.checked).toBe(true);
+            expect(el('#limit-minutes [role="spinbutton"]').getAttribute('aria-valuenow')).toBe(
+                '20'
+            );
+            expect(el('#limit-seconds [role="spinbutton"]').getAttribute('aria-valuenow')).toBe(
+                '30'
+            );
+        });
+    });
+
     describe('editing a workout', () => {
         it('fills the form from the workout in ?editId', async () => {
             await setup({ editId: 'workout-1' });

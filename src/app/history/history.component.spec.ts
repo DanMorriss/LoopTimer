@@ -476,6 +476,19 @@ describe('HistoryComponent', () => {
                 )
             ).toBe('12 rounds · until stopped');
         });
+
+        it('gives the score of a time limit, or the rounds when stopped before it', () => {
+            const limit = { totalRounds: 0, timeLimitSeconds: 1200 };
+            expect(
+                describeRounds(makeEntry({ ...limit, roundsCompleted: 7, stepsIntoRound: 3 }))
+            ).toBe('7 rounds + 3 in 20:00');
+            expect(
+                describeRounds(makeEntry({ ...limit, roundsCompleted: 1, stepsIntoRound: 0 }))
+            ).toBe('1 round in 20:00');
+            expect(
+                describeRounds(makeEntry({ ...limit, roundsCompleted: 4, outcome: 'stopped' }))
+            ).toBe('4 rounds · stopped before 20:00');
+        });
     });
 
     describe('describeSets', () => {

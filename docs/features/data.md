@@ -29,6 +29,7 @@ A JSON list of workouts:
 - `id`: a random UUID, given when the workout is made and never changed.
 - `updatedAt`: when it was made or last changed (edited, or its reps or weight changed mid-workout).
 - `repeats`: 1–30, or **0 for until stopped**.
+- `timeLimitSeconds` (optional): a time limit, 1–5999 (99:59), for as many rounds as fit in it (BLD-8). Only with `repeats` 0, so a copy of the app from before time limits runs it until stopped. Missing for none; one that's broken, or with `repeats` above 0, is dropped when loading, leaving the workout as it was set to repeat.
 - `seconds`: 1–5999 (99:59). `reps`: 1–100. `name`: may be empty.
 - `weight` (rep steps only, optional): in **kg whatever unit is shown**, to the gram, more than 0 and up to 300. Missing for none. A weight picked in lb is converted (1 lb = 0.45359237 kg), so 45 lb saves as 20.412 kg.
 - `exerciseId` (work and rep steps, optional): the exercise the step is, e.g. `builtin:back-squat`, or one of your own. Set by picking an exercise in setup (EXR-2). When a workout is saved, a step keeps its exercise while that exercise is still there; any other named work step is linked by its name, as the conversion to version 3 does (below). Typing over a step's name in setup drops its link, so a renamed step follows its name. Missing for a rest or an unnamed step.
@@ -72,7 +73,8 @@ In IndexedDB on the web: the `history` store of the `looptimer` database, one re
 - Times are ms since 1970 (UTC).
 - `id` is `<startedAt>-<workoutId>`: unique per run, so the same run logged again replaces its entry, and the same run matches across copies.
 - `updatedAt`: when it was last logged or its note changed.
-- `totalRounds` is 0 for a workout that runs until stopped. `outcome` is `finished` or `stopped`. `note` is missing when there isn't one (up to 120 characters).
+- `totalRounds` is 0 for a workout that runs until stopped or to a time limit. `outcome` is `finished` or `stopped`; a time limit that ran out is `finished`.
+- `timeLimitSeconds` (optional): the workout's time limit, when it had one. `stepsIntoRound` (optional): when the time limit ran out, how many steps of the round it ran out in were done, rests left out, so "7 rounds + 3" is `roundsCompleted` 7 and `stepsIntoRound` 3. Both are dropped when broken, and `stepsIntoRound` is missing for a run stopped before its time limit. `note` is missing when there isn't one (up to 120 characters).
 - `sets` (missing when there were none), in order: one per Done on a rep step, and one per timed work step of an exercise that ran to its end. `round` and `step` count from 0. A rep set has `reps`, at least 1, and `weight` in kg (missing for none); a timed set has `seconds` (1–5999, the step's length) and no `reps` or `weight`. Entries from before timed sets were logged have rep sets only. `exerciseId` is the exercise it was, from its step (missing for an unnamed step). A broken set is dropped when loading, keeping the rest of the entry.
 
 **`history-pending` (`localStorage`):** each change to the history is kept here too until IndexedDB confirms it, as a JSON list of entries, since a write started as the page closes (logging a run left mid-way) may never finish. On the next load anything still here is saved to IndexedDB, the most recent change to each entry winning, and a deletion made after an entry's last change (in `deleted`) wins over it. If IndexedDB can't be used at all, the history stays here.
@@ -187,7 +189,7 @@ From these, everything on the workout page is worked out (see [run-a-workout](ru
 ```json
 {
     "app": "LoopTimer",
-    "version": 5,
+    "version": 6,
     "exportedAt": 1761055200000,
     "workouts": [],
     "history": [],
@@ -212,6 +214,7 @@ From these, everything on the workout page is worked out (see [run-a-workout](ru
 - `version` goes up whenever the file's shape changes. A file from an older version is converted when imported; one from a newer version is turned down.
 - **Version 1** files (from before random ids) have number workout ids, no `updatedAt` and no `deleted`. They're converted as saved data is: their workouts get new random ids, so they're matched on what they are (title, steps and rounds) rather than by id.
 - **Version 3 and older** files call workouts timers: a `timers` list in place of `workouts`, `timerId` in the history and the kind `timer` in `deleted`. They're renamed as they're read.
+- **Version 5 and older** files have no time limits, so nothing needs converting.
 - **Version 4 and older** files have no `hiddenExercises`, so nothing in them is hidden.
 - **Version 2** files (from before exercises) have no `exercises` or `exerciseNotes`, and their steps and sets aren't linked; they're linked by name as they're imported.
 - A file that isn't JSON, doesn't say `"app": "LoopTimer"`, lacks `workouts` or `history` lists, or is over 50 MB isn't a backup.

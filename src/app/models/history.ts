@@ -17,8 +17,15 @@ export interface HistoryEntry extends Synced {
     activeSeconds: number;
     /** Full rounds done. */
     roundsCompleted: number;
-    /** Rounds the workout was set to, or 0 for one that runs until stopped. */
+    /** Rounds the workout was set to, or 0 for one that runs until stopped or to a time limit. */
     totalRounds: number;
+    /** The workout's time limit, in whole seconds. Missing for none. */
+    timeLimitSeconds?: number;
+    /**
+     * With a time limit it ran out of, the steps done of the round it ran out in, rests left
+     * out: the 3 of "7 rounds + 3". Missing otherwise.
+     */
+    stepsIntoRound?: number;
     outcome: 'finished' | 'stopped';
     /** A short line of the user's own, e.g. "felt strong". Missing when there isn't one. */
     note?: string;

@@ -1,6 +1,6 @@
 # Progress
 
-Built: last time on each rep step (PRG-1), personal bests on the workout summary (PRG-2), latest and best on the exercises list (PRG-3), progress on the exercise page (PRG-4), and the muscles worked this week on the history page (PRG-6). The suggested weight (PRG-5) is planned (see [direction](../direction.md)); its rules are a first draft and get firmed up, with acceptance criteria, when it's built. Builds on [exercises](exercises.md) and the sets in the [history](history.md).
+Built: last time on each rep step (PRG-1), personal bests on the workout summary (PRG-2), latest and best on the exercises list (PRG-3), progress on the exercise page (PRG-4), the muscles worked this week on the history page (PRG-6), and the most rounds in a time limit (PRG-7). The suggested weight (PRG-5) is planned (see [direction](../direction.md)); its rules are a first draft and get firmed up, with acceptance criteria, when it's built. Builds on [exercises](exercises.md) and the sets in the [history](history.md).
 
 ## Stories
 
@@ -10,6 +10,7 @@ Built: last time on each rep step (PRG-1), personal bests on the workout summary
 - **PRG-4** As a user I want a page per exercise with a chart over time, its bests and its recent sessions.
 - **PRG-5** As a user I want the app to suggest the next weight to try, based on how my last sessions went.
 - **PRG-6** As a user I want to see which muscles I've worked this week, on the body map, so I can spot what I'm missing.
+- **PRG-7** As a user I want to be told when I've done more rounds than ever in a workout with a time limit, so I know I'm getting fitter.
 
 ## Rules
 
@@ -63,6 +64,12 @@ Under the body map, a **Progress** section:
 - Only a **new** best counts: equalling one doesn't (the first time stands), and nor does doing an exercise for the first time, when everything would be a best.
 - Nothing shows when it set none, or when it wasn't logged (ended before its first step was done).
 
+### Most rounds in a time limit (PRG-7)
+
+- A workout with a time limit (BLD-8) is scored by how far it got: full rounds, then steps done of the next, e.g. "7 rounds + 3" beats "7 rounds + 1" and "6 rounds + 5".
+- On the summary, under **Personal bests**: "Most rounds: 7 rounds + 3", when it got further than every other run of the **same workout to the same time limit** that ran out. Runs stopped before time was up don't count, nor do other time limits (20:00 isn't compared with 10:00).
+- As with the other bests, a tie isn't one, and nor is the first run.
+
 ### In the history
 
 - Each set line's name links to its exercise's page, where it's linked to an exercise that's still there (see [history](history.md)).
@@ -85,11 +92,12 @@ Under the body map, a **Progress** section:
 - Given squats of 10 at 60 kg last week, when this workout is in the history too (ended and taken back up, or the page refreshed), then a squats rep step still says "Last time: 10 reps @ 60 kg", not this workout's sets.
 - Given 80 kg × 5 bench press last time, when I bench 100 kg × 5 and finish, then the summary lists "Personal bests" with "Heaviest: 100 kg × 5".
 - Given 80 kg × 5 bench press last time, when I bench 80 kg × 5 again, or bench for the first time, then the summary has no personal bests.
+- Given a 20:00 time limit run before to "7 rounds + 1", when I get to "7 rounds + 3", then the summary lists "Most rounds: 7 rounds + 3"; given "7 rounds + 1" again, or a first run, then it doesn't.
 - Given two sets of back squats and one of bench press in the last 7 days, and a plank 9 days ago, then the history shows "Muscles worked this week" with "Most worked: Glutes (2 sets), Quads (2 sets), Adductors (1 set)".
 
 ## Platform notes
 
-- **Web:** the sums are in `src/app/models/progress.ts` (`sessionsByExercise`, `progressMeasure`, `exerciseBests`, `sessionValue`) and the wording in `src/app/exercises/progress-format.ts`. The page's section is `ExerciseProgressComponent` (`src/app/exercises/exercise-page/exercise-progress/`), an inline SVG chart in the `--accent` colour. `/exercises` now waits for the history to load, as `/exercises/:id` and `/history` do. Last time is `WorkoutComponent.lastTime` (with `describeSets()` from `src/app/history/history-format.ts`), the summary's bests `WorkoutSummaryComponent.personalBests`, and the muscles this week `HistoryComponent.musclesWorked`, shown with `BodyMapComponent`.
+- **Web:** the sums are in `src/app/models/progress.ts` (`sessionsByExercise`, `progressMeasure`, `exerciseBests`, `sessionValue`) and the wording in `src/app/exercises/progress-format.ts`. The page's section is `ExerciseProgressComponent` (`src/app/exercises/exercise-page/exercise-progress/`), an inline SVG chart in the `--accent` colour. `/exercises` now waits for the history to load, as `/exercises/:id` and `/history` do. Last time is `WorkoutComponent.lastTime` (with `describeSets()` from `src/app/history/history-format.ts`), the summary's bests `WorkoutSummaryComponent.personalBests` (most rounds with `isMostRounds()` in `models/progress.ts`), and the muscles this week `HistoryComponent.musclesWorked`, shown with `BodyMapComponent`.
 - **iOS:** Swift Charts (`LineMark` + `PointMark`, with `chartXSelection` for the readout) covers the chart; VoiceOver's audio graphs (`AXChartDescriptor`) can stand in for the arrow keys and the table.
 
 ## Open questions

@@ -1,5 +1,44 @@
 import { HistoryEntry, isTimedSet, LoggedSet, RepSet, TimedSet } from './history';
 
+/** How far a workout got in its time limit: full rounds, then steps done of the next. */
+export interface RoundsScore {
+    rounds: number;
+    steps: number;
+}
+
+/** A run's score, if it ran to its time limit; null otherwise, e.g. stopped before it. */
+export function roundsScore(entry: HistoryEntry): RoundsScore | null {
+    return entry.timeLimitSeconds !== undefined && entry.outcome === 'finished'
+        ? { rounds: entry.roundsCompleted, steps: entry.stepsIntoRound ?? 0 }
+        : null;
+}
+
+/** More than 0 when `a` got further than `b`: more rounds, or as many and more steps. */
+export function compareScores(a: RoundsScore, b: RoundsScore): number {
+    return a.rounds - b.rounds || a.steps - b.steps;
+}
+
+/**
+ * Whether `entry` got further than every other run of the same workout to the same time
+ * limit (PRG-7). Not the first run of it, when there's nothing to beat, and not a tie.
+ */
+export function isMostRounds(entry: HistoryEntry, history: readonly HistoryEntry[]): boolean {
+    const score = roundsScore(entry);
+    if (!score) {
+        return false;
+    }
+    const earlier = history
+        .filter(
+            (other) =>
+                other.id !== entry.id &&
+                other.workoutId === entry.workoutId &&
+                other.timeLimitSeconds === entry.timeLimitSeconds
+        )
+        .map(roundsScore)
+        .filter((other) => other !== null);
+    return earlier.length > 0 && earlier.every((other) => compareScores(score, other) > 0);
+}
+
 /** One workout's sets of one exercise (PRG-4's recent sessions, and a point on its chart). */
 export interface ExerciseSession {
     /** The history entry it's from. */

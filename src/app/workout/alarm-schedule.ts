@@ -1,19 +1,22 @@
 import {
+    endlessRounds,
     roundSeconds,
-    runsUntilStopped,
     stepSeconds,
     Workout,
     workoutSeconds,
 } from '../models/workout';
 import { nextRepStep } from './workout-state';
 
-export type AlarmKind = 'work' | 'rest' | 'finish';
+export type AlarmKind = 'work' | 'rest' | 'finish' | 'countdown';
 
 export interface AlarmEvent {
     kind: AlarmKind;
     /** When it should sound, in ms since the epoch. */
     at: number;
 }
+
+/** Seconds before a time limit runs out that a countdown beep sounds. */
+export const TIME_LIMIT_COUNTDOWN = [10, 3, 2, 1];
 
 /**
  * The alarms in a workout, in order: the start of each step, then the finish. Uses the
@@ -27,35 +30,56 @@ export interface AlarmEvent {
  *
  * A workout that runs until stopped has no end, so only the `roundCount` rounds starting
  * at round `fromRound` (counting from 0) are listed; finite workouts stop at their last round.
+ *
+ * With a time limit, steps stop where time runs out, with a countdown beep before it
+ * (`TIME_LIMIT_COUNTDOWN`) and the finish as it does. That moment is known even while a rep
+ * step is waited on: `startedAt` plus the limit, less `repMs`, the time on rep steps already
+ * done, as Done moves `startedAt` on by just what it adds to `repMs`.
  */
 export function alarmEvents(
     workout: Workout,
     startedAt: number,
     fromRound = 0,
     roundCount = 100,
-    repStepsDone = 0
+    repStepsDone = 0,
+    repMs = 0
 ): AlarmEvent[] {
     const roundMs = roundSeconds(workout) * 1000;
     const waitingOn = nextRepStep(workout, repStepsDone);
-    const untilStopped = runsUntilStopped(workout);
-    const endRound = untilStopped
+    const endless = endlessRounds(workout);
+    const timeLimited = workout.timeLimitSeconds !== undefined;
+    const endRound = endless
         ? fromRound + roundCount
         : Math.min(workout.repeats, fromRound + roundCount);
-    const endMs = startedAt + workoutSeconds(workout) * 1000;
+    const endMs = timeLimited
+        ? startedAt + workout.timeLimitSeconds! * 1000 - repMs
+        : startedAt + workoutSeconds(workout) * 1000;
     const events: AlarmEvent[] = [];
+    const timeUp = () => [
+        ...TIME_LIMIT_COUNTDOWN.map((seconds) => ({
+            kind: 'countdown' as const,
+            at: endMs - seconds * 1000,
+        })).filter((event) => event.at > startedAt),
+        { kind: 'finish' as const, at: endMs },
+    ];
 
     for (let round = fromRound; round < endRound; round++) {
         let at = startedAt + round * roundMs;
         for (const [stepIndex, step] of workout.steps.entries()) {
             if (round === waitingOn?.round && stepIndex === waitingOn.stepIndex) {
-                events.push({ kind: 'work', at });
-                return events;
+                // Rep steps take no time on the clock, so without a time limit one can start
+                // right at the end of the countdown, and still needs its alarm
+                if (!timeLimited || at < endMs) {
+                    events.push({ kind: 'work', at });
+                }
+                return timeLimited ? [...events, ...timeUp()] : events;
             }
             // Done already, and takes no time on the clock
             if (step.kind === 'reps') {
                 continue;
             }
-            // Past the end only happens for rest at the end of the last round
+            // Past the end only happens for rest at the end of the last round, or once a
+            // time limit has run out
             if (at < endMs) {
                 events.push({ kind: step.kind, at });
             }
@@ -63,7 +87,10 @@ export function alarmEvents(
         }
     }
 
-    if (!untilStopped && endRound === workout.repeats) {
+    if (timeLimited) {
+        return [...events, ...timeUp()];
+    }
+    if (!endless && endRound === workout.repeats) {
         events.push({ kind: 'finish', at: endMs });
     }
     return events;

@@ -144,6 +144,16 @@ for (const theme of ['dark', 'light'] as const) {
                 await expectNoViolations();
             });
 
+            it('with a time limit of 00:00 (and its error)', async () => {
+                await open('/setup');
+                click('input[name="repeatMode"][value="time"]');
+                await settle();
+                click('#limit-minutes [data-value="0"]');
+                await settle();
+                expect(fixture.nativeElement.textContent).toContain('Time limit needs');
+                await expectNoViolations();
+            });
+
             it('editing a workout', async () => {
                 const saved = store.addWorkout(sprints);
                 await open('/setup?editId=' + saved.id);
@@ -431,6 +441,30 @@ for (const theme of ['dark', 'light'] as const) {
                 store.setActiveWorkout(store.addWorkout({ ...sprints, repeats: 0 }));
                 await open('/workout');
                 expect(fixture.nativeElement.textContent).toContain('round 1 of ∞');
+                await expectNoViolations();
+            });
+
+            it('running to a time limit', async () => {
+                store.setActiveWorkout(
+                    store.addWorkout({ ...sprints, repeats: 0, timeLimitSeconds: 1200 })
+                );
+                await open('/workout');
+                expect(fixture.nativeElement.textContent).toContain('20:00 left');
+                await expectNoViolations();
+            });
+
+            it("time's up on a rep step, asking how many reps were done", async () => {
+                store.setActiveWorkout(
+                    store.addWorkout(
+                        makeWorkout({
+                            steps: [reps(20, 'Push-ups'), work(30)],
+                            timeLimitSeconds: 1,
+                        })
+                    )
+                );
+                await open('/workout');
+                await settle(1200);
+                expect(fixture.nativeElement.textContent).toContain('Time ran out during Push-ups');
                 await expectNoViolations();
             });
 

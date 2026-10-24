@@ -127,6 +127,25 @@ describe('HistoryStore', () => {
             expect('note' in store.entries()[0]).toBe(false);
         });
 
+        it('loads a time limit and its score, dropping them when broken', async () => {
+            localStorage.setItem(
+                'history',
+                JSON.stringify([
+                    makeEntry({ timeLimitSeconds: 1200, stepsIntoRound: 3 }),
+                    makeEntry({ startedAt: 5_000, timeLimitSeconds: 1200, stepsIntoRound: -1 }),
+                    makeEntry({ startedAt: 6_000, timeLimitSeconds: 0, stepsIntoRound: 2 }),
+                ])
+            );
+
+            const entries = (await createStore()).entries();
+            expect(entries.map((e) => [e.timeLimitSeconds, e.stepsIntoRound])).toEqual([
+                [1200, 3],
+                // Newest first: a limit of 0 is dropped with its score, a broken score alone
+                [undefined, undefined],
+                [1200, undefined],
+            ]);
+        });
+
         it('loads saved notes, and entries saved before notes existed', async () => {
             localStorage.setItem(
                 'history',

@@ -228,6 +228,34 @@ describe('WorkoutStore', () => {
 
             expect(createStore().workouts()).toEqual([untilStopped]);
         });
+
+        it('keeps a time limit with rounds until stopped, and drops one that is broken', () => {
+            const saved = (id: string, repeats: number, timeLimitSeconds: unknown) => ({
+                ...makeWorkout(),
+                id,
+                updatedAt: 1,
+                repeats,
+                timeLimitSeconds,
+            });
+            localStorage.setItem(
+                'workouts',
+                JSON.stringify([
+                    saved('amrap', 0, 1200),
+                    saved('zero', 0, 0),
+                    saved('too-long', 0, 100 * 60),
+                    saved('with-rounds', 3, 1200),
+                ])
+            );
+
+            const workouts = createStore().workouts();
+            expect(workouts.map((w) => [w.id, w.timeLimitSeconds])).toEqual([
+                ['amrap', 1200],
+                ['zero', undefined],
+                ['too-long', undefined],
+                ['with-rounds', undefined],
+            ]);
+            expect('timeLimitSeconds' in workouts[1]).toBe(false);
+        });
     });
 
     describe('active workout across page loads', () => {

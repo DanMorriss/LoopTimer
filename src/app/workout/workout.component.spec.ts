@@ -1226,6 +1226,129 @@ describe('WorkoutComponent', () => {
         });
     });
 
+    describe('a time limit', () => {
+        beforeEach(() => localStorage.clear());
+        afterEach(() => localStorage.clear());
+
+        // 3s work, 2s rest, as many rounds as fit in 1:04: 12 rounds, then the work of the 13th
+        const amrap = () => makeWorkout({ workSeconds: 3, restSeconds: 2, timeLimitSeconds: 64 });
+        const said = () =>
+            (fixture.nativeElement.querySelector('[aria-live]') as HTMLElement).textContent?.trim();
+        const summary = () =>
+            fixture.nativeElement.querySelector('app-workout-summary') as HTMLElement | null;
+        const summaryText = () => summary()?.textContent?.replace(/\s+/g, ' ') ?? '';
+        const entries = () => TestBed.inject(HistoryStore).entries();
+
+        it('counts the rounds up, with the time left under them', () => {
+            start(amrap());
+            advance(12_000);
+
+            expect(text()).toContain('round 3');
+            expect(text()).not.toContain('of ∞');
+            expect(text()).toContain('00:52 left');
+            expect(
+                fixture.nativeElement.querySelector('.workout-status__time-left--nearly-up')
+            ).toBeNull();
+
+            advance(43_000);
+            expect(
+                fixture.nativeElement.querySelector('.workout-status__time-left--nearly-up')
+            ).not.toBeNull();
+            fixture.destroy();
+        });
+
+        it('announces the round with the time left as each round starts', () => {
+            start(amrap());
+            expect(said()).toBe('Timed, round 1, 01:04 left');
+
+            advance(5000);
+            expect(said()).toBe('Timed, round 2, 00:59 left');
+            fixture.destroy();
+        });
+
+        it("stops when time's up, and logs the rounds and steps done as finished", () => {
+            start(amrap());
+            advance(64_000);
+
+            expect(component.isComplete()).toBe(true);
+            expect(summaryText()).toContain("Time's up");
+            expect(summaryText()).toContain('12 rounds + 1 in 1:04');
+            expect(entries()[0]).toEqual(
+                expect.objectContaining({
+                    outcome: 'finished',
+                    roundsCompleted: 12,
+                    totalRounds: 0,
+                    timeLimitSeconds: 64,
+                    stepsIntoRound: 1,
+                    activeSeconds: 64,
+                })
+            );
+            fixture.destroy();
+        });
+
+        it('counts time on rep steps towards it', () => {
+            start(makeWorkout({ steps: [work(3), reps(10, 'Push-ups')], timeLimitSeconds: 20 }));
+            advance(3000);
+            // 12s on the push-ups, then Done: 15s gone, so 5s are left
+            advance(12_000);
+            (fixture.nativeElement.querySelector('[aria-label="Done"]') as HTMLElement).click();
+            fixture.detectChanges();
+            expect(text()).toContain('00:05 left');
+
+            advance(5000);
+            expect(component.isComplete()).toBe(true);
+            fixture.destroy();
+        });
+
+        it('asks how many reps of the set time ran out in, and logs them', () => {
+            start(makeWorkout({ steps: [work(3), reps(10, 'Push-ups')], timeLimitSeconds: 10 }));
+            advance(10_000);
+
+            expect(summaryText()).toContain(
+                'Time ran out during Push-ups. How many reps did you get?'
+            );
+            (
+                summary()!.querySelector('.summary__last-set [data-value="6"]') as HTMLElement
+            ).click();
+            fixture.detectChanges();
+            const add = Array.from(summary()!.querySelectorAll('button')).find((b) =>
+                b.textContent?.includes('Add set')
+            )!;
+            add.click();
+            fixture.detectChanges();
+
+            expect(entries()[0].sets).toEqual([
+                expect.objectContaining({ round: 0, step: 1, name: 'Push-ups', reps: 6 }),
+            ]);
+            expect(summary()!.querySelector('.summary__last-set')).toBeNull();
+            // It's still a full round's step short, so the score doesn't count it
+            expect(entries()[0].stepsIntoRound).toBe(1);
+            fixture.destroy();
+        });
+
+        it('calls out the most rounds yet of the same workout and time limit', () => {
+            TestBed.inject(HistoryStore).record({
+                id: 'earlier',
+                workoutId: 'workout-1',
+                title: 'Intervals',
+                startedAt: Date.now() - 86_400_000,
+                endedAt: Date.now() - 86_000_000,
+                activeSeconds: 64,
+                roundsCompleted: 10,
+                totalRounds: 0,
+                outcome: 'finished',
+                timeLimitSeconds: 64,
+                stepsIntoRound: 1,
+            });
+            start(amrap());
+            advance(64_000);
+
+            expect(summaryText()).toContain('Personal bests');
+            expect(summaryText()).toContain('Most rounds: 12 rounds + 1');
+            fixture.destroy();
+        });
+    });
+
     describe('alarms', () => {
         // 3s work, 2s rest, 2 rounds: work at 0s, rest at 3s, work at 5s, finish at 8s
         const workout = () => makeWorkout({ workSeconds: 3, restSeconds: 2, repeats: 2 });
