@@ -217,7 +217,8 @@ From these, everything on the workout page is worked out (see [run-a-workout](ru
 - **Version 5 and older** files have no time limits, so nothing needs converting.
 - **Version 4 and older** files have no `hiddenExercises`, so nothing in them is hidden.
 - **Version 2** files (from before exercises) have no `exercises` or `exerciseNotes`, and their steps and sets aren't linked; they're linked by name as they're imported.
-- A file that isn't JSON, doesn't say `"app": "LoopTimer"`, lacks `workouts` or `history` lists, or is over 50 MB isn't a backup.
+- **A file written by hand** (e.g. by an AI from a plan, with the prompt in settings) can leave out everything but `app`, `version` and `workouts`, and its workouts and exercises of your own can leave out `id` and `updatedAt`: one with no id is new, and is given a random id and dated now when it's imported (see [backup-and-sync](backup-and-sync.md#bringing-in-a-plan-with-ai-syn-6)). Its steps need no `exerciseId`, since they're linked by name.
+- A file that isn't JSON, doesn't say `"app": "LoopTimer"`, lacks a `workouts` list, has a `history` that isn't a list, or is over 50 MB isn't a backup.
 
 ## Broken data
 

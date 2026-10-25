@@ -71,6 +71,12 @@ export const MAX_TIME_LIMIT_SECONDS = MAX_STEP_SECONDS;
 /** The most reps a step can have, the most the setup wheel goes up to. */
 export const MAX_REPS = 100;
 
+/** The most rounds the setup wheel goes up to, before ∞. */
+export const MAX_REPEATS = 30;
+
+/** Enough for a long circuit, while keeping the setup page manageable. */
+export const MAX_STEPS = 20;
+
 /** A step's countdown in seconds: 0 for a rep step, which has none. */
 export function stepSeconds(step: Step): number {
     return step.kind === 'reps' ? 0 : step.seconds;

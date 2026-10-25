@@ -29,10 +29,6 @@ Timed sets are logged now (a set per timed work step of an exercise that runs to
 
 - [ ] **Suggested next weight (PRG-5):** double progression, as drafted in `docs/features/progress.md`.
 
-### Your data (any time)
-
-- [ ] **A prompt for bringing in a workout plan with AI:** someone with a plan already (from a coach, a book or a spreadsheet) could give it to an AI agent and have it turned into a file LoopTimer can import. Settings → Your data offers a prompt to copy for that: it describes the import format (see `docs/features/data.md`), so the agent writes workouts, steps and exercises that import cleanly, using built-in exercise names where they match. Check first what Import needs from such a file (e.g. ids and `updatedAt`, or a whole backup) and whether it should be eased for hand-made files; add it to `docs/features/settings.md` and `docs/features/backup-and-sync.md`.
-
 ### Alarms (any time)
 
 - [ ] **Alarm sound files:** swap the beeps generated in code (`AlarmService`) for proper sounds. Waiting on Dan to supply the files.

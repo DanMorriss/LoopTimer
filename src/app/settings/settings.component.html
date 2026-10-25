@@ -212,6 +212,20 @@
                     (change)="importBackup(backupInput)"
                 />
             </div>
+            <p class="setting__hint backup__plan-hint" id="plan-hint">
+                Have a plan from a coach, a book or a spreadsheet? Copy this prompt into an AI chat,
+                add your plan, then bring in the file it writes with Import backup.
+            </p>
+            <div class="backup__actions">
+                <button
+                    type="button"
+                    class="btn-pill"
+                    aria-describedby="plan-hint"
+                    (click)="copyPlanPrompt()"
+                >
+                    Copy AI prompt
+                </button>
+            </div>
             <p class="setting__hint backup__status" role="status">{{ backupStatus() }}</p>
         </section>
 

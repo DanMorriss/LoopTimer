@@ -10,13 +10,13 @@ import {
     provideRouter,
 } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
-import { Workout, WorkoutFields, UNTIL_STOPPED } from '../models/workout';
+import { MAX_STEPS, Workout, WorkoutFields, UNTIL_STOPPED } from '../models/workout';
 import { SettingsStore } from '../shared/state/settings-store.service';
 import { WorkoutStore } from '../shared/state/workout-store.service';
 import { ExerciseStore } from '../shared/state/exercise-store.service';
 import { UndoService } from '../shared/undo/undo.service';
 import { reps, rest, unlinked, unlinkedWorkout, work } from '../shared/testing/make-workout';
-import { MAX_STEPS, WorkoutSetupComponent } from './workout-setup.component';
+import { WorkoutSetupComponent } from './workout-setup.component';
 
 /** The step a new workout starts with, as `shown()` reads it. */
 const blankStep = { kind: 'Reps', name: '', time: '0 reps' };

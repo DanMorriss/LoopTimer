@@ -26,7 +26,9 @@ import { StepDragPreviewComponent } from './step-drag-preview/step-drag-preview.
 import { StepKindMenuComponent } from './step-kind-menu/step-kind-menu.component';
 import {
     hasWork,
+    MAX_REPEATS,
     MAX_REPS,
+    MAX_STEPS,
     Step,
     StepKind,
     stepKindName,
@@ -94,9 +96,6 @@ interface WorkoutSetupModel {
 
 /** A new time limit, until one's picked: a common length for as many rounds as possible. */
 const DEFAULT_TIME_LIMIT_MINUTES = 20;
-
-/** Enough for a long circuit, while keeping the page manageable. */
-export const MAX_STEPS = 20;
 
 function pickerOptions(
     from: number,
@@ -166,7 +165,7 @@ export class WorkoutSetupComponent {
     protected readonly isBuiltIn = isBuiltIn;
     // 1-30, then ∞ at the end of the wheel
     protected readonly repeatOptions: WheelPickerOption[] = [
-        ...pickerOptions(1, 30, String),
+        ...pickerOptions(1, MAX_REPEATS, String),
         { value: UNTIL_STOPPED, label: '∞', spokenLabel: 'until stopped' },
     ];
 

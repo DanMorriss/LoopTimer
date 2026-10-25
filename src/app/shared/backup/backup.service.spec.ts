@@ -8,7 +8,7 @@ import { savedHistory } from '../testing/history-database';
 import { SettingsStore } from '../state/settings-store.service';
 import { WorkoutStore } from '../state/workout-store.service';
 import { makeWorkout } from '../testing/make-workout';
-import { BackupFile, MAX_BACKUP_BYTES } from './backup-file';
+import { BACKUP_VERSION, BackupFile, MAX_BACKUP_BYTES } from './backup-file';
 import { BackupService, ImportResult } from './backup.service';
 
 function makeEntry(startedAt: number, overrides: Partial<HistoryEntry> = {}): HistoryEntry {
@@ -453,6 +453,44 @@ describe('BackupService', () => {
             const crawl = TestBed.inject(ExerciseStore).finder.find('Bear crawl');
             expect(workouts().workouts()[0].steps[0].exerciseId).toBe('builtin:back-squat');
             expect(history().entries()[0].sets![0].exerciseId).toBe(crawl!.id);
+        });
+
+        it('brings in a plan written by hand, linking its steps by name, and only once', async () => {
+            start();
+            const plan = new Blob([
+                JSON.stringify({
+                    app: 'LoopTimer',
+                    version: BACKUP_VERSION,
+                    workouts: [
+                        {
+                            title: 'Legs',
+                            repeats: 3,
+                            steps: [
+                                { kind: 'reps', reps: 8, name: 'Back squat', weight: 60 },
+                                { kind: 'work', seconds: 30, name: 'Sled push' },
+                            ],
+                        },
+                    ],
+                    exercises: [{ name: 'Sled push', measuredBy: 'timed', mainMuscles: ['quads'] }],
+                }),
+            ]);
+
+            const first = await backup.import(plan);
+            const again = await backup.import(plan);
+
+            const exercises = TestBed.inject(ExerciseStore);
+            const sled = exercises.finder.find('Sled push')!;
+            expect(first).toEqual(result({ workoutsAdded: 1, exercisesAdded: 1 }));
+            expect(again).toEqual(result({}));
+            expect(exercises.own()).toEqual([
+                expect.objectContaining({ name: 'Sled push', mainMuscles: ['quads'] }),
+            ]);
+            expect(workouts().workouts()).toHaveLength(1);
+            expect(
+                workouts()
+                    .workouts()[0]
+                    .steps.map((s) => s.exerciseId)
+            ).toEqual(['builtin:back-squat', sled.id]);
         });
 
         it('links a step anew when its exercise is neither here nor in the file', async () => {
