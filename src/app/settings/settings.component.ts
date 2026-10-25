@@ -3,6 +3,7 @@ import { BodyFigure } from '../models/exercise';
 import { WeightUnit } from '../models/weight';
 import { AlarmService } from '../shared/alarms/alarm.service';
 import { BackupService, ImportResult } from '../shared/backup/backup.service';
+import { planPrompt } from '../shared/backup/plan-prompt';
 import { ToggleSwitchComponent } from '../shared/components/toggle-switch/toggle-switch.component';
 import { injectPrefersReducedMotion } from '../shared/reduced-motion';
 import { LoopLogoComponent } from '../shared/components/loop-logo/loop-logo.component';
@@ -84,6 +85,16 @@ export class SettingsComponent {
             return;
         }
         this.backupStatus.set(importMessage(await this.backup.import(file)));
+    }
+
+    /** Copies the prompt for turning a plan into a file to import (see `planPrompt()`). */
+    protected async copyPlanPrompt() {
+        try {
+            await navigator.clipboard.writeText(planPrompt());
+            this.backupStatus.set('Prompt copied. Paste it into an AI chat, then add your plan.');
+        } catch {
+            this.backupStatus.set("The prompt couldn't be copied. Try again, or another browser.");
+        }
     }
 
     /**

@@ -76,6 +76,7 @@ Status: ✅ done, ◐ partly, — not started. The iOS column fills in as a port
 | SYN-3  | Sign in and have the same data on every device                           | —   | —   | [backup-and-sync](backup-and-sync.md)         |
 | SYN-4  | Keep working offline, and catch up when back online                      | —   | —   | [backup-and-sync](backup-and-sync.md)         |
 | SYN-5  | Keep years of history, not just the last 500 workouts                    | ✅  | —   | [backup-and-sync](backup-and-sync.md)         |
+| SYN-6  | Have an AI turn a plan I already have into workouts to import            | ✅  | —   | [backup-and-sync](backup-and-sync.md)         |
 | PLN-1  | Set which workouts I do on which days                                    | —   | —   | [planning](planning.md)                       |
 | PLN-2  | See what's due today in the library                                      | —   | —   | [planning](planning.md)                       |
 | PLN-3  | See whether I kept to the plan this week                                 | —   | —   | [planning](planning.md)                       |

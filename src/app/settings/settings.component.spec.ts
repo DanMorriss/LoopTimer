@@ -5,6 +5,7 @@ import { SettingsStore } from '../shared/state/settings-store.service';
 import { FakeAudioContext, provideFakeAudioContext } from '../shared/testing/fake-audio-context';
 import { fakeReducedMotion } from '../shared/testing/fake-reduced-motion';
 import { BackupService, ImportCounts } from '../shared/backup/backup.service';
+import { planPrompt } from '../shared/backup/plan-prompt';
 import { importMessage, SettingsComponent } from './settings.component';
 
 // An import that changed nothing, to build results from
@@ -350,6 +351,29 @@ describe('SettingsComponent', () => {
 
             expect(importSpy).toHaveBeenCalledWith(file);
             expect(status()).toBe('Added 2 workouts and 14 history entries.');
+        });
+
+        it('copies the prompt for bringing in a plan with AI, and says so', async () => {
+            create();
+            const writeText = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue();
+
+            button('Copy AI prompt').click();
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(writeText).toHaveBeenCalledWith(planPrompt());
+            expect(status()).toBe('Prompt copied. Paste it into an AI chat, then add your plan.');
+        });
+
+        it("says when the prompt couldn't be copied", async () => {
+            create();
+            vi.spyOn(navigator.clipboard, 'writeText').mockRejectedValue(new Error('denied'));
+
+            button('Copy AI prompt').click();
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(status()).toBe("The prompt couldn't be copied. Try again, or another browser.");
         });
     });
 

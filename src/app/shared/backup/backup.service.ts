@@ -90,8 +90,9 @@ export class BackupService {
      * linked to them: steps and sets that aren't linked yet (from a file before version 3, or
      * to an exercise that isn't here) are linked by name, as saved data is. An exercise of your
      * own in the file with the same name as one here, under another id, is taken to be that
-     * one: the one here is kept, and what in the file used the other id uses its id. Settings in the
-     * file are left out, since they're a choice for each device.
+     * one: the one here is kept, and what in the file used the other id uses its id. Workouts
+     * with no id (a file written by hand) are added unless the same workout is here already.
+     * Settings in the file are left out, since they're a choice for each device.
      */
     async import(file: Blob): Promise<ImportResult> {
         if (file.size > MAX_BACKUP_BYTES) {
@@ -132,10 +133,14 @@ export class BackupService {
         const workouts = backup.fromVersion1
             ? { added: this.workouts.importWorkouts(linkedWorkouts), updated: 0, removed: 0 }
             : this.workouts.mergeWorkouts(linkedWorkouts, backup.deleted);
+        // Written by hand with no ids, so a file imported twice doesn't add them twice
+        const newWorkoutsAdded = this.workouts.importWorkouts(
+            backup.newWorkouts.map((workout) => this.linked(workout, idHere))
+        );
         const entries = this.history.mergeEntries(linkedHistory, backup.deleted);
         return {
             ok: true,
-            workoutsAdded: workouts.added,
+            workoutsAdded: workouts.added + newWorkoutsAdded,
             workoutsUpdated: workouts.updated,
             entriesAdded: entries.added,
             entriesUpdated: entries.updated,

@@ -1,6 +1,6 @@
 import { ExerciseNote, HiddenExercise, OwnExercise } from '../../models/exercise';
 import { HistoryEntry } from '../../models/history';
-import { Deletion, isDeletion } from '../../models/sync';
+import { Deletion, isDeletion, newId } from '../../models/sync';
 import { Workout } from '../../models/workout';
 import {
     readExerciseNote,
@@ -70,6 +70,11 @@ export type ReadBackup =
            * been given new ids, so they're matched on what they are rather than by id.
            */
           fromVersion1: boolean;
+          /**
+           * Workouts with no id, as in a file written by hand (e.g. by an AI from a plan): given
+           * new ids and dated now, and matched on what they are, like version 1's.
+           */
+          newWorkouts: Workout[];
           /** Workouts, history entries and exercises in the file that weren't usable, and were left out. */
           skipped: number;
       }
@@ -102,6 +107,8 @@ export function backupFileName(exportedAt: number): string {
  * Reads a backup file's text. Workouts and history entries that aren't usable are left out and
  * counted, as when the app loads its own data; the rest are read the same way, so older
  * workout formats convert, and a version 1 file is brought up to version 2 as saved data is.
+ * A file written by hand needs less: `history` can be left out, and a workout or exercise of
+ * your own with no id is new, given an id and dated now.
  */
 export function readBackup(text: string, now = Date.now()): ReadBackup {
     let parsed: unknown;
@@ -121,7 +128,7 @@ export function readBackup(text: string, now = Date.now()): ReadBackup {
         !Number.isInteger(version) ||
         (version as number) < 1 ||
         !Array.isArray(file['workouts']) ||
-        !Array.isArray(file['history'])
+        (file['history'] !== undefined && !Array.isArray(file['history']))
     ) {
         return { ok: false, problem: 'not-a-backup' };
     }
@@ -130,21 +137,29 @@ export function readBackup(text: string, now = Date.now()): ReadBackup {
     }
     const fromVersion1 = version === 1;
     const newIds: Record<string, string> = {};
+    const fileHistory: unknown[] = Array.isArray(file['history']) ? file['history'] : [];
     const savedWorkouts: unknown[] = fromVersion1
         ? file['workouts'].map((workout) => upgradeWorkout(workout, newIds, now))
         : file['workouts'];
     const savedHistory: unknown[] = fromVersion1
-        ? file['history'].map((entry) => upgradeHistoryEntry(entry, newIds))
-        : file['history'];
+        ? fileHistory.map((entry) => upgradeHistoryEntry(entry, newIds))
+        : fileHistory;
 
-    const workouts = savedWorkouts.map((item) => readWorkout(item)).filter((t) => t !== null);
+    const workouts = savedWorkouts
+        .filter((item) => !isNew(item))
+        .map((item) => readWorkout(item))
+        .filter((t) => t !== null);
+    const newWorkouts = savedWorkouts
+        .filter(isNew)
+        .map((item) => readWorkout(madeNew(item, now)))
+        .filter((t) => t !== null);
     const history = savedHistory
         .map((item) => readHistoryEntry(item))
         .filter((entry) => entry !== null);
     const deleted = Array.isArray(file['deleted']) ? file['deleted'].filter(isDeletion) : [];
     const savedExercises: unknown[] = Array.isArray(file['exercises']) ? file['exercises'] : [];
     const exercises = savedExercises
-        .map((item) => readOwnExercise(item))
+        .map((item) => readOwnExercise(isNew(item) ? madeNew(item, now) : item))
         .filter((exercise) => exercise !== null);
     const exerciseNotes = (Array.isArray(file['exerciseNotes']) ? file['exerciseNotes'] : [])
         .map((item) => readExerciseNote(item))
@@ -154,7 +169,8 @@ export function readBackup(text: string, now = Date.now()): ReadBackup {
         .filter((hidden) => hidden !== null);
     const skipped =
         savedWorkouts.length -
-        workouts.length +
+        workouts.length -
+        newWorkouts.length +
         (savedHistory.length - history.length) +
         (savedExercises.length - exercises.length);
     return {
@@ -166,8 +182,23 @@ export function readBackup(text: string, now = Date.now()): ReadBackup {
         hiddenExercises,
         deleted,
         fromVersion1,
+        newWorkouts,
         skipped,
     };
+}
+
+/** Whether a workout or exercise in the file has no id, as one written by hand may not. */
+function isNew(item: unknown): item is Record<string, unknown> {
+    if (typeof item !== 'object' || item === null) {
+        return false;
+    }
+    const id = (item as Record<string, unknown>)['id'];
+    return id === undefined || id === '';
+}
+
+/** A record with no id given a new one, and dated now. */
+function madeNew(item: Record<string, unknown>, now: number): Record<string, unknown> {
+    return { ...item, id: newId(), updatedAt: now };
 }
 
 /** A file from before version 4 with the names it has now: workouts, not timers. */

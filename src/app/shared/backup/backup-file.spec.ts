@@ -107,6 +107,7 @@ describe('backup file', () => {
             hiddenExercises: [],
             deleted: [DELETION],
             fromVersion1: false,
+            newWorkouts: [],
             skipped: 0,
         });
     });
@@ -162,6 +163,7 @@ describe('backup file', () => {
             hiddenExercises: [],
             deleted: [DELETION],
             fromVersion1: false,
+            newWorkouts: [],
             skipped: 3,
         });
     });
@@ -187,6 +189,53 @@ describe('backup file', () => {
                 skipped: 0,
             })
         );
+    });
+
+    describe('written by hand', () => {
+        const handMade = (contents: Record<string, unknown>) =>
+            JSON.stringify({ app: 'LoopTimer', version: BACKUP_VERSION, ...contents });
+
+        it('needs no history, and gives workouts and exercises with no id new ones, dated now', () => {
+            const { id: _id, updatedAt: _at, ...legs } = makeWorkout({ title: 'Legs' });
+            const sled = { name: 'Sled push', measuredBy: 'reps', mainMuscles: ['quads'] };
+
+            const result = readBackup(
+                handMade({
+                    workouts: [legs, { ...legs, id: '', title: 'Arms' }],
+                    exercises: [sled],
+                }),
+                4000
+            );
+
+            expect(result.ok).toBe(true);
+            if (!result.ok) {
+                return;
+            }
+            expect(result.workouts).toEqual([]);
+            expect(result.newWorkouts).toEqual([
+                { ...legs, id: expect.any(String), updatedAt: 4000 },
+                { ...legs, title: 'Arms', id: expect.any(String), updatedAt: 4000 },
+            ]);
+            expect(new Set(result.newWorkouts.map((w) => w.id)).size).toBe(2);
+            expect(result.exercises).toEqual([
+                expect.objectContaining({
+                    ...sled,
+                    id: expect.any(String),
+                    updatedAt: 4000,
+                    supportingMuscles: [],
+                }),
+            ]);
+            expect(result.history).toEqual([]);
+            expect(result.skipped).toBe(0);
+        });
+
+        it('still leaves out, and counts, a workout with no id that is broken', () => {
+            const result = readBackup(
+                handMade({ workouts: [{ title: 'No steps', repeats: 3, steps: [] }] })
+            );
+
+            expect(result.ok && [result.newWorkouts, result.skipped]).toEqual([[], 1]);
+        });
     });
 
     describe('from version 1', () => {
