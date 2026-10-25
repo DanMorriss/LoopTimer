@@ -17,6 +17,7 @@ import {
     EQUIPMENT_CHOICES,
     equipmentLabel,
     Exercise,
+    ExerciseText,
     isBuiltIn,
     MAX_EXERCISE_DESCRIPTION_LENGTH,
     MAX_EXERCISE_LINE_LENGTH,
@@ -51,6 +52,7 @@ interface ExerciseEditorModel {
 }
 
 const MUSCLES = Object.keys(MUSCLE_LABELS) as MuscleGroup[];
+const NO_TEXT: ExerciseText = { description: '', steps: [], tips: [] };
 
 /**
  * An exercise's details and your note on it, in a dialog. Your own exercise can be renamed
@@ -81,6 +83,7 @@ export class ExerciseEditorComponent {
     constructor() {
         // Grows out of the button that opened it, and shrinks back into it
         afterNextRender(() => growFromClick(this.card().nativeElement));
+        void this.exercises.loadText();
     }
 
     protected readonly builtIn = computed(() => isBuiltIn(this.exercise()));
@@ -102,20 +105,28 @@ export class ExerciseEditorComponent {
         { value: 'timed', label: 'Time' },
     ];
 
+    /** A built-in exercise's description, shown above its note once it's loaded. */
+    protected readonly description = computed(
+        () => this.exercises.textOf(this.exercise())?.description
+    );
+
     private readonly model = linkedSignal<ExerciseEditorModel>(() => {
         const exercise = this.exercise();
+        // Only your own exercise's words are edited here: a built-in one has just a note. Not
+        // read from the store, so the form doesn't start again when a built-in one's words load
+        const text = isBuiltIn(exercise) ? NO_TEXT : exercise;
         return {
             name: exercise.name,
             measuredBy: exercise.measuredBy,
-            description: exercise.description,
+            description: text.description,
             // Only single pieces can be picked; a choice of them (from a backup) stays as it is
             equipment: exercise.equipment.filter(
                 (need): need is Equipment => typeof need === 'string'
             ),
             mainMuscles: [...exercise.mainMuscles],
             supportingMuscles: [...exercise.supportingMuscles],
-            steps: exercise.steps.join('\n'),
-            tips: exercise.tips.join('\n'),
+            steps: text.steps.join('\n'),
+            tips: text.tips.join('\n'),
             note: this.exercises.noteFor(exercise.id) ?? '',
         };
     });

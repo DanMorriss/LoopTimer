@@ -21,7 +21,7 @@
 
             @if (builtIn()) {
                 <p class="editor__kind">Built-in exercise</p>
-                <p class="editor__description">{{ exercise().description }}</p>
+                <p class="editor__description">{{ description() }}</p>
             } @else {
                 <label class="picker-field" for="exercise-editor-name">
                     <span class="picker-field__label">Name</span>

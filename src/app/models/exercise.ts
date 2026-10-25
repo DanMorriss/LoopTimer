@@ -78,7 +78,10 @@ export type EquipmentNeed = Equipment | readonly Equipment[];
 /** Reps (with a weight where there is one), or a time held, e.g. a plank. */
 export type MeasuredBy = 'reps' | 'timed';
 
-/** One of the exercises that comes with the app (EXR-6, EXR-7). */
+/**
+ * One of the exercises that comes with the app (EXR-6, EXR-7). Its description, steps and tips
+ * are kept apart, in BUILT_IN_EXERCISE_TEXT, so they aren't in the first download.
+ */
 export interface BuiltInExercise {
     /** Fixed for good, so history keeps pointing to it: `builtin:<name-in-kebab-case>`. */
     id: `builtin:${string}`;
@@ -95,6 +98,13 @@ export interface BuiltInExercise {
     mainMuscles: MuscleGroup[];
     /** Muscles that help or hold steady: darker on the body map. */
     supportingMuscles: MuscleGroup[];
+}
+
+/**
+ * The words about an exercise. A built-in one's are in BUILT_IN_EXERCISE_TEXT, loaded when
+ * they're shown (see `ExerciseStore.textOf()`); your own exercise has them on it.
+ */
+export interface ExerciseText {
     /** One line: what it is, and why do it. */
     description: string;
     /** 3–5 short steps, in order. */

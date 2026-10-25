@@ -1,5 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { BUILT_IN_EXERCISE_TEXT } from '../../../models/built-in-exercise-text';
 import { BUILT_IN_EXERCISES } from '../../../models/built-in-exercises';
 import { Exercise, MAX_EXERCISE_STEPS } from '../../../models/exercise';
 import { reps } from '../../testing/make-workout';
@@ -88,9 +89,13 @@ describe('ExerciseEditorComponent', () => {
 
         it('shows its description, and only the note can be changed', async () => {
             await open(plank);
+            await TestBed.inject(ExerciseStore).loadText();
+            fixture.detectChanges();
 
             expect(el('#exercise-editor-title').textContent!.trim()).toBe('Plank');
-            expect(el('.editor__description').textContent!.trim()).toBe(plank.description);
+            expect(el('.editor__description').textContent!.trim()).toBe(
+                BUILT_IN_EXERCISE_TEXT['builtin:plank'].description
+            );
             expect(el('#exercise-editor-name')).toBeNull();
             expect(el('app-body-map')).toBeNull();
             expect(el('#exercise-editor-note')).not.toBeNull();

@@ -5,7 +5,8 @@ How the exercises that come with LoopTimer are written, and which are still to w
 ## Where they go
 
 - The exercises: `src/app/models/built-in-exercises.ts`, one batch of 10 at a time, added to the end of the list under a comment saying what the batch is, e.g. `// Fourth batch: core, carries and variations`.
-- Their shape: `BuiltInExercise` in `src/app/models/exercise.ts`.
+- Their words (`description`, `steps` and `tips`): `src/app/models/built-in-exercise-text.ts`, under each one's id, in the same order and under the same batch comment. They're kept apart so they aren't in the app's first download.
+- Their shape: `BuiltInExercise` and `ExerciseText` in `src/app/models/exercise.ts`.
 - The rules below that can be checked are checked by `src/app/models/built-in-exercises.spec.ts`. Run it after every batch.
 
 ## Each field
@@ -38,7 +39,7 @@ Read the first 30 before writing; new ones should sound the same.
 - **No hype, no medical claims, no exclamation marks, no emoji.** "Great for hamstrings" is fine; "burns fat" or "fixes back pain" isn't.
 - Name body parts as the app does: quads, glutes, hamstrings, upper back, lower back, abs.
 
-An example to match:
+An example to match, in `built-in-exercises.ts`:
 
 ```ts
 {
@@ -49,6 +50,13 @@ An example to match:
     measuredBy: 'reps',
     mainMuscles: ['hamstrings', 'glutes'],
     supportingMuscles: ['lower-back', 'forearms'],
+},
+```
+
+and in `built-in-exercise-text.ts`:
+
+```ts
+'builtin:romanian-deadlift': {
     description:
         'From standing, you lower a bar down your legs by pushing your hips back, then stand back up. Great for hamstrings.',
     steps: [

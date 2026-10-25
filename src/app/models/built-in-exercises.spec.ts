@@ -1,3 +1,4 @@
+import { BUILT_IN_EXERCISE_TEXT } from './built-in-exercise-text';
 import { BUILT_IN_EXERCISES } from './built-in-exercises';
 
 // The content rules from docs/features/exercises.md, so each new batch is held to them
@@ -65,14 +66,21 @@ describe('built-in exercises', () => {
         }
     });
 
+    it('each have their words, in the same order, and there are none for anything else', () => {
+        expect(Object.keys(BUILT_IN_EXERCISE_TEXT)).toEqual(
+            BUILT_IN_EXERCISES.map((exercise) => exercise.id)
+        );
+    });
+
     it('are short enough to read between sets', () => {
         for (const exercise of BUILT_IN_EXERCISES) {
-            expect(exercise.description.length, exercise.name).toBeLessThanOrEqual(140);
-            expect(exercise.steps.length, exercise.name).toBeGreaterThanOrEqual(3);
-            expect(exercise.steps.length, exercise.name).toBeLessThanOrEqual(5);
-            expect(exercise.tips.length, exercise.name).toBeGreaterThanOrEqual(1);
-            expect(exercise.tips.length, exercise.name).toBeLessThanOrEqual(2);
-            for (const line of [...exercise.steps, ...exercise.tips]) {
+            const text = BUILT_IN_EXERCISE_TEXT[exercise.id];
+            expect(text.description.length, exercise.name).toBeLessThanOrEqual(140);
+            expect(text.steps.length, exercise.name).toBeGreaterThanOrEqual(3);
+            expect(text.steps.length, exercise.name).toBeLessThanOrEqual(5);
+            expect(text.tips.length, exercise.name).toBeGreaterThanOrEqual(1);
+            expect(text.tips.length, exercise.name).toBeLessThanOrEqual(2);
+            for (const line of [...text.steps, ...text.tips]) {
                 expect(line.length, line).toBeLessThanOrEqual(140);
             }
         }

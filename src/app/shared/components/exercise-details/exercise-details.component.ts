@@ -27,9 +27,15 @@ export class ExerciseDetailsComponent {
     protected readonly id = `exercise-details-${nextId++}`;
 
     protected readonly builtIn = computed(() => isBuiltIn(this.exercise()));
+    /** Its description, steps and tips: a built-in one's once they've loaded. */
+    protected readonly text = computed(() => this.exercises.textOf(this.exercise()));
     protected readonly note = computed(() => this.exercises.noteFor(this.exercise().id));
     protected readonly hidden = computed(() => this.exercises.isHidden(this.exercise().id));
     protected readonly equipment = computed(() =>
         equipmentPhrases(this.exercise().equipment).map(capitalise)
     );
+
+    constructor() {
+        void this.exercises.loadText();
+    }
 }
