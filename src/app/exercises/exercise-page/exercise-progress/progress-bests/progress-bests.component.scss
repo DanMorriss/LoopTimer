@@ -1,0 +1,47 @@
+@use 'type' as *;
+
+:host {
+    display: block;
+}
+
+// Two to a row, as tiles
+.bests {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin: 0;
+}
+
+.best {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--border-soft);
+    border-radius: 0.75rem;
+    background: var(--card);
+
+    dt {
+        color: var(--text-muted);
+        @include small-type(0.72rem);
+    }
+
+    dd {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+        margin: 0;
+    }
+}
+
+.best__value {
+    color: var(--text-strong);
+    font-size: 1.1rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.best__when {
+    color: var(--text-muted);
+    @include small-type(0.72rem);
+}

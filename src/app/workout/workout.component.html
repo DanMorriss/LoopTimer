@@ -43,14 +43,7 @@
                             }
                             <!-- The same count as the line above, as a picture: rounds done, this one, and those to go -->
                             @if (slide.dots.length) {
-                                <div class="round-dots" aria-hidden="true">
-                                    @for (dot of slide.dots; track $index) {
-                                        <span
-                                            class="round-dot"
-                                            [class]="'round-dot--' + dot"
-                                        ></span>
-                                    }
-                                </div>
+                                <app-round-dots [dots]="slide.dots" />
                             }
                         }
                     </div>
@@ -60,36 +53,12 @@
 
         <!-- The ring, with Resume and End workout over it while paused -->
         <div class="workout-stage">
-            <div
-                class="workout-ring"
-                [class.workout-ring--work]="isWorkActive()"
-                [class.workout-ring--rest]="isRestActive()"
-                [class.workout-ring--reps]="isRepsActive()"
-                [class.workout-ring--paused]="isPaused()"
-                role="progressbar"
-                aria-label="Progress through this phase"
-                aria-valuemin="0"
-                aria-valuemax="100"
-                [attr.aria-valuenow]="progressPercent()"
-                [attr.aria-valuetext]="isRepsActive() ? 'Waiting for Done' : null"
+            <app-workout-ring
+                [phase]="ringPhase()"
+                [paused]="isPaused()"
+                [sweeps]="ringSweeps()"
+                [percent]="progressPercent()"
             >
-                @for (sweep of ringSweeps(); track sweep.key) {
-                    <!-- Two rotating half-circles; transforms animate without repainting -->
-                    <div
-                        class="workout-ring__sweep"
-                        [style.--half-duration]="sweep.halfDuration"
-                        [style.--first-half-delay]="sweep.firstHalfDelay"
-                        [style.--second-half-delay]="sweep.secondHalfDelay"
-                        aria-hidden="true"
-                    >
-                        <div class="workout-ring__half workout-ring__half--right">
-                            <div class="workout-ring__fill"></div>
-                        </div>
-                        <div class="workout-ring__half workout-ring__half--left">
-                            <div class="workout-ring__fill"></div>
-                        </div>
-                    </div>
-                }
                 <div class="workout-inner">
                     <div
                         class="workout-face rounded-full text-center text-4xl text-black"
@@ -147,7 +116,7 @@
                         }
                     </div>
                 </div>
-            </div>
+            </app-workout-ring>
 
             <!-- Paused: the ring greys out, and the way on (or out) sits in the middle of it.
                  Ending only happens from here, two presses away, so it's never hit by mistake. -->
@@ -174,10 +143,7 @@
 
         <!-- Your note on this exercise, e.g. a cue or a machine setting -->
         @if (exerciseNote() && isComplete() === false) {
-            <p class="workout-note">
-                <mat-icon class="workout-note__icon" aria-hidden="true">sticky_note_2</mat-icon>
-                <span><span class="sr-only">Your note: </span>{{ exerciseNote() }}</span>
-            </p>
+            <app-workout-note [text]="exerciseNote()!" [muted]="isPaused()" />
         }
 
         @if (upNext()) {

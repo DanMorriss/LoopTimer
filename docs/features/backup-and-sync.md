@@ -20,6 +20,7 @@ Export and import (SYN-1, SYN-2) are built, the history has room for years (SYN-
     - A workout, history entry, exercise of your own, note on an exercise or hidden exercise only in the file is **added**.
     - One in both keeps **the most recent change**: an edit, a note, a change of reps mid-workout. On a tie, this device's stays.
     - Exercises and notes come in first, so the file's workouts and history entries can be **linked** to them: a step or set that isn't linked yet (a file from before exercises), or is linked to an exercise that's neither here nor in the file, is linked by its name, as saved data is (see [data](data.md#data-version)).
+    - An **exercise of your own with the same name** as one here (matched as names are, so "sled  push" is "Sled push") but another id, e.g. typed on two devices, is taken to be the one here: it isn't added, and the file's steps, sets, note and hidden mark for it go to the one here.
     - One **deleted where the backup came from** is deleted here too, unless it's changed here since. One **deleted here** doesn't come back, unless it changed there after it was deleted here.
     - Nothing else here is changed or removed.
     - **Settings** in the file are left out: theme, sound, your equipment and so on are a choice for each device.
@@ -53,6 +54,7 @@ Export and import (SYN-1, SYN-2) are built, the history has room for years (SYN-
 - Given a workout here with no note, when I import a backup where it was given a note later, then it has the note.
 - Given a backup made after a workout was deleted on that device, when I import it, then the workout goes here too, unless I changed it here after.
 - Given a workout I deleted here, when I import a backup that has it, then it stays deleted.
+- Given my own exercise "Sled push" here, when I import a backup with a "Sled push" of its own made on another device, then I still have one "Sled push", and the backup's workouts and history that used its one use mine.
 - Given a version 1 backup with a workout "Legs" and one the same already here, when I import it, then "Legs" isn't added again; a different workout with the same old id as one here is added with a new id, and both are kept.
 - Given a backup with a light theme and lb, when I import it, then my settings don't change.
 - Given a file that isn't a backup, or is from a newer version, when I import it, then nothing changes and I'm told why.

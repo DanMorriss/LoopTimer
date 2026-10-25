@@ -1,0 +1,39 @@
+// Added to <body> by the drag, so it carries its own colours
+:host {
+    --step-color: var(--work);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    box-sizing: border-box;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-strong);
+    border-left: 4px solid var(--step-color);
+    border-radius: 0.75rem;
+    background: var(--raised);
+    box-shadow: 0 12px 28px var(--shadow);
+    color: var(--text);
+}
+
+:host(.rest) {
+    --step-color: var(--rest);
+}
+
+:host(.reps) {
+    --step-color: var(--reps);
+}
+
+// As the step's own kind pill
+.badge {
+    padding: 0.15rem 0.6rem;
+    border: 1px solid var(--step-color);
+    border-radius: 999px;
+    color: var(--step-color);
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.time {
+    margin-left: auto;
+    font-variant-numeric: tabular-nums;
+}

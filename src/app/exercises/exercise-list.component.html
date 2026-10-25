@@ -136,9 +136,7 @@
 
         <ul class="exercises__list">
             @for (item of shown(); track item.exercise.id) {
-                <ng-container
-                    *ngTemplateOutlet="cardTemplate; context: { $implicit: item }"
-                ></ng-container>
+                <li><app-exercise-card [card]="item" /></li>
             }
         </ul>
 
@@ -158,58 +156,13 @@
             @if (hiddenOpen()) {
                 <ul id="exercise-list-hidden" class="exercises__list">
                     @for (item of hidden(); track item.exercise.id) {
-                        <ng-container
-                            *ngTemplateOutlet="cardTemplate; context: { $implicit: item }"
-                        ></ng-container>
+                        <li><app-exercise-card [card]="item" /></li>
                     }
                 </ul>
             }
         }
     </div>
 </div>
-
-<ng-template #cardTemplate let-item>
-    <li>
-        <a class="exercise-card" [routerLink]="item.path" [queryParams]="item.queryParams">
-            <span class="exercise-card__text">
-                <span class="exercise-card__name">
-                    {{ item.exercise.name }}
-                    @if (item.own) {
-                        <span class="exercise-card__tag">Your own</span>
-                    }
-                </span>
-                @if (item.otherName) {
-                    <span class="exercise-card__also">Also called {{ item.otherName }}</span>
-                }
-                <span class="exercise-card__details">
-                    @for (label of item.mainMuscles; track label) {
-                        <span class="exercise-card__muscle">{{ label }}</span>
-                    }
-                    @if (item.equipment) {
-                        <span class="exercise-card__equipment">{{ item.equipment }}</span>
-                    }
-                </span>
-                @if (item.progress; as progress) {
-                    <span class="exercise-card__progress">
-                        <span>
-                            <span class="exercise-card__progress-label">Latest</span>&ngsp;
-                            <span aria-hidden="true">{{ progress.latest }}</span>
-                            <span class="sr-only">{{ progress.latestSpoken }}</span>
-                            · {{ progress.latestAt | date: progress.dateFormat }}
-                        </span>
-                        @if (progress.best) {
-                            <span>
-                                <span class="exercise-card__progress-label">Best</span>&ngsp;
-                                {{ progress.best }}
-                            </span>
-                        }
-                    </span>
-                }
-            </span>
-            <mat-icon class="exercise-card__chevron" aria-hidden="true">chevron_right</mat-icon>
-        </a>
-    </li>
-</ng-template>
 
 @if (drafting()) {
     <app-exercise-editor

@@ -398,6 +398,37 @@ describe('BackupService', () => {
             expect(workouts().workouts()[0].steps[0].exerciseId).toBe('sled');
         });
 
+        it('takes an exercise of your own made on both devices to be the one here', async () => {
+            start();
+            const exercises = TestBed.inject(ExerciseStore);
+            const here = exercises.addOwn('Sled push', 'reps');
+            const there = { ...here, id: 'sled-there', name: 'sled  push' };
+            const workout = makeWorkout({
+                id: 'legs',
+                steps: [{ kind: 'reps', reps: 3, name: 'Sled', exerciseId: 'sled-there' }],
+            });
+            const entry = makeEntry(1_000_000, {
+                sets: [{ round: 0, step: 0, name: 'Sled', reps: 3, exerciseId: 'sled-there' }],
+            });
+
+            const imported = await backup.import(
+                fileOf({
+                    workouts: [workout],
+                    history: [entry],
+                    exercises: [there],
+                    exerciseNotes: [{ id: 'sled-there', text: 'Low and fast', updatedAt: 1 }],
+                    hiddenExercises: [{ id: 'sled-there', updatedAt: 1 }],
+                })
+            );
+
+            expect(imported).toEqual(result({ workoutsAdded: 1, entriesAdded: 1 }));
+            expect(exercises.own()).toEqual([here]);
+            expect(exercises.noteFor(here.id)).toBe('Low and fast');
+            expect(exercises.isHidden(here.id)).toBe(true);
+            expect(workouts().workouts()[0].steps[0].exerciseId).toBe(here.id);
+            expect(history().entries()[0].sets![0].exerciseId).toBe(here.id);
+        });
+
         it('links the steps and sets of a backup from before exercises, by name', async () => {
             start();
 

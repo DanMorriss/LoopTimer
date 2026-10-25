@@ -68,88 +68,6 @@
     gap: 0.4rem;
 }
 
-.step__badge {
-    padding: 0.15rem 0.6rem;
-    background: transparent;
-    border: 1px solid var(--step-color);
-    border-radius: 999px;
-    color: var(--step-color);
-    font-size: 0.8rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-}
-
-// The kind pill opens a menu of the kinds, under it
-.step__kind {
-    position: relative;
-}
-
-.step__kind-button {
-    display: inline-flex;
-    align-items: center;
-    min-height: 32px;
-    padding-right: 0.3rem;
-    font: inherit;
-    font-size: 0.8rem;
-    cursor: pointer;
-
-    // 32px drawn, 44px to a finger
-    @include hit-area(6px);
-
-    @include hover {
-        background: var(--control);
-    }
-
-    @include pressed {
-        background: var(--control);
-    }
-
-    &:focus-visible {
-        outline: 2px solid var(--accent);
-        outline-offset: 2px;
-    }
-}
-
-.step__kind-arrow {
-    width: 18px;
-    height: 18px;
-    font-size: 18px;
-    line-height: 18px;
-}
-
-// A shared .menu (styles/_menu.scss); above the steps below it, growing from under the pill
-.step__kind-menu {
-    position: absolute;
-    top: calc(100% + 0.2rem);
-    left: 0;
-    z-index: 10;
-    transform-origin: top left;
-}
-
-.step__kind-option {
-    --step-color: var(--work);
-
-    &--rest {
-        --step-color: var(--rest);
-    }
-
-    &--reps {
-        --step-color: var(--reps);
-    }
-}
-
-.step__kind-dot {
-    width: 0.6rem;
-    height: 0.6rem;
-    border-radius: 999px;
-    background: var(--step-color);
-}
-
-.step__kind-check {
-    margin-left: auto;
-    color: var(--accent);
-}
-
 .step__number {
     color: var(--text-muted);
     font-size: 0.9rem;
@@ -316,35 +234,6 @@
     .cdk-drop-list-dragging & {
         cursor: grabbing;
     }
-}
-
-// The card that follows the pointer (added to <body>, but still styled from here)
-.step-preview {
-    --step-color: var(--work);
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    box-sizing: border-box;
-    padding: 0.75rem 1rem;
-    border: 1px solid var(--border-strong);
-    border-left: 4px solid var(--step-color);
-    border-radius: 0.75rem;
-    background: var(--raised);
-    box-shadow: 0 12px 28px var(--shadow);
-    color: var(--text);
-
-    &.step--rest {
-        --step-color: var(--rest);
-    }
-
-    &.step--reps {
-        --step-color: var(--reps);
-    }
-}
-
-.step-preview__time {
-    margin-left: auto;
-    font-variant-numeric: tabular-nums;
 }
 
 // The gap the step will drop into

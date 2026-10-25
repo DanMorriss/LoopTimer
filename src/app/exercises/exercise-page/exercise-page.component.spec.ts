@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
+import { BUILT_IN_EXERCISE_TEXT } from '../../models/built-in-exercise-text';
 import { BUILT_IN_EXERCISES } from '../../models/built-in-exercises';
 import { ExerciseStore } from '../../shared/state/exercise-store.service';
 import { HistoryStore } from '../../shared/state/history-store.service';
@@ -57,13 +58,17 @@ describe('ExercisePageComponent', () => {
 
         it('shows its name, other names, equipment, description, steps and tips', async () => {
             await open('/exercises/back-squat');
+            // Its words aren't in the first download
+            await exercises.loadText();
+            await render();
+            const words = BUILT_IN_EXERCISE_TEXT['builtin:back-squat'];
 
             expect(text('.exercise__name')).toBe('Back squat');
             expect(text('.exercise__also')).toBe(`Also called: ${backSquat.otherNames.join(', ')}`);
             expect(all('.exercise__chip')).toEqual(['Barbell', 'Rack', 'Reps']);
-            expect(text('.exercise__description')).toBe(backSquat.description);
-            expect(all('.exercise__steps li')).toEqual(backSquat.steps);
-            expect(all('.exercise__tips li')).toEqual(backSquat.tips);
+            expect(text('.exercise__description')).toBe(words.description);
+            expect(all('.exercise__steps li')).toEqual(words.steps);
+            expect(all('.exercise__tips li')).toEqual(words.tips);
             expect(all('.body-map__label--main')).toEqual(['Quads', 'Glutes']);
             expect(el().querySelector('#exercise-page-delete')).toBeNull();
         });

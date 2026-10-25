@@ -1,7 +1,6 @@
-import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseEditorComponent } from '../shared/components/exercise-editor/exercise-editor.component';
 import { ToggleSwitchComponent } from '../shared/components/toggle-switch/toggle-switch.component';
 import { BodyMapComponent } from '../shared/components/body-map/body-map.component';
@@ -28,35 +27,15 @@ import {
 import { WeightUnit } from '../models/weight';
 import { describeSets } from '../history/history-format';
 import { HistoryStore } from '../shared/state/history-store.service';
-import { headlineBest } from './progress-format';
+import { dateFormatFor, headlineBest } from './progress-format';
 import { blankOwnExercise, ExerciseStore } from '../shared/state/exercise-store.service';
 import { SettingsStore } from '../shared/state/settings-store.service';
 import { parseMusclesParam, serialiseMusclesParam } from './muscle-filter-query';
-
-/** One exercise in the list, as its card shows it. */
-interface ExerciseCard {
-    exercise: Exercise;
-    path: string;
-    queryParams: { muscles?: string };
-    own: boolean;
-    mainMuscles: string[];
-    /** e.g. "Barbell, rack", or empty when it lists none. */
-    equipment: string;
-    /** The other name a search found it by, if not its own. */
-    otherName?: string;
-    /** Its latest and best (PRG-3); missing until it's been done in a workout. */
-    progress?: CardProgress;
-}
-
-/** e.g. latest "3 × 10 @ 60 kg" on 18 October, best "80 kg". */
-interface CardProgress {
-    latest: string;
-    latestSpoken: string;
-    latestAt: number;
-    /** The date with its year, unless it was this year. */
-    dateFormat: string;
-    best: string;
-}
+import {
+    CardProgress,
+    ExerciseCard,
+    ExerciseCardComponent,
+} from './exercise-card/exercise-card.component';
 
 const MUSCLES = Object.keys(MUSCLE_LABELS) as MuscleGroup[];
 
@@ -68,13 +47,11 @@ const MUSCLES = Object.keys(MUSCLE_LABELS) as MuscleGroup[];
 @Component({
     selector: 'app-exercise-list',
     imports: [
-        DatePipe,
         MatIconModule,
-        NgTemplateOutlet,
-        RouterLink,
         ToggleSwitchComponent,
         BodyMapComponent,
         ExerciseEditorComponent,
+        ExerciseCardComponent,
     ],
     templateUrl: './exercise-list.component.html',
     styleUrl: './exercise-list.component.scss',
@@ -260,10 +237,7 @@ function cardProgress(sessions: readonly ExerciseSession[], unit: WeightUnit): C
         latest: lines.map((line) => line.text).join(' + '),
         latestSpoken: lines.map((line) => line.spoken).join(', then '),
         latestAt: latest.startedAt,
-        dateFormat:
-            new Date(latest.startedAt).getFullYear() === new Date().getFullYear()
-                ? 'd MMM'
-                : 'd MMM y',
+        dateFormat: dateFormatFor(latest.startedAt),
         best: headlineBest(exerciseBests(sessions), measure, unit),
     };
 }

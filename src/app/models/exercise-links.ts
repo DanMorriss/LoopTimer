@@ -1,4 +1,4 @@
-import { Exercise, exerciseKey, MeasuredBy } from './exercise';
+import { Exercise, exerciseKey, MeasuredBy, OwnExercise } from './exercise';
 import { HistoryEntry, isTimedSet, LoggedSet } from './history';
 import { Step, Workout } from './workout';
 
@@ -22,6 +22,30 @@ export function findByName(name: string, exercises: readonly Exercise[]): Exerci
     return exercises.find((exercise) =>
         [exercise.name, ...exercise.otherNames].some((other) => exerciseKey(other) === key)
     );
+}
+
+/**
+ * Which of another copy's exercises of your own are here already under another id, as an
+ * exercise typed on two devices is: each id there, mapped to the id of the exercise here with
+ * the same name (matched as `findByName()` does). One here by its own id, or deleted here,
+ * isn't matched, so it merges as usual.
+ */
+export function sameExercisesHere(
+    there: readonly OwnExercise[],
+    here: readonly Exercise[],
+    deletedHere: (id: string) => boolean
+): Map<string, string> {
+    const ids = new Map<string, string>();
+    for (const exercise of there) {
+        if (deletedHere(exercise.id) || here.some((e) => e.id === exercise.id)) {
+            continue;
+        }
+        const same = findByName(exercise.name, here);
+        if (same) {
+            ids.set(exercise.id, same.id);
+        }
+    }
+    return ids;
 }
 
 /** An exercise found by a search, and the other name it was found by, if not its own name. */

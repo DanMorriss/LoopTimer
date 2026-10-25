@@ -1,0 +1,10 @@
+// The workout's colours, shared by the page and its ring
+
+$work-color: oklch(81% 0.117 11.638);
+$rest-color: #38bdf8; // sky-400: 4.8:1 on the track, 9.8:1 for black text
+$reps-color: #a78bfa; // violet-400: the rep step's own colour, a full and still ring
+$reps-face: #ede9fe; // violet-100: the face while it waits for Done
+$face-color: oklch(97.7% 0.013 236.62);
+$face-muted: #475569; // slate-600: quieter text on the face, light in both themes (6.4:1 on the rep face)
+$track-color: #334155; // slate-700: dark, so both phase colours stand out (3:1 minimum)
+// The ring keeps these colours in both themes: its dark track is what makes work and rest stand out

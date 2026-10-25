@@ -942,6 +942,9 @@ describe('WorkoutSetupComponent', () => {
             pick(0, 'Front squat');
 
             await press('Details of Front squat');
+            // Its words aren't in the first download
+            await TestBed.inject(ExerciseStore).loadText();
+            fixture.detectChanges();
 
             const dialog = el('[role="dialog"]');
             expect(el('#exercise-details-title').textContent!.trim()).toBe('Front squat');

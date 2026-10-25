@@ -4,7 +4,9 @@ import {
     EquipmentNeed,
     Exercise,
     ExerciseNote,
+    ExerciseText,
     HiddenExercise,
+    isBuiltIn,
     MAX_EXERCISE_LINE_LENGTH,
     MAX_EXERCISE_NOTE_LENGTH,
     MAX_EXERCISE_STEPS,
@@ -56,6 +58,33 @@ export class ExerciseStore {
         byId: (id) => this.byId(id),
         create: (name, measuredBy) => this.addOwn(name, measuredBy),
     };
+
+    /** The built-in exercises' words, once `loadText()` has them. */
+    private readonly builtInText = signal<Readonly<Record<string, ExerciseText>> | null>(null);
+    private textLoading: Promise<void> | null = null;
+
+    /**
+     * Loads the built-in exercises' descriptions, steps and tips, which aren't in the first
+     * download, if they aren't here yet. Call it before showing them; `textOf()` has them
+     * once it settles. Failing (e.g. offline), it can be tried again.
+     */
+    loadText(): Promise<void> {
+        this.textLoading ??= import('../../models/built-in-exercise-text').then(
+            ({ BUILT_IN_EXERCISE_TEXT }) => this.builtInText.set(BUILT_IN_EXERCISE_TEXT),
+            () => {
+                this.textLoading = null;
+            }
+        );
+        return this.textLoading;
+    }
+
+    /**
+     * An exercise's description, steps and tips: your own exercise's, or a built-in one's
+     * once `loadText()` has loaded them (undefined until then).
+     */
+    textOf(exercise: Exercise): ExerciseText | undefined {
+        return isBuiltIn(exercise) ? this.builtInText()?.[exercise.id] : exercise;
+    }
 
     byId(id: string): Exercise | undefined {
         return this.exercises().find((exercise) => exercise.id === id);

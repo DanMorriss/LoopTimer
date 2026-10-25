@@ -83,17 +83,13 @@
                     >
                         <!-- What follows the pointer: a compact card, as the wheels don't copy well.
                              Held where the step was grabbed (grabbedAt), not by its corner. -->
-                        <div
-                            class="step-preview"
-                            [class.step--rest]="kind === 'rest'"
-                            [class.step--reps]="kind === 'reps'"
+                        <app-step-drag-preview
+                            [kind]="kind"
+                            [name]="step().value().name.trim()"
+                            [time]="time"
                             [style.translate]="-grabbedAt().x + 'px ' + -grabbedAt().y + 'px'"
                             *cdkDragPreview
-                        >
-                            <span class="step__badge">{{ kindName(kind) }}</span>
-                            <span>{{ step().value().name.trim() }}</span>
-                            <span class="step-preview__time">{{ time }}</span>
-                        </div>
+                        />
                         <!-- Where it will land -->
                         <div class="step-placeholder" *cdkDragPlaceholder></div>
 
@@ -109,64 +105,15 @@
                                 <mat-icon>drag_indicator</mat-icon>
                             </span>
                             <!-- The step's kind, and a menu to change it -->
-                            <div
-                                class="step__kind"
-                                (keydown.escape)="closeKindMenu(key)"
-                                (focusout)="kindMenuFocusOut($event)"
-                            >
-                                <button
-                                    type="button"
-                                    class="step__badge step__kind-button"
-                                    [id]="'step-' + key + '-kind'"
-                                    [attr.aria-label]="
-                                        kindName(kind) + ', change type of step ' + (i + 1)
-                                    "
-                                    [attr.aria-expanded]="kindMenuFor() === key"
-                                    [attr.aria-controls]="
-                                        kindMenuFor() === key ? 'step-' + key + '-kinds' : null
-                                    "
-                                    (click)="toggleKindMenu(key)"
-                                >
-                                    <span class="step__kind-label">{{ kindName(kind) }}</span>
-                                    <mat-icon class="step__kind-arrow" aria-hidden="true"
-                                        >arrow_drop_down</mat-icon
-                                    >
-                                </button>
-                                @if (kindMenuFor() === key) {
-                                    <div
-                                        class="menu step__kind-menu"
-                                        animate.leave="menu--leaving"
-                                        [id]="'step-' + key + '-kinds'"
-                                        role="group"
-                                        [attr.aria-label]="'Type of step ' + (i + 1)"
-                                    >
-                                        @for (option of kinds; track option) {
-                                            <button
-                                                type="button"
-                                                [class]="
-                                                    'menu__item step__kind-option step__kind-option--' +
-                                                    option
-                                                "
-                                                [attr.aria-pressed]="option === kind"
-                                                (click)="setStepKind(i, option)"
-                                            >
-                                                <span
-                                                    class="step__kind-dot"
-                                                    aria-hidden="true"
-                                                ></span>
-                                                {{ kindName(option) }}
-                                                @if (option === kind) {
-                                                    <mat-icon
-                                                        class="step__kind-check"
-                                                        aria-hidden="true"
-                                                        >check</mat-icon
-                                                    >
-                                                }
-                                            </button>
-                                        }
-                                    </div>
-                                }
-                            </div>
+                            <app-step-kind-menu
+                                [kind]="kind"
+                                [stepKey]="key"
+                                [stepNumber]="i + 1"
+                                [open]="kindMenuFor() === key"
+                                (toggled)="toggleKindMenu(key)"
+                                (closed)="kindMenuFor.set(null)"
+                                (picked)="setStepKind(i, $event)"
+                            />
                             <span class="step__number" [id]="'step-' + key + '-title'">
                                 <span aria-hidden="true">{{ i + 1 }}</span>
                                 <span class="sr-only">{{ stepTitle(i) }}</span>

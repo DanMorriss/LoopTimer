@@ -22,11 +22,14 @@ import {
 } from '@angular/cdk/drag-drop';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
+import { StepDragPreviewComponent } from './step-drag-preview/step-drag-preview.component';
+import { StepKindMenuComponent } from './step-kind-menu/step-kind-menu.component';
 import {
     hasWork,
     MAX_REPS,
     Step,
     StepKind,
+    stepKindName,
     Workout,
     WorkoutFields,
     UNTIL_STOPPED,
@@ -107,7 +110,6 @@ function pickerOptions(
 }
 
 const padded = (n: number) => n.toString().padStart(2, '0');
-const kindName = (kind: StepKind) => ({ work: 'Timed', rest: 'Rest', reps: 'Reps' })[kind];
 
 /** What the name box suggests for each kind of step. */
 const NAME_EXAMPLES: Record<StepKind, string> = {
@@ -136,6 +138,8 @@ const NAME_EXAMPLES: Record<StepKind, string> = {
         ExercisePickerComponent,
         ExerciseEditorComponent,
         ExerciseDetailsDialogComponent,
+        StepDragPreviewComponent,
+        StepKindMenuComponent,
         MatFormFieldModule,
         MatIconModule,
     ],
@@ -152,9 +156,7 @@ export class WorkoutSetupComponent {
     protected readonly weightUnit = inject(SettingsStore).weightUnit();
 
     protected readonly maxSteps = MAX_STEPS;
-    protected readonly kindName = kindName;
     /** In the order the kind menu lists them. */
-    protected readonly kinds: readonly StepKind[] = ['reps', 'work', 'rest'];
     protected readonly editingWorkoutId = signal<string | null>(null);
     protected readonly minuteOptions = pickerOptions(0, 99, padded);
     protected readonly secondOptions = pickerOptions(0, 59, padded);
@@ -305,7 +307,7 @@ export class WorkoutSetupComponent {
     /** How a step is named to screen readers, e.g. "Step 2, rest" or "Step 1, Squats". */
     protected stepTitle(index: number): string {
         const step = this.model().steps[index];
-        return `Step ${index + 1}, ${step.name.trim() || kindName(step.kind).toLowerCase()}`;
+        return `Step ${index + 1}, ${step.name.trim() || stepKindName(step.kind).toLowerCase()}`;
     }
 
     /**
@@ -452,22 +454,6 @@ export class WorkoutSetupComponent {
         this.kindMenuFor.update((open) => (open === key ? null : key));
     }
 
-    /** Escape: closes the menu and goes back to its pill. */
-    protected closeKindMenu(key: number) {
-        if (this.kindMenuFor() === key) {
-            this.kindMenuFor.set(null);
-            document.getElementById(`step-${key}-kind`)?.focus();
-        }
-    }
-
-    /** Tabbing out of a kind menu closes it. */
-    protected kindMenuFocusOut(event: FocusEvent) {
-        const wrap = event.currentTarget as HTMLElement;
-        if (event.relatedTarget instanceof Node && !wrap.contains(event.relatedTarget)) {
-            this.kindMenuFor.set(null);
-        }
-    }
-
     /**
      * Changes a step's kind. Its name, exercise and numbers stay, so changing it back
      * finds them again; only those for its new kind are used.
@@ -482,13 +468,13 @@ export class WorkoutSetupComponent {
         this.updateSteps((steps) =>
             steps.map((step) => (step.key === changed.key ? { ...step, kind } : step))
         );
-        this.stepAnnouncement.set(`Step ${index + 1} is now ${kindName(kind).toLowerCase()}`);
+        this.stepAnnouncement.set(`Step ${index + 1} is now ${stepKindName(kind).toLowerCase()}`);
     }
 
     /** A click anywhere outside the open kind menu or the tooltip closes it. */
     protected closePopups(event: MouseEvent) {
         const target = event.target instanceof Element ? event.target : null;
-        if (!target?.closest('.step__kind')) {
+        if (!target?.closest('app-step-kind-menu')) {
             this.kindMenuFor.set(null);
         }
         if (!target?.closest('.info')) {
@@ -539,7 +525,7 @@ export class WorkoutSetupComponent {
         this.updateSteps(() => steps);
         const moved = steps[to];
         this.stepAnnouncement.set(
-            `Moved ${moved.name.trim() || kindName(moved.kind).toLowerCase()} to step ${to + 1}`
+            `Moved ${moved.name.trim() || stepKindName(moved.kind).toLowerCase()} to step ${to + 1}`
         );
         return moved;
     }

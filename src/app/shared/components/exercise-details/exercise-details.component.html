@@ -1,4 +1,5 @@
 @let shown = exercise();
+@let words = text();
 <div class="exercise__head">
     @if (shown.otherNames.length > 0) {
         <p class="exercise__also">Also called: {{ shown.otherNames.join(', ') }}</p>
@@ -19,8 +20,8 @@
     }
 </div>
 
-@if (shown.description) {
-    <p class="exercise__description">{{ shown.description }}</p>
+@if (words?.description) {
+    <p class="exercise__description">{{ words!.description }}</p>
 }
 
 @if (note(); as note) {
@@ -41,28 +42,29 @@
 <!-- What goes under the body map, e.g. the exercise page's progress -->
 <ng-content select="[underMuscles]" />
 
-@if (shown.steps.length > 0) {
+@if (words?.steps?.length) {
     <section class="exercise__section" [attr.aria-labelledby]="id + '-how'">
         <h3 [id]="id + '-how'" class="exercise__heading">How to do it</h3>
         <ol class="exercise__steps">
-            @for (step of shown.steps; track $index) {
+            @for (step of words!.steps; track $index) {
                 <li>{{ step }}</li>
             }
         </ol>
     </section>
 }
 
-@if (shown.tips.length > 0) {
+@if (words?.tips?.length) {
     <section class="exercise__section" [attr.aria-labelledby]="id + '-tips'">
         <h3 [id]="id + '-tips'" class="exercise__heading">Tips</h3>
         <ul class="exercise__tips">
-            @for (tip of shown.tips; track $index) {
+            @for (tip of words!.tips; track $index) {
                 <li>{{ tip }}</li>
             }
         </ul>
     </section>
 }
 
-@if (emptyHint() && shown.steps.length === 0 && shown.tips.length === 0) {
+<!-- Not while a built-in exercise's words are loading -->
+@if (emptyHint() && words && words.steps.length === 0 && words.tips.length === 0) {
     <p class="exercise__empty">{{ emptyHint() }}</p>
 }

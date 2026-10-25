@@ -114,3 +114,8 @@ export function axisValue(value: number, measure: ProgressMeasure, unit: WeightU
 function reps(count: number): string {
     return `${count} ${count === 1 ? 'rep' : 'reps'}`;
 }
+
+/** How a workout's date reads: "18 Oct", with the year too unless it was this year. */
+export function dateFormatFor(at: number, now = Date.now()): string {
+    return new Date(at).getFullYear() === new Date(now).getFullYear() ? 'd MMM' : 'd MMM y';
+}

@@ -1,7 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { describeSets, formatDuration } from '../../../history/history-format';
+import { formatDuration } from '../../../history/history-format';
 import {
     exerciseBests,
     ExerciseSession,
@@ -12,7 +11,15 @@ import {
 } from '../../../models/progress';
 import { HistoryStore } from '../../../shared/state/history-store.service';
 import { SettingsStore } from '../../../shared/state/settings-store.service';
-import { axisValue, bestLines, formatMeasure, MEASURE_TITLES } from '../../progress-format';
+import {
+    axisValue,
+    bestLines,
+    dateFormatFor,
+    formatMeasure,
+    MEASURE_TITLES,
+} from '../../progress-format';
+import { ProgressBestsComponent } from './progress-bests/progress-bests.component';
+import { RecentSessionsComponent } from './recent-sessions/recent-sessions.component';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -27,7 +34,6 @@ const RANGES: { value: ChartRange; label: string; spoken: string; days: number }
 ];
 
 /** Recent sessions shown before "Show all". */
-const RECENT = 5;
 
 // The chart's drawing area, in SVG units: room on the left for the values, below for dates
 const WIDTH = 340;
@@ -58,7 +64,7 @@ interface ChartPoint {
  */
 @Component({
     selector: 'app-exercise-progress',
-    imports: [DatePipe, RouterLink],
+    imports: [DatePipe, ProgressBestsComponent, RecentSessionsComponent],
     templateUrl: './exercise-progress.component.html',
     styleUrl: './exercise-progress.component.scss',
 })
@@ -66,7 +72,6 @@ export class ExerciseProgressComponent {
     private readonly history = inject(HistoryStore);
     private readonly settings = inject(SettingsStore);
     private readonly now = Date.now();
-    private readonly thisYear = new Date(this.now).getFullYear();
 
     readonly exerciseId = input.required<string>();
     /** For ids that are unique on the page. */
@@ -74,7 +79,6 @@ export class ExerciseProgressComponent {
 
     protected readonly unit = this.settings.weightUnit;
     protected readonly ranges = RANGES;
-    protected readonly recentCount = RECENT;
     protected readonly width = WIDTH;
     protected readonly height = HEIGHT;
     protected readonly left = LEFT;
@@ -187,24 +191,13 @@ export class ExerciseProgressComponent {
     });
 
     protected readonly tableOpen = signal(false);
-    protected readonly showAll = signal(false);
-    /** Recent sessions, newest first, with their sets as in the history. */
-    protected readonly recent = computed(() =>
-        (this.showAll() ? this.sessions() : this.sessions().slice(0, RECENT)).map((session) => ({
-            entryId: session.entryId,
-            at: session.startedAt,
-            title: session.title.trim() || 'Untitled workout',
-            lines: describeSets(session.sets, this.unit()),
-        }))
-    );
-
     protected readonly measureTitle = computed(() => {
         const measure = this.measure();
         return measure ? MEASURE_TITLES[measure] : '';
     });
 
     protected dateFormat(at: number): string {
-        return new Date(at).getFullYear() === this.thisYear ? 'd MMM' : 'd MMM y';
+        return dateFormatFor(at, this.now);
     }
 
     protected pickRange(range: ChartRange) {

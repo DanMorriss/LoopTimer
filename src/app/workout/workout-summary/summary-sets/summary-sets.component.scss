@@ -1,0 +1,83 @@
+:host {
+    display: block;
+}
+
+.summary__section {
+    margin-top: 1.5rem;
+
+    h3 {
+        margin: 0;
+        color: var(--text-strong);
+        font-size: 1.1rem;
+    }
+}
+
+.summary__section-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.summary__lines {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    line-height: 1.6;
+
+    strong {
+        color: var(--text-strong);
+        font-weight: 500;
+    }
+}
+
+.summary__group + .summary__group {
+    margin-top: 1rem;
+}
+
+.summary__group-name {
+    margin: 0 0 0.25rem;
+    color: var(--text-strong);
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+// "Set 2", then its reps and weight wheels, in columns under their headings
+.summary__set {
+    display: grid;
+    grid-template-columns: 4rem 1fr 1fr;
+    align-items: center;
+    gap: 0.5rem;
+
+    & + & {
+        margin-top: 0.4rem;
+    }
+
+    &--head {
+        color: var(--text-muted);
+        font-size: 0.8rem;
+        text-align: center;
+    }
+}
+
+.summary__set-label {
+    color: var(--text-muted);
+}
+
+.summary__next-time {
+    margin-top: 0.75rem;
+
+    p {
+        margin: 0;
+        color: var(--text-strong);
+    }
+}
+
+.summary__next-time-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
