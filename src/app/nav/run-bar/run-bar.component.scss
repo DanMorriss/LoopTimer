@@ -1,3 +1,4 @@
+@use 'type' as *;
 @use 'interaction' as *;
 
 // The same frosted capsule as the tab bar, just above it
@@ -111,7 +112,7 @@
 
 .run-bar__status {
     color: var(--text-muted);
-    font-size: 0.75rem;
+    @include small-type(0.75rem);
     font-variant-numeric: tabular-nums;
 }
 

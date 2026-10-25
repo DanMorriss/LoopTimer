@@ -1,6 +1,5 @@
 import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { userEvent } from 'vitest/browser';
 import { fakeReducedMotion } from '../../testing/fake-reduced-motion';
 import { WheelPickerComponent, WheelPickerOption } from './wheel-picker.component';
 
@@ -177,15 +176,58 @@ describe('WheelPickerComponent', () => {
             expect(valueInMiddle()).toBe(5);
         });
 
+        /** A mouse pressing, moving or letting go at `y`. */
+        function mouse(type: 'pointerdown' | 'pointermove' | 'pointerup', y: number) {
+            viewport().dispatchEvent(
+                new PointerEvent(type, {
+                    pointerType: 'mouse',
+                    pointerId: 1,
+                    button: 0,
+                    clientY: y,
+                    bubbles: true,
+                })
+            );
+        }
+
+        const middleOf = (value: number) => {
+            const rect = item(value).getBoundingClientRect();
+            return rect.top + rect.height / 2;
+        };
+
         it('turns with a mouse drag and snaps to a whole row', async () => {
             await create();
             await openByPress();
 
-            // Drag the bottom visible number (4) up to the top row (2): two rows
-            await userEvent.dragAndDrop(item(4), item(2));
+            // Drag the bottom visible number (4) up to the top row (2): two rows, held still
+            // before letting go, so nothing carries it further
+            const from = middleOf(4);
+            const to = middleOf(2);
+            mouse('pointerdown', from);
+            mouse('pointermove', (from + to) / 2);
+            mouse('pointermove', to);
+            await wait(150);
+            mouse('pointerup', to);
             await scrolled();
 
             expect(host.value()).toBe(5);
+            expect(viewport().scrollTop % rowHeight()).toBe(0);
+        });
+
+        it('carries on past where a quick mouse flick lets go, as a thrown wheel does', async () => {
+            await create();
+            await openByPress();
+
+            // A row's worth, quickly
+            const from = middleOf(4);
+            mouse('pointerdown', from);
+            for (let i = 1; i <= 4; i++) {
+                await wait(10);
+                mouse('pointermove', from - (rowHeight() + 10) * (i / 4));
+            }
+            mouse('pointerup', from - rowHeight() - 10);
+            await scrolled();
+
+            expect(host.value()).toBeGreaterThan(4);
             expect(viewport().scrollTop % rowHeight()).toBe(0);
         });
 

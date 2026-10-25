@@ -1,8 +1,10 @@
-// Dialogs over the page (the exercise editor, an exercise's details): the page dims
-// and blurs behind as the card settles into place from just smaller, on the app's spring, and
-// closing goes back the way it came. In a dialog's template, the overlay is .dialog-overlay
-// and the card .dialog-card; where it's used, the dialog's element has
-// animate.leave="dialog-leave", which keeps it on the page while it goes.
+// Dialogs over the page (the exercise editor, an exercise's details): the page dims and its
+// blur thickens behind as the card settles into place from just smaller, on the app's spring,
+// growing out of the button that opened it (growFromClick, src/app/shared/dialog-origin.ts).
+// Closing goes back the way it came: the same path, on the mirror of the curve. In a
+// dialog's template, the overlay is .dialog-overlay and the card .dialog-card; where it's
+// used, the dialog's element has animate.leave="dialog-leave", which keeps it on the page
+// while it goes.
 
 .dialog-overlay {
     animation: dialog-dim-in 0.2s ease-out;
@@ -17,28 +19,32 @@
 // than the dialog's element fading it: an ancestor part-faded would cut its blur off from the
 // page behind it, so the blur would vanish at the start of every close.
 .dialog-leave {
-    animation: dialog-leaving 0.16s;
+    animation: dialog-leaving 0.2s;
 }
 
 // On its way out it's done with, so taps go straight through to the page
 .dialog-leave .dialog-overlay {
-    animation: dialog-dim-out 0.16s ease-in forwards;
+    animation: dialog-dim-out 0.2s ease-in forwards;
     pointer-events: none;
 }
 
 .dialog-leave .dialog-card {
-    animation: dialog-card-out 0.16s ease-in forwards;
+    animation: dialog-card-out 0.2s var(--ease-spring-out) forwards;
 }
 
+// The blur is part of the material arriving, so it thickens with the dimming rather than
+// being there at full strength as the colour fades in (and thins again as it goes)
 @keyframes dialog-dim-in {
     from {
         opacity: 0;
+        backdrop-filter: blur(0);
     }
 }
 
 @keyframes dialog-dim-out {
     to {
         opacity: 0;
+        backdrop-filter: blur(0);
     }
 }
 

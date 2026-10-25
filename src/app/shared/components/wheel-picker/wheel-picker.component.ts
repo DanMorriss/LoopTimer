@@ -12,7 +12,9 @@ import {
     viewChild,
 } from '@angular/core';
 import { FormValueControl } from '@angular/forms/signals';
+import { project, rubberband, VelocityTracker } from '../../gesture';
 import { injectPrefersReducedMotion } from '../../reduced-motion';
+import { spring, springCurve } from '../../spring';
 
 export interface WheelPickerOption {
     value: number;
@@ -21,8 +23,14 @@ export interface WheelPickerOption {
     spokenLabel?: string;
 }
 
-/** How far a mouse has to move (px) before a press counts as a drag rather than a click. */
-const DRAG_THRESHOLD = 4;
+/**
+ * How far a mouse has to move (px) before a press counts as a drag rather than a click. The
+ * wheel then follows from there, rather than jumping to catch up.
+ */
+const DRAG_THRESHOLD = 10;
+
+/** How quickly a mouse-thrown wheel comes to rest on its row (Apple's spring response, s). */
+const GLIDE_RESPONSE = 0.3;
 
 /** Digits typed within this many ms of each other build one number, e.g. "4" then "5" is 45. */
 const TYPING_PAUSE = 1000;
@@ -56,6 +64,7 @@ export class WheelPickerComponent implements FormValueControl<number> {
     readonly labelledBy = input<string>();
 
     private readonly viewport = viewChild.required<ElementRef<HTMLElement>>('viewport');
+    private readonly track = viewChild.required<ElementRef<HTMLElement>>('track');
     private readonly reducedMotion = injectPrefersReducedMotion();
 
     protected readonly selectedIndex = computed(() =>
@@ -89,7 +98,12 @@ export class WheelPickerComponent implements FormValueControl<number> {
         startY: number;
         startScroll: number;
         dragging: boolean;
+        tracker: VelocityTracker;
+        /** How far (px) the numbers are stretched past an end, as the mouse pulls them. */
+        stretch: number;
     } | null = null;
+    /** The frame a mouse-thrown wheel is gliding on, while it glides to rest. */
+    private glideFrame: number | null = null;
     private settleTimer: ReturnType<typeof setTimeout> | undefined;
     /** Digits typed so far, and when the last one was typed. */
     private typed = { text: '', at: 0 };
@@ -117,7 +131,10 @@ export class WheelPickerComponent implements FormValueControl<number> {
             observer.observe(this.viewport().nativeElement);
             destroyRef.onDestroy(() => observer.disconnect());
         });
-        destroyRef.onDestroy(() => clearTimeout(this.closeTimer));
+        destroyRef.onDestroy(() => {
+            clearTimeout(this.closeTimer);
+            this.stopGlide();
+        });
     }
 
     focus(options?: FocusOptions) {
@@ -128,7 +145,7 @@ export class WheelPickerComponent implements FormValueControl<number> {
     private realign() {
         const viewport = this.viewport().nativeElement;
         // Not while pressed: opening resizes the wheel, and a finger may already be turning it
-        if (viewport.clientHeight === 0 || this.pressed) {
+        if (viewport.clientHeight === 0 || this.pressed || this.glideFrame !== null) {
             return;
         }
         const top = this.selectedIndex() * this.rowHeight();
@@ -152,7 +169,8 @@ export class WheelPickerComponent implements FormValueControl<number> {
 
     /** Scrolling has stopped: select whatever is in the middle. */
     protected settle() {
-        if (this.drag?.dragging) {
+        // A mouse drag, or the glide after one, settles itself when it's done
+        if (this.drag?.dragging || this.glideFrame !== null) {
             return;
         }
         const index = this.indexAtScroll();
@@ -181,6 +199,8 @@ export class WheelPickerComponent implements FormValueControl<number> {
     }
 
     protected onKeydown(event: KeyboardEvent) {
+        // A key mid-glide takes over, rather than the glide landing on its own row after it
+        this.endGlide();
         if (event.key === 'Escape' && this.open()) {
             event.preventDefault();
             this.close();
@@ -231,16 +251,24 @@ export class WheelPickerComponent implements FormValueControl<number> {
         this.pressed = true;
         this.openedByPress = !this.open();
         this.openWheel();
+        // Caught mid-glide: it stops where it is, under the pointer
+        this.stopGlide();
 
         // Mouse dragging. Touch and pens already scroll natively, so only the mouse needs this.
         if (event.pointerType !== 'mouse') {
+            this.viewport().nativeElement.classList.remove('wheel-picker__viewport--dragging');
             return;
         }
+        const tracker = new VelocityTracker();
+        const startScroll = this.viewport().nativeElement.scrollTop;
+        tracker.add(startScroll, event.timeStamp);
         this.drag = {
             pointerId: event.pointerId,
             startY: event.clientY,
-            startScroll: this.viewport().nativeElement.scrollTop,
+            startScroll,
             dragging: false,
+            tracker,
+            stretch: 0,
         };
     }
 
@@ -256,10 +284,21 @@ export class WheelPickerComponent implements FormValueControl<number> {
             drag.dragging = true;
             viewport.setPointerCapture(event.pointerId);
             viewport.classList.add('wheel-picker__viewport--dragging');
+            // Follow from here, rather than jumping the threshold's worth to catch up
+            drag.startY += Math.sign(moved) * DRAG_THRESHOLD;
         }
-        if (drag.dragging) {
-            viewport.scrollTop = drag.startScroll - moved;
+        if (!drag.dragging) {
+            return;
         }
+        const wanted = drag.startScroll - (event.clientY - drag.startY);
+        const end = viewport.scrollHeight - viewport.clientHeight;
+        const top = Math.min(end, Math.max(0, wanted));
+        viewport.scrollTop = top;
+        // Past either end, the numbers stretch after the pointer, resisting more the further
+        // they're pulled, rather than stopping dead
+        drag.stretch = -rubberband(wanted - top, viewport.clientHeight);
+        this.track().nativeElement.style.translate = drag.stretch ? `0 ${drag.stretch}px` : '';
+        drag.tracker.add(top, event.timeStamp);
     }
 
     /**
@@ -306,11 +345,91 @@ export class WheelPickerComponent implements FormValueControl<number> {
             return;
         }
         this.drag = null;
-        if (drag.dragging) {
-            const viewport = this.viewport().nativeElement;
+        const viewport = this.viewport().nativeElement;
+        if (!drag.dragging) {
             viewport.classList.remove('wheel-picker__viewport--dragging');
-            viewport.releasePointerCapture(event.pointerId);
+            return;
+        }
+        viewport.releasePointerCapture(event.pointerId);
+        if (drag.stretch) {
+            // Let go past an end: the numbers spring back, and the end row is chosen
+            this.springBack(drag.stretch);
+            viewport.classList.remove('wheel-picker__viewport--dragging');
             this.selectIndex(this.indexAtScroll());
+            return;
+        }
+        // Thrown: it glides on to where the flick would carry it, and rests on that row
+        const velocity = drag.tracker.velocity(event.timeStamp);
+        const last = this.options().length - 1;
+        const projected = Math.round((viewport.scrollTop + project(velocity)) / this.rowHeight());
+        this.glideTo(Math.min(last, Math.max(0, projected)), velocity);
+    }
+
+    /**
+     * Glides the wheel to the row at `index` on a spring, setting off at the mouse's `velocity`
+     * (px/s) so there's no seam where the drag let go, then selects it. A press stops it.
+     * With reduced motion it's just there.
+     */
+    private glideTo(index: number, velocity: number) {
+        const viewport = this.viewport().nativeElement;
+        const from = viewport.scrollTop;
+        const distance = index * this.rowHeight() - from;
+        const done = () => {
+            this.glideFrame = null;
+            viewport.classList.remove('wheel-picker__viewport--dragging');
+            this.selectIndex(index);
+        };
+        if (this.reducedMotion() || Math.abs(distance) < 0.5) {
+            viewport.scrollTop = from + distance;
+            done();
+            return;
+        }
+        // The spring wants speed as a share of the distance left per second. Capped where it
+        // would carry past the row: a flick clamped to an end row would otherwise run into
+        // the end of the scroll and stop dead there.
+        const omega = (2 * Math.PI) / GLIDE_RESPONSE;
+        const curve = springCurve(GLIDE_RESPONSE, {
+            velocity: Math.min(velocity / distance, omega),
+        });
+        const start = performance.now();
+        const step = (now: number) => {
+            const t = (now - start) / 1000;
+            if (t >= curve.settledAt) {
+                viewport.scrollTop = from + distance;
+                done();
+                return;
+            }
+            viewport.scrollTop = from + distance * curve.progress(t);
+            this.glideFrame = requestAnimationFrame(step);
+        };
+        this.glideFrame = requestAnimationFrame(step);
+    }
+
+    private stopGlide() {
+        if (this.glideFrame !== null) {
+            cancelAnimationFrame(this.glideFrame);
+            this.glideFrame = null;
+        }
+    }
+
+    /** Stops a glide for good, letting the rows snap again (not a press, which may drag on). */
+    private endGlide() {
+        if (this.glideFrame !== null) {
+            this.stopGlide();
+            this.viewport().nativeElement.classList.remove('wheel-picker__viewport--dragging');
+        }
+    }
+
+    /** Springs the numbers back from `stretch` px past an end. */
+    private springBack(stretch: number) {
+        const track = this.track().nativeElement;
+        track.style.translate = '';
+        if (!this.reducedMotion()) {
+            const { easing, duration } = spring(GLIDE_RESPONSE);
+            track.animate([{ translate: `0 ${stretch}px` }, { translate: '0 0' }], {
+                duration,
+                easing,
+            });
         }
     }
 

@@ -10,6 +10,11 @@
     backdrop-filter: blur(6px);
     padding: 1rem;
     z-index: 40;
+
+    // No blur where the system asks for less see-through; the dimming is darker instead
+    @media (prefers-reduced-transparency: reduce) {
+        backdrop-filter: none;
+    }
 }
 
 .details {

@@ -1,4 +1,45 @@
-import { criticallyDampedSpring } from './spring';
+import { criticallyDampedSpring, spring, springCurve } from './spring';
+
+describe('spring', () => {
+    const points = (easing: string) =>
+        easing
+            .replace(/^linear\(|\)$/g, '')
+            .split(', ')
+            .map(Number);
+
+    it('bounces past the end and back with a damping ratio under 1', () => {
+        const curve = points(spring(0.3, { dampingRatio: 0.8 }).easing);
+
+        expect(Math.max(...curve)).toBeGreaterThan(1);
+        expect(curve.at(-1)).toBe(1);
+    });
+
+    it('bounces more the lower the damping ratio', () => {
+        const peak = (dampingRatio: number) =>
+            Math.max(...points(spring(0.3, { dampingRatio }).easing));
+
+        expect(peak(0.5)).toBeGreaterThan(peak(0.8));
+    });
+
+    it('is critically damped by default', () => {
+        expect(spring(0.4)).toEqual(criticallyDampedSpring(0.4));
+    });
+});
+
+describe('springCurve', () => {
+    it('runs from 0 and comes to rest at 1', () => {
+        const { progress, settledAt } = springCurve(0.4);
+
+        expect(progress(0)).toBe(0);
+        expect(progress(settledAt)).toBeCloseTo(1, 2);
+    });
+
+    it("sets off at the speed it's handed", () => {
+        const { progress } = springCurve(0.4, { velocity: 5 });
+
+        expect(progress(0.001) / 0.001).toBeCloseTo(5, 0);
+    });
+});
 
 describe('criticallyDampedSpring', () => {
     const points = (easing: string) =>

@@ -126,6 +126,8 @@ export class WorkoutCardComponent {
     private holdTimer: ReturnType<typeof setTimeout> | undefined;
     /** The press was a swipe or a hold, so the click that ends it doesn't start the workout. */
     private swallowClick = false;
+    /** Counts presses, so a swipe's spring knows if a new press caught the card mid-way. */
+    private presses = 0;
 
     constructor() {
         inject(DestroyRef).onDestroy(() => clearTimeout(this.holdTimer));
@@ -162,6 +164,7 @@ export class WorkoutCardComponent {
             return;
         }
         this.swallowClick = false;
+        this.presses++;
         // Where it is on screen now, mid-spring included, and stop it there
         const offset = new DOMMatrix(getComputedStyle(this.face().nativeElement).transform).m41;
         this.host.nativeElement.getAnimations({ subtree: true }).forEach((a) => a.cancel());
@@ -241,8 +244,10 @@ export class WorkoutCardComponent {
         const width = this.width();
         // Where the flick would come to rest decides, not where the finger let go
         const away = gesture.offset + project(velocity) < -width / 2;
+        const press = this.presses;
         await this.springTo(away ? -width : 0, gesture.offset, velocity);
-        if (away) {
+        // Caught again on its way off: the new press has it now, so it isn't deleted
+        if (away && press === this.presses) {
             this.deleteRequested.emit();
         }
     }

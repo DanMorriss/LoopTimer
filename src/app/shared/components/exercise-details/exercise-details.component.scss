@@ -1,3 +1,4 @@
+@use 'type' as *;
 :host {
     display: block;
 }
@@ -68,7 +69,7 @@
 .exercise__note-label {
     margin: 0 0 0.2rem;
     color: var(--text-muted);
-    font-size: 0.75rem;
+    @include small-type(0.75rem);
 }
 
 .exercise__note-text {

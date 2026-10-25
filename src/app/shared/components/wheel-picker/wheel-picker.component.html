@@ -21,19 +21,22 @@
     (focusout)="onFocusOut()"
     (wheel)="onWheel()"
 >
-    @for (option of options(); track option.value; let i = $index) {
-        <div
-            class="wheel-picker__item"
-            [class.wheel-picker__item--selected]="i === selectedIndex()"
-            [attr.data-value]="option.value"
-            aria-hidden="true"
-            (click)="onItemClick(i)"
-        >
-            @if (option.label === '∞') {
-                <span class="symbol-infinity">∞</span>
-            } @else {
-                {{ option.label }}
-            }
-        </div>
-    }
+    <!-- Holds the numbers, so a mouse dragging past the ends can stretch them a little way -->
+    <div #track class="wheel-picker__track">
+        @for (option of options(); track option.value; let i = $index) {
+            <div
+                class="wheel-picker__item"
+                [class.wheel-picker__item--selected]="i === selectedIndex()"
+                [attr.data-value]="option.value"
+                aria-hidden="true"
+                (click)="onItemClick(i)"
+            >
+                @if (option.label === '∞') {
+                    <span class="symbol-infinity">∞</span>
+                } @else {
+                    {{ option.label }}
+                }
+            </div>
+        }
+    </div>
 </div>

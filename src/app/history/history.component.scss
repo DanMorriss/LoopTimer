@@ -26,7 +26,8 @@
     padding: 1rem;
     border: 1px solid var(--panel-border);
     border-radius: 0.9rem;
-    background: var(--panel-alt);
+    // A card on the panel, as the exercises page's body map is
+    background: var(--card);
 }
 
 .history__muscles-title {

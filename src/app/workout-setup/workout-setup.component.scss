@@ -93,6 +93,9 @@
     font-size: 0.8rem;
     cursor: pointer;
 
+    // 32px drawn, 44px to a finger
+    @include hit-area(6px);
+
     @include hover {
         background: var(--control);
     }
@@ -114,12 +117,13 @@
     line-height: 18px;
 }
 
-// A shared .menu (styles/_menu.scss); above the steps below it
+// A shared .menu (styles/_menu.scss); above the steps below it, growing from under the pill
 .step__kind-menu {
     position: absolute;
     top: calc(100% + 0.2rem);
     left: 0;
     z-index: 10;
+    transform-origin: top left;
 }
 
 .step__kind-option {
@@ -151,7 +155,6 @@
     font-size: 0.9rem;
 }
 
-// A one-row grid, so opening and closing can animate its height from 0fr to 1fr
 .step__body {
     display: grid;
     grid-template-rows: 1fr;
@@ -166,30 +169,16 @@
     padding-top: 0.75rem;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-    .step__body--opening {
-        animation: step-body-open 0.2s ease-out;
-    }
-
-    .step__body--closing {
-        animation: step-body-open 0.15s ease-in reverse;
-    }
-
-    // Clipped only while moving, so focus outlines aren't cut off the rest of the time
-    .step__body--opening > .step__body-inner,
-    .step__body--closing > .step__body-inner {
-        overflow: hidden;
-    }
+// Opening, it takes its full height at once, and what's below slides down out of its way
+// (WorkoutSetupComponent.toggleStep): only opacity and transforms animate, never its height,
+// which would lay the page out again every frame. A fade, so it stays with reduced motion.
+.step__body--opening {
+    animation: step-body-in 0.2s ease-out;
 }
 
-@keyframes step-body-open {
+@keyframes step-body-in {
     from {
-        grid-template-rows: 0fr;
         opacity: 0;
-    }
-    to {
-        grid-template-rows: 1fr;
-        opacity: 1;
     }
 }
 

@@ -1,6 +1,6 @@
 <div class="flex justify-center">
     <div
-        class="m-4 w-full max-w-md rounded-xl border border-(--panel-border) bg-(--panel) p-6 shadow-xl shadow-(color:--shadow) backdrop-blur-sm"
+        class="m-4 w-full max-w-md rounded-xl border border-(--panel-border) bg-(--panel) p-6 shadow-xl shadow-(color:--shadow)"
     >
         <form [formRoot]="workoutForm">
             <label class="picker-field" for="title">
@@ -81,11 +81,13 @@
                         [class.step--collapsed]="!expanded"
                         cdkDrag
                     >
-                        <!-- What follows the pointer: a compact card, as the wheels don't copy well -->
+                        <!-- What follows the pointer: a compact card, as the wheels don't copy well.
+                             Held where the step was grabbed (grabbedAt), not by its corner. -->
                         <div
                             class="step-preview"
                             [class.step--rest]="kind === 'rest'"
                             [class.step--reps]="kind === 'reps'"
+                            [style.translate]="-grabbedAt().x + 'px ' + -grabbedAt().y + 'px'"
                             *cdkDragPreview
                         >
                             <span class="step__badge">{{ kindName(kind) }}</span>
@@ -102,6 +104,7 @@
                                 cdkDragHandle
                                 aria-hidden="true"
                                 title="Drag to reorder"
+                                (pointerdown)="grabStep($event)"
                             >
                                 <mat-icon>drag_indicator</mat-icon>
                             </span>
@@ -132,6 +135,7 @@
                                 @if (kindMenuFor() === key) {
                                     <div
                                         class="menu step__kind-menu"
+                                        animate.leave="menu--leaving"
                                         [id]="'step-' + key + '-kinds'"
                                         role="group"
                                         [attr.aria-label]="'Type of step ' + (i + 1)"
@@ -226,12 +230,12 @@
                         </div>
 
                         @if (expanded) {
-                            <!-- Slides open and shut; the inner div is what gets clipped meanwhile -->
+                            <!-- Fades in as it opens, while what's below slides down to make room
+                                 (and back up as it shuts): toggleStep -->
                             <div
                                 class="step__body"
                                 [id]="'step-' + key + '-body'"
                                 animate.enter="step__body--opening"
-                                animate.leave="step__body--closing"
                             >
                                 <div class="step__body-inner">
                                     @if (kind === 'rest') {

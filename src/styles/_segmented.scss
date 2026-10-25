@@ -40,7 +40,8 @@
     // The lighter tint, so the label keeps 4.5:1 in the light theme
     background: var(--accent-soft);
     transform: translateX(calc(var(--chosen) * (100% + var(--gap))));
-    transition: transform 0.25s ease;
+    // On the app's spring, as the tab bar's highlight, which looks the same, moves
+    transition: transform var(--spring-duration) var(--ease-spring);
     pointer-events: none;
 }
 

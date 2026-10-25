@@ -40,19 +40,21 @@
 
 - **Add step** (shown as "+ Step") adds a **rep step** at the end, opens it (closing the others) and puts the cursor in its name box.
 - **Changing kind:** a step's kind pill (e.g. "REPS") opens a menu of Reps, Timed and Rest, with the current one ticked. Picking one changes the step, open or collapsed, and focus goes back to the pill. The step keeps its name, exercise and numbers, so changing back finds them; only those its kind uses are saved. Escape, a click elsewhere or tabbing away closes the menu.
-- A step can be moved up or down one place with buttons, or dragged by its handle. The first step can't move up; the last can't move down.
+- A step can be moved up or down one place with buttons, or dragged by its handle. The first step can't move up; the last can't move down. A dragged step shows as a compact card held where the handle was grabbed, so it doesn't jump under the pointer.
 - **Deleting** a step happens at once. For one with a name, time or reps, the **Undo bar** says "Deleted Step 2, Squats, 00:45" with **Undo**, which puts it back where it was (see [home-and-navigation](home-and-navigation.md#undo)); an empty one (no name, no time or reps) has nothing to undo.
 
 ### Collapsing
 
 - Each step can be **open** (name box and wheels) or **collapsed** to one line: its name (or kind) and time, e.g. "Squats 00:45" or "Push-ups 20 reps".
 - **Expand all / Collapse all** opens or closes every step at once.
+- Opening or closing, the steps and everything under them **slide** to their new places on a spring with no bounce, and an opening step's name box and wheels fade in. With reduced motion they move at once, and the fade stays.
 - A step opens as it's added. A saved workout opens with every step collapsed, so the whole workout is in view.
 
 ### Picking numbers
 
 - Times, reps, weights and rounds are picked on **wheels** like iPhone pickers: swipe, scroll or drag, tap a number, or type one. Whatever sits in the middle is selected.
-- The rounds wheel ends with **∞** after 30. Next to it, an **Until stopped** switch turns the wheel to ∞; turning it off goes back to the number of rounds picked before.
+- Dragged with a mouse, a wheel follows once the pointer has moved 10px. Flicked, it glides on as far as the flick would carry it and settles on that row; pulled past either end, the numbers stretch and spring back. (Touch already scrolls this way.)
+- The rounds wheel ends with **∞** after 30. Next to it, an **Until stopped** switch turns the wheel to ∞; turning it off goes back to the number of rounds picked before. The switch shrinks a little as it's pressed.
 
 ### Time limit (BLD-8)
 
@@ -100,5 +102,5 @@
 
 ## Platform notes
 
-- **Web:** the form is `WorkoutSetupComponent` (`src/app/workout-setup/`), at `/setup`, or `/setup?editId=<id>` to edit. The wheels are `WheelPickerComponent`. Rounds or Time limit is the shared segmented control (`src/styles/_segmented.scss`, also settings' theme). Rules for what counts as a valid workout are in `src/app/models/workout.ts`.
+- **Web:** the form is `WorkoutSetupComponent` (`src/app/workout-setup/`), at `/setup`, or `/setup?editId=<id>` to edit. The wheels are `WheelPickerComponent`. Opening and closing steps slide with `captureLayout()` (`src/app/shared/layout-change.ts`), moving only transforms rather than animating heights. Rounds or Time limit is the shared segmented control (`src/styles/_segmented.scss`, also settings' theme). Rules for what counts as a valid workout are in `src/app/models/workout.ts`.
 - **iOS:** the kind pill maps onto a `Menu` (or a `Picker` with `.menu` style) labelled with the kind; the Steps tip onto a `.popover` or `.help()` on an `info.circle` button. The wheels map directly onto `Picker` with `.wheel` style. Drag to reorder maps onto `List` with `onMove`; swipe to delete is the iOS habit, but keep the "ask first if it has something in it" rule.

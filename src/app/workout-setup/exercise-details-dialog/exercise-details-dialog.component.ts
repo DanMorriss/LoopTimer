@@ -1,8 +1,9 @@
 import { CdkTrapFocus } from '@angular/cdk/a11y';
-import { Component, input, output } from '@angular/core';
+import { afterNextRender, Component, ElementRef, input, output, viewChild } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { ExerciseDetailsComponent } from '../../shared/components/exercise-details/exercise-details.component';
 import { Exercise } from '../../models/exercise';
+import { growFromClick } from '../../shared/dialog-origin';
 
 /**
  * The exercise picked for a step, in full, so you can see it's the one you want (EXR-11):
@@ -20,6 +21,7 @@ import { Exercise } from '../../models/exercise';
             (keydown.escape)="closed.emit()"
         >
             <div
+                #card
                 class="details dialog-card"
                 cdkTrapFocus
                 [cdkTrapFocusAutoCapture]="true"
@@ -61,4 +63,11 @@ export class ExerciseDetailsDialogComponent {
     readonly closed = output<void>();
     /** Back to the step's name box, to choose a different exercise. */
     readonly pickAnother = output<void>();
+
+    private readonly card = viewChild.required<ElementRef<HTMLElement>>('card');
+
+    constructor() {
+        // Grows out of the Details button that opened it, and shrinks back into it
+        afterNextRender(() => growFromClick(this.card().nativeElement));
+    }
 }

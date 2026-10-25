@@ -37,7 +37,10 @@ import {
 import { bestLines } from '../../exercises/progress-format';
 import { project, rubberband, VelocityTracker } from '../../shared/gesture';
 import { injectPrefersReducedMotion } from '../../shared/reduced-motion';
-import { criticallyDampedSpring } from '../../shared/spring';
+import { spring } from '../../shared/spring';
+
+/** px/s: let go faster than this, the sheet was thrown rather than set down. */
+const THROWN = 300;
 
 /** One rep step's sets, for correcting them one by one. */
 interface SetGroup {
@@ -257,11 +260,32 @@ export class WorkoutSummaryComponent {
         offset: number;
         tracker: VelocityTracker;
     } | null = null;
+    /** Counts grabs, so a spring knows if a new grab caught the sheet mid-way. */
+    private grabs = 0;
+    /** The sheet's content is scrolled to the top, so its heading can drag it too. */
+    private readonly atTop = signal(true);
+    /** On a phone, the sheet's heading and title drag it while it's scrolled to the top. */
+    protected readonly headDraggable = computed(() => !this.finished() && this.atTop());
+
+    protected onBodyScroll(event: Event) {
+        this.atTop.set((event.target as HTMLElement).scrollTop <= 0);
+    }
+
+    /** A press on the heading or title: a grab, where the grabber would take one. */
+    protected grabByHead(event: PointerEvent) {
+        // Only where the styles hand the finger to the sheet (on a phone: a card on a wider
+        // screen isn't dragged, as it has no grabber), so the breakpoint lives in one place
+        const head = event.currentTarget as Element;
+        if (this.headDraggable() && getComputedStyle(head).touchAction === 'none') {
+            this.grab(event);
+        }
+    }
 
     protected grab(event: PointerEvent) {
         if (event.pointerType === 'mouse' && event.button !== 0) {
             return;
         }
+        this.grabs++;
         const sheet = this.sheet().nativeElement;
         // Where it is on screen now, mid-spring included, and stop it there
         const offset = new DOMMatrix(getComputedStyle(sheet).transform).m42;
@@ -304,8 +328,12 @@ export class WorkoutSummaryComponent {
         const height = this.height();
         // Where the flick would come to rest decides, not where the finger let go
         const away = dragging.offset + project(velocity) > height / 2;
-        await this.springTo(away ? height : 0, dragging.offset, velocity);
-        if (away) {
+        const grab = this.grabs;
+        // Flicked back up, it settles home with a little bounce, as something thrown does
+        const thrown = !away && velocity < -THROWN;
+        await this.springTo(away ? height : 0, dragging.offset, velocity, thrown ? 0.8 : 1);
+        // Caught again on its way down: it follows the finger instead of going
+        if (away && grab === this.grabs) {
             this.draggedAway.set(true);
             this.leave('back');
         }
@@ -330,15 +358,16 @@ export class WorkoutSummaryComponent {
      * Springs the sheet from `from` to `to` px down, setting off at the finger's `velocity`
      * (px/s), so there's no seam where the drag lets go. With reduced motion it's just there.
      */
-    private async springTo(to: number, from: number, velocity: number) {
+    private async springTo(to: number, from: number, velocity: number, dampingRatio = 1) {
         const distance = to - from;
         this.moveTo(to);
         if (this.reducedMotion() || Math.abs(distance) < 1) {
             return;
         }
         // The spring wants speed as a share of the distance left per second
-        const { easing, duration } = criticallyDampedSpring(0.3, {
+        const { easing, duration } = spring(0.3, {
             velocity: velocity / distance,
+            dampingRatio,
         });
         const timing = { duration, easing };
         // The dimming behind, on the host's ::before, fades with it

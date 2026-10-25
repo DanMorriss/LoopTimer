@@ -150,6 +150,9 @@
     white-space: nowrap;
     cursor: pointer;
 
+    // 36px drawn, 44px to a finger
+    @include hit-area(4px);
+
     @include hover {
         background: var(--control-hover);
     }
@@ -234,8 +237,10 @@
         background: var(--control-hover);
     }
 
+    // Lit at once on the press, fading back after
     @include pressed {
         background: var(--control-hover);
+        transition-duration: 0s;
     }
 
     &:focus-visible {
@@ -266,12 +271,12 @@
     border: 1px solid var(--reps);
     border-radius: 999px;
     color: var(--text);
-    font-size: 0.65rem;
+    @include small-type(0.65rem);
 }
 
 .exercise-card__also {
     color: var(--text-muted);
-    font-size: 0.75rem;
+    @include small-type(0.75rem);
 }
 
 .exercise-card__details {
@@ -287,12 +292,12 @@
     border-radius: 999px;
     background: var(--muscle-main);
     color: var(--muscle-main-ink);
-    font-size: 0.7rem;
+    @include small-type(0.7rem);
 }
 
 .exercise-card__equipment {
     color: var(--text-muted);
-    font-size: 0.75rem;
+    @include small-type(0.75rem);
 }
 
 // Latest and best (PRG-3), once it's been done in a workout
@@ -301,7 +306,7 @@
     flex-wrap: wrap;
     gap: 0.15rem 0.9rem;
     color: var(--text);
-    font-size: 0.75rem;
+    @include small-type(0.75rem);
 }
 
 .exercise-card__progress-label {

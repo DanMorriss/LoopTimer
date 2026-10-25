@@ -1,3 +1,5 @@
+@use 'interaction' as *;
+
 $off-color: var(--control-off); // 3:1 or more against the box, as a control's state must be
 $on-color: var(--glow);
 // The loop the dot follows: the same path as the SVG, in the loop box's own pixels
@@ -9,8 +11,10 @@ $loop-path: path(
     display: block;
 }
 
-// Styled like the wheel picker beside it, and the same height as it is closed (one row)
+// Styled like the wheel picker beside it, and the same height as it is closed (one row).
+// It shrinks a little the moment it's pressed, as every button does.
 .infinity-switch {
+    @include pressed-scale(0.97);
     box-sizing: content-box;
     display: flex;
     width: 100%;
@@ -26,6 +30,7 @@ $loop-path: path(
     color: var(--text-muted);
     font: inherit;
     cursor: pointer;
+    transition: scale 0.2s ease-out;
 
     &:focus-visible {
         outline: 2px solid var(--accent);
@@ -39,7 +44,8 @@ $loop-path: path(
         // Turning on fades in; turning off has no transition, so it greys at once
         transition:
             border-color 0.3s ease,
-            box-shadow 0.3s ease;
+            box-shadow 0.3s ease,
+            scale 0.2s ease-out;
     }
 }
 
@@ -117,6 +123,7 @@ $loop-path: path(
 }
 
 @media (prefers-reduced-motion: reduce) {
+    .infinity-switch,
     .infinity-switch--on,
     .infinity-switch--on .infinity-switch__track path,
     .infinity-switch--on .infinity-switch__dot {

@@ -11,6 +11,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
 import { Workout } from '../models/workout';
 import { WorkoutCardComponent } from './workout-card/workout-card.component';
+import { changeSmoothly } from '../shared/layout-change';
 import { ActiveRunService } from '../shared/run/active-run.service';
 import { WorkoutStore } from '../shared/state/workout-store.service';
 import { UndoService } from '../shared/undo/undo.service';
@@ -38,13 +39,14 @@ export class WorkoutLibraryComponent {
      */
     deleteWorkout(workout: Workout) {
         const index = this.workoutStore.workouts().findIndex((w) => w.id === workout.id);
-        this.workoutStore.deleteWorkout(workout.id);
+        // The cards after it close up the gap, and open it again on Undo, rather than jumping
+        this.smoothChange(() => this.workoutStore.deleteWorkout(workout.id));
         this.openWorkoutMenuId.set(null);
         const name = workout.title.trim();
         this.undo.offerUndo({
             message: name ? `Deleted "${name}"` : 'Deleted a workout',
             undo: () => {
-                this.workoutStore.restoreWorkout(workout, index);
+                this.smoothChange(() => this.workoutStore.restoreWorkout(workout, index));
                 this.focusAfterRender(`[data-menu-for="${workout.id}"]`);
             },
             // "Add workout" goes once the library is empty, and "Create a workout" takes its place
@@ -74,6 +76,11 @@ export class WorkoutLibraryComponent {
         }
         this.openWorkoutMenuId.set(null);
         this.focusAfterRender(`[data-menu-for="${workoutId}"]`);
+    }
+
+    /** Makes a change to the list, with the cards sliding to their new places. */
+    private smoothChange(change: () => void) {
+        changeSmoothly(this.host.nativeElement, '.workout-card', this.injector, change);
     }
 
     // The element that had focus is removed when a menu or dialog closes,

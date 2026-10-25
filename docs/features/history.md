@@ -54,6 +54,7 @@
 ### Delete and Undo
 
 - **Delete** removes the entry at once, and the **Undo bar** says "Deleted Sprints" with **Undo** (see [home-and-navigation](home-and-navigation.md#undo)). Undo puts it back, note and all.
+- The entries and days after it **slide** up to close the gap, and back down on Undo as it fades back in (at once with reduced motion, the fade staying).
 - A deleted entry **stays deleted** even if its run is still going and later finishes, or the app is closed (which would otherwise log it again). Only Undo brings it back.
 
 ## Acceptance criteria
@@ -75,5 +76,5 @@
 
 ## Platform notes
 
-- **Web:** `HistoryStore` (`src/app/shared/state/history-store.service.ts`) and `HistoryComponent` (`src/app/history/`), at `/history`. The history is saved in IndexedDB (`history-database.ts`; see [data](data.md#history-the-history)) and loads in the background, so `/history` and `/exercises/:id` wait for it to open, and a backup waits for it too; `?run=<id>` comes from the workout summary. Formatting is in `src/app/history/history-format.ts`.
+- **Web:** `HistoryStore` (`src/app/shared/state/history-store.service.ts`) and `HistoryComponent` (`src/app/history/`), at `/history`. The history is saved in IndexedDB (`history-database.ts`; see [data](data.md#history-the-history)) and loads in the background, so `/history` and `/exercises/:id` wait for it to open, and a backup waits for it too; `?run=<id>` comes from the workout summary. Formatting is in `src/app/history/history-format.ts`. The list closes up and opens out around a deleted entry with `captureLayout()` (`src/app/shared/layout-change.ts`).
 - **iOS:** SwiftData (or a JSON file) for entries, with no cap. Swipe to delete with an Undo toast is the iOS habit. The date groups should follow the user's locale, as they do on the web.

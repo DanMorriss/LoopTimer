@@ -20,13 +20,33 @@
             (pointercancel)="letGo($event)"
         ></div>
     }
-    <div class="summary__body">
-        <!-- Focus starts here, so it's read from the top -->
-        <h2 id="summary-heading" class="summary__heading" tabindex="-1" cdkFocusInitial>
+    <div class="summary__body" (scroll)="onBodyScroll($event)">
+        <!-- Focus starts here, so it's read from the top. Scrolled to the top, the heading and
+             title drag the sheet too, as a sheet's top does on a phone -->
+        <h2
+            id="summary-heading"
+            class="summary__heading"
+            [class.summary__head--draggable]="headDraggable()"
+            tabindex="-1"
+            cdkFocusInitial
+            (pointerdown)="grabByHead($event)"
+            (pointermove)="drag($event)"
+            (pointerup)="letGo($event)"
+            (pointercancel)="letGo($event)"
+        >
             {{ heading() }}
         </h2>
         @if (title()) {
-            <p class="summary__title">{{ title() }}</p>
+            <p
+                class="summary__title"
+                [class.summary__head--draggable]="headDraggable()"
+                (pointerdown)="grabByHead($event)"
+                (pointermove)="drag($event)"
+                (pointerup)="letGo($event)"
+                (pointercancel)="letGo($event)"
+            >
+                {{ title() }}
+            </p>
         }
 
         @if (entry()) {
