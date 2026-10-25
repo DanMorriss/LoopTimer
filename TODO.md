@@ -10,7 +10,7 @@ Do these first: everything after builds on them. The data is ready for sync (#81
 
 ### Phase 2: Feedback in the workout
 
-Making it clearer which part of the workout is happening, as agreed with Dan on 2026-10-22, is done: Pause and End workout (Stop is gone from the running screen), the workout summary (RUN-7) with Back to workout and "Use these settings next time?", "Next:" pulsing in a step's last seconds, and each step sliding in like the number wheels (sideways for a new round). So are "Last time" on each rep step (PRG-1) and personal bests on the workout summary (PRG-2). A different look per step type is under Design. Phase 2 is done.
+Making it clearer which part of the workout is happening, as agreed with Dan on 2026-10-22, is done: Pause and End workout (Stop is gone from the running screen), the workout summary (RUN-7) with Back to workout and "Use these settings next time?", "Next:" pulsing in a step's last seconds, and each step rolling in on a drum like the number wheels (sideways for a new round). So are "Last time" on each rep step (PRG-1) and personal bests on the workout summary (PRG-2), and a different look per step type: an icon each, work's ring tip and last-second pops, rest's gentle settling in and breathing with what's after it on the face, the big rep count and Done's swell, long names fitted to the circle, the step strip, and the whole workout's time left. Phase 2 is done.
 
 ### Phase 3: Progress pages
 
@@ -29,6 +29,10 @@ Timed sets are logged now (a set per timed work step of an exercise that runs to
 
 - [ ] **Suggested next weight (PRG-5):** double progression, as drafted in `docs/features/progress.md`.
 
+### Your data (any time)
+
+- [ ] **A prompt for bringing in a workout plan with AI:** someone with a plan already (from a coach, a book or a spreadsheet) could give it to an AI agent and have it turned into a file LoopTimer can import. Settings → Your data offers a prompt to copy for that: it describes the import format (see `docs/features/data.md`), so the agent writes workouts, steps and exercises that import cleanly, using built-in exercise names where they match. Check first what Import needs from such a file (e.g. ids and `updatedAt`, or a whole backup) and whether it should be eased for hand-made files; add it to `docs/features/settings.md` and `docs/features/backup-and-sync.md`.
+
 ### Alarms (any time)
 
 - [ ] **Alarm sound files:** swap the beeps generated in code (`AlarmService`) for proper sounds. Waiting on Dan to supply the files.
@@ -37,7 +41,7 @@ Timed sets are logged now (a set per timed work step of an exercise that runs to
 
 ## 2. Design
 
-- [ ] **A different look per step type on the workout page:** timed, rep and rest steps could each have their own look or motion (e.g. the "Next:" line rising into the ring and becoming the new label). The slides are in (`workout-motion.scss`), so this can be picked up whenever Dan wants.
+- [ ] **Tone down the main button's glow:** the glow under the main button (e.g. **+ Add workout** in the library; `.btn-main` in `src/styles/_buttons.scss`, two glows underneath, one tight and one wide) is a little too strong. Try a few versions side by side with Dan, e.g. a softer or smaller wide glow, the tight glow only, or a tinted shadow, in both themes, then pick one.
 
 ### Apple-style design review
 
@@ -47,7 +51,7 @@ From reviews against Apple's WWDC design talks (Designing Fluid Interfaces, Prin
     - A `theme-color` per theme, and a manifest so it looks installed from the Home Screen (`viewport-fit=cover` is in, with the tab bar).
     - Lift a dragged step (a slight grow and a deeper shadow).
     - Make Done feel finished: fill the ring, with the sound and a vibration on the same frame.
-    - Check the beep, vibration and the face's slide all fire from the same tick in `ActiveRunService`.
+    - Check the beep, vibration and the face's roll to the next step all fire from the same tick in `ActiveRunService`.
 
 ## 3. Known issues
 

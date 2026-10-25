@@ -1,0 +1,52 @@
+:host {
+    display: block;
+}
+
+.step-strip {
+    display: flex;
+    justify-content: center;
+    gap: 0.25rem;
+    width: min(16rem, 80vw);
+}
+
+// To go: an outline in the step's colour. Done: filled, but quieter. In progress: filled,
+// taller, with a glow, like the round's dot.
+.step-strip__step {
+    flex: 0 1 2.5rem;
+    height: 0.4rem;
+    border: 1.5px solid var(--step-color);
+    border-radius: 999px;
+    transition:
+        background-color 0.3s ease,
+        opacity 0.3s ease,
+        transform 0.3s ease;
+
+    &--work {
+        --step-color: var(--work);
+    }
+
+    &--rest {
+        --step-color: var(--rest);
+    }
+
+    &--reps {
+        --step-color: var(--reps);
+    }
+
+    &--done {
+        background: var(--step-color);
+        opacity: 0.45;
+    }
+
+    &--current {
+        background: var(--step-color);
+        box-shadow: 0 0 6px var(--step-color);
+        transform: scaleY(1.6);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .step-strip__step {
+        transition: none;
+    }
+}

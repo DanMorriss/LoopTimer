@@ -10,9 +10,12 @@
         <!-- Fixed-height slot, so the ring doesn't jump when this line changes -->
         <!-- Read out by screen readers when the phase changes; the countdown itself stays quiet -->
         <div class="sr-only" aria-live="polite" aria-atomic="true">{{ announcement() }}</div>
-        <div class="workout-status text-(--text-strong)">
+        <div
+            class="workout-status text-(--text-strong)"
+            [class.workout-status--steps]="stepStrip().length"
+        >
             @if (isComplete() === false) {
-                <!-- Keyed by round: a new round's line slides in from the right -->
+                <!-- Keyed by round: a new round's line turns in from the right, on a drum -->
                 @for (slide of roundSlides(); track slide.key) {
                     <div
                         class="workout-status__round"
@@ -41,10 +44,24 @@
                                     round {{ slide.round }} of {{ slide.totalRounds }}
                                 </p>
                             }
-                            <!-- The same count as the line above, as a picture: rounds done, this one, and those to go -->
-                            @if (slide.dots.length) {
-                                <app-round-dots [dots]="slide.dots" />
-                            }
+                        }
+                        <!-- The same count as the round line, as a picture: rounds done, this
+                             one, and those to go; and the time left of a workout of timed steps -->
+                        @if (slide.dots.length || slide.totalLeft) {
+                            <div class="workout-status__progress">
+                                @if (slide.dots.length) {
+                                    <app-round-dots [dots]="slide.dots" />
+                                }
+                                @if (slide.totalLeft) {
+                                    <p class="workout-status__time-left">
+                                        {{ slide.totalLeft }} left
+                                    </p>
+                                }
+                            </div>
+                        }
+                        <!-- The round's steps in their colours, and which one it's on -->
+                        @if (slide.strip.length) {
+                            <app-step-strip [steps]="slide.strip" />
                         }
                     </div>
                 }
@@ -65,6 +82,7 @@
                         [class]="{
                             'flash-fade': isWorkActive(),
                             'flash-fade-blue': isRestActive(),
+                            'workout-face--rest': isRestActive(),
                             'bg-sky-50/50': isComplete(),
                             'workout-face--reps': isRepsActive(),
                             'workout-face--paused': isPaused(),
@@ -72,27 +90,32 @@
                             'workout-face--new-round': newRound(),
                         }"
                     >
-                        <!-- Keyed by step: the last step's text slides up and out as the next
-                             one's slides in from below, like the number wheels; a new round
-                             slides right to left instead -->
+                        <!-- Keyed by step: the last step's text rolls away over the top as the
+                             next one's rolls up from below, as if on a drum like the number
+                             wheels; a new round turns right to left instead, and rest settles
+                             in more gently -->
                         @for (slide of faceSlides(); track slide.key) {
                             <div
                                 class="workout-face__content"
+                                [attr.data-step]="slide.key"
                                 animate.enter="face-in"
                                 animate.leave="face-out"
                             >
                                 @if (!slide.complete) {
-                                    <!-- Unnamed work shows just the time; the empty line keeps it centred -->
-                                    <p
-                                        class="workout-face__label"
-                                        [class.text-transparent]="!slide.label"
-                                        [attr.aria-hidden]="!slide.label || null"
-                                    >
-                                        {{ slide.label || 'Timed' }}
-                                    </p>
+                                    <!-- The kind's icon, on its own line, so it isn't told by colour
+                                         alone. Unnamed work shows just that above the time. -->
+                                    <mat-icon class="workout-face__kind" aria-hidden="true">{{
+                                        slide.icon
+                                    }}</mat-icon>
+                                    @if (slide.label) {
+                                        <p class="workout-face__label">{{ slide.label }}</p>
+                                    }
                                     @if (slide.reps !== null) {
+                                        <!-- No clock to compete with, so the count is the big thing -->
                                         <p>
-                                            {{ slide.reps }}
+                                            <span class="workout-face__count">{{
+                                                slide.reps
+                                            }}</span>
                                             <span class="workout-face__reps">reps</span>
                                         </p>
                                         @if (slide.weight) {
@@ -101,12 +124,21 @@
                                         @if (lastTime()) {
                                             <p class="workout-face__last-time">{{ lastTime() }}</p>
                                         }
+                                    } @else if (slide.pop) {
+                                        <!-- A fresh element each second, so it pops each time -->
+                                        @for (time of [slide.time]; track time) {
+                                            <p class="workout-face__pop">
+                                                <app-clock-digits [time]="time" />
+                                            </p>
+                                        }
                                     } @else {
                                         <p><app-clock-digits [time]="slide.time" /></p>
                                     }
-                                    @if (slide.step) {
-                                        <p class="workout-face__step">
-                                            {{ slide.step }}
+                                    <!-- What's after the rest, to get ready for. "Next:" says it
+                                         to screen readers. -->
+                                    @if (slide.then) {
+                                        <p class="workout-face__then" aria-hidden="true">
+                                            then {{ slide.then }}
                                         </p>
                                     }
                                 } @else {

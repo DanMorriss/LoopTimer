@@ -14,7 +14,7 @@
     - Rep steps add the count, and the weight if there is one: "Push-ups, 20 reps", "Squats, 10 reps at 60 kg".
     - "last round" in place of the count in the final round (but "round 1 of 1" for a one-round workout); "round 4" with no total when it runs until stopped.
     - "Paused" when paused; "Finished" at the end.
-- ∞ is read as "until stopped". The round dots are hidden (the announcements say the same).
+- ∞ is read as "until stopped". The round dots, the step strip and each step's kind icon are hidden (the announcements say the same), and so is what's after a rest on the face, which "Next:" says.
 - The ring reports progress through the step as a percentage, or "Waiting for Done" on a rep step.
 - Icon buttons have names (Pause, Resume, Done, Options for …). Visible captions repeat them, hidden from screen readers.
 - Wheels are spin buttons named by their step, e.g. "Step 2, rest, Seconds", reporting their value and range.
@@ -38,11 +38,11 @@
 
 ### Motion and colour
 
-- With **reduced motion**: looping animations stop (the "Next:" pulse too, leaving its coloured border, and the face's last-seconds pulse, leaving its tint), the logo shows drawn at once, wheels jump rather than glide, a new step or round crossfades rather than sliding, Pause and Resume swap rather than glide, the workout opens and closes without growing out of its bar, dialogs and menus fade without growing or shrinking, the summary appears and goes without rising or sinking, a mouse-flicked wheel lands at once, switches' knobs jump across, lists close up (or open out) at once rather than sliding, with a row put back or a step's content fading in, and themes change without a fade.
+- With **reduced motion**: looping animations stop (the "Next:" pulse too, leaving its coloured border, the face's last-seconds pulse, leaving its tint, and rest's breathing), a timed step's last seconds don't pop and Done doesn't swell as a rep step comes round, the logo shows drawn at once, wheels jump rather than glide, a new step or round crossfades rather than rolling in, Pause and Resume swap rather than glide, the workout opens and closes without growing out of its bar, dialogs and menus fade without growing or shrinking, the summary appears and goes without rising or sinking, a mouse-flicked wheel lands at once, switches' knobs jump across, lists close up (or open out) at once rather than sliding, with a row put back or a step's content fading in, and themes change without a fade.
 - **Pressing** a button shows at once, while the finger or mouse button is still down: buttons shrink a little, switches' knobs swell, and menu and list rows light up. Hover looks only show where there's a mouse or trackpad, so on a phone they don't stick after a tap.
 - Controls drawn smaller than a fingertip (chips, the chart's range buttons, the ⓘ and step-kind buttons, a muscle's ✕) take presses **44px** across, without changing how they look.
 - With **reduced transparency**, panels and cards are solid and the dimming behind dialogs is darker with no blur; with **more contrast**, panels and cards get a control's border. The bars along the bottom do both too.
-- Every page meets **WCAG 2.1 AA** in both themes: text at least 4.5:1 against what it sits on, controls and the ring at least 3:1. Nothing relies on colour alone (e.g. switches say On or Off).
+- Every page meets **WCAG 2.1 AA** in both themes: text at least 4.5:1 against what it sits on, controls and the ring at least 3:1. Nothing relies on colour alone (e.g. switches say On or Off, and each kind of step has its own icon as well as its colour).
 
 ## Acceptance criteria
 
