@@ -1,5 +1,5 @@
 import { DOCUMENT, inject, Service } from '@angular/core';
-import { linkSets, linkSteps } from '../../models/exercise-links';
+import { linkSets, linkSteps, sameExercisesHere } from '../../models/exercise-links';
 import { HistoryEntry } from '../../models/history';
 import { Workout } from '../../models/workout';
 import { DeletionStore } from '../state/deletion-store.service';
@@ -88,7 +88,9 @@ export class BackupService {
      * own, note and hidden exercise wins, and what was deleted where the backup came from is deleted here,
      * unless it's changed here since. Exercises come first, so the workouts and history entries can be
      * linked to them: steps and sets that aren't linked yet (from a file before version 3, or
-     * to an exercise that isn't here) are linked by name, as saved data is. Settings in the
+     * to an exercise that isn't here) are linked by name, as saved data is. An exercise of your
+     * own in the file with the same name as one here, under another id, is taken to be that
+     * one: the one here is kept, and what in the file used the other id uses its id. Settings in the
      * file are left out, since they're a choice for each device.
      */
     async import(file: Blob): Promise<ImportResult> {
@@ -106,11 +108,27 @@ export class BackupService {
             return backup;
         }
         await this.history.ready;
-        const exercises = this.exercises.mergeOwn(backup.exercises, backup.deleted);
-        this.exercises.mergeNotes(backup.exerciseNotes, backup.deleted);
-        this.exercises.mergeHidden(backup.hiddenExercises, backup.deleted);
-        const linkedWorkouts = backup.workouts.map((workout) => this.linked(workout));
-        const linkedHistory = backup.history.map((entry) => this.linkedSets(entry));
+        // An exercise typed on both devices is one exercise: the one here, under its id here
+        const sameHere = sameExercisesHere(
+            backup.exercises,
+            this.exercises.exercises(),
+            (id) => this.deletions.deletedAt('exercise', id) !== undefined
+        );
+        const idHere = (id: string) => sameHere.get(id) ?? id;
+        const exercises = this.exercises.mergeOwn(
+            backup.exercises.filter((exercise) => !sameHere.has(exercise.id)),
+            backup.deleted
+        );
+        this.exercises.mergeNotes(
+            backup.exerciseNotes.map((note) => ({ ...note, id: idHere(note.id) })),
+            backup.deleted
+        );
+        this.exercises.mergeHidden(
+            backup.hiddenExercises.map((hidden) => ({ ...hidden, id: idHere(hidden.id) })),
+            backup.deleted
+        );
+        const linkedWorkouts = backup.workouts.map((workout) => this.linked(workout, idHere));
+        const linkedHistory = backup.history.map((entry) => this.linkedSets(entry, idHere));
         const workouts = backup.fromVersion1
             ? { added: this.workouts.importWorkouts(linkedWorkouts), updated: 0, removed: 0 }
             : this.workouts.mergeWorkouts(linkedWorkouts, backup.deleted);
@@ -128,12 +146,31 @@ export class BackupService {
         };
     }
 
-    /** A workout with each step linked to an exercise that's here, linking by name if not. */
-    private linked(workout: Workout): Workout {
-        return { ...workout, steps: linkSteps(workout.steps, this.exercises.finder) };
+    /**
+     * A workout with each step linked to an exercise that's here: by `idHere()` of its id,
+     * else by name.
+     */
+    private linked(workout: Workout, idHere: (id: string) => string): Workout {
+        return {
+            ...workout,
+            steps: linkSteps(workout.steps.map(withIdHere(idHere)), this.exercises.finder),
+        };
     }
 
-    private linkedSets(entry: HistoryEntry): HistoryEntry {
-        return entry.sets ? { ...entry, sets: linkSets(entry.sets, this.exercises.finder) } : entry;
+    private linkedSets(entry: HistoryEntry, idHere: (id: string) => string): HistoryEntry {
+        return entry.sets
+            ? {
+                  ...entry,
+                  sets: linkSets(entry.sets.map(withIdHere(idHere)), this.exercises.finder),
+              }
+            : entry;
     }
+}
+
+/** A step or set linked to `idHere()` of its exercise's id, if it's linked. */
+function withIdHere(idHere: (id: string) => string) {
+    return <T extends { exerciseId?: string }>(linked: T): T =>
+        linked.exerciseId === undefined
+            ? linked
+            : { ...linked, exerciseId: idHere(linked.exerciseId) };
 }
