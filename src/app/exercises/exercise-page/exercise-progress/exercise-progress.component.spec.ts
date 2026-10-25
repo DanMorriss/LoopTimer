@@ -88,17 +88,13 @@ describe('ExerciseProgressComponent', () => {
         logged(2, [squat(10, 80), squat(12, 60)]);
         await create();
 
-        expect(all('.progress__best dt')).toEqual([
-            'Heaviest',
-            'Estimated one-rep max',
-            'Most reps',
-        ]);
-        expect(all('.progress__best-value')).toEqual(['100 kg × 5', '116.5 kg', '12 @ 60 kg']);
-        expect(all('.progress__best-when')[1]).toContain('from 100 kg × 5');
+        expect(all('.best dt')).toEqual(['Heaviest', 'Estimated one-rep max', 'Most reps']);
+        expect(all('.best__value')).toEqual(['100 kg × 5', '116.5 kg', '12 @ 60 kg']);
+        expect(all('.best__when')[1]).toContain('from 100 kg × 5');
 
         TestBed.inject(SettingsStore).update({ weightUnit: 'lb' });
         await render();
-        expect(all('.progress__best-value')[0]).toBe('220.5 lb × 5');
+        expect(all('.best__value')[0]).toBe('220.5 lb × 5');
     });
 
     it('charts one point per workout, and steps through them with the arrow keys', async () => {
@@ -160,7 +156,7 @@ describe('ExerciseProgressComponent', () => {
         fixture.destroy();
 
         await create('builtin:plank');
-        expect(all('.progress__best-value')).toEqual(['0:45']);
+        expect(all('.best__value')).toEqual(['0:45']);
         expect(el().querySelector('.progress__subheading')!.textContent).toContain('Longest set');
     });
 
@@ -170,21 +166,15 @@ describe('ExerciseProgressComponent', () => {
         }
         await create();
 
-        expect(all('.progress__session-title')).toEqual([
-            'Day 1',
-            'Day 2',
-            'Day 3',
-            'Day 4',
-            'Day 5',
-        ]);
-        const link = el().querySelector('.progress__session-link') as HTMLAnchorElement;
+        expect(all('.session__title')).toEqual(['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5']);
+        const link = el().querySelector('.session__link') as HTMLAnchorElement;
         expect(link.getAttribute('href')).toBe(
             `/history?run=${encodeURIComponent(`${now - DAY_MS}-legs`)}`
         );
-        expect(all('.progress__session-sets')[0]).toContain('5 reps @ 61 kg');
+        expect(all('.session__sets')[0]).toContain('5 reps @ 61 kg');
 
         button('Show all 7').click();
         await render();
-        expect(all('.progress__session-title').length).toBe(7);
+        expect(all('.session__title').length).toBe(7);
     });
 });

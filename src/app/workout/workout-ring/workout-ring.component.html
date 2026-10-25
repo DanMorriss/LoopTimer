@@ -1,0 +1,32 @@
+<div
+    class="workout-ring"
+    [class.workout-ring--work]="phase() === 'work'"
+    [class.workout-ring--rest]="phase() === 'rest'"
+    [class.workout-ring--reps]="phase() === 'reps'"
+    [class.workout-ring--paused]="paused()"
+    role="progressbar"
+    aria-label="Progress through this phase"
+    aria-valuemin="0"
+    aria-valuemax="100"
+    [attr.aria-valuenow]="percent()"
+    [attr.aria-valuetext]="phase() === 'reps' ? 'Waiting for Done' : null"
+>
+    @for (sweep of sweeps(); track sweep.key) {
+        <!-- Two rotating half-circles; transforms animate without repainting -->
+        <div
+            class="workout-ring__sweep"
+            [style.--half-duration]="sweep.halfDuration"
+            [style.--first-half-delay]="sweep.firstHalfDelay"
+            [style.--second-half-delay]="sweep.secondHalfDelay"
+            aria-hidden="true"
+        >
+            <div class="workout-ring__half workout-ring__half--right">
+                <div class="workout-ring__fill"></div>
+            </div>
+            <div class="workout-ring__half workout-ring__half--left">
+                <div class="workout-ring__fill"></div>
+            </div>
+        </div>
+    }
+    <ng-content />
+</div>

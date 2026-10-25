@@ -6,23 +6,7 @@
             Nothing logged yet. Do it in a workout and its bests and progress show up here.
         </p>
     } @else {
-        <dl class="progress__bests" aria-label="Personal bests">
-            @for (best of bests(); track best.label) {
-                <div class="progress__best">
-                    <dt>{{ best.label }}</dt>
-                    <dd>
-                        <span class="progress__best-value" aria-hidden="true">{{ best.text }}</span>
-                        <span class="sr-only">{{ best.spoken }}</span>
-                        <span class="progress__best-when">
-                            @if (best.detail) {
-                                {{ best.detail }} ·
-                            }
-                            {{ best.at | date: dateFormat(best.at) }}
-                        </span>
-                    </dd>
-                </div>
-            }
-        </dl>
+        <app-progress-bests [bests]="bests()" />
 
         <div class="progress__chart-head">
             <h4 [id]="id + '-chart'" class="progress__subheading">{{ measureTitle() }}</h4>
@@ -177,33 +161,6 @@
             }
         }
 
-        <h4 [id]="id + '-recent'" class="progress__subheading">Recent sessions</h4>
-        <ul class="progress__sessions" [attr.aria-labelledby]="id + '-recent'">
-            @for (session of recent(); track session.entryId) {
-                <li class="progress__session">
-                    <a
-                        class="progress__session-link"
-                        routerLink="/history"
-                        [queryParams]="{ run: session.entryId }"
-                    >
-                        <span class="progress__session-date">{{
-                            session.at | date: dateFormat(session.at)
-                        }}</span>
-                        <span class="progress__session-title">{{ session.title }}</span>
-                    </a>
-                    @for (line of session.lines; track $index) {
-                        <span class="progress__session-sets">
-                            <span aria-hidden="true">{{ line.text }}</span>
-                            <span class="sr-only">{{ line.spoken }}</span>
-                        </span>
-                    }
-                </li>
-            }
-        </ul>
-        @if (sessions().length > recentCount) {
-            <button type="button" class="progress__toggle" (click)="showAll.set(!showAll())">
-                {{ showAll() ? 'Show fewer' : 'Show all ' + sessions().length }}
-            </button>
-        }
+        <app-recent-sessions [sessions]="sessions()" [id]="id" />
     }
 </section>

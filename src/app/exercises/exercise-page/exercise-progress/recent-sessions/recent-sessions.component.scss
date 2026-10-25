@@ -1,0 +1,88 @@
+@use 'type' as *;
+@use 'interaction' as *;
+
+// Spaced as the rest of the progress section
+:host {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.sessions__heading {
+    margin: 0.5rem 0 0;
+    font-family: inherit;
+    color: var(--text-strong);
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.sessions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.session {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-soft);
+}
+
+.session__link {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    min-height: 24px;
+    color: var(--text-strong);
+    font-size: 0.85rem;
+    text-decoration: none;
+
+    // A line of text, 44px to a finger
+    @include hit-area(10px);
+
+    @include hover {
+        text-decoration: underline;
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+    }
+}
+
+.session__date {
+    flex: none;
+    color: var(--text-muted);
+    @include small-type(0.75rem);
+}
+
+.session__sets {
+    color: var(--text);
+    font-size: 0.8rem;
+}
+
+.sessions__toggle {
+    align-self: flex-start;
+    min-height: 44px;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--glow-text);
+    font: inherit;
+    font-size: 0.8rem;
+    cursor: pointer;
+
+    @include hover {
+        text-decoration: underline;
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+    }
+}

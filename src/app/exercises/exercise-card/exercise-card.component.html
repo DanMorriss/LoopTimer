@@ -1,0 +1,39 @@
+@let c = card();
+<a class="exercise-card" [routerLink]="c.path" [queryParams]="c.queryParams">
+    <span class="exercise-card__text">
+        <span class="exercise-card__name">
+            {{ c.exercise.name }}
+            @if (c.own) {
+                <span class="exercise-card__tag">Your own</span>
+            }
+        </span>
+        @if (c.otherName) {
+            <span class="exercise-card__also">Also called {{ c.otherName }}</span>
+        }
+        <span class="exercise-card__details">
+            @for (label of c.mainMuscles; track label) {
+                <span class="exercise-card__muscle">{{ label }}</span>
+            }
+            @if (c.equipment) {
+                <span class="exercise-card__equipment">{{ c.equipment }}</span>
+            }
+        </span>
+        @if (c.progress; as progress) {
+            <span class="exercise-card__progress">
+                <span>
+                    <span class="exercise-card__progress-label">Latest</span>&ngsp;
+                    <span aria-hidden="true">{{ progress.latest }}</span>
+                    <span class="sr-only">{{ progress.latestSpoken }}</span>
+                    · {{ progress.latestAt | date: progress.dateFormat }}
+                </span>
+                @if (progress.best) {
+                    <span>
+                        <span class="exercise-card__progress-label">Best</span>&ngsp;
+                        {{ progress.best }}
+                    </span>
+                }
+            </span>
+        }
+    </span>
+    <mat-icon class="exercise-card__chevron" aria-hidden="true">chevron_right</mat-icon>
+</a>

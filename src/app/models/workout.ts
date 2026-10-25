@@ -130,3 +130,8 @@ export function hasWork(steps: readonly Step[]): boolean {
             (step.kind === 'work' && step.seconds > 0) || (step.kind === 'reps' && step.reps > 0)
     );
 }
+
+/** What a kind of step is called, e.g. on its pill in Create. */
+export function stepKindName(kind: StepKind): string {
+    return { work: 'Timed', rest: 'Rest', reps: 'Reps' }[kind];
+}

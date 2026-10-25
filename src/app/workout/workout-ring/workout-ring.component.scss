@@ -1,0 +1,118 @@
+@use '../workout-colours' as *;
+
+// Everything that animates for the length of a workout only animates `transform`
+// or `opacity`, which the browser can run without repainting each frame.
+
+:host {
+    display: block;
+}
+
+// Progress ring: two half-circles rotate into view, one after the other.
+// Work fills clockwise from 12 o'clock; rest is mirrored to fill anticlockwise.
+
+@keyframes half-sweep {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(180deg);
+    }
+}
+
+.workout-ring {
+    position: relative;
+    transition: filter 0.3s ease;
+    // 380px, or the screen width minus the page gutters on narrow phones
+    width: min(380px, calc(100vw - 2rem));
+    aspect-ratio: 1;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &--work,
+    &--rest {
+        background: $track-color;
+    }
+
+    &--work {
+        --ring-color: #{$work-color};
+    }
+
+    &--rest {
+        --ring-color: #{$rest-color};
+    }
+
+    // No countdown, so no sweep: the whole ring shows in the rep colour
+    &--reps {
+        background: $reps-color;
+    }
+}
+
+.workout-ring__sweep {
+    position: absolute;
+    inset: 0;
+
+    .workout-ring--rest & {
+        transform: scaleX(-1);
+    }
+}
+
+// Each half is a window onto one side of the ring...
+.workout-ring__half {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 50%;
+    overflow: hidden;
+
+    &--right {
+        left: 50%;
+    }
+
+    &--left {
+        left: 0;
+    }
+}
+
+// ...with a half-circle that starts outside the window and rotates into it around the centre
+.workout-ring__fill {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+    background: var(--ring-color);
+    animation: half-sweep var(--half-duration) linear both;
+    will-change: transform;
+
+    .workout-ring__half--right & {
+        left: -100%;
+        border-radius: 100% 0 0 100% / 50% 0 0 50%;
+        transform-origin: 100% 50%;
+        animation-delay: var(--first-half-delay);
+    }
+
+    .workout-ring__half--left & {
+        left: 100%;
+        border-radius: 0 100% 100% 0 / 0 50% 50% 0;
+        transform-origin: 0 50%;
+        animation-delay: var(--second-half-delay);
+    }
+}
+
+// Paused: freeze the ring where it is, and carry on from there on resume...
+.workout-ring--paused .workout-ring__fill {
+    animation-play-state: paused;
+}
+
+// ...and grey it out, darkened rather than faded, so the face stays light under Resume and
+// End workout in both themes.
+.workout-ring--paused {
+    filter: grayscale(1) brightness(0.9);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .workout-ring {
+        transition: none;
+    }
+}

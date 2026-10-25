@@ -1,0 +1,17 @@
+<dl class="bests" aria-label="Personal bests">
+    @for (best of bests(); track best.label) {
+        <div class="best">
+            <dt>{{ best.label }}</dt>
+            <dd>
+                <span class="best__value" aria-hidden="true">{{ best.text }}</span>
+                <span class="sr-only">{{ best.spoken }}</span>
+                <span class="best__when">
+                    @if (best.detail) {
+                        {{ best.detail }} ·
+                    }
+                    {{ best.at | date: dateFormat(best.at) }}
+                </span>
+            </dd>
+        </div>
+    }
+</dl>

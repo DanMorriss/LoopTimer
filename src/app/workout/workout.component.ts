@@ -25,6 +25,9 @@ import { ExerciseStore } from '../shared/state/exercise-store.service';
 import { describeSets } from '../history/history-format';
 import { injectPrefersReducedMotion } from '../shared/reduced-motion';
 import { criticallyDampedSpring } from '../shared/spring';
+import { RoundDot, RoundDotsComponent } from './round-dots/round-dots.component';
+import { WorkoutNoteComponent } from './workout-note/workout-note.component';
+import { WorkoutRingComponent } from './workout-ring/workout-ring.component';
 
 // Space on one of these already does something, e.g. presses the focused button
 const SPACE_HANDLED_BY =
@@ -50,6 +53,9 @@ const MAX_ROUND_DOTS = 15;
         WheelPickerComponent,
         WorkoutSummaryComponent,
         ClockDigitsComponent,
+        RoundDotsComponent,
+        WorkoutNoteComponent,
+        WorkoutRingComponent,
     ],
     templateUrl: './workout.component.html',
     styleUrls: ['./workout.component.scss', './workout-motion.scss', './workout-type.scss'],
@@ -280,7 +286,7 @@ export class WorkoutComponent {
     totalRounds = computed(() => (this.untilStopped() ? 0 : (this.workout()?.repeats ?? 0)));
 
     /** One dot per round, for workouts short enough for a row of them to fit on a phone. */
-    roundDots = computed((): ('done' | 'current' | 'left')[] => {
+    roundDots = computed((): RoundDot[] => {
         const total = this.totalRounds();
         if (total > MAX_ROUND_DOTS) {
             return [];
@@ -315,6 +321,12 @@ export class WorkoutComponent {
         },
         { equal: (a, b) => a?.key === b?.key }
     );
+
+    /** What the ring shows: null once the workout's finished. */
+    ringPhase = computed(() => {
+        const phase = this.state()?.phase;
+        return phase === 'complete' || phase === undefined ? null : phase;
+    });
 
     ringSweeps = computed(() => {
         const sweep = this.ringSweep();
