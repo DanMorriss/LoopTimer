@@ -275,19 +275,6 @@
     margin-top: 1rem;
 }
 
-// A long step name shouldn't push the time out of the circle
-.workout-face__label {
-    max-width: 16ch;
-    margin-inline: auto;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.workout-face__step {
-    font-size: 1.25rem;
-}
-
 // Under the ring on a rep step, opening the reps and weight wheels
 .workout-change {
     margin-top: 1rem;

@@ -32,24 +32,32 @@
 
 - When the clock reaches a rep step, the workout **stops and waits**, however long it takes. The ring is full and still, in violet, and the face shows the reps, e.g. "20 reps", with the weight under them if there is one, e.g. "60 kg".
 - The main button becomes **Done** (in place of Pause), with a smaller **Pause** to one side. Done moves on to the next step, which starts from its **full time**.
+- As a rep step comes round, **Done swells once**, as it's the user's move now (not with reduced motion). The phone vibrates with the step's alarm, as for any step.
 - The time spent on reps doesn't come off any countdown, but it **counts as time spent** in the history.
 
 ### What's on screen
 
 - **Title**: the workout's title. On a phone it takes the place of the app name in the header.
 - **Round line**:
+
     - "round 2 of 5" for a workout of more than one round, with a dot per round (done, current, to go) when there are 15 rounds or fewer.
     - "**Last one!**" in place of the count in the final round.
     - "round 3 of ∞" for a workout that runs until stopped.
     - "round 3" for a time limit, with the **time left** under it, e.g. "12:34 left", in the accent colour for its last 10 seconds. Screen readers hear it with the round as each round starts, e.g. "Timed, round 3, 12:34 left"; the time left itself isn't read out as it ticks.
     - Nothing for a single-round workout.
-- **Ring**: fills as the step goes by. Timed steps fill clockwise in pink, rest fills anticlockwise in blue. The face behind the time is tinted in the phase colour, and holds still for most of the step.
+    - The **time left of the whole workout**, e.g. "01:20 left", beside the dots, for a set number of rounds of timed steps only. Not with rep steps, which take as long as they take, nor until stopped.
+    - A **strip of the round's steps** under it, one segment per step in its kind's colour: an outline to go, filled but quieter when done, and taller with a glow for the one in progress. Only when a round has more than one work or rep step (a plain work-and-rest workout leaves it out); hidden from screen readers, which hear the step number, e.g. "step 2 of 5", with each step.
+
+- **Ring**: fills as the step goes by. Timed steps fill clockwise in pink, with a bright dot at the fill's leading edge so the clock is plain to see from across the room; rest fills anticlockwise in blue, with no dot, as it stays calm. The face behind the time is tinted in the phase colour, and holds still for most of the step. During rest the face **breathes**, growing very slightly and back every 4 seconds (not with reduced motion).
 - **Face**:
-    - The step's name. Unnamed work shows just the time; unnamed rest says "Rest"; unnamed reps say "Reps".
-    - The time left as mm:ss, e.g. "00:45", or the reps.
-    - "step 2 of 5" when a round has more than one work or rep step. A plain work-and-rest workout leaves it out.
+    - An **icon for the step's kind** on its own line (a stopwatch for timed, a seated figure for rest, a dumbbell for reps), so the kinds aren't told apart by colour alone.
+    - The step's name under it. Unnamed work shows just the icon over the time; unnamed rest says "Rest"; unnamed reps say "Reps".
+    - A **long name** is fitted to the circle: at full size on one line if it fits; otherwise on two even lines, e.g. "Bodyweight / squat"; and only if that's still too wide, shrunk as far as it needs to be, to no less than 70% of its size. A name too long even for that, e.g. "Single-leg Romanian deadlift" on a phone, gets a third line in the same way. Past that, its last line ends in "…". It's fitted again when the screen changes size, e.g. a phone turned round.
+    - The time left as mm:ss, e.g. "00:45". On each of a timed work step's **last 3 seconds** (for a step longer than that) the time pops in a little large and settles. Not rest.
+    - On a rep step, the **count is the big thing**, e.g. "12 reps", with the weight and "Last time" under it.
+    - During **rest, what's after it**, e.g. "then Bench press · 12 reps @ 60 kg", under the countdown, to get ready for. Screen readers hear it from "Next:".
     - While paused, the face's text gives way to "Paused · 00:23", Resume and End workout (see [pause-and-stop](pause-and-stop.md)).
-- **Moving on**: the face's text slides up and out as the next step's slides in from below (half a second, like the number wheels), so a new step is plain to see. When a new **round** starts it slides right to left instead, and the round line and dots slide with it. The ring stays put. The text sliding out keeps showing the step it was, e.g. its last "00:01".
+- **Moving on**: the face's text is on a drum behind the face, like the number wheels: the next step's text rolls up into view from below as the last one rolls away over the top, in perspective (three quarters of a second), so a new step is plain to see. When a new **round** starts the drum turns right to left instead, and the round line and dots above the ring turn with it. **Rest** settles in more gently: from a little way below, over most of a second, as the last step fades quickly away. The ring stays put. The text on its way out keeps showing the step it was, e.g. its last "00:01".
 - **Your note** on the step's exercise (EXR-10), if you've written one, in a box under the ring, e.g. "Pause at the bottom". Any work or rep step linked to an exercise shows it; screen readers hear it with the step, e.g. "Push-ups, 20 reps, your note: Elbows in".
 - **Next**: "Next: Plank · 00:45", "Next: Push-ups · 20 reps", "Next: Squats · 10 reps @ 60 kg", or "Next: finish" before the last step. Unnamed steps use their kind ("Timed", "Rest", "Reps").
     - In the **last 5 seconds** of a timed step (the last 3 for a step under 15 seconds), "Next:" becomes a pill in the next step's colour (pink for timed, blue for rest, violet for reps, the accent colour for finish) that swells and glows once a second, to get ready. Not on a rep step, where Done is the cue, and not while paused.
@@ -100,7 +108,8 @@
 - Given a rep step of 10 squats at 60 kg, then the face shows "10 reps" and "60 kg", "Next:" before it says "Squats · 10 reps @ 60 kg", and a screen reader hears "Squats, 10 reps at 60 kg".
 - Given 20 push-ups in round 1, when I change them to 15 at 22.5 kg, then the face shows "15 reps" and "22.5 kg", the saved workout has 15 at 22.5 kg, and round 2 starts from 15 at 22.5 kg.
 - Given a step at 40 kg, when I set the weight to –, then the step has no weight.
-- Given steps Squats (work), Rest, Plank (work), then Squats shows "step 1 of 3" and "Next: Rest · 00:15".
+- Given steps Squats (work), Rest, Plank (work), then the strip shows Squats as the first of three, screen readers hear "step 1 of 3", and it says "Next: Rest · 00:15".
+- Given a step named "Bodyweight squat", then the face shows it on two lines at full size; given "Single-leg Romanian deadlift", then it's on two lines on a wide screen, and on three on a phone, never smaller than 70%.
 - Given the workout finishes, then the summary opens with no Back to workout, and a note typed there is saved to it in the history.
 - Given a workout ended early, on a phone, when I drag the summary down past halfway (or flick it down), then it goes back to the workout, paused; when I let go above halfway, then it springs back up.
 - Given 20 push-ups at 40 kg in round 1 and the workout ended in round 2, when I change the set to 18 reps on the summary, then the history has 18; on "Yes, use next time" the saved workout starts from 18 at 40 kg, and on "No, just this time" it stays at 20.
@@ -109,13 +118,18 @@
 - Given work 0:10, then "Next:" pulses only from 00:03 left.
 - Given a rep step, then "Next:" never pulses.
 - Given work 0:20, then the face holds a steady pink tint until 00:05 left, then flares once a second with "Next:".
-- Given a new step in the same round, then its text slides in from below; given round 2 starting, then the text and "round 2 of 3" slide in from the right.
+- Given a new step in the same round, then its text rolls up from below; given round 2 starting, then the text and "round 2 of 3" turn in from the right; given a rest, then it settles in gently from just below.
 - Given work 0:03, rest 0:02 and a time limit of 1:04, then 12s in it says "round 3" and "00:52 left", and screen readers heard "Timed, round 1, 01:04 left" at the start.
 - Given that workout, when 1:04 has gone by, then it finishes with "Time's up" and "12 rounds + 1 in 1:04", logged as finished with 12 rounds and 1 step.
 - Given work 0:03 then 10 push-ups and a time limit of 0:20, when the push-ups take 12 seconds, then after Done 00:05 are left.
 - Given time runs out while push-ups are waited on, then the summary asks how many reps I got; Add set with 6 logs 6 push-ups, and the score stays as it was.
+- Given work 0:03, rest 0:02, 2 rounds, then it says "00:08 left" at the start and "00:05 left" at the rest; given a rep step in the round, then there's no time left.
+- Given Squats, Plank and Rest, then the strip shows work (current), work, rest (to go); at the rest, the two works are done and rest is current.
+- Given work 0:10, then the time pops at 00:03, 00:02 and 00:01, and not in the rest after.
+- Given Squats, Plank, Rest in round 1 of 2, then the rest's face says "then Squats · 00:03".
+- Given a rep step comes round, then Done swells once; with reduced motion it doesn't.
 
 ## Platform notes
 
-- **Web:** the maths is pure and has no Angular in it, so it can be ported line for line: `workoutStateAt()` in `src/app/workout/workout-state.ts` (where a workout is after so many ms, given the rep steps done and, for a time limit, the time they took; `stepsIntoRound()` gives the score's steps) and the helpers in `src/app/models/workout.ts`. The run itself is `ActiveRunService` (`src/app/shared/run/`), and the page is `WorkoutComponent` (`src/app/workout/`).
-- **iOS:** keep the same "work it out from the clock" design: store when the run started (moved on by pauses and rep steps) and derive everything else. That's also what makes a relaunch carry on correctly (see [pause-and-stop](pause-and-stop.md)). A `TimelineView` or a display-link tick only needs to redraw.
+- **Web:** the maths is pure and has no Angular in it, so it can be ported line for line: `workoutStateAt()` in `src/app/workout/workout-state.ts` (where a workout is after so many ms, given the rep steps done and, for a time limit, the time they took; `stepsIntoRound()` gives the score's steps) and the helpers in `src/app/models/workout.ts`. The run itself is `ActiveRunService` (`src/app/shared/run/`), and the page is `WorkoutComponent` (`src/app/workout/`), with each kind of step's look and motion in `workout-steps.scss` and `workout-motion.scss`, the step strip in `step-strip/`, and long names fitted to the face by `fitName()` (`fit-name.ts`), which measures the text rather than counting letters.
+- **iOS:** keep the same "work it out from the clock" design: store when the run started (moved on by pauses and rep steps) and derive everything else. That's also what makes a relaunch carry on correctly (see [pause-and-stop](pause-and-stop.md)). A `TimelineView` or a display-link tick only needs to redraw. The face's drum is a `rotation3DEffect` about the x axis (the y axis for a new round) with an anchor behind the face; a long name can use `ViewThatFits`, or `lineLimit(3)` with `minimumScaleFactor(0.7)`.

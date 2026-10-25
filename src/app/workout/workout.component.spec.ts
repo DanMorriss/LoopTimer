@@ -251,11 +251,27 @@ describe('WorkoutComponent', () => {
             fixture.destroy();
         });
 
-        it('shows no rounds for a single-round workout', () => {
+        it('shows no rounds for a single-round workout, just the time left', () => {
             start(makeWorkout({ repeats: 1 }));
 
-            expect(status()).toBe('');
+            expect(status()).toBe('00:03 left');
             expect(dots()).toEqual([]);
+            fixture.destroy();
+        });
+
+        it('counts down the time left of the whole workout, with no rest at the end', () => {
+            start(makeWorkout({ workSeconds: 3, restSeconds: 2, repeats: 2 }));
+            expect(status()).toContain('00:08 left');
+
+            advance(3000);
+            expect(status()).toContain('00:05 left');
+            fixture.destroy();
+        });
+
+        it('leaves out the time left when rep steps make it unknown', () => {
+            start(makeWorkout({ steps: [work(3), reps(10)], repeats: 2 }));
+
+            expect(status()).not.toContain('left');
             fixture.destroy();
         });
 
@@ -1155,10 +1171,11 @@ describe('WorkoutComponent', () => {
         const circuit = () =>
             makeWorkout({ steps: [work(3, 'Squats'), work(2, 'Plank'), rest(2)], repeats: 2 });
         // As it's read out: the countdown's clock cells are hidden from screen readers, which
-        // get the time as one piece of text instead
+        // get the time as one piece of text instead. Each line is read apart from the next.
         const face = () => {
             const copy = fixture.nativeElement.querySelector('.workout-face').cloneNode(true);
             copy.querySelectorAll('[aria-hidden="true"]').forEach((el: Element) => el.remove());
+            copy.querySelectorAll('p').forEach((line: Element) => line.append(' '));
             return copy.textContent.replace(/\s+/g, ' ').trim();
         };
         const next = () =>
@@ -1169,17 +1186,47 @@ describe('WorkoutComponent', () => {
         const said = () =>
             (fixture.nativeElement.querySelector('[aria-live]') as HTMLElement).textContent?.trim();
 
-        it("shows the step's name, its time, and which step of the round it is", () => {
+        it("shows the step's name and its time, leaving which step it is to the strip", () => {
             start(circuit());
 
-            expect(face()).toBe('Squats 00:03 step 1 of 3');
+            expect(face()).toBe('Squats 00:03');
 
             advance(3000);
-            expect(face()).toBe('Plank 00:02 step 2 of 3');
+            expect(face()).toBe('Plank 00:02');
 
             advance(2000);
-            expect(face()).toBe('Rest 00:02 step 3 of 3');
+            expect(face()).toBe('Rest 00:02');
             fixture.destroy();
+        });
+
+        describe('fitting a long name to the face', () => {
+            const label = () =>
+                fixture.nativeElement.querySelector(
+                    '.workout-face__content:last-child .workout-face__label'
+                ) as HTMLElement;
+            const size = (el: Element) => parseFloat(getComputedStyle(el).fontSize);
+            const lines = () =>
+                Math.round(label().scrollHeight / parseFloat(getComputedStyle(label()).lineHeight));
+
+            it('keeps a short name at full size, on one line', () => {
+                start(circuit());
+                TestBed.tick();
+
+                expect(label().style.fontSize).toBe('');
+                expect(lines()).toBe(1);
+                fixture.destroy();
+            });
+
+            // How it fits depends on the screen's width and the font: see fit-name.spec.ts
+            it('fits a long name in three lines at most, no smaller than 70% of its size', () => {
+                start(makeWorkout({ steps: [work(30, 'Single-leg Romanian deadlift'), rest(10)] }));
+                TestBed.tick();
+                const face = fixture.nativeElement.querySelector('.workout-face');
+
+                expect(size(label())).toBeGreaterThanOrEqual(size(face) * 0.7 - 0.5);
+                expect(lines()).toBeLessThanOrEqual(3);
+                fixture.destroy();
+            });
         });
 
         it('says what is up next, and "finish" before the end', () => {
@@ -1230,6 +1277,78 @@ describe('WorkoutComponent', () => {
             advance(7000 + 5000);
 
             expect(component.isComplete()).toBe(true);
+            fixture.destroy();
+        });
+
+        it("shows the round's steps as a strip in their kinds, done, current and to go", () => {
+            start(circuit());
+            const strip = () =>
+                Array.from(
+                    fixture.nativeElement.querySelectorAll(
+                        '.step-strip__step'
+                    ) as NodeListOf<Element>
+                ).map((step) =>
+                    ['work|rest|reps', 'done|current|left']
+                        .map((kinds) => step.className.match(`step-strip__step--(${kinds})\\b`)![1])
+                        .join(' ')
+                );
+            expect(strip()).toEqual(['work current', 'work left', 'rest left']);
+            expect(
+                fixture.nativeElement.querySelector('.step-strip').getAttribute('aria-hidden')
+            ).toBe('true');
+
+            advance(5000);
+            expect(strip()).toEqual(['work done', 'work done', 'rest current']);
+            fixture.destroy();
+        });
+
+        it("marks each step's kind with an icon, hidden from screen readers", () => {
+            start(makeWorkout({ steps: [work(3, 'Squats'), rest(2), reps(10)], repeats: 2 }));
+            const icon = () =>
+                fixture.nativeElement.querySelector(
+                    '.workout-face__content:last-child .workout-face__kind'
+                ) as HTMLElement;
+            expect(icon().textContent!.trim()).toBe('timer');
+            expect(icon().getAttribute('aria-hidden')).toBe('true');
+
+            advance(3000);
+            expect(icon().textContent!.trim()).toBe('self_improvement');
+
+            advance(2000);
+            expect(icon().textContent!.trim()).toBe('fitness_center');
+            fixture.destroy();
+        });
+
+        it("shows what's after a rest on the face, under its countdown", () => {
+            start(circuit());
+            const then = () =>
+                fixture.nativeElement.querySelector('.workout-face__then') as HTMLElement | null;
+            expect(then()).toBeNull();
+
+            advance(5000);
+            expect(then()!.textContent!.replace(/\s+/g, ' ').trim()).toBe('then Squats · 00:03');
+            // "Next:" says it to screen readers
+            expect(then()!.getAttribute('aria-hidden')).toBe('true');
+            fixture.destroy();
+        });
+
+        it("pops the countdown on each of a timed step's last 3 seconds", () => {
+            start(makeWorkout({ steps: [work(10, 'Squats'), rest(10)], repeats: 2 }));
+            const pop = () =>
+                fixture.nativeElement.querySelector('.workout-face__pop') as HTMLElement | null;
+            advance(6000);
+            expect(pop()).toBeNull();
+
+            advance(1000);
+            const first = pop();
+            expect(first).not.toBeNull();
+            advance(1000);
+            // A fresh one, so it pops again
+            expect(pop()).not.toBe(first);
+
+            // Not rest, which stays calm
+            advance(9000);
+            expect(pop()).toBeNull();
             fixture.destroy();
         });
 
@@ -1739,6 +1858,33 @@ describe('WorkoutComponent', () => {
             advance(10 * 60 * 1000);
 
             expect(component.isRepsActive()).toBe(true);
+            fixture.destroy();
+        });
+
+        it('makes the count the big thing on the face', () => {
+            start(circuit());
+            advance(3000);
+
+            expect(fixture.nativeElement.querySelector('.workout-face__count').textContent).toBe(
+                '20'
+            );
+            fixture.destroy();
+        });
+
+        it('swells Done once as a rep step comes round, but not with reduced motion', () => {
+            start(circuit());
+            expect(mainButton().getAnimations().length).toBe(0);
+
+            advance(3000);
+            TestBed.tick();
+            expect(mainButton().getAnimations().length).toBe(1);
+            fixture.destroy();
+
+            fakeReducedMotion(true);
+            start(circuit());
+            advance(3000);
+            TestBed.tick();
+            expect(mainButton().getAnimations().length).toBe(0);
             fixture.destroy();
         });
 

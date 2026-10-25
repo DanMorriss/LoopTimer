@@ -1,15 +1,26 @@
 import {
     afterNextRender,
     Component,
+    DOCUMENT,
     computed,
+    effect,
     ElementRef,
     inject,
     Injector,
     signal,
+    untracked,
     viewChild,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { MAX_REPS, RepStep, runsUntilStopped, Step } from '../models/workout';
+import {
+    MAX_REPS,
+    RepStep,
+    repStepsPerRound,
+    runsUntilStopped,
+    Step,
+    StepKind,
+    workoutSeconds,
+} from '../models/workout';
 import { formatWeight, weightIn, weightOptions, weightToKg } from '../models/weight';
 import { WheelPickerComponent } from '../shared/components/wheel-picker/wheel-picker.component';
 import { WorkoutSummaryComponent } from './workout-summary/workout-summary.component';
@@ -25,7 +36,9 @@ import { ExerciseStore } from '../shared/state/exercise-store.service';
 import { describeSets } from '../history/history-format';
 import { injectPrefersReducedMotion } from '../shared/reduced-motion';
 import { criticallyDampedSpring } from '../shared/spring';
+import { fitName } from './fit-name';
 import { RoundDot, RoundDotsComponent } from './round-dots/round-dots.component';
+import { StepStripComponent, StripStep } from './step-strip/step-strip.component';
 import { WorkoutNoteComponent } from './workout-note/workout-note.component';
 import { WorkoutRingComponent } from './workout-ring/workout-ring.component';
 
@@ -37,6 +50,16 @@ const SPACE_HANDLED_BY =
 function kindName(step: Step): string {
     return { work: 'Timed', rest: 'Rest', reps: 'Reps' }[step.kind];
 }
+
+/** Each kind of step's icon by its name, so the kinds aren't told apart by colour alone. */
+const KIND_ICONS: Record<StepKind, string> = {
+    work: 'timer',
+    rest: 'self_improvement',
+    reps: 'fitness_center',
+};
+
+// The countdown of a timed step pops on each of its last this many seconds
+const POP_SECONDS = 3;
 
 // Above this many rounds, the dots under "round 2 of 20" would wrap on a phone, so only the line shows
 const MAX_ROUND_DOTS = 15;
@@ -54,19 +77,28 @@ const MAX_ROUND_DOTS = 15;
         WorkoutSummaryComponent,
         ClockDigitsComponent,
         RoundDotsComponent,
+        StepStripComponent,
         WorkoutNoteComponent,
         WorkoutRingComponent,
     ],
     templateUrl: './workout.component.html',
-    styleUrls: ['./workout.component.scss', './workout-motion.scss', './workout-type.scss'],
+    styleUrls: [
+        './workout.component.scss',
+        './workout-motion.scss',
+        './workout-steps.scss',
+        './workout-type.scss',
+    ],
     host: {
         '(document:keydown.space)': 'onSpace($event)',
         '(document:keydown.escape)': 'onEscape()',
+        // A phone turned round gives the face a new width to fit the name to
+        '(window:resize)': 'fitName(stepKey())',
     },
 })
 export class WorkoutComponent {
     workoutStore = inject(WorkoutStore);
     private readonly router = inject(Router);
+    private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
     private readonly injector = inject(Injector);
     private readonly run = inject(ActiveRunService);
     workout = this.run.workout;
@@ -176,20 +208,37 @@ export class WorkoutComponent {
         const ms = this.run.timeLeftMs();
         return ms !== null && ms <= 10_000;
     });
+    /**
+     * Time left of the whole workout, e.g. "12:34", for a set number of rounds of timed steps
+     * only: '' with a time limit (which has its own), until stopped, or with rep steps, which
+     * take as long as they take.
+     */
+    totalLeft = computed(() => {
+        const workout = this.workout();
+        const elapsedMs = this.run.elapsedMs();
+        if (
+            !workout ||
+            elapsedMs === null ||
+            this.timeLimited() ||
+            this.untilStopped() ||
+            repStepsPerRound(workout) > 0
+        ) {
+            return '';
+        }
+        const seconds = Math.max(0, Math.ceil(workoutSeconds(workout) - elapsedMs / 1000));
+        return formatTime(Math.floor(seconds / 60), seconds % 60);
+    });
     /** The round in progress, counting from 1. */
     roundNumber = computed(() => (this.state()?.round ?? 0) + 1);
 
-    /** How many steps make up a round. */
-    stepCount = computed(() => this.workout()?.steps.length ?? 0);
     /**
-     * Whether to say which step it is. Only for rounds with more than one work or rep step:
-     * a plain work-and-rest workout doesn't need "step 1 of 2".
+     * Whether to say which step it is (the step strip, and to screen readers). Only for rounds
+     * with more than one work or rep step: a plain work-and-rest workout doesn't need
+     * "step 1 of 2".
      */
     showStepCount = computed(
         () => (this.workout()?.steps.filter((step) => step.kind !== 'rest').length ?? 0) > 1
     );
-    /** The step in progress, counting from 1. */
-    stepNumber = computed(() => (this.state()?.stepIndex ?? 0) + 1);
     /**
      * The step's name, or "Rest" or "Reps" for an unnamed one. Unnamed work shows just the
      * time.
@@ -239,22 +288,32 @@ export class WorkoutComponent {
     // slides out; a new round slides right to left, with the round line, rather than up.
     // Each is a snapshot of what it shows, so the text sliding out keeps its last values
     // rather than showing the new step's.
+    /** Which step is showing, so each gets its own text on the face: 'complete' at the end. */
+    protected readonly stepKey = computed(() => {
+        const state = this.state();
+        return !state || state.phase === 'complete'
+            ? 'complete'
+            : `${this.workoutStore.activeRunStartedAt()}-${state.round}-${state.stepIndex}`;
+    });
     faceSlides = computed(() => {
         const state = this.state();
-        const complete = !state || state.phase === 'complete';
+        const step = state?.step;
         return [
             {
-                key: complete
-                    ? 'complete'
-                    : `${this.workoutStore.activeRunStartedAt()}-${state.round}-${state.stepIndex}`,
-                complete,
+                key: this.stepKey(),
+                complete: !step,
+                icon: step ? KIND_ICONS[step.kind] : '',
                 label: this.stepLabel(),
                 reps: this.isRepsActive() ? this.reps() : null,
                 weight: this.weight(),
                 time: this.time(),
-                step: this.showStepCount()
-                    ? `step ${this.stepNumber()} of ${this.stepCount()}`
-                    : '',
+                // A timed step's last seconds: each one pops, to hurry the last effort along
+                pop:
+                    state?.phase === 'work' &&
+                    state.phaseSeconds > POP_SECONDS &&
+                    state.remainingSeconds <= POP_SECONDS,
+                // Rest is for getting ready, so it shows what's coming on the face itself
+                then: state?.phase === 'rest' && this.nextState()?.step ? this.upNext() : '',
             },
         ];
     });
@@ -267,14 +326,32 @@ export class WorkoutComponent {
             timeLeft: this.timeLeft(),
             timeNearlyUp: this.timeNearlyUp(),
             totalRounds: this.totalRounds(),
+            totalLeft: this.totalLeft(),
             last: this.repeats() === 1,
-            dots: this.roundDots(),
+            dots: this.totalRounds() > 1 ? this.roundDots() : [],
+            strip: this.stepStrip(),
         },
     ]);
     /** The step in progress began a new round, so it slides in sideways. */
     newRound = computed(() => {
         const state = this.state();
         return !!state && state.phase !== 'complete' && state.stepIndex === 0 && state.round > 0;
+    });
+
+    /**
+     * The round's steps as a strip in their kinds' colours: done, the one in progress, and
+     * those to go. Only where there's more than one work or rep step, and not once finished.
+     */
+    stepStrip = computed((): StripStep[] => {
+        const state = this.state();
+        const workout = this.workout();
+        if (!workout || !state || state.phase === 'complete' || !this.showStepCount()) {
+            return [];
+        }
+        return workout.steps.map((step, i) => ({
+            kind: step.kind,
+            state: i === state.stepIndex ? 'current' : i < state.stepIndex ? 'done' : 'left',
+        }));
     });
 
     private readonly remaining = computed(() => this.state()?.remainingSeconds ?? 0);
@@ -407,6 +484,51 @@ export class WorkoutComponent {
     private readonly reducedMotion = injectPrefersReducedMotion();
     /** Apple's spring for moving something about: no bounce, a 0.4s response. */
     private readonly glide = criticallyDampedSpring(0.4);
+
+    constructor() {
+        // A rep step has come round: Done swells once, as it's the user's move now
+        effect(() => {
+            if (this.currentSet() === null || untracked(this.reducedMotion)) {
+                return;
+            }
+            afterNextRender(
+                () =>
+                    this.mainButton()?.nativeElement.animate(
+                        [
+                            { transform: 'none' },
+                            { transform: 'scale(1.15)' },
+                            { transform: 'none' },
+                        ],
+                        { duration: 600, easing: 'ease-in-out' }
+                    ),
+                { injector: this.injector }
+            );
+        });
+
+        // Each new step's name is fitted to the face once it's there
+        effect(() => {
+            const key = this.stepKey();
+            afterNextRender(() => this.fitName(key), { injector: this.injector });
+        });
+
+        // The display face may arrive after the first fitting, and its letters are wider
+        inject(DOCUMENT).fonts?.ready.then(() => this.fitName(this.stepKey()));
+    }
+
+    /** The name of step `key` on the face, if it has one. */
+    private faceLabel(key: string): HTMLElement | null {
+        return this.host.nativeElement.querySelector<HTMLElement>(
+            `.workout-face [data-step="${key}"] .workout-face__label`
+        );
+    }
+
+    /** Fits step `key`'s name to the face: see fitName(). */
+    protected fitName(key: string) {
+        const label = this.faceLabel(key);
+        if (label) {
+            fitName(label);
+        }
+    }
 
     /** The button that pauses: the big one, or on a rep step the smaller one beside Done. */
     private pauseButton(): HTMLElement | undefined {

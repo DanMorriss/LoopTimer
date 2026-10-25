@@ -100,8 +100,45 @@
     }
 }
 
+// Timed work's leading edge: a bright dot that goes round once in the step, with the fill, so
+// it's plain from across the room that the clock is running. Not rest, which stays calm.
+@keyframes tip-round {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.workout-ring__tip {
+    display: none;
+    position: absolute;
+    inset: 0;
+    animation: tip-round calc(var(--half-duration) * 2) linear var(--first-half-delay) both;
+    will-change: transform;
+
+    .workout-ring--work & {
+        display: block;
+    }
+
+    // In the middle of the 15px band the face leaves showing
+    &::after {
+        content: '';
+        position: absolute;
+        top: 2.5px;
+        left: calc(50% - 5px);
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: white;
+        box-shadow: 0 0 8px 2px var(--ring-color);
+    }
+}
+
 // Paused: freeze the ring where it is, and carry on from there on resume...
-.workout-ring--paused .workout-ring__fill {
+.workout-ring--paused .workout-ring__fill,
+.workout-ring--paused .workout-ring__tip {
     animation-play-state: paused;
 }
 

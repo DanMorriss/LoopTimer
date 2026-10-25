@@ -78,34 +78,51 @@
     }
 }
 
-// A new step glides in from below as the last one glides off the top, like the number
-// wheels; a new round goes right to left instead. With reduced motion, a short crossfade.
-$glide: 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+// A new step rolls up into the face as the last one rolls away over the top, as if both were
+// on a drum behind it, like the number wheels. A new round turns the drum the other way, from
+// right to left, and the round line above the ring turns with it. With reduced motion, a short
+// crossfade.
+$roll: 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+
+// The face and the round line look onto their drums, so what's on them curves away in depth
+.workout-face,
+.workout-status {
+    perspective: 20rem;
+}
+
+// The drum's axle, behind the face; the far side of the drum is never seen
+.face-in,
+.face-out,
+.slide-in-sideways,
+.slide-out-sideways {
+    transform-origin: 50% 50% -9rem;
+    backface-visibility: hidden;
+}
 
 @keyframes in-from-below {
     from {
-        transform: translateY(70%);
+        transform: rotateX(-75deg);
         opacity: 0;
     }
 }
 
 @keyframes out-above {
     to {
-        transform: translateY(-70%);
+        transform: rotateX(75deg);
         opacity: 0;
     }
 }
 
 @keyframes in-from-right {
     from {
-        transform: translateX(60%);
+        transform: rotateY(75deg);
         opacity: 0;
     }
 }
 
 @keyframes out-left {
     to {
-        transform: translateX(-60%);
+        transform: rotateY(-75deg);
         opacity: 0;
     }
 }
@@ -123,21 +140,21 @@ $glide: 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .face-in {
-    animation: in-from-below $glide both;
+    animation: in-from-below $roll both;
 }
 
 .face-out {
-    animation: out-above $glide both;
+    animation: out-above $roll both;
 }
 
 .workout-face--new-round .face-in,
 .slide-in-sideways {
-    animation: in-from-right $glide both;
+    animation: in-from-right $roll both;
 }
 
 .workout-face--new-round .face-out,
 .slide-out-sideways {
-    animation: out-left $glide both;
+    animation: out-left $roll both;
 }
 
 @media (prefers-reduced-motion: reduce) {

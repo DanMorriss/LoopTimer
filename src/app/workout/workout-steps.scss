@@ -1,0 +1,123 @@
+@use 'workout-colours' as *;
+
+// Each kind of step's own look, on top of its colour: timed work hurries you through its last
+// seconds, rest settles in slowly and breathes, and a rep step's count is the big thing on the
+// face. Kept apart from workout.component.scss, which is near its size budget.
+
+// What the step's name is fitted to (fit-name.ts)
+.workout-face {
+    container-type: inline-size;
+}
+
+// The step's name: on one line if it fits, otherwise two even lines (three for the longest),
+// shrunk as far as it needs to be by fitName(). Kept clear of the circle's curve, which is
+// narrower up here.
+.workout-face__label {
+    max-width: 78cqi;
+    margin-inline: auto;
+    line-height: 1.1;
+    text-wrap: balance;
+    overflow-wrap: normal;
+    // Past the smallest it shrinks to, its last line ends in "…"
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    overflow: hidden;
+}
+
+// The kind's icon, on its own line above the step's name
+.workout-face__kind {
+    display: block;
+    width: auto;
+    height: auto;
+    font-size: 1.75rem;
+    line-height: 1;
+}
+
+// The rep count, as big as the face has room for on a narrow phone
+.workout-face__count {
+    font-size: min(4rem, 14vw);
+    line-height: 1.1;
+
+    // The template's whitespace between them is dropped
+    + .workout-face__reps {
+        margin-left: 0.3em;
+    }
+}
+
+// What's after the rest, under its countdown
+.workout-face__then {
+    max-width: 15em;
+    margin-inline: auto;
+    color: $face-muted;
+    font-size: 0.95rem;
+    line-height: 1.25;
+    text-wrap: balance;
+}
+
+// Room for the step strip under the round line, so the ring doesn't jump
+.workout-status--steps {
+    min-height: 4.5rem;
+}
+
+// The dots and the time left share a row
+.workout-status__progress {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    // Each of timed work's last seconds pops in a little large and settles
+    .workout-face__pop {
+        animation: tick-pop 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    // Rest comes in gently from a little way below, rather than gliding up the whole face...
+    .workout-face--rest:not(.workout-face--new-round) {
+        .face-in {
+            animation: rest-in 0.9s ease-out both;
+        }
+
+        // Gone quickly, so the two don't sit over each other
+        .face-out {
+            animation: rest-out 0.3s ease-in both;
+        }
+    }
+
+    // ...and the face breathes, slowly, while it lasts
+    .workout-face--rest {
+        animation: breathe 4s ease-in-out infinite;
+    }
+
+    .workout-face--rest.workout-face--paused {
+        animation-play-state: paused;
+    }
+}
+
+@keyframes tick-pop {
+    from {
+        transform: scale(1.18);
+    }
+}
+
+@keyframes rest-in {
+    from {
+        transform: translateY(15%);
+        opacity: 0;
+    }
+}
+
+@keyframes rest-out {
+    to {
+        transform: translateY(-10%);
+        opacity: 0;
+    }
+}
+
+@keyframes breathe {
+    50% {
+        transform: scale(1.015);
+    }
+}
