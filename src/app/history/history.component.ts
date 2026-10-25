@@ -1,9 +1,18 @@
 import { DatePipe } from '@angular/common';
-import { afterNextRender, Component, computed, inject, Injector, signal } from '@angular/core';
+import {
+    afterNextRender,
+    Component,
+    computed,
+    ElementRef,
+    inject,
+    Injector,
+    signal,
+} from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MUSCLE_LABELS, MuscleGroup } from '../models/exercise';
 import { HistoryEntry } from '../models/history';
 import { BodyMapComponent } from '../shared/components/body-map/body-map.component';
+import { changeSmoothly } from '../shared/layout-change';
 import { injectPrefersReducedMotion } from '../shared/reduced-motion';
 import { ExerciseStore } from '../shared/state/exercise-store.service';
 import { HistoryStore } from '../shared/state/history-store.service';
@@ -128,6 +137,7 @@ export class HistoryComponent {
     });
 
     private readonly undo = inject(UndoService);
+    private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
     /** Whose menu is open, and whose note is being edited: one of each at most. */
     protected readonly openMenuId = signal<string | null>(null);
     protected readonly editingId = signal<string | null>(null);
@@ -175,14 +185,20 @@ export class HistoryComponent {
     protected delete(entry: HistoryEntry) {
         this.openMenuId.set(null);
         this.closeNote(entry.id);
-        this.history.delete(entry.id);
+        // The entries and days after it close up the gap, and open it again on Undo
+        this.smoothChange(() => this.history.delete(entry.id));
         this.undo.offerUndo({
             message: `Deleted ${entryName(entry)}`,
             undo: () => {
-                this.history.restore(entry);
+                this.smoothChange(() => this.history.restore(entry));
                 this.focusAfterRender(`menu-${entry.id}`);
             },
         });
+    }
+
+    /** Makes a change to the history, with the days and entries sliding to their new places. */
+    private smoothChange(change: () => void) {
+        changeSmoothly(this.host.nativeElement, '.history__day, .entry', this.injector, change);
     }
 
     /**

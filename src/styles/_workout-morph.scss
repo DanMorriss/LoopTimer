@@ -74,17 +74,24 @@
 }
 
 // The tab bar: only in the old picture when the workout opens, only in the new one when it
-// folds away, so it leaves downwards and comes back up the same way
+// folds away, so it leaves downwards and comes back up the same way. Each way on the spring
+// played forwards: played in reverse, the way back would speed up into place and stop dead.
 ::view-transition-old(tab-bar):only-child {
     animation: tab-bar-down var(--spring-duration) var(--ease-spring) both;
 }
 
 ::view-transition-new(tab-bar):only-child {
-    animation: tab-bar-down var(--spring-duration) var(--ease-spring) reverse both;
+    animation: tab-bar-up var(--spring-duration) var(--ease-spring) both;
 }
 
 @keyframes tab-bar-down {
     to {
+        transform: translateY(calc(100% + var(--bars-bottom)));
+    }
+}
+
+@keyframes tab-bar-up {
+    from {
         transform: translateY(calc(100% + var(--bars-bottom)));
     }
 }

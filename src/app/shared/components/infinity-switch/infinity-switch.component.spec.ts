@@ -88,10 +88,11 @@ describe('InfinitySwitchComponent', () => {
             expect(racing()).toBe(true);
         });
 
-        it('greys out at once when turned off, but finishes its lap before stopping', () => {
+        it('greys out at once when turned off, but finishes its lap before stopping', async () => {
             click();
             const offColour = 'rgb(148, 163, 184)';
-            expect(loopColour()).not.toBe(offColour);
+            // Turning on fades in (0.3s), so wait for it; turning off is checked at once below
+            await vi.waitFor(() => expect(loopColour()).not.toBe(offColour));
 
             click();
             expect(loopColour()).toBe(offColour);

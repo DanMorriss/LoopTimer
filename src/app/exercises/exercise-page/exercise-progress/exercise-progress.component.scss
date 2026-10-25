@@ -1,3 +1,4 @@
+@use 'type' as *;
 @use 'interaction' as *;
 
 :host {
@@ -52,7 +53,7 @@
 
     dt {
         color: var(--text-muted);
-        font-size: 0.72rem;
+        @include small-type(0.72rem);
     }
 
     dd {
@@ -72,7 +73,7 @@
 
 .progress__best-when {
     color: var(--text-muted);
-    font-size: 0.72rem;
+    @include small-type(0.72rem);
 }
 
 .progress__chart-head {
@@ -101,9 +102,12 @@
     background: var(--control);
     color: var(--text);
     font: inherit;
-    font-size: 0.75rem;
+    @include small-type(0.75rem);
     white-space: nowrap;
     cursor: pointer;
+
+    // 32px drawn, 44px to a finger
+    @include hit-area(6px);
 
     @include hover {
         background: var(--control-hover);
@@ -152,7 +156,7 @@
 
 .progress__axis {
     fill: var(--text-muted);
-    font-size: 10px;
+    @include small-type(0.625rem);
     font-variant-numeric: tabular-nums;
 }
 
@@ -196,7 +200,7 @@
     background: var(--raised);
     box-shadow: 0 4px 12px var(--shadow);
     color: var(--text-muted);
-    font-size: 0.72rem;
+    @include small-type(0.72rem);
     pointer-events: none;
     // Above the dot, to its right
     transform: translate(10px, calc(-100% - 10px));
@@ -293,6 +297,9 @@
     font-size: 0.85rem;
     text-decoration: none;
 
+    // A line of text, 44px to a finger
+    @include hit-area(10px);
+
     @include hover {
         text-decoration: underline;
     }
@@ -306,7 +313,7 @@
 .progress__session-date {
     flex: none;
     color: var(--text-muted);
-    font-size: 0.75rem;
+    @include small-type(0.75rem);
 }
 
 .progress__session-sets {

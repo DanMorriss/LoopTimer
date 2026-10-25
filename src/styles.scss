@@ -108,7 +108,9 @@
 
     --panel: rgba(255, 255, 255, 0.6);
     --panel-border: rgba(148, 163, 184, 0.5);
-    --card: rgba(255, 255, 255, 0.75);
+    // Solid, as it sits on the see-through panel: a light see-through layer on another loses
+    // its edge. The same white the see-through one made there.
+    --card: #fcfdfe;
     --control: rgba(255, 255, 255, 0.9);
     --control-hover: rgba(226, 232, 240, 0.9);
     --raised: #ffffff;
@@ -162,6 +164,32 @@
     --muscle-outline: rgba(71, 85, 105, 0.55);
 }
 
+// Where the system asks for less see-through: the panels and cards solid, in the colour they
+// showed over the page, and the dimming behind dialogs darker (they drop their blur too)
+@media (prefers-reduced-transparency: reduce) {
+    :root {
+        --panel: #0b121e;
+        --card: #0d1423;
+        --overlay: rgba(2, 6, 23, 0.85);
+    }
+
+    :root[data-theme='light'] {
+        --panel: #f8fafd;
+        --card: #fcfdfe;
+        --overlay: rgba(15, 23, 42, 0.55);
+    }
+}
+
+// Where the system asks for more contrast: the panels' and cards' edges as strong as a
+// control's, so every surface has a defined border
+@media (prefers-contrast: more) {
+    :root,
+    :root[data-theme='light'] {
+        --panel-border: var(--border-strong);
+        --border-soft: var(--border);
+    }
+}
+
 // Motion and the bars along the bottom, the same in both themes
 :root {
     // Apple's critically damped spring (no bounce) with a 0.3s response, as a CSS easing: it
@@ -187,6 +215,9 @@
         1
     );
     --spring-duration: 0.45s;
+    // Its mirror, for going back the way something came: slow to start and quickest at the
+    // end, where the spring is quickest at the start and slow at the end
+    --ease-spring-out: cubic-bezier(0.64, 0, 0.78, 0);
 
     // The bars floating over the bottom of the page: the tabs, the workout's bar above them
     // while one is going, and the Undo bar above that after a delete. --bars-height is how

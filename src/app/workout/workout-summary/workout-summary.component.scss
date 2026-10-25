@@ -21,6 +21,11 @@
     backdrop-filter: blur(6px);
     opacity: var(--dim, 1);
     animation: sheet-dim-in 0.2s ease-out;
+
+    // No blur where the system asks for less see-through; the dimming is darker instead
+    @media (prefers-reduced-transparency: reduce) {
+        backdrop-filter: none;
+    }
 }
 
 // Closing: back down the way it came. Taps go straight through to the workout meanwhile.
@@ -121,12 +126,21 @@
 // closes with Back to workout or Escape). Pointer only: keyboards and screen readers have
 // those too.
 .summary__grabber {
+    position: relative;
+    z-index: 1;
     display: grid;
     place-items: center;
     height: 1.5rem;
     flex-shrink: 0;
     touch-action: none;
     cursor: grab;
+
+    // A 44px target, reaching down into the empty top of the content under it
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 0 0 -1.25rem;
+    }
 
     &::before {
         content: '';
@@ -148,6 +162,15 @@
     :host(.sheet-leave)::before,
     :host(.sheet-leave) .summary {
         animation: none;
+    }
+}
+
+// The heading and title while they drag the sheet (on a phone, scrolled to the top): a
+// finger on them moves the sheet rather than scrolling or selecting text
+@media (max-width: 639px) {
+    .summary__head--draggable {
+        touch-action: none;
+        user-select: none;
     }
 }
 

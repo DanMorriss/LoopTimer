@@ -16,6 +16,20 @@
 //                than `transform`, so it adds to any transform the control already has. Put
 //                `scale 0.2s ease-out` in the control's transition: it shrinks quickly on
 //                the press and grows back a touch slower, like pressing something real.
+// hit-area       Grows what a finger can hit to about 44px without moving anything: an
+//                invisible layer reaching $block past its top and bottom (and $inline past
+//                its sides). For controls drawn smaller than a fingertip. Include it after
+//                the control's own declarations, as with the others.
+
+@mixin hit-area($block, $inline: 0px) {
+    position: relative;
+
+    &::after {
+        content: '';
+        position: absolute;
+        inset: (-$block) (-$inline);
+    }
+}
 
 @mixin hover {
     @media (hover: hover) {

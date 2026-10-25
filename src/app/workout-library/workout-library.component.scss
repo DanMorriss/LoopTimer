@@ -11,11 +11,21 @@
     margin: 1rem 0 0;
 }
 
-// The main button, floating at the bottom of the screen above the list, and above the tab bar
+// The main button, floating at the bottom of the screen above the list, and above the tab bar.
+// When the Undo bar rises under it, it moves up on the same spring, rather than jumping.
 .library-add-button {
     position: fixed;
     left: 50%;
     bottom: calc(var(--bars-height) + 1rem);
     translate: -50% 0;
     z-index: 20;
+    transition:
+        bottom var(--spring-duration) var(--ease-spring),
+        scale 0.2s ease-out,
+        box-shadow 0.2s ease,
+        filter 0.2s ease;
+
+    @media (prefers-reduced-motion: reduce) {
+        transition: none;
+    }
 }

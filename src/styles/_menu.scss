@@ -2,6 +2,11 @@
 
 // The small menu a ⋮ button opens (a library card's options, a history entry's): a raised
 // panel of full-width items. The page places it; these are the looks.
+//
+// It grows out of the button that opened it, on the app's spring, and folds back into it as
+// it closes: from its top right, under a ⋮ at the right. A menu placed elsewhere sets its
+// own transform-origin, at the corner nearest its button. Where it's used, the menu has
+// animate.leave="menu--leaving", which keeps it on the page while it goes.
 
 .menu {
     min-width: 130px;
@@ -10,6 +15,51 @@
     background: var(--raised);
     box-shadow: 0 10px 24px var(--shadow);
     overflow: hidden;
+    transform-origin: top right;
+    animation: menu-in var(--spring-duration) var(--ease-spring);
+}
+
+// On its way out it's done with, so taps go straight through
+.menu--leaving {
+    animation: menu-out 0.15s var(--ease-spring-out) forwards;
+    pointer-events: none;
+}
+
+@keyframes menu-in {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+}
+
+@keyframes menu-out {
+    to {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+}
+
+// With reduced motion it doesn't grow or shrink: it fades
+@media (prefers-reduced-motion: reduce) {
+    .menu {
+        animation: menu-fade-in 0.15s ease-out;
+    }
+
+    .menu--leaving {
+        animation: menu-fade-out 0.15s ease-in forwards;
+    }
+
+    @keyframes menu-fade-in {
+        from {
+            opacity: 0;
+        }
+    }
+
+    @keyframes menu-fade-out {
+        to {
+            opacity: 0;
+        }
+    }
 }
 
 .menu__item {

@@ -11,6 +11,11 @@
     backdrop-filter: blur(6px);
     padding: 1rem;
     z-index: 40;
+
+    // No blur where the system asks for less see-through; the dimming is darker instead
+    @media (prefers-reduced-transparency: reduce) {
+        backdrop-filter: none;
+    }
 }
 
 .editor {
@@ -124,6 +129,9 @@
     font: inherit;
     font-size: 0.85rem;
     cursor: pointer;
+
+    // 36px drawn, 44px to a finger
+    @include hit-area(4px);
 
     @include hover {
         background: var(--control-hover);

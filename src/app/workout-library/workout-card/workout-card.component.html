@@ -54,6 +54,7 @@
         @if (menuOpen()) {
             <div
                 class="menu workout-card__menu"
+                animate.leave="menu--leaving"
                 [id]="'workout-options-' + workout().id"
                 role="group"
                 [attr.aria-label]="'Options for ' + name()"

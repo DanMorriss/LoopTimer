@@ -5,15 +5,36 @@
 //                  and weight together: headings are semibold.
 //   Display        `@include display;` for page titles and the workout's big numbers only:
 //                  Audiowide, the app's character. It has one weight, so it's never bolded
-//                  (that would be a smeared, faked bold), and large sizes are tracked in a
-//                  little, as wide letters read too far apart as they grow.
+//                  (that would be a smeared, faked bold). Its tracking follows its size: none
+//                  at 1.25rem, tightening as it grows (about -0.02em by 2.5rem, as wide
+//                  letters read too far apart large) and opening a hair below.
+//
+//   Small text     `@include small-type(0.75rem);` for anything 0.75rem or smaller: tracked
+//                  out a touch, more the smaller it gets, as small letters set close blur
+//                  together.
 //
 // Numbers that tick (a countdown, the time left) want `font-variant-numeric: tabular-nums`
 // in the system face, so the digits don't shift. Audiowide has no such digits: the workout's
 // countdown gives each one a fixed-width cell instead (ClockDigitsComponent).
 
-@mixin display($tracking: -0.01em) {
+@mixin display {
     font-family: var(--font-display);
     font-weight: 400;
-    letter-spacing: $tracking;
+    @include display-tracking;
+}
+
+// The display face's tracking, worked out from the size (1em) where it's set. Text inside at
+// another size inherits this size's, so a part holding bigger or smaller text in the face
+// sets it on that text as well (`.part * { @include display-tracking; }`).
+@mixin display-tracking {
+    letter-spacing: calc((1.25rem - 1em) * 0.04);
+}
+
+@mixin small-type($size) {
+    font-size: $size;
+    @if $size < 0.7rem {
+        letter-spacing: 0.02em;
+    } @else {
+        letter-spacing: 0.01em;
+    }
 }

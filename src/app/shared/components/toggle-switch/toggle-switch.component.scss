@@ -16,6 +16,9 @@ $on-color: var(--glow);
     color: var(--text-muted);
     font: inherit;
     cursor: pointer;
+    // Up and down scroll the page; sideways drags the knob
+    touch-action: pan-y;
+    -webkit-tap-highlight-color: transparent;
 
     &:focus-visible {
         outline: 2px solid var(--accent);
@@ -56,12 +59,21 @@ $on-color: var(--glow);
     border-radius: 50%;
     background: $off-color;
     transform: translateY(-50%);
-    transition: transform 0.2s ease;
+    // Across on the app's spring; grows quickly as it's pressed and settles back a touch slower
+    transition:
+        transform var(--spring-duration) var(--ease-spring),
+        scale 0.2s ease-out;
 
     .toggle-switch--on & {
         background: var(--glow-dot);
         box-shadow: 0 0 6px 1px $on-color;
         transform: translate(1.4rem, -50%);
+    }
+
+    // The moment it's pressed, as a finger on an iPhone's switch makes its knob swell
+    .toggle-switch:active:not(:disabled) & {
+        scale: 1.2;
+        transition-duration: var(--spring-duration), 0.08s;
     }
 }
 

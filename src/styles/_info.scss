@@ -21,6 +21,9 @@
     cursor: pointer;
     transition: scale 0.2s ease-out;
 
+    // 32px drawn, 44px to a finger
+    @include hit-area(6px, 6px);
+
     @include hover {
         background: var(--control);
         color: var(--text);

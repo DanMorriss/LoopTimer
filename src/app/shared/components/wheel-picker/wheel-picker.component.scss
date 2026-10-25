@@ -112,6 +112,12 @@ $rows-around: math.div($open-rows - 1, 2);
     }
 }
 
+// Holds the numbers; keeps them in the viewport's 3D space, so its perspective still curves
+// them into a drum (perspective only reaches an element's own children otherwise)
+.wheel-picker__track {
+    transform-style: preserve-3d;
+}
+
 // While dragging with a mouse, follow the pointer exactly; it snaps when released
 .wheel-picker__viewport--dragging {
     scroll-snap-type: none;

@@ -48,7 +48,6 @@
     border: 1px solid var(--border);
     background: var(--card);
     box-shadow: 0 10px 30px var(--shadow);
-    backdrop-filter: blur(8px);
     // Up and down scroll the page; left and right are the card's to swipe
     touch-action: pan-y;
     // A long press opens the card's options, not the phone's text selection or link menu

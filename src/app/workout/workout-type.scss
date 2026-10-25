@@ -14,9 +14,16 @@
     @include display;
 }
 
+// The round line and the face hold text of several sizes, each tracked for its own
+.workout-status *,
+.workout-face * {
+    @include display-tracking;
+}
+
 // The countdown is in clock cells (ClockDigitsComponent); the round's time left is small
-// enough to read in the system's face, with digits of one width so it doesn't shift
-.workout-status__time-left {
+// enough to read in the system's face, with digits of one width so it doesn't shift. Under
+// .workout-status, to outweigh the display face's tracking on everything in the status.
+.workout-status .workout-status__time-left {
     font-family: var(--font-text);
     font-weight: 600;
     letter-spacing: normal;

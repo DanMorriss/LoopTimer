@@ -3,6 +3,7 @@ import {
     Component,
     computed,
     effect,
+    ElementRef,
     inject,
     Injector,
     signal,
@@ -39,6 +40,7 @@ import { ExerciseStore } from '../shared/state/exercise-store.service';
 import { ExercisePickerComponent } from './exercise-picker/exercise-picker.component';
 import { InfinitySwitchComponent } from '../shared/components/infinity-switch/infinity-switch.component';
 import { UndoService } from '../shared/undo/undo.service';
+import { changeSmoothly } from '../shared/layout-change';
 import {
     WheelPickerComponent,
     WheelPickerOption,
@@ -144,6 +146,7 @@ export class WorkoutSetupComponent {
     private readonly router = inject(Router);
     private readonly route = inject(ActivatedRoute);
     private readonly injector = inject(Injector);
+    private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
     private readonly exercises = inject(ExerciseStore);
     /** Weights are shown and picked in this, and saved in kg. */
     protected readonly weightUnit = inject(SettingsStore).weightUnit();
@@ -408,17 +411,28 @@ export class WorkoutSetupComponent {
 
     /** Opens or closes one step. Its button stays in place, so focus stays on it. */
     protected toggleStep(key: number) {
-        this.expandedKeys.update((keys) => {
-            const next = new Set(keys);
-            if (!next.delete(key)) {
-                next.add(key);
-            }
-            return next;
-        });
+        this.smoothChange(() =>
+            this.expandedKeys.update((keys) => {
+                const next = new Set(keys);
+                if (!next.delete(key)) {
+                    next.add(key);
+                }
+                return next;
+            })
+        );
     }
 
     protected setAllExpanded(expanded: boolean) {
-        this.expandedKeys.set(expanded ? this.allKeys() : new Set());
+        this.smoothChange(() => this.expandedKeys.set(expanded ? this.allKeys() : new Set()));
+    }
+
+    /**
+     * Opens or closes steps with the steps and everything under them sliding to their new
+     * places, rather than the page jumping (and rather than animating a step's height, which
+     * would lay the page out again every frame).
+     */
+    private smoothChange(change: () => void) {
+        changeSmoothly(this.host.nativeElement, 'form > *, .step', this.injector, change);
     }
 
     /** Adds a rep step, the most common kind; its kind pill changes it. */
@@ -494,6 +508,20 @@ export class WorkoutSetupComponent {
         const atEnd = by === -1 ? target === 0 : target === this.stepCount() - 1;
         const button = by === -1 ? (atEnd ? 'down' : 'up') : atEnd ? 'up' : 'down';
         this.focusAfterRender(`step-${moved.key}-${button}`);
+    }
+
+    /**
+     * Where a step's handle was grabbed, from the step's top left (px). The CDK puts a custom
+     * preview's top left corner at the pointer, so the preview is moved back by this much,
+     * keeping the pointer where it took hold rather than jumping to the corner.
+     */
+    protected readonly grabbedAt = signal({ x: 0, y: 0 });
+
+    protected grabStep(event: PointerEvent) {
+        const step = (event.currentTarget as Element).closest('.step')?.getBoundingClientRect();
+        if (step) {
+            this.grabbedAt.set({ x: event.clientX - step.left, y: event.clientY - step.top });
+        }
     }
 
     /** A step dragged by its handle and dropped in a new place. */

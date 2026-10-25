@@ -1,5 +1,15 @@
 import { CdkTrapFocus } from '@angular/cdk/a11y';
-import { Component, computed, inject, input, linkedSignal, output } from '@angular/core';
+import {
+    afterNextRender,
+    Component,
+    computed,
+    ElementRef,
+    inject,
+    input,
+    linkedSignal,
+    output,
+    viewChild,
+} from '@angular/core';
 import { form, FormField, maxLength, validate } from '@angular/forms/signals';
 import { MatIconModule } from '@angular/material/icon';
 import {
@@ -23,6 +33,7 @@ import {
 import { ExerciseStore } from '../../state/exercise-store.service';
 import { WorkoutStore } from '../../state/workout-store.service';
 import { BodyMapComponent } from '../body-map/body-map.component';
+import { growFromClick } from '../../dialog-origin';
 
 /** What the editor holds: an exercise's details (used only for your own) and your note. */
 interface ExerciseEditorModel {
@@ -65,6 +76,12 @@ export class ExerciseEditorComponent {
 
     private readonly exercises = inject(ExerciseStore);
     private readonly workouts = inject(WorkoutStore);
+    private readonly card = viewChild.required<ElementRef<HTMLElement>>('card');
+
+    constructor() {
+        // Grows out of the button that opened it, and shrinks back into it
+        afterNextRender(() => growFromClick(this.card().nativeElement));
+    }
 
     protected readonly builtIn = computed(() => isBuiltIn(this.exercise()));
     protected readonly title = computed(() => {
