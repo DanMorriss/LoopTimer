@@ -45,9 +45,17 @@ describe('WheelPickerComponent', () => {
     /** Which value sits in the middle of the wheel. */
     const valueInMiddle = () => Math.round(viewport().scrollTop / rowHeight());
 
-    /** Wait for a smooth scroll to finish. */
+    /**
+     * Wait for a smooth scroll or a glide to finish: long enough for one to run, then until the
+     * wheel has stopped moving, as a busy machine can take longer.
+     */
     async function scrolled() {
-        await new Promise((resolve) => setTimeout(resolve, 600));
+        await wait(600);
+        let last: number;
+        do {
+            last = viewport().scrollTop;
+            await wait(100);
+        } while (viewport().scrollTop !== last);
         await settle();
     }
 
