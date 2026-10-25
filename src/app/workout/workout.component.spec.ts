@@ -2578,6 +2578,76 @@ describe('WorkoutComponent', () => {
                 expect(summary()).not.toBeNull();
                 expect(grabber()).toBeNull();
             });
+
+            describe('and by its content, scrolled to the top', () => {
+                const body = () => summary()!.querySelector<HTMLElement>('.summary__body')!;
+
+                /**
+                 * A finger on the stats moving `dy` px down (negative is up), and maybe lifting.
+                 * Returns whether each move was kept from scrolling.
+                 */
+                function swipe(dy: number, lift = true): boolean[] {
+                    const target = summary()!.querySelector<HTMLElement>('.summary__stats')!;
+                    const fire = (type: string, y: number) => {
+                        const touch = new Touch({ identifier: 7, target, clientX: 50, clientY: y });
+                        const event = new TouchEvent(type, {
+                            touches: type === 'touchend' ? [] : [touch],
+                            changedTouches: [touch],
+                            bubbles: true,
+                            cancelable: true,
+                        });
+                        target.dispatchEvent(event);
+                        return event.defaultPrevented;
+                    };
+                    fire('touchstart', 100);
+                    const prevented = [
+                        fire('touchmove', 100 + dy / 2),
+                        fire('touchmove', 100 + dy),
+                    ];
+                    if (lift) {
+                        fire('touchend', 100 + dy);
+                    }
+                    return prevented;
+                }
+
+                it('follows a finger moving down, from where it went down', () => {
+                    endInRound2();
+                    settle();
+
+                    expect(swipe(120, false)).toEqual([true, true]);
+                    expect(offset()).toBe(120);
+                });
+
+                it('goes back to the run once pulled past halfway down', async () => {
+                    fakeReducedMotion(true);
+                    endInRound2();
+
+                    swipe(sheet().offsetHeight * 0.75);
+                    await vi.waitFor(() => {
+                        fixture.detectChanges();
+                        expect(summary()).toBeNull();
+                    });
+                });
+
+                it('leaves a finger moving up to scroll the content', () => {
+                    endInRound2();
+                    settle();
+
+                    expect(swipe(-120)).toEqual([false, false]);
+                    expect(offset()).toBe(0);
+                });
+
+                it('leaves a finger moving down to scroll back up, once scrolled down', () => {
+                    endInRound2();
+                    settle();
+                    body().style.flex = 'none';
+                    body().style.height = '40px';
+                    body().scrollTop = 20;
+
+                    expect(swipe(120)).toEqual([false, false]);
+                    expect(offset()).toBe(0);
+                });
+            });
         });
 
         it('leaves the run alone on Space while it is open', () => {

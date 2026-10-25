@@ -12,6 +12,7 @@
          workout and Escape do the same -->
     @if (!finished()) {
         <div
+            #grabber
             class="summary__grabber"
             aria-hidden="true"
             (pointerdown)="grab($event)"
@@ -20,7 +21,15 @@
             (pointercancel)="letGo($event)"
         ></div>
     }
-    <div class="summary__body" (scroll)="onBodyScroll($event)">
+    <!-- Scrolled to the top, a finger moving down anywhere here drags the sheet too -->
+    <div
+        class="summary__body"
+        (scroll)="onBodyScroll($event)"
+        (touchstart)="onBodyTouchStart($event)"
+        (touchmove)="onBodyTouchMove($event)"
+        (touchend)="onBodyTouchEnd($event)"
+        (touchcancel)="onBodyTouchEnd($event)"
+    >
         <!-- Focus starts here, so it's read from the top. Scrolled to the top, the heading and
              title drag the sheet too, as a sheet's top does on a phone -->
         <h2
@@ -93,127 +102,7 @@
                 </div>
             }
 
-            @if (setLines().length) {
-                <section class="summary__section" aria-labelledby="summary-sets">
-                    <div class="summary__section-head">
-                        <h3 id="summary-sets">Sets</h3>
-                        @if (setGroups().length) {
-                            <button
-                                type="button"
-                                class="btn-pill summary__change"
-                                aria-controls="summary-sets-list"
-                                [attr.aria-expanded]="changingSets()"
-                                (click)="changingSets.set(!changingSets())"
-                            >
-                                <mat-icon aria-hidden="true">{{
-                                    changingSets() ? 'check' : 'tune'
-                                }}</mat-icon>
-                                {{ changingSets() ? 'Done changing' : 'Change reps or weight' }}
-                            </button>
-                        }
-                    </div>
-
-                    <div id="summary-sets-list">
-                        @if (changingSets()) {
-                            @for (group of setGroups(); track $index; let g = $index) {
-                                <div class="summary__group">
-                                    <h4 class="summary__group-name">{{ group.name }}</h4>
-                                    <div class="summary__set summary__set--head" aria-hidden="true">
-                                        <span></span>
-                                        <span>Reps</span>
-                                        <span>Weight ({{ weightUnit() }})</span>
-                                    </div>
-                                    @for (item of group.sets; track item.index; let s = $index) {
-                                        <div class="summary__set">
-                                            <span
-                                                class="summary__set-label"
-                                                [id]="'summary-set-' + item.index"
-                                            >
-                                                <span class="sr-only">{{ group.name }}, </span>Set
-                                                {{ s + 1 }}
-                                            </span>
-                                            <span
-                                                class="sr-only"
-                                                [id]="'summary-reps-' + item.index"
-                                                >reps</span
-                                            >
-                                            <app-wheel-picker
-                                                [value]="item.set.reps"
-                                                (valueChange)="setReps(item.index, $event)"
-                                                [options]="repOptions"
-                                                [labelledBy]="
-                                                    'summary-set-' +
-                                                    item.index +
-                                                    ' summary-reps-' +
-                                                    item.index
-                                                "
-                                            />
-                                            <span
-                                                class="sr-only"
-                                                [id]="'summary-weight-' + item.index"
-                                                >weight in {{ weightUnit() }}</span
-                                            >
-                                            <app-wheel-picker
-                                                [value]="weightValue(item.set)"
-                                                (valueChange)="setWeight(item.index, $event)"
-                                                [options]="weightOptions()"
-                                                [labelledBy]="
-                                                    'summary-set-' +
-                                                    item.index +
-                                                    ' summary-weight-' +
-                                                    item.index
-                                                "
-                                            />
-                                        </div>
-                                    }
-                                </div>
-                            }
-                        } @else {
-                            <ul class="summary__lines">
-                                @for (line of setLines(); track $index) {
-                                    <li>
-                                        <span aria-hidden="true"
-                                            ><strong>{{ line.name }}</strong
-                                            >: {{ line.text }}</span
-                                        >
-                                        <span class="sr-only"
-                                            >{{ line.name }}, {{ line.spoken }}</span
-                                        >
-                                    </li>
-                                }
-                            </ul>
-                        }
-                    </div>
-
-                    <!-- Changing what was done can carry over to the saved workout, if wanted -->
-                    <div class="summary__next-time" aria-live="polite">
-                        @switch (nextTime()) {
-                            @case ('asking') {
-                                <p>Use these settings next time?</p>
-                                <div class="summary__next-time-actions">
-                                    <button
-                                        type="button"
-                                        class="btn-pill"
-                                        (click)="answerNextTime(false)"
-                                    >
-                                        No, just this time
-                                    </button>
-                                    <button
-                                        type="button"
-                                        class="btn-pill summary__use-next-time"
-                                        (click)="answerNextTime(true)"
-                                    >
-                                        Yes, use next time
-                                    </button>
-                                </div>
-                            }
-                            @case ('yes') {
-                                <p>Saved: next time starts from these.</p>
-                            }
-                        }
-                    </div>
-                </section>
-            }
+            <app-summary-sets />
 
             <section class="summary__section">
                 <label class="picker-field" for="summary-note">

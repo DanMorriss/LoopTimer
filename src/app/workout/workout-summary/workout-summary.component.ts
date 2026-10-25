@@ -11,26 +11,21 @@ import {
 } from '@angular/core';
 import { form, FormField, maxLength } from '@angular/forms/signals';
 import { MatIconModule } from '@angular/material/icon';
-import { isBuiltIn } from '../../models/exercise';
-import { MAX_NOTE_LENGTH, RepSet } from '../../models/history';
+import { MAX_NOTE_LENGTH } from '../../models/history';
 import {
     exerciseBests,
     isMostRounds,
     roundsScore,
     sessionsByExercise,
 } from '../../models/progress';
-import { MAX_REPS } from '../../models/workout';
-import { weightIn, weightOptions, weightToKg } from '../../models/weight';
 import { WheelPickerComponent } from '../../shared/components/wheel-picker/wheel-picker.component';
 import { ActiveRunService } from '../../shared/run/active-run.service';
 import { ExerciseStore } from '../../shared/state/exercise-store.service';
 import { HistoryStore } from '../../shared/state/history-store.service';
 import { SettingsStore } from '../../shared/state/settings-store.service';
-import { WorkoutStore } from '../../shared/state/workout-store.service';
 import {
     describeRounds,
     describeScore,
-    describeSets,
     entryName,
     formatDuration,
 } from '../../history/history-format';
@@ -38,15 +33,36 @@ import { bestLines } from '../../exercises/progress-format';
 import { project, rubberband, VelocityTracker } from '../../shared/gesture';
 import { injectPrefersReducedMotion } from '../../shared/reduced-motion';
 import { spring } from '../../shared/spring';
+import {
+    ownExerciseName,
+    REP_OPTIONS,
+    SummarySetsComponent,
+} from './summary-sets/summary-sets.component';
 
 /** px/s: let go faster than this, the sheet was thrown rather than set down. */
 const THROWN = 300;
 
-/** One rep step's sets, for correcting them one by one. */
-interface SetGroup {
-    name: string;
-    /** Each set, with where it is in the run's list of sets. */
-    sets: { index: number; set: RepSet }[];
+/** px a finger moves on the content before it's taken as a drag or a scroll. */
+const TOUCH_SLOP = 8;
+
+/** The touch with this id among those that changed, if it's one of them. */
+function touchById(event: TouchEvent, id: number | undefined): Touch | undefined {
+    return id === undefined
+        ? undefined
+        : Array.from(event.changedTouches).find((touch) => touch.identifier === id);
+}
+
+/**
+ * Whether something between `target` and `container` is scrolled down, e.g. a wheel picker:
+ * a finger moving down there scrolls that back, rather than dragging the sheet.
+ */
+function scrolledWithin(target: Element, container: Element): boolean {
+    for (let el: Element | null = target; el && el !== container; el = el.parentElement) {
+        if (el.scrollTop > 0) {
+            return true;
+        }
+    }
+    return false;
 }
 
 /**
@@ -57,14 +73,13 @@ interface SetGroup {
  */
 @Component({
     selector: 'app-workout-summary',
-    imports: [CdkTrapFocus, FormField, MatIconModule, WheelPickerComponent],
+    imports: [CdkTrapFocus, FormField, MatIconModule, SummarySetsComponent, WheelPickerComponent],
     templateUrl: './workout-summary.component.html',
     styleUrl: './workout-summary.component.scss',
     host: { '[class.summary--dragged-away]': 'draggedAway()' },
 })
 export class WorkoutSummaryComponent {
     private readonly run = inject(ActiveRunService);
-    private readonly store = inject(WorkoutStore);
     private readonly history = inject(HistoryStore);
     private readonly settings = inject(SettingsStore);
     private readonly exercises = inject(ExerciseStore);
@@ -113,15 +128,7 @@ export class WorkoutSummaryComponent {
     });
 
     protected readonly weightUnit = this.settings.weightUnit;
-    private readonly exerciseName = (id: string) => {
-        // Built-in names never change, so a set keeps the name it ran with, e.g. "Squats"
-        const exercise = this.exercises.byId(id);
-        return exercise && !isBuiltIn(exercise) ? exercise.name : undefined;
-    };
-    /** Its sets, one line per step, e.g. "Squats: 10, 10, 8 @ 60 kg" or "Plank: 3 × 0:45". */
-    protected readonly setLines = computed(() =>
-        describeSets(this.run.sets(), this.weightUnit(), this.exerciseName)
-    );
+    private readonly exerciseName = ownExerciseName(this.exercises);
     /**
      * The bests this run set (PRG-2), e.g. "Heaviest: 80 kg × 5", and "Most rounds" for a
      * time limit (PRG-7). Equalling a best isn't one, and nor is doing it for the first time.
@@ -159,66 +166,13 @@ export class WorkoutSummaryComponent {
         this.run.logLastSet(this.lastSetReps());
     }
 
-    // Correcting the rep sets, e.g. the last one was 8 reps, not 10. Timed ones ran as set.
-    protected readonly changingSets = signal(false);
-    protected readonly setGroups = computed((): SetGroup[] => {
-        const groups = new Map<number, SetGroup>();
-        this.store.activeSets().forEach((set, index) => {
-            const group = groups.get(set.step) ?? { name: '', sets: [] };
-            group.sets.push({ index, set });
-            groups.set(set.step, group);
-        });
-        // Named as its line is
-        return Array.from(groups.values(), (group) => ({
-            ...group,
-            name: describeSets(
-                group.sets.map((item) => item.set),
-                this.weightUnit(),
-                this.exerciseName
-            )[0].name,
-        }));
-    });
-    protected readonly repOptions = Array.from({ length: MAX_REPS }, (_, i) => ({
-        value: i + 1,
-        label: String(i + 1),
-    }));
-    protected readonly weightOptions = computed(() => weightOptions(this.weightUnit()));
-    protected weightValue(set: RepSet): number {
-        return set.weight ? weightIn(set.weight, this.weightUnit()) : 0;
-    }
-
-    /** null until a set is changed; then asks whether to start from them next time. */
-    protected readonly nextTime = signal<'asking' | 'yes' | 'no' | null>(null);
+    protected readonly repOptions = REP_OPTIONS;
 
     // The note box starts from the saved note
     private readonly noteModel = linkedSignal(() => ({ note: this.entry()?.note ?? '' }));
     protected readonly noteForm = form(this.noteModel, (note) =>
         maxLength(note.note, MAX_NOTE_LENGTH)
     );
-
-    protected setReps(index: number, reps: number) {
-        if (this.store.activeSets()[index]?.reps === reps) {
-            return;
-        }
-        this.run.changeSet(index, { reps });
-        this.nextTime.set('asking');
-    }
-
-    protected setWeight(index: number, value: number) {
-        const weight = value > 0 ? weightToKg(value, this.weightUnit()) : undefined;
-        if (this.store.activeSets()[index]?.weight === weight) {
-            return;
-        }
-        this.run.changeSet(index, { weight });
-        this.nextTime.set('asking');
-    }
-
-    protected answerNextTime(use: boolean) {
-        if (use) {
-            this.run.useSetsNextTime();
-        }
-        this.nextTime.set(use ? 'yes' : 'no');
-    }
 
     /** Saves the note as it is, e.g. on leaving the box or the summary. */
     protected saveNote() {
@@ -254,7 +208,9 @@ export class WorkoutSummaryComponent {
     /** Gone by dragging, so it doesn't play its closing animation on top. */
     protected readonly draggedAway = signal(false);
     private dragging: {
+        /** The pointer's id, or the touch's if it's dragged by the content (`byTouch`). */
         pointerId: number;
+        byTouch: boolean;
         startY: number;
         startOffset: number;
         offset: number;
@@ -285,6 +241,95 @@ export class WorkoutSummaryComponent {
         if (event.pointerType === 'mouse' && event.button !== 0) {
             return;
         }
+        (event.currentTarget as Element).setPointerCapture(event.pointerId);
+        this.startDrag(event.pointerId, event.clientY, event.timeStamp);
+    }
+
+    protected drag(event: PointerEvent) {
+        if (!this.dragging?.byTouch) {
+            this.moveDrag(event.pointerId, event.clientY, event.timeStamp);
+        }
+    }
+
+    protected letGo(event: PointerEvent) {
+        if (!this.dragging?.byTouch) {
+            this.endDrag(event.pointerId, event.timeStamp);
+        }
+    }
+
+    // Anywhere in the content drags the sheet too while it's scrolled to the top, as an iOS
+    // sheet does. Which way a finger goes isn't known until it moves, so the content can't
+    // hand it over with touch-action (and Safari has no pan-down): its first move decides.
+    // Down, and the sheet takes it, stopping the scroll; any other way, and the content
+    // scrolls. Touch only, as the sheet only drags on a phone.
+
+    /** A touch on the content that hasn't moved far enough yet to tell a drag from a scroll. */
+    private touch: { id: number; x: number; y: number } | null = null;
+    private readonly grabber = viewChild<ElementRef<HTMLElement>>('grabber');
+
+    protected onBodyTouchStart(event: TouchEvent) {
+        const finger = event.changedTouches[0];
+        // Not a second finger, or one on the heading or title, which drag the sheet themselves
+        this.touch =
+            event.touches.length === 1 && !this.dragging
+                ? { id: finger.identifier, x: finger.clientX, y: finger.clientY }
+                : null;
+    }
+
+    protected onBodyTouchMove(event: TouchEvent) {
+        const finger = touchById(event, this.touchDragId() ?? this.touch?.id);
+        if (!finger) {
+            return;
+        }
+        if (this.touchDragId() !== undefined) {
+            event.preventDefault();
+            this.moveDrag(finger.identifier, finger.clientY, event.timeStamp);
+            return;
+        }
+        const touch = this.touch!;
+        const dx = finger.clientX - touch.x;
+        const dy = finger.clientY - touch.y;
+        if (Math.hypot(dx, dy) < TOUCH_SLOP) {
+            return;
+        }
+        this.touch = null;
+        const body = event.currentTarget as HTMLElement;
+        if (
+            dy > Math.abs(dx) &&
+            event.cancelable &&
+            this.sheetDrags() &&
+            body.scrollTop <= 0 &&
+            !scrolledWithin(event.target as Element, body)
+        ) {
+            event.preventDefault();
+            // From where the finger went down, so the sheet catches up with it
+            this.startDrag(finger.identifier, touch.y, event.timeStamp, true);
+            this.moveDrag(finger.identifier, finger.clientY, event.timeStamp);
+        }
+    }
+
+    protected onBodyTouchEnd(event: TouchEvent) {
+        this.touch = null;
+        const finger = touchById(event, this.touchDragId());
+        if (finger) {
+            // No click on whatever the drag started on
+            event.preventDefault();
+            this.endDrag(finger.identifier, event.timeStamp);
+        }
+    }
+
+    /** The touch dragging the sheet, if it's dragged by the content. */
+    private touchDragId(): number | undefined {
+        return this.dragging?.byTouch ? this.dragging.pointerId : undefined;
+    }
+
+    /** Whether the sheet drags here: on a phone, where it has a grabber. */
+    private sheetDrags(): boolean {
+        const grabber = this.grabber()?.nativeElement;
+        return !!grabber && getComputedStyle(grabber).display !== 'none';
+    }
+
+    private startDrag(id: number, y: number, time: number, byTouch = false) {
         this.grabs++;
         const sheet = this.sheet().nativeElement;
         // Where it is on screen now, mid-spring included, and stop it there
@@ -293,38 +338,31 @@ export class WorkoutSummaryComponent {
             .getAnimations({ subtree: true })
             .forEach((animation) => animation.cancel());
         this.moveTo(offset);
-        (event.currentTarget as Element).setPointerCapture(event.pointerId);
         const tracker = new VelocityTracker();
-        tracker.add(offset, event.timeStamp);
-        this.dragging = {
-            pointerId: event.pointerId,
-            startY: event.clientY,
-            startOffset: offset,
-            offset,
-            tracker,
-        };
+        tracker.add(offset, time);
+        this.dragging = { pointerId: id, byTouch, startY: y, startOffset: offset, offset, tracker };
     }
 
-    protected drag(event: PointerEvent) {
+    private moveDrag(id: number, y: number, time: number) {
         const dragging = this.dragging;
-        if (!dragging || event.pointerId !== dragging.pointerId) {
+        if (!dragging || id !== dragging.pointerId) {
             return;
         }
-        const pulled = dragging.startOffset + event.clientY - dragging.startY;
+        const pulled = dragging.startOffset + y - dragging.startY;
         // Down follows the finger; up, past where it sits, resists more the further it goes
         const offset = pulled < 0 ? rubberband(pulled, this.height()) : pulled;
         dragging.offset = offset;
-        dragging.tracker.add(offset, event.timeStamp);
+        dragging.tracker.add(offset, time);
         this.moveTo(offset);
     }
 
-    protected async letGo(event: PointerEvent) {
+    private async endDrag(id: number, time: number) {
         const dragging = this.dragging;
-        if (!dragging || event.pointerId !== dragging.pointerId) {
+        if (!dragging || id !== dragging.pointerId) {
             return;
         }
         this.dragging = null;
-        const velocity = dragging.tracker.velocity(event.timeStamp);
+        const velocity = dragging.tracker.velocity(time);
         const height = this.height();
         // Where the flick would come to rest decides, not where the finger let go
         const away = dragging.offset + project(velocity) > height / 2;

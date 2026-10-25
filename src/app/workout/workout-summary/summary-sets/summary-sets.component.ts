@@ -1,0 +1,111 @@
+import { Component, computed, inject, signal } from '@angular/core';
+import { MatIconModule } from '@angular/material/icon';
+import { describeSets } from '../../../history/history-format';
+import { isBuiltIn } from '../../../models/exercise';
+import { RepSet } from '../../../models/history';
+import { weightIn, weightOptions, weightToKg } from '../../../models/weight';
+import { MAX_REPS } from '../../../models/workout';
+import { WheelPickerComponent } from '../../../shared/components/wheel-picker/wheel-picker.component';
+import { ActiveRunService } from '../../../shared/run/active-run.service';
+import { ExerciseStore } from '../../../shared/state/exercise-store.service';
+import { SettingsStore } from '../../../shared/state/settings-store.service';
+import { WorkoutStore } from '../../../shared/state/workout-store.service';
+
+/** One rep step's sets, for correcting them one by one. */
+interface SetGroup {
+    name: string;
+    /** Each set, with where it is in the run's list of sets. */
+    sets: { index: number; set: RepSet }[];
+}
+
+/** 1 to MAX_REPS, for the reps wheels. */
+export const REP_OPTIONS = Array.from({ length: MAX_REPS }, (_, i) => ({
+    value: i + 1,
+    label: String(i + 1),
+}));
+
+/**
+ * What a set's exercise is called now, if it's your own (it may have been renamed since).
+ * Built-in names never change, so a set keeps the name it ran with, e.g. "Squats".
+ */
+export function ownExerciseName(exercises: ExerciseStore) {
+    return (id: string): string | undefined => {
+        const exercise = exercises.byId(id);
+        return exercise && !isBuiltIn(exercise) ? exercise.name : undefined;
+    };
+}
+
+/**
+ * The run's sets on the workout summary, one line per step, e.g. "Squats: 10, 10, 8 @ 60 kg".
+ * The rep sets can be corrected (the last one was 8 reps, not 10; timed ones ran as set), and
+ * once one is, it asks whether to start from them next time.
+ */
+@Component({
+    selector: 'app-summary-sets',
+    imports: [MatIconModule, WheelPickerComponent],
+    templateUrl: './summary-sets.component.html',
+    styleUrl: './summary-sets.component.scss',
+})
+export class SummarySetsComponent {
+    private readonly run = inject(ActiveRunService);
+    private readonly store = inject(WorkoutStore);
+    private readonly settings = inject(SettingsStore);
+    private readonly exerciseName = ownExerciseName(inject(ExerciseStore));
+
+    protected readonly weightUnit = this.settings.weightUnit;
+    /** One line per step, e.g. "Squats: 10, 10, 8 @ 60 kg" or "Plank: 3 × 0:45". */
+    protected readonly setLines = computed(() =>
+        describeSets(this.run.sets(), this.weightUnit(), this.exerciseName)
+    );
+
+    protected readonly changingSets = signal(false);
+    protected readonly setGroups = computed((): SetGroup[] => {
+        const groups = new Map<number, SetGroup>();
+        this.store.activeSets().forEach((set, index) => {
+            const group = groups.get(set.step) ?? { name: '', sets: [] };
+            group.sets.push({ index, set });
+            groups.set(set.step, group);
+        });
+        // Named as its line is
+        return Array.from(groups.values(), (group) => ({
+            ...group,
+            name: describeSets(
+                group.sets.map((item) => item.set),
+                this.weightUnit(),
+                this.exerciseName
+            )[0].name,
+        }));
+    });
+    protected readonly repOptions = REP_OPTIONS;
+    protected readonly weightOptions = computed(() => weightOptions(this.weightUnit()));
+    protected weightValue(set: RepSet): number {
+        return set.weight ? weightIn(set.weight, this.weightUnit()) : 0;
+    }
+
+    /** null until a set is changed; then asks whether to start from them next time. */
+    protected readonly nextTime = signal<'asking' | 'yes' | 'no' | null>(null);
+
+    protected setReps(index: number, reps: number) {
+        if (this.store.activeSets()[index]?.reps === reps) {
+            return;
+        }
+        this.run.changeSet(index, { reps });
+        this.nextTime.set('asking');
+    }
+
+    protected setWeight(index: number, value: number) {
+        const weight = value > 0 ? weightToKg(value, this.weightUnit()) : undefined;
+        if (this.store.activeSets()[index]?.weight === weight) {
+            return;
+        }
+        this.run.changeSet(index, { weight });
+        this.nextTime.set('asking');
+    }
+
+    protected answerNextTime(use: boolean) {
+        if (use) {
+            this.run.useSetsNextTime();
+        }
+        this.nextTime.set(use ? 'yes' : 'no');
+    }
+}
