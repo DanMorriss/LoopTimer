@@ -37,11 +37,50 @@
     text-align: center;
 }
 
-.history__muscles-most {
-    margin: 0.75rem 0 0;
+.history__bars {
+    margin-top: 1.25rem;
+}
+
+// A card like the muscles', for the workout to do next
+.history__suggestion {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0 0 1.25rem;
+    padding: 1rem;
+    border: 1px solid var(--panel-border);
+    border-radius: 0.9rem;
+    background: var(--card);
+    text-align: center;
+
+    p {
+        margin: 0;
+    }
+
+    .btn-pill {
+        margin-top: 0.4rem;
+    }
+}
+
+.history__suggestion-label {
+    margin: 0;
     color: var(--text-muted);
     font-size: 0.8rem;
-    text-align: center;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.history__suggestion-title {
+    @include display;
+    color: var(--text-strong);
+    font-size: 1.2rem;
+}
+
+.history__suggestion-reason {
+    color: var(--text-muted);
+    font-size: 0.85rem;
 }
 
 .history__day + .history__day {

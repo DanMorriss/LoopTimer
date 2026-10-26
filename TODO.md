@@ -60,8 +60,7 @@ The Exercises page's items are done: an exercise's page slides in over the list 
 
 #### History page
 
-- [ ] **Bars for "Muscles worked this week":** one per muscle group, showing which are overworked and which are underworked.
-- [ ] **Suggested next workout:** one that works the least-used muscle groups.
+The History page's items are done: a bar per muscle group against 10 to 20 sets a week (PRG-8), and a suggested next workout for the least worked muscles (PRG-9).
 
 ### Apple-style design review
 
@@ -83,3 +82,4 @@ From reviews against Apple's WWDC design talks (Designing Fluid Interfaces, Prin
 - [ ] **Try holding and dragging a library card on an iPhone:** added on 2026-10-26 and tested only in Chromium with simulated touches. Check that holding a card lifts it (with no text selection or link menu), dragging it then moves it and doesn't scroll the page, letting go of it unmoved opens its options, and a quick swipe left still deletes.
 - [ ] **The library's order won't sync:** it's the order of the saved list, not part of a workout's record, so when sync comes (SYN-3) a workout moved on one device won't move on another (an open question in `docs/features/library.md`).
 - [ ] **Try the face's reps and weight wheels on an iPhone:** added on 2026-10-26 and tested only in Chromium. Check that tapping the count opens its wheel over the ring (not cut off by the circle), a finger can carry straight on and turn it, it closes on its own, and the face doesn't scroll or slide while it's open.
+- [ ] **The muscle bars' aim is the same for every muscle:** 10 to 20 sets a week (PRG-8), the usual advice for building muscle, so small muscles hardly anyone trains on their own (neck, shins, abductors) always show as under, and so does most of the body for someone training for fitness rather than size. Decide whether small muscles get a lower aim, or the aim becomes a setting (an open question in `docs/features/progress.md`).

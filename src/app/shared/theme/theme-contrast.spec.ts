@@ -116,5 +116,14 @@ for (const theme of ['dark', 'light'] as const) {
                 ).toBeGreaterThanOrEqual(3);
             });
         });
+
+        // The history's bars of sets per muscle, filled on an unworked-muscle track
+        it('makes each muscle bar stand out on its track (at least 3:1)', () => {
+            for (const fill of ['under', 'in', 'over']) {
+                expect(
+                    contrastRatio(token(`--balance-${fill}`), token('--muscle-idle'))
+                ).toBeGreaterThanOrEqual(3);
+            }
+        });
     });
 }

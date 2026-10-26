@@ -8,16 +8,21 @@ import {
     Injector,
     signal,
 } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import { MUSCLE_LABELS, MuscleGroup } from '../models/exercise';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { MUSCLE_LABELS } from '../models/exercise';
 import { HistoryEntry } from '../models/history';
+import { muscleBalance, setsByMuscle, suggestNextWorkout } from '../models/muscle-balance';
+import { Workout } from '../models/workout';
 import { BodyMapComponent } from '../shared/components/body-map/body-map.component';
 import { changeSmoothly } from '../shared/layout-change';
 import { injectPrefersReducedMotion } from '../shared/reduced-motion';
 import { ExerciseStore } from '../shared/state/exercise-store.service';
+import { ActiveRunService } from '../shared/run/active-run.service';
 import { HistoryStore } from '../shared/state/history-store.service';
+import { WorkoutStore } from '../shared/state/workout-store.service';
 import { UndoService } from '../shared/undo/undo.service';
 import { HistoryEntryComponent } from './history-entry/history-entry.component';
+import { MuscleBarsComponent } from './muscle-bars/muscle-bars.component';
 import { entryName, formatDuration } from './history-format';
 
 interface DayGroup {
@@ -32,6 +37,9 @@ interface DayGroup {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+/** "Glutes, Quads and Calves". */
+const LIST = new Intl.ListFormat('en-GB');
+
 function dayKey(time: number): string {
     const date = new Date(time);
     const pad = (n: number) => String(n).padStart(2, '0');
@@ -44,7 +52,7 @@ function dayKey(time: number): string {
  */
 @Component({
     selector: 'app-history',
-    imports: [BodyMapComponent, DatePipe, HistoryEntryComponent, RouterLink],
+    imports: [BodyMapComponent, DatePipe, HistoryEntryComponent, MuscleBarsComponent, RouterLink],
     templateUrl: './history.component.html',
     styleUrl: './history.component.scss',
     host: {
@@ -55,6 +63,9 @@ function dayKey(time: number): string {
 export class HistoryComponent {
     private readonly history = inject(HistoryStore);
     private readonly exercises = inject(ExerciseStore);
+    private readonly workouts = inject(WorkoutStore);
+    private readonly run = inject(ActiveRunService);
+    private readonly router = inject(Router);
     private readonly injector = inject(Injector);
     private readonly reducedMotion = injectPrefersReducedMotion();
     private readonly now = Date.now();
@@ -88,51 +99,57 @@ export class HistoryComponent {
         };
     });
 
+    /** Sets per muscle in the last seven days (PRG-6). */
+    private readonly weekSets = computed(() =>
+        setsByMuscle(
+            this.history.entries().filter((entry) => entry.startedAt >= this.now - 7 * DAY_MS),
+            (id) => this.exercises.byId(id)
+        )
+    );
+
     /**
-     * Which muscles have been used in the last seven days (PRG-6): each set counts 1 for its
-     * exercise's main muscles and ½ for supporting ones. A score of 1 or more shades as main.
-     * Most worked first, A to Z on a tie.
+     * Which muscles have been used in the last seven days (PRG-6): a muscle with a set or more
+     * shades as main on the body map, under that as supporting. Then a bar per muscle group
+     * against the sets a week aimed for (PRG-8), most worked first.
      */
     protected readonly musclesWorked = computed(() => {
-        const recent = this.history
-            .entries()
-            .filter((entry) => entry.startedAt >= this.now - 7 * DAY_MS);
-        const counts = new Map<MuscleGroup, number>();
+        const balance = muscleBalance(this.weekSets());
+        return {
+            hasData: this.weekSets().size > 0,
+            main: balance.filter(({ sets }) => sets >= 1).map(({ muscle }) => muscle),
+            supporting: balance
+                .filter(({ sets }) => sets > 0 && sets < 1)
+                .map(({ muscle }) => muscle),
+            balance,
+        };
+    });
 
-        for (const entry of recent) {
-            for (const set of entry.sets ?? []) {
-                const exercise = set.exerciseId ? this.exercises.byId(set.exerciseId) : undefined;
-                if (!exercise) {
-                    continue;
-                }
-                for (const muscle of exercise.mainMuscles) {
-                    counts.set(muscle, (counts.get(muscle) ?? 0) + 1);
-                }
-                for (const muscle of exercise.supportingMuscles) {
-                    counts.set(muscle, (counts.get(muscle) ?? 0) + 0.5);
-                }
+    /** The saved workout for the least worked muscles this week (PRG-9). */
+    protected readonly suggestion = computed(() => {
+        const lastDone = new Map<string, number>();
+        // Newest first, so the first of each workout is when it was last done
+        for (const entry of this.history.entries()) {
+            if (!lastDone.has(entry.workoutId)) {
+                lastDone.set(entry.workoutId, entry.startedAt);
             }
         }
-
-        const sorted = [...counts.entries()].sort(
-            ([muscleA, scoreA], [muscleB, scoreB]) =>
-                scoreB - scoreA || MUSCLE_LABELS[muscleA].localeCompare(MUSCLE_LABELS[muscleB])
+        const suggested = suggestNextWorkout(
+            this.workouts.workouts(),
+            this.weekSets(),
+            (id) => this.exercises.byId(id),
+            lastDone
         );
-
-        const main = sorted.filter(([, score]) => score >= 1).map(([muscle]) => muscle);
-        const supporting = sorted
-            .filter(([, score]) => score > 0 && score < 1)
-            .map(([muscle]) => muscle);
-        const most = sorted.slice(0, 3).map(([muscle, score]) => {
-            const count = score % 1 === 0 ? `${score}` : score.toFixed(1).replace(/\.0$/, '');
-            return `${MUSCLE_LABELS[muscle]} (${count} ${score === 1 ? 'set' : 'sets'})`;
+        if (!suggested) {
+            return null;
+        }
+        const muscles = suggested.muscles.slice(0, 3).map((muscle) => {
+            const sets = this.weekSets().get(muscle) ?? 0;
+            const count = Number.isInteger(sets) ? `${sets}` : sets.toFixed(1);
+            return `${MUSCLE_LABELS[muscle]} (${count} ${sets === 1 ? 'set' : 'sets'})`;
         });
-
         return {
-            hasData: sorted.length > 0,
-            main,
-            supporting,
-            most: most.length > 0 ? `Most worked: ${most.join(', ')}` : '',
+            workout: suggested.workout,
+            reason: `For ${LIST.format(muscles)}, the least worked this week.`,
         };
     });
 
@@ -155,6 +172,12 @@ export class HistoryComponent {
             this.editingId.set(noteFor);
             this.bringIntoView(run, !noteFor);
         }
+    }
+
+    /** Starts the suggested workout, as the library's Start does. */
+    protected start(workout: Workout) {
+        this.run.start(workout);
+        this.router.navigate(['/workout']);
     }
 
     protected toggleMenu(id: string) {

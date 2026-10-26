@@ -1,8 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { HistoryEntry, LoggedSet } from '../models/history';
+import { ActiveRunService } from '../shared/run/active-run.service';
 import { HistoryStore } from '../shared/state/history-store.service';
+import { WorkoutStore } from '../shared/state/workout-store.service';
 import { UndoService } from '../shared/undo/undo.service';
 import { describeRounds, describeSets, formatDuration } from './history-format';
 import { SettingsStore } from '../shared/state/settings-store.service';
@@ -227,9 +229,54 @@ describe('HistoryComponent', () => {
 
         expect(text('.history__muscles-title')).toEqual(['Muscles worked this week']);
         expect(fixture.nativeElement.querySelector('app-body-map')).not.toBeNull();
-        expect(text('.history__muscles-most')).toEqual([
-            'Most worked: Glutes (2 sets), Quads (2 sets), Adductors (1 set)',
+        // A bar per muscle group, most worked first; the plank is too long ago to count
+        const labels = text('.bars__label');
+        const rows = text('.bars__row .sr-only');
+        expect(labels).toHaveLength(18);
+        expect(labels.slice(0, 3).map((label, i) => `${label}: ${rows[i]}`)).toEqual([
+            'Glutes: 2 sets, under 10',
+            'Quads: 2 sets, under 10',
+            'Adductors: 1 set, under 10',
         ]);
+        expect(labels.at(-1)).toBe('Upper back');
+    });
+
+    it('suggests the saved workout for the least worked muscles, and starts it', () => {
+        const workouts = TestBed.inject(WorkoutStore);
+        workouts.addWorkout({
+            title: 'Legs',
+            repeats: 3,
+            steps: [
+                { kind: 'reps', reps: 5, name: 'Back squat', exerciseId: 'builtin:back-squat' },
+            ],
+        });
+        const push = workouts.addWorkout({
+            title: 'Push',
+            repeats: 3,
+            steps: [
+                { kind: 'reps', reps: 5, name: 'Bench press', exerciseId: 'builtin:bench-press' },
+            ],
+        });
+        const squat: LoggedSet = {
+            round: 0,
+            step: 0,
+            name: 'Back squat',
+            reps: 5,
+            exerciseId: 'builtin:back-squat',
+        };
+        create(makeEntry({ sets: [squat, { ...squat, round: 1 }] }));
+
+        expect(text('.history__suggestion-title')).toEqual(['Push']);
+        expect(text('.history__suggestion-reason')).toEqual([
+            'For Chest (0 sets), the least worked this week.',
+        ]);
+
+        const router = TestBed.inject(Router);
+        vi.spyOn(router, 'navigate').mockResolvedValue(true);
+        button('Start Push').click();
+
+        expect(TestBed.inject(ActiveRunService).workout()?.id).toBe(push.id);
+        expect(router.navigate).toHaveBeenCalledWith(['/workout']);
     });
 
     /** Opens an entry's ⋮ menu and picks an item, e.g. "Delete". */

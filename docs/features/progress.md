@@ -1,6 +1,6 @@
 # Progress
 
-Built: last time on each rep step (PRG-1), personal bests on the workout summary (PRG-2), latest and best on the exercises list (PRG-3), progress on the exercise page (PRG-4), the muscles worked this week on the history page (PRG-6), and the most rounds in a time limit (PRG-7). The suggested weight (PRG-5) is planned (see [direction](../direction.md)); its rules are a first draft and get firmed up, with acceptance criteria, when it's built. Builds on [exercises](exercises.md) and the sets in the [history](history.md).
+Built: last time on each rep step (PRG-1), personal bests on the workout summary (PRG-2), latest and best on the exercises list (PRG-3), progress on the exercise page (PRG-4), the muscles worked this week on the history page (PRG-6), the most rounds in a time limit (PRG-7), a bar per muscle group against the sets a week aimed for (PRG-8), and a suggested next workout (PRG-9). The suggested weight (PRG-5) is planned (see [direction](../direction.md)); its rules are a first draft and get firmed up, with acceptance criteria, when it's built. Builds on [exercises](exercises.md) and the sets in the [history](history.md).
 
 ## Stories
 
@@ -11,6 +11,8 @@ Built: last time on each rep step (PRG-1), personal bests on the workout summary
 - **PRG-5** As a user I want the app to suggest the next weight to try, based on how my last sessions went.
 - **PRG-6** As a user I want to see which muscles I've worked this week, on the body map, so I can spot what I'm missing.
 - **PRG-7** As a user I want to be told when I've done more rounds than ever in a workout with a time limit, so I know I'm getting fitter.
+- **PRG-8** As a user I want a bar per muscle group for this week's sets, so I can see which I'm overworking and which I'm underworking.
+- **PRG-9** As a user I want the history to suggest which of my workouts to do next, one that works the muscles I've used least this week.
 
 ## Rules
 
@@ -73,7 +75,9 @@ Under the body map, a **Progress** section:
 ### In the history
 
 - Each set line's name links to its exercise's page, where it's linked to an exercise that's still there (see [history](history.md)).
-- **Muscles worked this week (PRG-6):** under "Last 7 days", the [exercises](exercises.md) body map, shaded by the sets of workouts started in the last 7 days: each set counts 1 for its exercise's main muscles and ½ for supporting ones. A muscle with 1 or more shades as main, under 1 as supporting, and the map's lists say which. Sets with no exercise, or of an exercise since deleted, don't count. Under it, the three most worked: "Most worked: Glutes (2 sets), Quads (2 sets), Adductors (1 set)", most first and A to Z on a tie. Not shown with no sets to count.
+- **Muscles worked this week (PRG-6):** under "Last 7 days", the [exercises](exercises.md) body map, shaded by the sets of workouts started in the last 7 days: each set counts 1 for its exercise's main muscles and ½ for supporting ones. A muscle with 1 or more shades as main, under 1 as supporting, and the map's lists say which. Sets with no exercise, or of an exercise since deleted, don't count. Not shown with no sets to count.
+- **Bars per muscle (PRG-8):** under the body map, a bar for each of the 18 muscle groups, most worked first and A to Z on a tie, with its sets this week counted as above. Each track has the **aim** shaded as a band: **10 to 20 sets a week**, the usual advice for building muscle. Under 10 is **under** (a grey bar), 10 to 20 **in range** (cyan), over 20 **over** (pink); the bar ending short of the band or past it says the same without colour, and a screen reader hears e.g. "Glutes: 2 sets, under 10". The tracks run to 25 sets, or further when a muscle has had more. A key under them explains the band and the counting.
+- **Suggested next workout (PRG-9):** a card under the muscles, with the saved workout whose muscles have had the fewest sets this week: the average of this week's sets over the muscles its exercises work, its main muscles counting twice its supporting ones, lowest wins. On a tie, the one done longest ago (never done first), then the library's order. It names up to three of its main muscles, least worked first: "For Chest (0 sets), the least worked this week.", and Start starts it, as the library's Start does. Workouts with no step linked to an exercise aren't suggested; with none to suggest, there's no card. Shown even in a week with no sets, when it's the workout done longest ago.
 
 ### Planned
 
@@ -93,13 +97,16 @@ Under the body map, a **Progress** section:
 - Given 80 kg × 5 bench press last time, when I bench 100 kg × 5 and finish, then the summary lists "Personal bests" with "Heaviest: 100 kg × 5".
 - Given 80 kg × 5 bench press last time, when I bench 80 kg × 5 again, or bench for the first time, then the summary has no personal bests.
 - Given a 20:00 time limit run before to "7 rounds + 1", when I get to "7 rounds + 3", then the summary lists "Most rounds: 7 rounds + 3"; given "7 rounds + 1" again, or a first run, then it doesn't.
-- Given two sets of back squats and one of bench press in the last 7 days, and a plank 9 days ago, then the history shows "Muscles worked this week" with "Most worked: Glutes (2 sets), Quads (2 sets), Adductors (1 set)".
+- Given two sets of back squats and one of bench press in the last 7 days, and a plank 9 days ago, then the history shows "Muscles worked this week" with 18 bars, starting Glutes (2 sets), Quads (2 sets), Adductors (1 set), all under 10.
+- Given saved workouts Legs (back squats) and Push (bench press), and two sets of back squats this week, then the suggested next workout is Push, "For Chest (0 sets), the least worked this week.", and Start starts it.
+- Given 22 sets for the chest this week, then its bar runs past the band and it's read as "over 20".
 
 ## Platform notes
 
-- **Web:** the sums are in `src/app/models/progress.ts` (`sessionsByExercise`, `progressMeasure`, `exerciseBests`, `sessionValue`) and the wording in `src/app/exercises/progress-format.ts`. The page's section is `ExerciseProgressComponent` (`src/app/exercises/exercise-page/exercise-progress/`), an inline SVG chart in the `--accent` colour. `/exercises` now waits for the history to load, as `/exercises/:id` and `/history` do. Last time is `WorkoutComponent.lastTime` (with `describeSets()` from `src/app/history/history-format.ts`), the summary's bests `WorkoutSummaryComponent.personalBests` (most rounds with `isMostRounds()` in `models/progress.ts`), and the muscles this week `HistoryComponent.musclesWorked`, shown with `BodyMapComponent`.
+- **Web:** the sums are in `src/app/models/progress.ts` (`sessionsByExercise`, `progressMeasure`, `exerciseBests`, `sessionValue`) and the wording in `src/app/exercises/progress-format.ts`. The page's section is `ExerciseProgressComponent` (`src/app/exercises/exercise-page/exercise-progress/`), an inline SVG chart in the `--accent` colour. `/exercises` now waits for the history to load, as `/exercises/:id` and `/history` do. Last time is `WorkoutComponent.lastTime` (with `describeSets()` from `src/app/history/history-format.ts`), the summary's bests `WorkoutSummaryComponent.personalBests` (most rounds with `isMostRounds()` in `models/progress.ts`), and the muscles this week `HistoryComponent.musclesWorked`, shown with `BodyMapComponent` and `MuscleBarsComponent` (`src/app/history/muscle-bars/`). The counting, the aim (`WEEKLY_SETS_LOW`, `WEEKLY_SETS_HIGH`) and the suggestion are in `src/app/models/muscle-balance.ts`; the bars' colours are the `--balance-*` tokens.
 - **iOS:** Swift Charts (`LineMark` + `PointMark`, with `chartXSelection` for the readout) covers the chart; VoiceOver's audio graphs (`AXChartDescriptor`) can stand in for the arrow keys and the table.
 
 ## Open questions
 
 - Is the weight step for PRG-5 a setting, or per exercise?
+- Should the aim of 10 to 20 sets a week (PRG-8) be lower for small muscles (neck, shins, forearms), or a setting for people training for fitness rather than size? As it is, most people's bars are under for those.
