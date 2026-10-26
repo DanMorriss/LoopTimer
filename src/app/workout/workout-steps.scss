@@ -36,8 +36,9 @@
 }
 
 // A rep step's count and weight, each a wheel with its unit beside it. Closed, a wheel is
-// just its number in the face's text, with a quiet outline to say it can be tapped; open, it's
-// the wheel as anywhere else, over the ring.
+// just its number in the face's text, with a short faint line under it to say it can be
+// changed (like a field to fill in, without boxing the number); open, it's the wheel as
+// anywhere else, over the ring.
 .workout-face__amount {
     display: flex;
     align-items: center;
@@ -46,8 +47,9 @@
 }
 
 .workout-face app-wheel-picker:not(.wheel-picker--open) {
-    --wheel-background: transparent;
-    --wheel-border: 1.5px solid #{rgba($face-muted, 0.45)};
+    --wheel-background: linear-gradient(#{rgba($face-muted, 0.5)}, #{rgba($face-muted, 0.5)}) bottom
+        center / 55% 2px no-repeat;
+    --wheel-border: 1px solid transparent;
     // The face's own text colour ("inherit" in a custom property would leave it unset)
     --wheel-color: currentColor;
 }

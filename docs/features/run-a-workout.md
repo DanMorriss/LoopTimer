@@ -66,9 +66,9 @@
 
 ### Changing reps or weight mid-workout (RUN-6)
 
-- While a rep step is waiting, the **reps and weight on the face are wheels**: closed, each is just its number in the face's text, in a quiet outline that says it can be tapped, with its unit beside it ("reps", "kg"). Tapping one opens it there, over the ring, as wheels open anywhere else: **Reps** 1–100, and **Weight** none, then halves, in the unit chosen in settings. No weight shows as "+", to add one. Screen readers hear them as spin buttons named "reps" and "Weight, kg".
+- While a rep step is waiting, the **reps and weight on the face are wheels**: closed, each is just its number in the face's text, with a short faint line under it (no box) that says it can be changed, with its unit beside it ("reps", "kg"). Tapping one opens it there, over the ring, as wheels open anywhere else: **Reps** 1–100, and **Weight** none, then halves, in the unit chosen in settings. No weight shows as "+", to add one. Screen readers hear them as spin buttons named "reps" and "Weight, kg".
 - A change applies at once, to **this set, the rest of this workout's rounds, and the saved workout**, so next time starts from there. If the workout has been deleted from the library meanwhile, only this workout changes.
-- A wheel closes by itself as it does anywhere else (on a pick, or once it stops turning).
+- A wheel closes by itself as it does anywhere else (on a pick, or two fifths of a second after it stops turning).
 - Space on a focused wheel is left to the wheel, rather than pressing Done.
 
 ### Finishing, and the summary (RUN-4, RUN-7)

@@ -303,7 +303,7 @@ describe('WheelPickerComponent', () => {
 
             // It was turned, so it closes soon after the finger lifts
             viewport().dispatchEvent(new TouchEvent('touchend', { bubbles: true }));
-            await wait(350);
+            await wait(550);
             fixture.detectChanges();
             expect(isOpen()).toBe(false);
         });
@@ -319,7 +319,7 @@ describe('WheelPickerComponent', () => {
             expect(isOpen()).toBe(false);
         });
 
-        it('closes a fifth of a second after it stops turning, not while it turns', async () => {
+        it('closes two fifths of a second after it stops turning, not while it turns', async () => {
             await create();
             await openByPress();
 
@@ -331,7 +331,7 @@ describe('WheelPickerComponent', () => {
             fixture.detectChanges();
             expect(isOpen()).toBe(true);
 
-            await wait(200);
+            await wait(400);
             fixture.detectChanges();
             expect(isOpen()).toBe(false);
         });
