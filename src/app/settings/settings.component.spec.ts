@@ -207,6 +207,18 @@ describe('SettingsComponent', () => {
         ]);
     });
 
+    it('links to the privacy notice and terms of use, under About', () => {
+        create();
+        const links = Array.from(
+            fixture.nativeElement.querySelectorAll('.settings__legal a') as NodeListOf<HTMLElement>
+        ).map((a) => [a.textContent!.trim(), a.getAttribute('href')]);
+
+        expect(links).toEqual([
+            ['Privacy notice', '/privacy'],
+            ['Terms of use', '/terms'],
+        ]);
+    });
+
     describe('weight units', () => {
         const radios = () =>
             Array.from(

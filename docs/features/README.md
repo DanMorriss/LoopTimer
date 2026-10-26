@@ -54,6 +54,7 @@ Status: ✅ done, ◐ partly, — not started. The iOS column fills in as a port
 | SET-3  | Hear each alarm sound before a workout                                   | ✅  | —   | [settings](settings.md)                       |
 | SET-4  | Choose kg or lb for weights                                              | ✅  | —   | [settings](settings.md)                       |
 | SET-5  | Choose a male or female figure for the body map                          | ✅  | —   | [settings](settings.md)                       |
+| SET-6  | Read the privacy notice and terms of use                                 | ✅  | —   | [settings](settings.md)                       |
 | NAV-1  | Get to any page from anywhere, and back to a workout in progress         | ✅  | —   | [home-and-navigation](home-and-navigation.md) |
 | A11Y-1 | Use every feature with a screen reader, keyboard or reduced motion       | ✅  | —   | [accessibility](accessibility.md)             |
 | EXR-1  | Exercises as things in their own right, used across workouts             | ✅  | —   | [exercises](exercises.md)                     |

@@ -86,10 +86,8 @@ export class WorkoutSummaryComponent {
 
     /** Back to workout: the run carries on from where it was ended. */
     readonly back = output<void>();
-    /** Done: the run is over, on to the library. */
+    /** Done: the run is over, on to it in the history. */
     readonly done = output<void>();
-    /** View history: the run is over, on to it in the history. */
-    readonly viewHistory = output<void>();
 
     protected readonly finished = this.run.isComplete;
     protected readonly heading = computed(() => {
@@ -183,7 +181,7 @@ export class WorkoutSummaryComponent {
         }
     }
 
-    protected leave(to: 'back' | 'done' | 'viewHistory') {
+    protected leave(to: 'back' | 'done') {
         this.saveNote();
         this[to].emit();
     }

@@ -6,7 +6,7 @@ export const TABS = [
     { path: '/library', label: 'Library', icon: 'view_list', holds: ['/setup'] },
     { path: '/exercises', label: 'Exercises', icon: 'fitness_center', holds: [] },
     { path: '/history', label: 'History', icon: 'history', holds: [] },
-    { path: '/settings', label: 'Settings', icon: 'settings', holds: [] },
+    { path: '/settings', label: 'Settings', icon: 'settings', holds: ['/privacy', '/terms'] },
 ] as const;
 
 export type Tab = (typeof TABS)[number];

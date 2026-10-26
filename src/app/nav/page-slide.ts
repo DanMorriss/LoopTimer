@@ -9,10 +9,11 @@ export const SLIDING_CLASS = 'page-sliding';
 export type SlideWay = 'in' | 'out';
 
 /**
- * Going into an exercise from the Exercises list and back slides the page across, as a phone
- * does: the new page comes in from the right over the list, which moves a little way left and
- * fades; going back, the page leaves to the right and the list comes back. Every other
- * navigation changes page at once, so this starts its own view transition around those two,
+ * Going into an exercise from the Exercises list and back (or Privacy or Terms from Settings)
+ * slides the page across, as a phone does: the new page comes in from the right over the list,
+ * which moves a little way left and fades; going back, the page leaves to the right and the
+ * list comes back. Every other navigation changes page at once, so this starts its own view
+ * transition around those,
  * as WorkoutMorph does for the workout. The names it moves (styles/_page-slide.scss) only
  * apply under SLIDING_CLASS.
  */

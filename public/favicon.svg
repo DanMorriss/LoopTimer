@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#67e8f9"/>
+      <stop offset="1" stop-color="#0ea5c6"/>
+    </linearGradient>
+    <radialGradient id="halo">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.9"/>
+      <stop offset="0.35" stop-color="#fff" stop-opacity="0.4"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#tile)"/>
+  <path d="M 8 32 C 8 10, 20 10, 32 32 C 44 54, 56 54, 56 32 C 56 10, 44 10, 32 32 C 20 54, 8 54, 8 32 Z" fill="none" stroke="#032029" stroke-width="5.5" stroke-linejoin="round"/>
+  <g transform="translate(53.23 45.64)">
+    <circle r="10" fill="url(#halo)"/>
+    <circle r="4.4" fill="#fff" stroke="#032029" stroke-width="2"/>
+    <animateMotion dur="1.5s" begin="-0.63s" repeatCount="indefinite" path="M -45.23 -13.64 C -45.23 -35.64, -33.23 -35.64, -21.23 -13.64 C -9.23 8.36, 2.77 8.36, 2.77 -13.64 C 2.77 -35.64, -9.23 -35.64, -21.23 -13.64 C -33.23 8.36, -45.23 8.36, -45.23 -13.64 Z"/>
+  </g>
+</svg>

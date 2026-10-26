@@ -645,12 +645,10 @@ export class WorkoutComponent {
         });
     }
 
-    /** The summary's Done or View history: the run is over, on to the library or the history. */
-    async closeSummary(toHistory = false) {
+    /** The summary's Done: the run is over, on to it in the history (highlighted if logged). */
+    async closeSummary() {
         const run = this.run.runId();
         this.run.stop();
-        await (toHistory && run
-            ? this.router.navigate(['/history'], { queryParams: { run } })
-            : this.router.navigate(['/library']));
+        await this.router.navigate(['/history'], run ? { queryParams: { run } } : {});
     }
 }

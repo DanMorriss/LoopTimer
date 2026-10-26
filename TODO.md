@@ -45,10 +45,7 @@ The Library page's items are done (LIB-3–5).
 
 #### General
 
-- [ ] **Swipe right to end a workout** from the workout bar at the bottom of the page.
-- [ ] **Go to the History page after finishing a workout.**
-- [ ] **Privacy notice and terms of use pages.**
-- [ ] **Favicon.**
+The General items are done: swiping the workout bar right ends the workout and opens its summary, the summary's Done goes on to the workout in the history (View history is gone), the Privacy notice and Terms of use are linked under About in Settings (SET-6), and the favicon is the ∞ and its light on the Start button's cyan (option E of the mock-ups).
 
 #### Workout page
 
@@ -74,10 +71,14 @@ From reviews against Apple's WWDC design talks (Designing Fluid Interfaces, Prin
 
 ## 3. Known issues
 
+- [ ] **Try swiping the workout bar right on an iPhone:** added on 2026-10-26 and tested only in Chromium with simulated touches. Check that the bar follows the finger with End workout showing behind it, letting go past halfway ends the workout and opens its summary, short of that it springs back, scrolling up and down over the bar still works, and the link or Pause a swipe starts on isn't pressed.
+- [ ] **Have the Privacy notice and Terms of use looked over:** written on 2026-10-26 from what the app does (data on the device only; Vercel hosting and Google Fonts see an IP address), with GitHub issues for questions. They name no country's law and no contact email; decide whether they should, and update the privacy notice before sync (Phase 4) sends anything off the device.
+- [ ] **The favicon's light only moves in Firefox:** `favicon.svg` moves it round the loop with SMIL, which Chrome, Edge and Safari don't run in a tab, so they show it still. Moving it everywhere would mean redrawing the icon from script (e.g. while a workout runs), which background tabs slow to about once a second.
+
 - [ ] **A progress chart test can fail when the whole suite runs at once:** "narrows the chart to a range, and says when nothing falls in it" failed once in a full local run on 2026-10-24, once in eight on 2026-10-25 and once in two on 2026-10-26, and passes on its own. Ruled out on 2026-10-25: the history's background load landing mid-test (waiting for `HistoryStore.ready` first didn't stop it), and spec files sharing storage (files run at once, but each has its own localStorage). Catch the failure's message next time it happens, since it hasn't been seen yet. The wheel picker's "turns with a mouse drag and snaps to a whole row", which failed with it on 2026-10-24, now waits for the wheel to stop rather than a fixed time.
 - [ ] **Try the swipe back on an exercise's page on an iPhone:** added on 2026-10-26 with pointer events and tested only in Chromium with simulated touches. Check that a swipe right follows the finger and slides back to the list, that scrolling up and down still works, and what happens when the swipe starts at the very left edge, where Safari has its own Back swipe (which plays its own slide and skips ours).
 - [ ] **Try the summary's drag from its content on an iPhone:** added on 2026-10-25 with touch events (Safari has no `touch-action: pan-down`), and tested only in Chromium with simulated touches. Check that, scrolled to the top, a finger moving down on the stats drags the sheet; moving up scrolls; a scrolled-down wheel in the sets still turns; and the button a drag starts on isn't pressed.
-- [ ] **The initial load is close to its 500 kB budget:** 493 kB on 2026-10-25, after the built-in exercises' words moved out to load on demand. Each new built-in exercise still adds about 300 bytes up front (its name, muscles and equipment), so about 20 more would reach the budget. The next saving found then was Material's icon module in the tab bar, run bar and undo bar (about 16 kB), as inline SVG instead.
+- [ ] **The initial load is close to its 500 kB budget:** 493 kB on 2026-10-25, after the built-in exercises' words moved out to load on demand. 498.7 kB on 2026-10-26, after the workout bar learnt to swipe right to end a workout (it's on every page, so it loads up front). Each new built-in exercise still adds about 300 bytes up front (its name, muscles and equipment), so only a few more would reach the budget: make the saving below first. The next saving found then was Material's icon module in the tab bar, run bar and undo bar (about 16 kB), as inline SVG instead.
 - [ ] **The body map can't shade abductors:** react-native-body-highlighter has no abductor shapes on either figure (still none upstream on 2026-10-25, though its slug is mapped in `tools/build-body-shapes.mjs`), so exercises that work them (side plank, hip abduction) list them without shading. Fix by drawing the shapes ourselves, or swap to a diagram that has them.
 - [ ] **Try holding and dragging a library card on an iPhone:** added on 2026-10-26 and tested only in Chromium with simulated touches. Check that holding a card lifts it (with no text selection or link menu), dragging it then moves it and doesn't scroll the page, letting go of it unmoved opens its options, and a quick swipe left still deletes.
 - [ ] **The library's order won't sync:** it's the order of the saved list, not part of a workout's record, so when sync comes (SYN-3) a workout moved on one device won't move on another (an open question in `docs/features/library.md`).

@@ -236,6 +236,17 @@
             <p class="setting__hint settings__about">
                 LoopTimer: build a workout, then let it loop.
             </p>
+            <!-- Slide in over Settings, as an exercise does over the list -->
+            <ul class="settings__legal">
+                <li>
+                    <a href="/privacy" (click)="slide.follow($event, '/privacy', 'in')"
+                        >Privacy notice</a
+                    >
+                </li>
+                <li>
+                    <a href="/terms" (click)="slide.follow($event, '/terms', 'in')">Terms of use</a>
+                </li>
+            </ul>
         </section>
     </div>
 </div>
