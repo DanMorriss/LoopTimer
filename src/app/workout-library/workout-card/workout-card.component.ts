@@ -1,3 +1,4 @@
+import { CdkDrag } from '@angular/cdk/drag-drop';
 import {
     Component,
     computed,
@@ -6,8 +7,10 @@ import {
     inject,
     input,
     output,
+    signal,
     viewChild,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatIconModule } from '@angular/material/icon';
 import { repStepsPerRound, roundSeconds, runsUntilStopped, Workout } from '../../models/workout';
 import { formatTime } from '../../shared/format-time';
@@ -17,10 +20,12 @@ import { criticallyDampedSpring } from '../../shared/spring';
 
 /**
  * One workout in the library list: pressing it starts the workout. It can also be swiped to
- * the left to delete it, or held (or right-clicked) for its options, which the ⋮ button opens
- * too, for keyboards, screen readers and anyone who doesn't know the gestures. The library
- * decides which card's options are open (one at a time); the card shows that and reports
- * what the user does.
+ * the left to delete it, or held to pick it up: it lifts, and can then be dragged to another
+ * place (the library's drop list does that), or let go of where it is for its options, as on
+ * an iPhone. A right-click opens them too, and so does the ⋮ button, for keyboards, screen
+ * readers and anyone who doesn't know the gestures; its menu has Move up and Move down as
+ * well. The library decides which card's options are open (one at a time); the card shows
+ * that and reports what the user does.
  */
 @Component({
     selector: 'li[appWorkoutCard]',
@@ -30,17 +35,24 @@ import { criticallyDampedSpring } from '../../shared/spring';
     host: {
         class: 'workout-card',
         '[class.workout-card--menu-open]': 'menuOpen()',
+        '[class.workout-card--lifted]': 'lifted()',
     },
 })
 export class WorkoutCardComponent {
     readonly workout = input.required<Workout>();
     /** Whether this card's options are open. */
     readonly menuOpen = input(false);
+    /** Whether it's first or last in the library, so it can't move up or down. */
+    readonly first = input(false);
+    readonly last = input(false);
 
     readonly started = output<void>();
     readonly menuToggled = output<void>();
     readonly menuClosed = output<void>();
+    readonly detailsRequested = output<void>();
     readonly editRequested = output<void>();
+    /** Move up (-1) or down (1) a place. */
+    readonly moveRequested = output<-1 | 1>();
     readonly deleteRequested = output<void>();
 
     protected readonly title = computed(() => this.workout().title.trim());
@@ -107,8 +119,9 @@ export class WorkoutCardComponent {
     // Gestures on the card, as on an iPhone list. A tap starts the workout. A swipe to the
     // left follows the finger, showing Delete behind; let go, and where the flick would carry
     // it decides: past halfway it carries on off the card and deletes (with Undo), otherwise
-    // it springs back, from the finger's speed either way. Holding still on it opens its
-    // options. Up and down is left to the page, which scrolls.
+    // it springs back, from the finger's speed either way. Holding still on it lifts it: moved
+    // then, the drop list drags it; let go of without moving, its options open. Up and down is
+    // left to the page, which scrolls.
 
     private readonly face = viewChild.required<ElementRef<HTMLElement>>('face');
     private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
@@ -128,9 +141,16 @@ export class WorkoutCardComponent {
     private swallowClick = false;
     /** Counts presses, so a swipe's spring knows if a new press caught the card mid-way. */
     private presses = 0;
+    /** Held still long enough to pick up: where the press was, until it moves or lets go. */
+    private held: { pointerId: number; x: number; y: number } | null = null;
+    protected readonly lifted = signal(false);
 
     constructor() {
         inject(DestroyRef).onDestroy(() => clearTimeout(this.holdTimer));
+        // Picked up and dragged: the drag has it now, so letting go won't open the options
+        inject(CdkDrag, { optional: true, self: true })
+            ?.started.pipe(takeUntilDestroyed())
+            .subscribe(() => this.putDown());
     }
 
     protected start(event: Event) {
@@ -144,12 +164,16 @@ export class WorkoutCardComponent {
         this.started.emit();
     }
 
-    /** A hold (or a right-click) opens the options, as the ⋮ button does. */
-    protected openMenuFromHold(event: Event) {
+    /** A right-click opens the options, as the ⋮ button does. */
+    protected openMenuFromRightClick(event: Event) {
         if ((event.target as Element).closest('.workout-card__menu-wrap')) {
             return;
         }
         event.preventDefault();
+        // A long press on a touch screen (Android sends one) is a hold, which lifts the card
+        if ((event as PointerEvent).pointerType === 'touch') {
+            return;
+        }
         if (!this.menuOpen()) {
             this.menuToggled.emit();
         }
@@ -164,6 +188,7 @@ export class WorkoutCardComponent {
             return;
         }
         this.swallowClick = false;
+        this.putDown();
         this.presses++;
         // Where it is on screen now, mid-spring included, and stop it there
         const offset = new DOMMatrix(getComputedStyle(this.face().nativeElement).transform).m41;
@@ -180,22 +205,29 @@ export class WorkoutCardComponent {
             axis: null,
             tracker,
         };
-        // Held still for half a second: its options. iPhones don't send a contextmenu event
-        // for a long press, so this does it.
+        // Held still for as long as the drop list waits before a drag: it lifts
         clearTimeout(this.holdTimer);
         this.holdTimer = setTimeout(() => {
-            if (this.gesture && !this.gesture.axis) {
+            const gesture = this.gesture;
+            if (gesture && !gesture.axis) {
+                this.held = { pointerId: gesture.pointerId, x: gesture.startX, y: gesture.startY };
                 this.gesture = null;
                 this.swallowClick = true;
+                this.lifted.set(true);
                 navigator.vibrate?.(10);
-                if (!this.menuOpen()) {
-                    this.menuToggled.emit();
-                }
             }
         }, HOLD_MS);
     }
 
     protected move(event: PointerEvent) {
+        const held = this.held;
+        if (held?.pointerId === event.pointerId) {
+            // Moving off with it: the drag takes over
+            if (Math.hypot(event.clientX - held.x, event.clientY - held.y) >= DIRECTION_THRESHOLD) {
+                this.held = null;
+            }
+            return;
+        }
         const gesture = this.gesture;
         if (!gesture || event.pointerId !== gesture.pointerId) {
             return;
@@ -233,6 +265,14 @@ export class WorkoutCardComponent {
     protected async release(event: PointerEvent) {
         const gesture = this.gesture;
         clearTimeout(this.holdTimer);
+        // Picked up and let go of where it was: its options
+        if (this.held?.pointerId === event.pointerId) {
+            this.putDown();
+            if (event.type === 'pointerup' && !this.menuOpen()) {
+                this.menuToggled.emit();
+            }
+            return;
+        }
         if (!gesture || event.pointerId !== gesture.pointerId) {
             return;
         }
@@ -250,6 +290,11 @@ export class WorkoutCardComponent {
         if (away && press === this.presses) {
             this.deleteRequested.emit();
         }
+    }
+
+    private putDown() {
+        this.held = null;
+        this.lifted.set(false);
     }
 
     private width(): number {
@@ -292,8 +337,11 @@ export class WorkoutCardComponent {
     }
 }
 
-/** How long a press is held, still, before it opens the options. */
-const HOLD_MS = 500;
+/**
+ * How long a press is held, still, before the card lifts. The library's drop list waits as
+ * long before it lets a drag start, so a swipe or a scroll before then stays one.
+ */
+export const HOLD_MS = 500;
 
 /** How far a press moves (px) before it counts as a swipe or a scroll, and which. */
 const DIRECTION_THRESHOLD = 10;

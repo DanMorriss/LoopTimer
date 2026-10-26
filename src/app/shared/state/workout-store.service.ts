@@ -200,6 +200,19 @@ export class WorkoutStore {
         this.saveWorkouts();
     }
 
+    /** Moves a workout to another place in the library, e.g. dragged there. */
+    moveWorkout(from: number, to: number) {
+        const workouts = [...this._workouts()];
+        const outside = (i: number) => i < 0 || i >= workouts.length;
+        if (from === to || outside(from) || outside(to)) {
+            return;
+        }
+        const [moved] = workouts.splice(from, 1);
+        workouts.splice(to, 0, moved);
+        this._workouts.set(workouts);
+        this.saveWorkouts();
+    }
+
     findWorkoutById(workoutId: string): Workout | null {
         return this._workouts().find((workout) => workout.id === workoutId) ?? null;
     }

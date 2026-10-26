@@ -41,6 +41,9 @@ Status: ✅ done, ◐ partly, — not started. The iOS column fills in as a port
 | ALM-4  | Choose the sound for each step                                           | —   | —   | [alarms](alarms.md)                           |
 | LIB-1  | See my saved workouts and start one                                      | ✅  | —   | [library](library.md)                         |
 | LIB-2  | Edit or delete a saved workout                                           | ✅  | —   | [library](library.md)                         |
+| LIB-3  | Put my workouts in the order I want                                      | ✅  | —   | [library](library.md)                         |
+| LIB-4  | See what a workout works, and when I did it                              | ✅  | —   | [library](library.md)                         |
+| LIB-5  | See which muscle groups my workouts leave out                            | ✅  | —   | [library](library.md)                         |
 | HIS-1  | See the workouts I've done, by day                                       | ✅  | —   | [history](history.md)                         |
 | HIS-2  | See how much I've done this week                                         | ✅  | —   | [history](history.md)                         |
 | HIS-3  | Add a note to a workout                                                  | ✅  | —   | [history](history.md)                         |

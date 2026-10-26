@@ -529,6 +529,31 @@ describe('WorkoutStore', () => {
         });
     });
 
+    describe('moveWorkout', () => {
+        it('moves a workout to another place in the library, and saves', () => {
+            const store = createStore();
+            const first = store.addWorkout(makeWorkout({ title: 'First' }));
+            const middle = store.addWorkout(makeWorkout({ title: 'Middle' }));
+            const last = store.addWorkout(makeWorkout({ title: 'Last' }));
+
+            store.moveWorkout(2, 0);
+
+            expect(store.workouts()).toEqual([last, first, middle]);
+            expect(savedWorkouts()).toEqual([last, first, middle]);
+        });
+
+        it('leaves the library as it is for a place outside it', () => {
+            const store = createStore();
+            const first = store.addWorkout(makeWorkout({ title: 'First' }));
+            const last = store.addWorkout(makeWorkout({ title: 'Last' }));
+
+            store.moveWorkout(0, 2);
+            store.moveWorkout(-1, 0);
+
+            expect(store.workouts()).toEqual([first, last]);
+        });
+    });
+
     describe('mergeWorkouts', () => {
         const saved = (overrides: Partial<SimpleWorkout>) => baseWorkout(overrides);
 

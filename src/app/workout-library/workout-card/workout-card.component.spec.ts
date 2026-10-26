@@ -23,10 +23,14 @@ const sprints = makeWorkout({
                 appWorkoutCard
                 [workout]="workout()"
                 [menuOpen]="menuOpen()"
+                [first]="first()"
+                [last]="last()"
                 (started)="events.push('started')"
                 (menuToggled)="events.push('menuToggled')"
                 (menuClosed)="events.push('menuClosed')"
+                (detailsRequested)="events.push('detailsRequested')"
                 (editRequested)="events.push('editRequested')"
+                (moveRequested)="events.push('moveRequested ' + $event)"
                 (deleteRequested)="events.push('deleteRequested')"
             ></li>
         </ul>
@@ -35,6 +39,8 @@ const sprints = makeWorkout({
 class HostComponent {
     workout = signal(sprints);
     menuOpen = signal(false);
+    first = signal(false);
+    last = signal(false);
     events: string[] = [];
 }
 
@@ -154,6 +160,29 @@ describe('WorkoutCardComponent', () => {
         expect(host.events).toEqual(['menuToggled', 'editRequested', 'deleteRequested']);
     });
 
+    it('offers its details, and moving up and down, in its options', () => {
+        set({ menuOpen: true });
+
+        el('.workout-card__menu-item--details').click();
+        el('.workout-card__menu-item--up').click();
+        el('.workout-card__menu-item--down').click();
+
+        expect(host.events).toEqual(['detailsRequested', 'moveRequested -1', 'moveRequested 1']);
+    });
+
+    it("can't move up when it's first, or down when it's last", () => {
+        host.first.set(true);
+        set({ menuOpen: true });
+        expect(card().querySelector('.workout-card__menu-item--up')).toBeNull();
+        expect(card().querySelector('.workout-card__menu-item--down')).not.toBeNull();
+
+        host.first.set(false);
+        host.last.set(true);
+        fixture.detectChanges();
+        expect(card().querySelector('.workout-card__menu-item--up')).not.toBeNull();
+        expect(card().querySelector('.workout-card__menu-item--down')).toBeNull();
+    });
+
     it('asks to close its options on Escape', () => {
         set({ menuOpen: true });
 
@@ -249,18 +278,52 @@ describe('WorkoutCardComponent', () => {
             expect(host.events).toEqual(['started']);
         });
 
-        it('opens its options when held, without starting on letting go', () => {
+        it('lifts when held, and opens its options when let go of where it is, without starting', () => {
             vi.useFakeTimers();
             try {
                 pointer('pointerdown', 300);
                 vi.advanceTimersByTime(500);
+                fixture.detectChanges();
+                expect(card().classList).toContain('workout-card--lifted');
+
                 pointer('pointerup', 300);
+                fixture.detectChanges();
                 el('.workout-card__start').click();
 
+                expect(card().classList).not.toContain('workout-card--lifted');
                 expect(host.events).toEqual(['menuToggled']);
             } finally {
                 vi.useRealTimers();
             }
+        });
+
+        it("doesn't open its options when held and moved, which drags it instead", () => {
+            vi.useFakeTimers();
+            try {
+                pointer('pointerdown', 300);
+                vi.advanceTimersByTime(500);
+                pointer('pointermove', 300, 140);
+                pointer('pointerup', 300, 140);
+                fixture.detectChanges();
+                el('.workout-card__start').click();
+
+                expect(offset()).toBe(0);
+                expect(host.events).toEqual([]);
+            } finally {
+                vi.useRealTimers();
+            }
+        });
+
+        it('leaves a long press on a touch screen to the hold, not the right-click', () => {
+            const event = new PointerEvent('contextmenu', {
+                pointerType: 'touch',
+                bubbles: true,
+                cancelable: true,
+            });
+            el('.workout-card__start').dispatchEvent(event);
+
+            expect(event.defaultPrevented).toBe(true);
+            expect(host.events).toEqual([]);
         });
 
         it("doesn't open its options if let go before the hold", () => {

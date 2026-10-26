@@ -18,7 +18,7 @@ Built with Angular 22 (standalone components, signals and Signal Forms), Angular
 - **Get anywhere from the tab bar** along the bottom: Library (where the app opens), Exercises, History and Settings. A workout that's going shows in a bar above the tabs, with its step, time and Pause, like a music app's mini player; tap it to go back to the workout, or ⌄ on the workout to leave it running.
 - **Settings**: a dark, light or match-system theme, which fades from one to the other as you switch; show weights in kg or lb; turn sound, vibration or keeping the screen on off; play each alarm sound to hear what it is; export and import a backup; and copy a prompt that has an AI turn a plan from a coach, a book or a spreadsheet into workouts to import. Saved in the browser, like workouts.
 - **History**: every finished workout, and any stopped after at least one step (including one ended by starting another workout, or by closing the tab: it's logged as stopped then, and updated if a refresh carries it on), grouped by day with its start time, time spent (not counting pauses) and rounds, plus a total for the last seven days. Each entry lists the sets of its rep steps, e.g. "Squats: 10, 10, 8 @ 60 kg". Each entry's ⋮ menu adds, edits or removes a short note (e.g. "felt strong"), or deletes it, with Undo. When a workout finishes, "Add a note" goes straight to it in the history with the note box open; "View history" just shows it. Saved in the browser.
-- **Save and reuse workouts** in the library: start, edit or delete any of them. Workouts are saved in the browser (`localStorage`), so they stay on that device.
+- **Save and reuse workouts** in the library: start, edit or delete any of them, hold one to drag it to another place, and see a workout's details (the muscles it works and its history). Under the workouts, the muscle groups none of them work, each a link to exercises for it. Workouts are saved in the browser (`localStorage`), so they stay on that device.
 - **Accessible:**
     - Everything works with a keyboard, and Space pauses and resumes the workout.
     - Screen readers hear "Timed, round 1 of 3", "Rest" and "Finished" as each phase starts, and "Paused" when paused.
@@ -63,7 +63,8 @@ src/app/
   settings/            Sound and vibration switches, and alarm previews
   workout-setup/       Create or edit a workout (Signal Forms)
   workout-library/     Saved workouts
-    workout-card/      One workout: tap to start, swipe to delete, hold for options
+    workout-card/      One workout: tap to start, swipe to delete, hold to drag (or let go for options)
+    workout-details/   A workout's muscles and history, from its options
   workout/             The running workout: ring, countdown, announcements
     workout-state.ts   Works out phase, time left and round from elapsed time
     fit-name.ts        Fits a step's name to the face: wraps, then shrinks only as far as it must

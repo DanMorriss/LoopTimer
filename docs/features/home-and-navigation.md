@@ -8,7 +8,7 @@
 
 ### Where the app opens
 
-- The app opens on the **Library**, where workouts are started and **Add workout** makes a new one. `/` and the old `/home` both go there.
+- The app opens on the **Library**, where workouts are started and **New** at its top right makes a new one. `/` and the old `/home` both go there.
 - There's no separate home page any more. The **∞ logo** that was the home page is in **Settings**, under **About**: the loop draws itself in and a light travels round it (it rests where the loops cross with reduced motion on).
 
 ### The tab bar
