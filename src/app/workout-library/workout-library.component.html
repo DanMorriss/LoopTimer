@@ -1,5 +1,22 @@
 <div class="library-screen p-4 text-(--text-strong)" (click)="closeWorkoutMenus()">
     @let existingWorkouts = isExistingWorkouts();
+    <!-- The title, as on the other pages, with the way to add a workout at its right -->
+    <div class="library__top">
+        <h2 class="library__title">Library</h2>
+        <!-- One way to add a workout at a time: an empty library has "Create a workout" instead -->
+        @if (existingWorkouts) {
+            <button
+                type="button"
+                class="btn-pill library-add-button"
+                aria-label="New workout"
+                (click)="$event.stopPropagation(); navigateToCreateWorkout()"
+            >
+                <mat-icon aria-hidden="true">add</mat-icon>
+                New
+            </button>
+        }
+    </div>
+
     @if (!existingWorkouts) {
         <div class="flex flex-col items-center justify-center">
             <p>Nothing in the library yet, best go make a workout.</p>
@@ -13,30 +30,93 @@
             </button>
         </div>
     }
-    <ul class="library-list">
-        @for (workout of workoutStore.workouts(); track workout.id) {
+
+    <!-- Held still for HOLD_MS a card lifts, and can be dragged to another place. Moving
+         before then is a swipe or a scroll, which the drag lets go of -->
+    <ul
+        class="library-list"
+        cdkDropList
+        cdkDropListOrientation="mixed"
+        (cdkDropListDropped)="dropWorkout($event)"
+    >
+        @for (
+            workout of workoutStore.workouts();
+            track workout.id;
+            let first = $first, last = $last
+        ) {
             <li
                 appWorkoutCard
+                cdkDrag
+                [cdkDragStartDelay]="holdMs"
+                [cdkDragDisabled]="openWorkoutMenuId() === workout.id"
+                [attr.data-workout]="workout.id"
                 [workout]="workout"
                 [menuOpen]="openWorkoutMenuId() === workout.id"
+                [first]="first"
+                [last]="last"
+                (cdkDragStarted)="closeWorkoutMenus()"
                 (started)="startWorkout(workout)"
                 (menuToggled)="toggleWorkoutMenu(workout.id)"
                 (menuClosed)="closeWorkoutMenu(workout.id)"
+                (detailsRequested)="openDetails(workout.id)"
                 (editRequested)="navigateToEditWorkout(workout.id)"
+                (moveRequested)="moveWorkout(workout, $event)"
                 (deleteRequested)="deleteWorkout(workout)"
             ></li>
         }
     </ul>
+    <div class="sr-only" aria-live="polite">{{ announcement() }}</div>
 
-    <!-- One main button per screen: an empty library has "Create a workout" instead -->
-    @if (existingWorkouts) {
-        <button
-            type="button"
-            class="btn-main library-add-button"
-            (click)="$event.stopPropagation(); navigateToCreateWorkout()"
-        >
-            <mat-icon aria-hidden="true">add</mat-icon>
-            Add workout
-        </button>
+    <!-- The muscle groups the library's workouts leave out, to find exercises for -->
+    @let muscles = libraryMuscles();
+    @if (muscles.hasExercises) {
+        <section class="library__muscles" aria-labelledby="library-muscles-title">
+            <h3 id="library-muscles-title" class="library__muscles-title">Missing muscle groups</h3>
+            @if (muscles.missed.length === 0 && muscles.light.length === 0) {
+                <p class="library__muscles-text">Your workouts work every muscle group.</p>
+            } @else {
+                @if (muscles.missed.length > 0) {
+                    <p class="library__muscles-text">
+                        None of your workouts work these. Pick one to find exercises for it.
+                    </p>
+                    <ul class="library__muscle-list">
+                        @for (muscle of muscles.missed; track muscle.id) {
+                            <li>
+                                <a
+                                    class="btn-pill library__muscle"
+                                    routerLink="/exercises"
+                                    [queryParams]="{ muscles: muscle.id }"
+                                    >{{ muscle.label }}</a
+                                >
+                            </li>
+                        }
+                    </ul>
+                }
+                @if (muscles.light.length > 0) {
+                    <p class="library__muscles-text">Only lightly, as a supporting muscle:</p>
+                    <ul class="library__muscle-list">
+                        @for (muscle of muscles.light; track muscle.id) {
+                            <li>
+                                <a
+                                    class="btn-pill library__muscle"
+                                    routerLink="/exercises"
+                                    [queryParams]="{ muscles: muscle.id }"
+                                    >{{ muscle.label }}</a
+                                >
+                            </li>
+                        }
+                    </ul>
+                }
+            }
+        </section>
     }
 </div>
+
+@if (detailsWorkout(); as workout) {
+    <app-workout-details-dialog
+        animate.leave="dialog-leave"
+        [workout]="workout"
+        (closed)="closeDetails()"
+        (editRequested)="navigateToEditWorkout(workout.id)"
+    />
+}

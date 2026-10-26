@@ -50,9 +50,13 @@
     box-shadow: 0 10px 30px var(--shadow);
     // Up and down scroll the page; left and right are the card's to swipe
     touch-action: pan-y;
-    // A long press opens the card's options, not the phone's text selection or link menu
+    // A long press lifts the card, rather than starting the phone's text selection or link menu
     user-select: none;
     -webkit-touch-callout: none;
+    // Lifting when held, below
+    transition:
+        scale 0.2s var(--ease-spring),
+        box-shadow 0.2s ease;
 }
 
 // The whole card is the button that starts the workout
@@ -158,9 +162,33 @@
     z-index: 9;
 }
 
+// Held, it lifts off the list to be dragged: a little bigger, its shadow deeper and further
+// below. The copy that follows the finger (the drop list's preview) stays lifted.
+:host(.workout-card--lifted),
+:host(.cdk-drag-preview) {
+    .workout-card__face {
+        scale: 1.03;
+        box-shadow: 0 18px 40px var(--shadow);
+    }
+}
+
+// Where it will land: an outline the card's size, as for a dragged step in setup
+:host(.cdk-drag-placeholder) {
+    .workout-card__face {
+        border: 2px dashed var(--border-strong);
+        background: var(--accent-soft);
+        box-shadow: none;
+    }
+
+    .workout-card__face > * {
+        visibility: hidden;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     .workout-card__start,
-    .workout-card__delete {
+    .workout-card__delete,
+    .workout-card__face {
         transition: none;
     }
 }

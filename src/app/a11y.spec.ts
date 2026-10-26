@@ -279,6 +279,51 @@ for (const theme of ['dark', 'light'] as const) {
                 expect(fixture.nativeElement.querySelector('.undo-bar')).not.toBeNull();
                 await expectNoViolations();
             });
+
+            it('with exercises in its workouts, and the muscle groups they miss', async () => {
+                store.addWorkout(makeWorkout({ title: 'Legs', steps: [reps(10, 'Back squat')] }));
+                store.addWorkout(sprints);
+                await open('/library');
+                expect(fixture.nativeElement.querySelector('.library__muscles')).not.toBeNull();
+                await expectNoViolations();
+            });
+
+            it('with a middle card moved down, its options open', async () => {
+                store.addWorkout(sprints);
+                store.addWorkout(untitled);
+                store.addWorkout(makeWorkout({ id: 'workout-3', title: 'Last' }));
+                await open('/library');
+                click('.workout-card:nth-child(2) .workout-card__action--menu');
+                await settle();
+                click('.workout-card__menu-item--down');
+                await settle();
+                await expectNoViolations();
+            });
+
+            it("with a workout's details open, its muscles and runs", async () => {
+                const legs = store.addWorkout(
+                    makeWorkout({ title: 'Legs', steps: [reps(10, 'Back squat')] })
+                );
+                const now = Date.now();
+                TestBed.inject(HistoryStore).record({
+                    id: 'run-1',
+                    workoutId: legs.id,
+                    title: 'Legs',
+                    startedAt: now - 86_400_000,
+                    endedAt: now - 86_400_000 + 600_000,
+                    activeSeconds: 600,
+                    roundsCompleted: 3,
+                    totalRounds: 3,
+                    outcome: 'finished',
+                });
+                await open('/library');
+                click('.workout-card__action--menu');
+                await settle();
+                click('.workout-card__menu-item--details');
+                await settle();
+                expect(fixture.nativeElement.querySelector('[role="dialog"]')).not.toBeNull();
+                await expectNoViolations();
+            });
         });
 
         describe('exercises', () => {

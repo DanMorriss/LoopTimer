@@ -41,13 +41,7 @@ Timed sets are logged now (a set per timed work step of an exercise that runs to
 
 From Dan going through the app on 2026-10-26.
 
-#### Library page
-
-- [ ] **Add workout button:** move it to the top right, as a link like the one on the Exercises page.
-- [ ] **Drag to reorder workouts:** so people can change the order they're shown in. This may stop holding a workout from opening its settings, which is fine: the ⋯ button still opens them.
-- [ ] **Page title:** add one to match the other pages.
-- [ ] **More in a workout's settings:** that workout's history, and the muscle groups it works.
-- [ ] **Missing muscle groups:** a section showing any muscle group that none of the library's exercises work.
+The Library page's items are done (LIB-3–5).
 
 #### General
 
@@ -87,3 +81,5 @@ From reviews against Apple's WWDC design talks (Designing Fluid Interfaces, Prin
 - [ ] **Try the summary's drag from its content on an iPhone:** added on 2026-10-25 with touch events (Safari has no `touch-action: pan-down`), and tested only in Chromium with simulated touches. Check that, scrolled to the top, a finger moving down on the stats drags the sheet; moving up scrolls; a scrolled-down wheel in the sets still turns; and the button a drag starts on isn't pressed.
 - [ ] **The initial load is close to its 500 kB budget:** 493 kB on 2026-10-25, after the built-in exercises' words moved out to load on demand. Each new built-in exercise still adds about 300 bytes up front (its name, muscles and equipment), so about 20 more would reach the budget. The next saving found then was Material's icon module in the tab bar, run bar and undo bar (about 16 kB), as inline SVG instead.
 - [ ] **The body map can't shade abductors:** react-native-body-highlighter has no abductor shapes on either figure (still none upstream on 2026-10-25, though its slug is mapped in `tools/build-body-shapes.mjs`), so exercises that work them (side plank, hip abduction) list them without shading. Fix by drawing the shapes ourselves, or swap to a diagram that has them.
+- [ ] **Try holding and dragging a library card on an iPhone:** added on 2026-10-26 and tested only in Chromium with simulated touches. Check that holding a card lifts it (with no text selection or link menu), dragging it then moves it and doesn't scroll the page, letting go of it unmoved opens its options, and a quick swipe left still deletes.
+- [ ] **The library's order won't sync:** it's the order of the saved list, not part of a workout's record, so when sync comes (SYN-3) a workout moved on one device won't move on another (an open question in `docs/features/library.md`).

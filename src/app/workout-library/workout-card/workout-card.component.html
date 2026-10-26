@@ -5,7 +5,7 @@
 </div>
 
 <!-- The card itself, which slides with a swipe. Pressing it starts the workout; holding it
-     (or a right-click) opens its options, as the ⋮ button does -->
+     lifts it, to drag or let go of for its options. A right-click opens them, as ⋮ does -->
 <div
     #face
     class="workout-card__face"
@@ -13,7 +13,7 @@
     (pointermove)="move($event)"
     (pointerup)="release($event)"
     (pointercancel)="release($event)"
-    (contextmenu)="openMenuFromHold($event)"
+    (contextmenu)="openMenuFromRightClick($event)"
 >
     <button
         type="button"
@@ -61,12 +61,41 @@
             >
                 <button
                     type="button"
+                    class="menu__item workout-card__menu-item--details"
+                    (click)="detailsRequested.emit()"
+                >
+                    <mat-icon aria-hidden="true">info</mat-icon>
+                    Details
+                </button>
+                <button
+                    type="button"
                     class="menu__item workout-card__menu-item--edit"
                     (click)="editRequested.emit()"
                 >
                     <mat-icon aria-hidden="true">edit</mat-icon>
                     Edit
                 </button>
+                <!-- Dragging, for keyboards and screen readers (and anyone else) -->
+                @if (!first()) {
+                    <button
+                        type="button"
+                        class="menu__item workout-card__menu-item--up"
+                        (click)="moveRequested.emit(-1)"
+                    >
+                        <mat-icon aria-hidden="true">arrow_upward</mat-icon>
+                        Move up
+                    </button>
+                }
+                @if (!last()) {
+                    <button
+                        type="button"
+                        class="menu__item workout-card__menu-item--down"
+                        (click)="moveRequested.emit(1)"
+                    >
+                        <mat-icon aria-hidden="true">arrow_downward</mat-icon>
+                        Move down
+                    </button>
+                }
                 <button
                     type="button"
                     class="menu__item menu__item--danger workout-card__menu-item--danger"

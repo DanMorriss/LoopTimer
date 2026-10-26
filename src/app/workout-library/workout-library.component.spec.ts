@@ -1,11 +1,15 @@
 import type { Mock } from 'vitest';
+import { CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { Router, provideRouter } from '@angular/router';
+import { HistoryEntry } from '../models/history';
 import { Workout } from '../models/workout';
+import { HistoryStore } from '../shared/state/history-store.service';
 import { WorkoutStore } from '../shared/state/workout-store.service';
 import { DeletionStore } from '../shared/state/deletion-store.service';
 import { UndoService } from '../shared/undo/undo.service';
-import { makeWorkout as baseWorkout, SimpleWorkout } from '../shared/testing/make-workout';
+import { makeWorkout as baseWorkout, reps, SimpleWorkout } from '../shared/testing/make-workout';
 import { WorkoutLibraryComponent } from './workout-library.component';
 
 // A new workout to add: the shared test workout without its id
@@ -76,7 +80,7 @@ describe('WorkoutLibraryComponent', () => {
             expect(navigate).toHaveBeenCalledWith(['/setup']);
         });
 
-        it('shows only "Create a workout", not "Add workout" as well, so there is one main button', () => {
+        it('shows only "Create a workout", not New as well, so there is one way to add one', () => {
             expect(all('.btn-main')).toHaveLength(1);
             expect(el('.library-add-button')).toBeNull();
         });
@@ -113,10 +117,115 @@ describe('WorkoutLibraryComponent', () => {
             expect(card(1).textContent).toContain('Untitled workout');
         });
 
-        it('goes to setup from the "Add Workout" button', () => {
+        it('goes to setup from the New button at the top', () => {
             click(el('.library-add-button'));
 
             expect(navigate).toHaveBeenCalledWith(['/setup']);
+        });
+
+        it('has a title, as the other pages do', () => {
+            expect(el('h2.library__title')?.textContent?.trim()).toBe('Library');
+            expect(el('.library__top .library-add-button')?.getAttribute('aria-label')).toBe(
+                'New workout'
+            );
+        });
+
+        describe('moving', () => {
+            const titles = () => store.workouts().map((w) => w.title);
+            const menuItem = (index: number, item: string) =>
+                card(index).querySelector<HTMLElement>(`.workout-card__menu-item--${item}`);
+
+            it('moves down from its options, saved, and says so', async () => {
+                click(card(0).querySelector('.workout-card__action--menu'));
+                click(menuItem(0, 'down'));
+                await settle();
+
+                expect(titles()).toEqual(['   ', 'Sprints']);
+                expect(JSON.parse(localStorage.getItem('workouts')!)[1].title).toBe('Sprints');
+                expect(el('[aria-live]')?.textContent).toContain('Moved Sprints to 2 of 2');
+                // Its options stay open, with focus on the way back, now it's at the bottom
+                expect(document.activeElement).toBe(menuItem(1, 'up'));
+            });
+
+            it('moves to where a held card is dropped', () => {
+                const list = fixture.debugElement.query(By.directive(CdkDropList));
+                list.injector.get(CdkDropList).dropped.emit({
+                    previousIndex: 1,
+                    currentIndex: 0,
+                } as CdkDragDrop<unknown>);
+                fixture.detectChanges();
+
+                expect(titles()).toEqual(['   ', 'Sprints']);
+                expect(card(0).textContent).toContain('Untitled workout');
+            });
+        });
+
+        describe('details', () => {
+            const openDetails = (index: number) => {
+                click(card(index).querySelector('.workout-card__action--menu'));
+                click(card(index).querySelector('.workout-card__menu-item--details'));
+            };
+            const dialog = () => el('[role="dialog"]');
+
+            it("opens from its options, saying when it hasn't been done yet", () => {
+                openDetails(0);
+
+                expect(dialog()?.textContent).toContain('Sprints');
+                expect(dialog()?.textContent).toContain('Not done yet.');
+                expect(dialog()?.textContent).toContain('None of its steps is an exercise yet');
+            });
+
+            it('lists its runs, newest first, linking to them in the history', () => {
+                const run = (startedAt: number): HistoryEntry => ({
+                    id: `${startedAt}-${first.id}`,
+                    workoutId: first.id,
+                    title: 'Sprints',
+                    startedAt,
+                    endedAt: startedAt + 300_000,
+                    activeSeconds: 300,
+                    roundsCompleted: 4,
+                    totalRounds: 4,
+                    outcome: 'finished',
+                    updatedAt: startedAt,
+                });
+                const history = TestBed.inject(HistoryStore);
+                history.record(run(Date.UTC(2026, 9, 20, 12)));
+                history.record(run(Date.UTC(2026, 9, 24, 12)));
+                openDetails(0);
+
+                expect(dialog()?.textContent).toContain('Done 2 times');
+                const runs = Array.from(dialog()!.querySelectorAll('.details__run'));
+                expect(runs.map((a) => a.textContent!.replace(/\s+/g, ' ').trim())).toEqual([
+                    'Sat 24 Oct 4 rounds · 5:00',
+                    'Tue 20 Oct 4 rounds · 5:00',
+                ]);
+                expect(runs[0].getAttribute('href')).toBe(
+                    `/history?run=${Date.UTC(2026, 9, 24, 12)}-${first.id}`
+                );
+            });
+
+            it('closes with Done, putting focus back on the options button', async () => {
+                openDetails(0);
+                click(dialog()!.querySelector('.details__done'));
+                await settle();
+
+                expect(document.activeElement).toBe(
+                    card(0).querySelector('.workout-card__action--menu')
+                );
+            });
+
+            it('edits the workout from its Edit button', () => {
+                openDetails(1);
+                click(dialog()!.querySelector('.details__edit'));
+
+                expect(navigate).toHaveBeenCalledWith(['/setup'], {
+                    queryParams: { editId: second.id },
+                });
+            });
+        });
+
+        it('says nothing of muscles while no step is an exercise', () => {
+            expect(el('.library__muscles')).toBeNull();
         });
 
         describe('starting a workout', () => {
@@ -245,7 +354,7 @@ describe('WorkoutLibraryComponent', () => {
             });
 
             describe('closing the offer without undoing', () => {
-                it('moves focus to "Add workout"', async () => {
+                it('moves focus to New', async () => {
                     deleteFromMenu(0);
 
                     undo().dismiss();
@@ -264,6 +373,33 @@ describe('WorkoutLibraryComponent', () => {
                     expect(document.activeElement).toBe(el('.library-create-button'));
                 });
             });
+        });
+    });
+
+    describe('muscle groups', () => {
+        beforeEach(() => {
+            // Back squat works the quads and glutes, helped by the hamstrings, adductors and
+            // lower back; Bench press the chest, helped by the shoulders and triceps
+            store.addWorkout(makeWorkout({ title: 'Legs', steps: [reps(10, 'Back squat')] }));
+            store.addWorkout(makeWorkout({ title: 'Push', steps: [reps(10, 'Bench press')] }));
+            create();
+        });
+
+        const muscles = (list: number) =>
+            Array.from(all('.library__muscle-list')[list].querySelectorAll('a'), (a) =>
+                a.textContent!.trim()
+            ).join(' ');
+
+        it('lists the muscle groups no workout works, linking to exercises for each', () => {
+            expect(el('.library__muscles-title')?.textContent).toContain('Missing muscle groups');
+            expect(muscles(0)).toBe(
+                'Biceps Forearms Abs Obliques Traps Upper back Abductors Calves Shins Neck'
+            );
+            expect(el('.library__muscle')?.getAttribute('href')).toBe('/exercises?muscles=biceps');
+        });
+
+        it('lists the ones only worked as a supporting muscle apart', () => {
+            expect(muscles(1)).toBe('Shoulders Triceps Lower back Adductors Hamstrings');
         });
     });
 });

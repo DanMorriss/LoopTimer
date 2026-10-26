@@ -1,31 +1,82 @@
+@use 'type' as *;
+
+// The title, the cards and the muscles under them share the cards' columns, so the title
+// and New line up with the edges of the cards, however many columns fit
 .library-screen {
-    padding-bottom: 6.5rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 420px));
+    justify-content: center;
+    align-content: start;
+    column-gap: 1rem;
+
+    > * {
+        grid-column: 1 / -1;
+    }
+}
+
+.library__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+// The page's title, in the display face, as on Exercises and History
+.library__title {
+    margin: 0;
+    @include display;
+    font-size: 1.5rem;
+    color: var(--text-strong);
 }
 
 .library-list {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 420px));
-    justify-content: center;
+    grid-template-columns: subgrid;
     gap: 1rem;
     padding: 0;
     margin: 1rem 0 0;
 }
 
-// The main button, floating at the bottom of the screen above the list, and above the tab bar.
-// When the Undo bar rises under it, it moves up on the same spring, rather than jumping.
-.library-add-button {
-    position: fixed;
-    left: 50%;
-    bottom: calc(var(--bars-height) + 1rem);
-    translate: -50% 0;
-    z-index: 20;
-    transition:
-        bottom var(--spring-duration) var(--ease-spring),
-        scale 0.2s ease-out,
-        box-shadow 0.2s ease,
-        filter 0.2s ease;
+// The other cards slide aside to make room for a dragged one, and it settles into place
+.library-list.cdk-drop-list-dragging > :not(.cdk-drag-placeholder),
+.library-list > .cdk-drag-animating {
+    transition: transform 0.25s cubic-bezier(0, 0, 0.2, 1);
+}
 
-    @media (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion: reduce) {
+    .library-list.cdk-drop-list-dragging > :not(.cdk-drag-placeholder),
+    .library-list > .cdk-drag-animating {
         transition: none;
     }
+}
+
+// Under the cards, lined up with the first column's
+.library__muscles {
+    margin-top: 2rem;
+    justify-self: start;
+    width: min(100%, 420px);
+}
+
+.library__muscles-title {
+    margin: 0 0 0.5rem;
+    font-size: 1rem;
+    color: var(--text-strong);
+}
+
+.library__muscles-text {
+    margin: 0.75rem 0 0.5rem;
+    color: var(--text);
+}
+
+.library__muscle-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.library__muscle {
+    text-decoration: none;
 }
