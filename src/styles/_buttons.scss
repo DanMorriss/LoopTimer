@@ -3,7 +3,7 @@
 // The app's buttons, in one place so every page uses the same few. Pick by role:
 //
 // .btn-main   The one main action on a screen (Start workout, Add workout, Create a workout):
-//             a raised glowing pill that a band of light crosses once, soon after the
+//             a raised pill that a band of light crosses once, soon after the
 //             screen opens. .btn-main--round makes it a circle for an icon (the workout's
 //             Pause/Resume), with no band: nothing should catch the eye mid-workout.
 //
@@ -30,12 +30,13 @@
     border-radius: 999px;
     background: linear-gradient(to bottom, var(--cta-top), var(--cta-bottom));
     // A highlight along the top edge and a shade along the bottom make it read as raised;
-    // two glows underneath, one tight and one wide, give it depth
+    // a deep teal shadow underneath, one tight and one wide, sets it on the page. A glow
+    // there instead lit up the page around it, which was too much.
     box-shadow:
         inset 0 1px 0 var(--cta-edge),
         inset 0 -2px 0 var(--cta-shade),
-        0 2px 6px var(--cta-near),
-        0 12px 32px -6px var(--cta-far);
+        0 2px 4px var(--cta-near),
+        0 8px 18px -6px var(--cta-far);
     color: var(--cta-ink);
     font: inherit;
     font-size: 1.0625rem;
@@ -76,8 +77,8 @@
         box-shadow:
             inset 0 1px 0 var(--cta-edge),
             inset 0 -2px 0 var(--cta-shade),
-            0 3px 10px var(--cta-near),
-            0 18px 40px -6px var(--cta-near);
+            0 3px 8px var(--cta-near),
+            0 12px 24px -6px var(--cta-far);
     }
 
     @include pressed-scale(0.96);
@@ -85,8 +86,8 @@
     &:active {
         box-shadow:
             inset 0 1px 0 var(--cta-shade),
-            0 1px 3px var(--cta-near),
-            0 6px 16px -6px var(--cta-far);
+            0 1px 2px var(--cta-near),
+            0 4px 10px -6px var(--cta-far);
     }
 
     &:focus-visible {
