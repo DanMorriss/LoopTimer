@@ -1,7 +1,9 @@
 @use 'sass:math';
 
-// Closed, one row shows: the selected number. Open, five show, with it in the middle.
-$row-height: 2.5rem;
+// Closed, one row shows: the selected number. Open, five show, with it in the middle. Where
+// it's used, --wheel-row and --wheel-font can make it bigger (the workout's face does), and
+// --wheel-border, --wheel-background and --wheel-color change how it looks closed.
+$row-height: var(--wheel-row, 2.5rem);
 $open-rows: 5;
 // Rows above (and below) the middle one when open
 $rows-around: math.div($open-rows - 1, 2);
@@ -14,10 +16,10 @@ $rows-around: math.div($open-rows - 1, 2);
     // The border sits outside the row, so the number lines up with the band exactly
     box-sizing: content-box;
     height: $row-height;
-    border: 1px solid var(--border);
+    border: var(--wheel-border, 1px solid var(--border));
     border-radius: 0.75rem;
-    background: var(--control);
-    color: var(--text);
+    background: var(--wheel-background, var(--control));
+    color: var(--wheel-color, var(--text));
     user-select: none;
 
     // The open wheel's panel, kept apart from the numbers so their fade doesn't fade it too
@@ -65,8 +67,8 @@ $rows-around: math.div($open-rows - 1, 2);
 
 :host(.wheel-picker--open) {
     &::before {
-        top: calc(#{-$row-height * $rows-around} - 1px);
-        height: calc(#{$row-height * $open-rows} + 2px);
+        top: calc(#{$row-height} * #{-$rows-around} - 1px);
+        height: calc(#{$row-height} * #{$open-rows} + 2px);
         opacity: 1;
     }
 
@@ -103,9 +105,9 @@ $rows-around: math.div($open-rows - 1, 2);
 
     :host(.wheel-picker--open) & {
         z-index: 10;
-        top: -$row-height * $rows-around;
-        height: $row-height * $open-rows;
-        padding-block: $row-height * $rows-around;
+        top: calc(#{$row-height} * #{-$rows-around});
+        height: calc(#{$row-height} * #{$open-rows});
+        padding-block: calc(#{$row-height} * #{$rows-around});
         cursor: grab;
         // Fade the numbers out towards the top and bottom, like a drum turning away
         mask-image: linear-gradient(transparent, #000 25%, #000 75%, transparent);
@@ -130,7 +132,7 @@ $rows-around: math.div($open-rows - 1, 2);
     align-items: center;
     justify-content: center;
     scroll-snap-align: center;
-    font-size: 1.15rem;
+    font-size: var(--wheel-font, 1.15rem);
     font-variant-numeric: tabular-nums;
     opacity: 0.45;
     transition: opacity 0.15s ease;
@@ -138,7 +140,7 @@ $rows-around: math.div($open-rows - 1, 2);
 
 .wheel-picker__item--selected {
     opacity: 1;
-    color: var(--text-strong);
+    color: var(--wheel-color, var(--text-strong));
 }
 
 // The curved drum: each number tilts away as it moves from the middle, driven by its

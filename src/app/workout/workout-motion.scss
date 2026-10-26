@@ -41,6 +41,47 @@
     }
 }
 
+// On a rep step it's Done: the pill all the time, steady, with an arrow on to what's next
+.workout-next--done {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 44px;
+    padding-inline: 1.1rem 0.8rem;
+    border-color: var(--next-color);
+    background: transparent;
+    font: inherit;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+        background-color 0.2s ease,
+        scale 0.2s ease-out;
+
+    @media (hover: hover) {
+        &:hover {
+            background: var(--control);
+        }
+    }
+
+    &:active {
+        scale: 0.97;
+        transition-duration: 0.08s;
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 3px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        transition: none;
+    }
+}
+
+.workout-next__arrow {
+    flex: none;
+}
+
 .workout-next--soon {
     border-color: var(--next-color);
     animation: next-swell 1s ease-in-out infinite;

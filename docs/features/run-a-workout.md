@@ -30,8 +30,9 @@
 
 ### Rep steps
 
-- When the clock reaches a rep step, the workout **stops and waits**, however long it takes. The ring is full and still, in violet, and the face shows the reps, e.g. "20 reps", with the weight under them if there is one, e.g. "60 kg".
-- The main button becomes **Done** (in place of Pause), with a smaller **Pause** to one side. Done moves on to the next step, which starts from its **full time**.
+- When the clock reaches a rep step, the workout **stops and waits**, however long it takes. The ring is full and still, in violet, and the face shows the reps, e.g. "20 reps", with the weight under them, e.g. "60 kg", or a quiet "+ kg" with none (see RUN-6).
+- **Done** is the "Next:" line under the ring: a pill in the next step's colour, e.g. "Next: Rest · 01:00 →", with an arrow on to it. Screen readers hear "Done. Next: Rest · 01:00". It moves on to the next step, which starts from its **full time**. The big button stays **Pause**, as on any other step. While paused, the line is only what's next again, not a button.
+- If Done had focus and the next step isn't a rep step (so Done goes), focus moves to Pause.
 - As a rep step comes round, **Done swells once**, as it's the user's move now (not with reduced motion). The phone vibrates with the step's alarm, as for any step.
 - The time spent on reps doesn't come off any countdown, but it **counts as time spent** in the history.
 
@@ -60,14 +61,14 @@
 - **Moving on**: the face's text is on a drum behind the face, like the number wheels: the next step's text rolls up into view from below as the last one rolls away over the top, in perspective (three quarters of a second), so a new step is plain to see. When a new **round** starts the drum turns right to left instead, and the round line and dots above the ring turn with it. **Rest** settles in more gently: from a little way below, over most of a second, as the last step fades quickly away. The ring stays put. The text on its way out keeps showing the step it was, e.g. its last "00:01".
 - **Your note** on the step's exercise (EXR-10), if you've written one, in a box under the ring, e.g. "Pause at the bottom". Any work or rep step linked to an exercise shows it; screen readers hear it with the step, e.g. "Push-ups, 20 reps, your note: Elbows in".
 - **Next**: "Next: Plank · 00:45", "Next: Push-ups · 20 reps", "Next: Squats · 10 reps @ 60 kg", or "Next: finish" before the last step. Unnamed steps use their kind ("Timed", "Rest", "Reps").
-    - In the **last 5 seconds** of a timed step (the last 3 for a step under 15 seconds), "Next:" becomes a pill in the next step's colour (pink for timed, blue for rest, violet for reps, the accent colour for finish) that swells and glows once a second, to get ready. Not on a rep step, where Done is the cue, and not while paused.
+    - In the **last 5 seconds** of a timed step (the last 3 for a step under 15 seconds), "Next:" becomes a pill in the next step's colour (pink for timed, blue for rest, violet for reps, the accent colour for finish) that swells and glows once a second, to get ready. Not on a rep step, where it's Done instead (above), and not while paused.
     - In the same seconds the **face** flares to full colour on each second and eases back to its tint, in time with "Next:": one "get ready" cue, rather than a flash all step long.
 
 ### Changing reps or weight mid-workout (RUN-6)
 
-- While a rep step is waiting, a **Change reps or weight** button sits under the controls. It opens a **Reps** wheel (1–100) and a **Weight** wheel (none, then halves, in the unit chosen in settings), and scrolls them into view. It's placed under the controls so opening it never moves Done.
+- While a rep step is waiting, the **reps and weight on the face are wheels**: closed, each is just its number in the face's text, in a quiet outline that says it can be tapped, with its unit beside it ("reps", "kg"). Tapping one opens it there, over the ring, as wheels open anywhere else: **Reps** 1–100, and **Weight** none, then halves, in the unit chosen in settings. No weight shows as "+", to add one. Screen readers hear them as spin buttons named "reps" and "Weight, kg".
 - A change applies at once, to **this set, the rest of this workout's rounds, and the saved workout**, so next time starts from there. If the workout has been deleted from the library meanwhile, only this workout changes.
-- The wheels close by themselves on Done; the next rep step starts with them closed.
+- A wheel closes by itself as it does anywhere else (on a pick, or once it stops turning).
 - Space on a focused wheel is left to the wheel, rather than pressing Done.
 
 ### Finishing, and the summary (RUN-4, RUN-7)
@@ -105,9 +106,9 @@
 - Given a rep step, when Done is pressed, then the next step starts from its full time.
 - Given a rep step at the very end of the last round, then the workout only finishes after Done.
 - Given a round of only rep steps, then it runs with no countdown at all, waiting on each in turn.
-- Given a rep step of 10 squats at 60 kg, then the face shows "10 reps" and "60 kg", "Next:" before it says "Squats · 10 reps @ 60 kg", and a screen reader hears "Squats, 10 reps at 60 kg".
-- Given 20 push-ups in round 1, when I change them to 15 at 22.5 kg, then the face shows "15 reps" and "22.5 kg", the saved workout has 15 at 22.5 kg, and round 2 starts from 15 at 22.5 kg.
-- Given a step at 40 kg, when I set the weight to –, then the step has no weight.
+- Given a rep step of 10 squats at 60 kg, then the face's wheels show 10 reps and 60 kg, "Next:" before it says "Squats · 10 reps @ 60 kg", and a screen reader hears "Squats, 10 reps at 60 kg".
+- Given 20 push-ups in round 1, when I change them to 15 at 22.5 kg, then the face's wheels show 15 and 22.5, the saved workout has 15 at 22.5 kg, and round 2 starts from 15 at 22.5 kg.
+- Given a step at 40 kg, when I set the weight to +, then the step has no weight.
 - Given steps Squats (work), Rest, Plank (work), then the strip shows Squats as the first of three, screen readers hear "step 1 of 3", and it says "Next: Rest · 00:15".
 - Given a step named "Bodyweight squat", then the face shows it on two lines at full size; given "Single-leg Romanian deadlift", then it's on two lines on a wide screen, and on three on a phone, never smaller than 70%.
 - Given the workout finishes, then the summary opens with no Back to workout, and a note typed there is saved to it in the history.

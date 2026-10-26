@@ -11,7 +11,7 @@
 
 ### Controls
 
-- Like a media player: a big **Pause** button under the ring, and nothing else while it runs. On a rep step the big button is **Done** instead, with a smaller **Pause** to one side (see [run-a-workout](run-a-workout.md)).
+- Like a media player: a big **Pause** button under the ring, and nothing else while it runs. On a rep step it's still Pause, and Done is the "Next:" pill above it (see [run-a-workout](run-a-workout.md)).
 - There's **no Stop while running**: a workout is only ended from the paused screen, two presses away, so it's never ended by mistake.
 - On a keyboard, **Space** pauses and resumes, or presses Done on a rep step. It's ignored when held down (no flicker), with Shift, Ctrl, Alt or Cmd, once finished, and when a button or text box has focus (Space already does something there). **Escape** resumes too.
 
@@ -19,7 +19,7 @@
 
 - Pausing **freezes** the countdown and the ring where they are, and stops the last-seconds pulse. However long it's paused, it doesn't move on.
 - The ring **greys out**, and the round line, your note and Next turn the muted text colour. In the middle of the ring the face shows "**Paused · 00:23**" (or "Paused · 20 reps" on a rep step), a big **Resume** button, and **End workout** under it. The controls under the ring go while paused.
-- Focus moves to Resume on pause, and back to Pause (or Done) on resume, as the button just pressed has gone.
+- Focus moves to Resume on pause, and back to Pause on resume, as the button just pressed has gone.
 - **Pause becomes Resume**: the button glides up from where Pause was into the middle of the ring as Resume, and back down again on resume, along the same path (from the smaller Pause beside Done on a rep step). It moves on a spring with no bounce (Apple's 0.4s response) and is a real button the whole way, so it can be pressed mid-glide, and it turns straight round from wherever it is. With reduced motion it's just swapped.
 - Resuming carries on from exactly where it was. The time spent paused **doesn't count** as time spent in the history.
 - Alarms booked ahead are cancelled on pause and booked again on resume. **An alarm that already sounded before the pause doesn't sound again** on resume, even if the pause came less than a second after it.

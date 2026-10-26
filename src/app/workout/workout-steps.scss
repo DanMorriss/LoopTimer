@@ -35,15 +35,50 @@
     line-height: 1;
 }
 
+// A rep step's count and weight, each a wheel with its unit beside it. Closed, a wheel is
+// just its number in the face's text, with a quiet outline to say it can be tapped; open, it's
+// the wheel as anywhere else, over the ring.
+.workout-face__amount {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3em;
+}
+
+.workout-face app-wheel-picker:not(.wheel-picker--open) {
+    --wheel-background: transparent;
+    --wheel-border: 1.5px solid #{rgba($face-muted, 0.45)};
+    // The face's own text colour ("inherit" in a custom property would leave it unset)
+    --wheel-color: currentColor;
+}
+
+// Open, a wheel reaches past the circle, so the face stops cutting it off meanwhile
+.workout-face:has(.wheel-picker--open) {
+    overflow: visible;
+}
+
 // The rep count, as big as the face has room for on a narrow phone
 .workout-face__count {
+    --wheel-row: min(4.4rem, 15.4vw);
+    --wheel-font: min(4rem, 14vw);
+    width: 2.6ch;
     font-size: min(4rem, 14vw);
-    line-height: 1.1;
+}
 
-    // The template's whitespace between them is dropped
-    + .workout-face__reps {
-        margin-left: 0.3em;
-    }
+.workout-face__weight {
+    --wheel-row: 2.1rem;
+    --wheel-font: 1.5rem;
+    width: 4.5ch;
+    font-size: 1.5rem;
+}
+
+// No weight yet: a "+" to add one, quieter than a weight
+.workout-face__weight--none:not(.wheel-picker--open) {
+    --wheel-color: #{$face-muted};
+}
+
+.workout-face__weight-unit {
+    font-size: 1.25rem;
 }
 
 // What's after the rest, under its countdown

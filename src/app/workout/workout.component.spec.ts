@@ -506,6 +506,8 @@ describe('WorkoutComponent', () => {
 
     describe('progress ring', () => {
         const ring = () => fixture.nativeElement.querySelector('.workout-ring') as HTMLElement;
+        const progress = () =>
+            fixture.nativeElement.querySelector('[role="progressbar"]') as HTMLElement;
         const sweeps = () =>
             Array.from(
                 fixture.nativeElement.querySelectorAll('.workout-ring__sweep')
@@ -579,12 +581,12 @@ describe('WorkoutComponent', () => {
 
         it('reports progress to screen readers', async () => {
             start(makeWorkout({ workSeconds: 4 }));
-            expect(ring().getAttribute('role')).toBe('progressbar');
-            expect(ring().getAttribute('aria-valuenow')).toBe('0');
+            expect(progress().getAttribute('role')).toBe('progressbar');
+            expect(progress().getAttribute('aria-valuenow')).toBe('0');
 
             advance(1000);
 
-            expect(ring().getAttribute('aria-valuenow')).toBe('25');
+            expect(progress().getAttribute('aria-valuenow')).toBe('25');
             fixture.destroy();
         });
     });
@@ -709,7 +711,7 @@ describe('WorkoutComponent', () => {
                 fixture.destroy();
             });
 
-            it('glides from the smaller Pause beside Done on a rep step, and back to it', () => {
+            it('glides between Pause and Resume on a rep step too', () => {
                 start(makeWorkout({ steps: [reps(10, 'Squats'), work(30)] }));
 
                 press('Pause');
@@ -722,7 +724,6 @@ describe('WorkoutComponent', () => {
                 press('Resume');
                 TestBed.tick();
                 expect(glideStart('Pause')).not.toBeNull();
-                expect(glideStart('Done')).toBeNull();
                 fixture.destroy();
             });
 
@@ -1492,7 +1493,7 @@ describe('WorkoutComponent', () => {
             advance(3000);
             // 12s on the push-ups, then Done: 15s gone, so 5s are left
             advance(12_000);
-            (fixture.nativeElement.querySelector('[aria-label="Done"]') as HTMLElement).click();
+            (fixture.nativeElement.querySelector('.workout-next--done') as HTMLElement).click();
             fixture.detectChanges();
             expect(text()).toContain('00:05 left');
 
@@ -1806,14 +1807,22 @@ describe('WorkoutComponent', () => {
             fixture.nativeElement.querySelector(
                 '.workout-control--main button'
             ) as HTMLButtonElement;
+        const doneButton = () =>
+            fixture.nativeElement.querySelector('.workout-next--done') as HTMLButtonElement | null;
+        /** What a face wheel is set to, as screen readers hear it. */
+        const faceWheel = (which: 'count' | 'weight') =>
+            fixture.nativeElement.querySelector(
+                `.workout-face__${which} [role="spinbutton"]`
+            ) as HTMLElement | null;
         const ring = () => fixture.nativeElement.querySelector('.workout-ring') as HTMLElement;
+        const progress = () =>
+            fixture.nativeElement.querySelector('[role="progressbar"]') as HTMLElement;
         const said = () =>
             (fixture.nativeElement.querySelector('[aria-live]') as HTMLElement).textContent?.trim();
         const entries = () => TestBed.inject(HistoryStore).entries();
 
         function pressDone() {
-            expect(mainButton().getAttribute('aria-label')).toBe('Done');
-            mainButton().click();
+            doneButton()!.click();
             fixture.detectChanges();
         }
 
@@ -1853,7 +1862,7 @@ describe('WorkoutComponent', () => {
             expect(text()).toContain('Push-ups');
             expect(text()).toContain('20 reps');
             expect(ring().classList).toContain('workout-ring--reps');
-            expect(ring().getAttribute('aria-valuetext')).toBe('Waiting for Done');
+            expect(progress().getAttribute('aria-valuetext')).toBe('Waiting for Done');
 
             advance(10 * 60 * 1000);
 
@@ -1865,26 +1874,25 @@ describe('WorkoutComponent', () => {
             start(circuit());
             advance(3000);
 
-            expect(fixture.nativeElement.querySelector('.workout-face__count').textContent).toBe(
-                '20'
-            );
+            expect(faceWheel('count')!.getAttribute('aria-valuenow')).toBe('20');
+            expect(faceWheel('count')!.getAttribute('aria-labelledby')).toMatch(/^reps-label-/);
             fixture.destroy();
         });
 
         it('swells Done once as a rep step comes round, but not with reduced motion', () => {
             start(circuit());
-            expect(mainButton().getAnimations().length).toBe(0);
+            expect(doneButton()).toBeNull();
 
             advance(3000);
             TestBed.tick();
-            expect(mainButton().getAnimations().length).toBe(1);
+            expect(doneButton()!.getAnimations().length).toBe(1);
             fixture.destroy();
 
             fakeReducedMotion(true);
             start(circuit());
             advance(3000);
             TestBed.tick();
-            expect(mainButton().getAnimations().length).toBe(0);
+            expect(doneButton()!.getAnimations().length).toBe(0);
             fixture.destroy();
         });
 
@@ -1983,27 +1991,49 @@ describe('WorkoutComponent', () => {
             fixture.destroy();
         });
 
-        it('swaps Pause for Done, with a smaller Pause to one side', () => {
+        it('makes "Next:" the Done button, keeping Pause as the big one', () => {
             start(circuit());
-            expect(mainButton().getAttribute('aria-label')).toBe('Pause');
+            expect(doneButton()).toBeNull();
+            expect(mainButton().getAttribute('aria-keyshortcuts')).toBe('Space');
 
             advance(3000);
 
-            expect(mainButton().getAttribute('aria-label')).toBe('Done');
-            expect(mainButton().getAttribute('aria-keyshortcuts')).toBe('Space');
-            expect(text()).toContain('Done');
-            const pause = fixture.nativeElement.querySelector(
-                '.workout-control--side [aria-label="Pause"]'
-            ) as HTMLElement;
-            expect(pause).not.toBeNull();
+            expect(doneButton()!.textContent).toContain('Next: Rest · 00:02');
+            expect(doneButton()!.getAttribute('aria-label')).toBe('Done. Next: Rest · 00:02');
+            expect(doneButton()!.getAttribute('aria-keyshortcuts')).toBe('Space');
+            expect(doneButton()!.dataset['next']).toBe('rest');
+            expect(mainButton().getAttribute('aria-label')).toBe('Pause');
+            expect(mainButton().getAttribute('aria-keyshortcuts')).toBeNull();
 
-            pause.click();
+            mainButton().click();
             fixture.detectChanges();
 
             expect(component.isPaused()).toBe(true);
             expect(fixture.nativeElement.querySelector('.workout-paused').textContent).toContain(
                 'Paused · 20 reps'
             );
+            // Paused, it's only what's next, not a button
+            expect(doneButton()).toBeNull();
+            expect(text()).toContain('Next: Rest · 00:02');
+            fixture.destroy();
+        });
+
+        it('says Done finishes the workout on its last step', () => {
+            start(makeWorkout({ steps: [reps(10, 'Squats')], repeats: 1 }));
+
+            expect(doneButton()!.getAttribute('aria-label')).toBe('Done. Next: finish');
+            fixture.destroy();
+        });
+
+        it('moves focus to Pause when Done goes, rather than losing it', async () => {
+            start(circuit());
+            advance(3000);
+            doneButton()!.focus();
+
+            pressDone();
+            await fixture.whenStable();
+
+            expect(document.activeElement).toBe(mainButton());
             fixture.destroy();
         });
 
@@ -2022,12 +2052,12 @@ describe('WorkoutComponent', () => {
         });
 
         describe('changing the reps or weight mid-workout', () => {
-            const changeButton = () =>
-                fixture.nativeElement.querySelector('.workout-change') as HTMLButtonElement | null;
-            const wheel = (label: string) =>
+            const wheel = (label: 'reps' | 'weight') =>
                 fixture.nativeElement.querySelector(
-                    `app-wheel-picker:has([aria-labelledby="workout-change-${label}"])`
+                    label === 'reps' ? '.workout-face__count' : '.workout-face__weight'
                 ) as HTMLElement;
+            const value = (label: 'reps' | 'weight') =>
+                wheel(label).querySelector('[role="spinbutton"]')!.getAttribute('aria-valuetext');
             function choose(label: 'reps' | 'weight', value: string) {
                 (wheel(label).querySelector(`[data-value="${value}"]`) as HTMLElement).click();
                 fixture.detectChanges();
@@ -2037,37 +2067,47 @@ describe('WorkoutComponent', () => {
                 start(store.addWorkout(circuit()));
             }
 
-            it('offers it only on a rep step, opening the reps and weight wheels', () => {
+            it('shows the reps and weight on the face as wheels, only on a rep step', () => {
                 startSaved();
-                expect(changeButton()).toBeNull();
+                expect(wheel('reps')).toBeNull();
+                expect(fixture.nativeElement.querySelector('.workout-change')).toBeNull();
 
                 advance(3000);
-                expect(changeButton()!.getAttribute('aria-expanded')).toBe('false');
-                changeButton()!.click();
-                fixture.detectChanges();
-
-                expect(changeButton()!.getAttribute('aria-expanded')).toBe('true');
-                expect(wheel('reps')).not.toBeNull();
+                expect(value('reps')).toBe('20');
+                // No weight yet: a quiet "+" to add one
+                expect(value('weight')).toBe('none');
+                expect(wheel('weight').classList).toContain('workout-face__weight--none');
                 expect(
                     wheel('weight')
-                        .querySelector('[role="spinbutton"]')!
-                        .getAttribute('aria-valuetext')
-                ).toBe('none');
-                expect(text()).toContain('Weight (kg)');
+                        .querySelector('.wheel-picker__item--selected')!
+                        .textContent!.trim()
+                ).toBe('+');
+                fixture.destroy();
+            });
+
+            it('opens a wheel when its number is pressed', () => {
+                startSaved();
+                advance(3000);
+
+                wheel('reps')
+                    .querySelector('[role="spinbutton"]')!
+                    .dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+                fixture.detectChanges();
+
+                expect(wheel('reps').classList).toContain('wheel-picker--open');
                 fixture.destroy();
             });
 
             it('changes this set, the rest of the workout, and the saved workout', () => {
                 startSaved();
                 advance(3000);
-                changeButton()!.click();
-                fixture.detectChanges();
 
                 choose('reps', '15');
                 choose('weight', '22.5');
 
-                expect(text()).toContain('15 reps');
-                expect(text()).toContain('22.5 kg');
+                expect(value('reps')).toBe('15');
+                expect(value('weight')).toBe('22.5');
+                expect(wheel('weight').classList).not.toContain('workout-face__weight--none');
                 expect(store.workouts()[0].steps[1]).toEqual({
                     kind: 'reps',
                     reps: 15,
@@ -2077,29 +2117,25 @@ describe('WorkoutComponent', () => {
                     exerciseId: 'builtin:push-up',
                 });
 
-                // Done closes the wheels; round 2's set starts from the new numbers
+                // Round 2's set starts from the new numbers
                 pressDone();
-                expect(fixture.nativeElement.querySelector('#workout-change-panel')).toBeNull();
                 advance(2000 + 3000);
-                expect(text()).toContain('15 reps');
-                expect(text()).toContain('22.5 kg');
-                expect(changeButton()!.getAttribute('aria-expanded')).toBe('false');
+                expect(value('reps')).toBe('15');
+                expect(value('weight')).toBe('22.5');
                 fixture.destroy();
             });
 
-            it('takes the weight off again at –', () => {
+            it('takes the weight off again at +', () => {
                 start(
                     store.addWorkout(
                         makeWorkout({ steps: [{ kind: 'reps', reps: 5, name: '', weight: 40 }] })
                     )
                 );
-                changeButton()!.click();
-                fixture.detectChanges();
 
                 choose('weight', '0');
 
                 expect(store.workouts()[0].steps[0]).toEqual({ kind: 'reps', reps: 5, name: '' });
-                expect(fixture.nativeElement.querySelector('.workout-face__weight')).toBeNull();
+                expect(wheel('weight').classList).toContain('workout-face__weight--none');
                 fixture.destroy();
             });
 
@@ -2107,12 +2143,11 @@ describe('WorkoutComponent', () => {
                 TestBed.inject(SettingsStore).update({ weightUnit: 'lb' });
                 startSaved();
                 advance(3000);
-                changeButton()!.click();
-                fixture.detectChanges();
 
                 choose('weight', '135');
 
-                expect(text()).toContain('135 lb');
+                expect(value('weight')).toBe('135');
+                expect(text()).toContain('lb');
                 expect((store.workouts()[0].steps[1] as { weight?: number }).weight).toBe(61.235);
                 fixture.destroy();
             });
@@ -2120,8 +2155,6 @@ describe('WorkoutComponent', () => {
             it('leaves Space to a focused wheel, rather than pressing Done', () => {
                 startSaved();
                 advance(3000);
-                changeButton()!.click();
-                fixture.detectChanges();
 
                 wheel('reps')
                     .querySelector('[role="spinbutton"]')!
@@ -2243,22 +2276,29 @@ describe('WorkoutComponent', () => {
             expect(text()).toContain('Next: Squats · 10 reps @ 61 kg');
 
             advance(3000);
-            expect(fixture.nativeElement.querySelector('.workout-face__weight').textContent).toBe(
-                '61 kg'
-            );
+            expect(faceWheel('weight')!.getAttribute('aria-valuenow')).toBe('61');
+            expect(
+                fixture.nativeElement.querySelector('.workout-face__weight-unit').textContent
+            ).toBe('Weight, kg');
             expect(said()).toBe('Squats, 10 reps at 61 kg, step 2 of 2');
 
             TestBed.inject(SettingsStore).update({ weightUnit: 'lb' });
             fixture.detectChanges();
-            expect(text()).toContain('135 lb');
+            expect(faceWheel('weight')!.getAttribute('aria-valuenow')).toBe('135');
+            expect(
+                fixture.nativeElement.querySelector('.workout-face__weight-unit').textContent
+            ).toBe('Weight, lb');
             fixture.destroy();
         });
 
-        it('shows no weight for a rep step without one', () => {
+        it('shows no weight for a rep step without one, just a "+" to add one', () => {
             start(circuit());
             advance(3000);
 
-            expect(fixture.nativeElement.querySelector('.workout-face__weight')).toBeNull();
+            expect(faceWheel('weight')!.getAttribute('aria-valuetext')).toBe('none');
+            expect(
+                fixture.nativeElement.querySelector('.workout-face__weight--none')
+            ).not.toBeNull();
             fixture.destroy();
         });
 
@@ -2494,9 +2534,7 @@ describe('WorkoutComponent', () => {
             const saved = store.addWorkout(circuit());
             start(saved);
             advance(2000);
-            (
-                fixture.nativeElement.querySelector('.workout-control--main button') as HTMLElement
-            ).click();
+            (fixture.nativeElement.querySelector('.workout-next--done') as HTMLElement).click();
             fixture.detectChanges();
             advance(1000);
             endWorkout();
@@ -2547,7 +2585,7 @@ describe('WorkoutComponent', () => {
                 })
             );
             advance(2000);
-            (fixture.nativeElement.querySelector('[aria-label="Done"]') as HTMLElement).click();
+            (fixture.nativeElement.querySelector('.workout-next--done') as HTMLElement).click();
             fixture.detectChanges();
 
             expect(component.summaryOpen()).toBe(true);
@@ -2580,7 +2618,7 @@ describe('WorkoutComponent', () => {
                 })
             );
             advance(2000);
-            (fixture.nativeElement.querySelector('[aria-label="Done"]') as HTMLElement).click();
+            (fixture.nativeElement.querySelector('.workout-next--done') as HTMLElement).click();
             fixture.detectChanges();
         }
 

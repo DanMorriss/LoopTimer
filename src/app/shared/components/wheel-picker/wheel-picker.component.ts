@@ -470,11 +470,13 @@ export class WheelPickerComponent implements FormValueControl<number> {
         }
     }
 
+    // Exactly, not rounded to a whole pixel as offsetHeight is: a row sized in rem or vw can
+    // be 33.6px, and rounding it would land a long way down the list a row out. Its layout
+    // height, as the drum's tilt would shrink a measurement of it on screen.
     private rowHeight(): number {
-        return (
-            this.viewport().nativeElement.querySelector<HTMLElement>('.wheel-picker__item')
-                ?.offsetHeight || 1
-        );
+        const item =
+            this.viewport().nativeElement.querySelector<HTMLElement>('.wheel-picker__item');
+        return (item && parseFloat(getComputedStyle(item).height)) || 1;
     }
 
     private indexAtScroll(): number {

@@ -505,12 +505,11 @@ for (const theme of ['dark', 'light'] as const) {
                     store.addWorkout(makeWorkout({ steps: [reps(20, 'Push-ups'), work(30)] }))
                 );
                 await open('/workout');
-                expect(fixture.nativeElement.textContent).toContain('20');
-                expect(fixture.nativeElement.textContent).toContain('Done');
+                expect(fixture.nativeElement.querySelector('.workout-next--done')).not.toBeNull();
                 await expectNoViolations();
             });
 
-            it('changing the reps or weight of a rep step', async () => {
+            it('changing the reps of a rep step, its wheel open on the face', async () => {
                 store.setActiveWorkout(
                     store.addWorkout(
                         makeWorkout({
@@ -519,9 +518,13 @@ for (const theme of ['dark', 'light'] as const) {
                     )
                 );
                 await open('/workout');
-                click('.workout-change');
+                fixture.nativeElement
+                    .querySelector('.workout-face__count [role="spinbutton"]')
+                    .dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
                 await settle();
-                expect(fixture.nativeElement.querySelector('#workout-change-panel')).not.toBeNull();
+                expect(
+                    fixture.nativeElement.querySelector('.workout-face__count.wheel-picker--open')
+                ).not.toBeNull();
                 await expectNoViolations();
             });
 
@@ -574,15 +577,15 @@ for (const theme of ['dark', 'light'] as const) {
                     )
                 );
                 await open('/workout');
-                click('.workout-control--main button'); // Done
+                click('.workout-next--done');
                 await settle();
-                click('.workout-control--side button'); // Pause
+                click('.workout-control--main button'); // Pause
                 await settle();
                 click('.workout-paused__end');
                 await settle();
                 click('.summary__change');
                 await settle();
-                click('app-wheel-picker [data-value="8"]');
+                click('.summary app-wheel-picker [data-value="8"]');
                 await settle();
                 expect(fixture.nativeElement.textContent).toContain(
                     'Use these settings next time?'

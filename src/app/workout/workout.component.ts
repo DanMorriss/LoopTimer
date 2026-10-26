@@ -168,23 +168,24 @@ export class WorkoutComponent {
         label: String(i + 1),
     }));
     protected readonly weightUnit = this.settings.weightUnit;
-    protected readonly weightOptions = computed(() => weightOptions(this.weightUnit()));
+    /** The face's weight wheel: as in setup, but no weight shows as "+", to add one. */
+    protected readonly faceWeightOptions = computed(() =>
+        weightOptions(this.weightUnit()).map((option) =>
+            option.value === 0 ? { ...option, label: '+' } : option
+        )
+    );
     /** The rep step's weight as its wheel shows it, or 0 for none. */
     protected readonly weightValue = computed(() => {
         const step = this.state()?.step;
         return step?.kind === 'reps' && step.weight ? weightIn(step.weight, this.weightUnit()) : 0;
     });
-    /** Which rep set is being changed, so the wheels close by themselves on Done. */
-    private readonly changingSet = signal<string | null>(null);
+    /** The rep set being waited on, so Done swells once for each. */
     private readonly currentSet = computed(() => {
         const state = this.state();
         return state?.phase === 'reps'
             ? `${this.workoutStore.activeRunStartedAt()}-${this.workoutStore.activeRepStepsDone()}`
             : null;
     });
-    protected readonly changingReps = computed(
-        () => this.currentSet() !== null && this.changingSet() === this.currentSet()
-    );
 
     /** Rounds left, including the one in progress. */
     repeats = computed(() => this.state()?.roundsLeft ?? 0);
@@ -306,6 +307,7 @@ export class WorkoutComponent {
                 label: this.stepLabel(),
                 reps: this.isRepsActive() ? this.reps() : null,
                 weight: this.weight(),
+                weightValue: this.weightValue(),
                 time: this.time(),
                 // A timed step's last seconds: each one pops, to hurry the last effort along
                 pop:
@@ -479,7 +481,7 @@ export class WorkoutComponent {
     pausedOn = computed(() => (this.isRepsActive() ? `${this.reps()} reps` : this.time()));
 
     private readonly mainButton = viewChild<ElementRef<HTMLButtonElement>>('mainButton');
-    private readonly sidePauseButton = viewChild<ElementRef<HTMLButtonElement>>('sidePauseButton');
+    private readonly doneButton = viewChild<ElementRef<HTMLButtonElement>>('doneButton');
     private readonly resumeButton = viewChild<ElementRef<HTMLButtonElement>>('resumeButton');
     private readonly reducedMotion = injectPrefersReducedMotion();
     /** Apple's spring for moving something about: no bounce, a 0.4s response. */
@@ -493,7 +495,7 @@ export class WorkoutComponent {
             }
             afterNextRender(
                 () =>
-                    this.mainButton()?.nativeElement.animate(
+                    this.doneButton()?.nativeElement.animate(
                         [
                             { transform: 'none' },
                             { transform: 'scale(1.15)' },
@@ -530,11 +532,6 @@ export class WorkoutComponent {
         }
     }
 
-    /** The button that pauses: the big one, or on a rep step the smaller one beside Done. */
-    private pauseButton(): HTMLElement | undefined {
-        return (this.isRepsActive() ? this.sidePauseButton() : this.mainButton())?.nativeElement;
-    }
-
     /**
      * Pausing swaps the controls for Resume and End workout over the ring, and resuming swaps
      * them back, so the button just pressed is gone: focus moves to the one that took its
@@ -542,15 +539,14 @@ export class WorkoutComponent {
      */
     togglePause() {
         // Where it is on screen now, mid-glide included, so a press mid-glide turns it round
-        const pressed = this.isPaused() ? this.resumeButton()?.nativeElement : this.pauseButton();
+        const pressed = (this.isPaused() ? this.resumeButton() : this.mainButton())?.nativeElement;
         const from = pressed?.getBoundingClientRect();
         this.run.togglePause();
         afterNextRender(
             () => {
-                (this.isPaused() ? this.resumeButton() : this.mainButton())?.nativeElement.focus();
-                const arrived = this.isPaused()
-                    ? this.resumeButton()?.nativeElement
-                    : this.pauseButton();
+                const arrived = (this.isPaused() ? this.resumeButton() : this.mainButton())
+                    ?.nativeElement;
+                arrived?.focus();
                 if (from && arrived) {
                     this.glideFrom(arrived, from);
                 }
@@ -586,21 +582,6 @@ export class WorkoutComponent {
         }
     }
 
-    protected toggleChangingReps() {
-        const opening = !this.changingReps();
-        this.changingSet.set(opening ? this.currentSet() : null);
-        // On a phone the wheels open below the fold, so bring them into view
-        if (opening) {
-            afterNextRender(
-                () =>
-                    document
-                        .getElementById('workout-change-panel')
-                        ?.scrollIntoView?.({ block: 'nearest' }),
-                { injector: this.injector }
-            );
-        }
-    }
-
     protected setReps(reps: number) {
         this.run.changeReps({ reps });
     }
@@ -611,9 +592,23 @@ export class WorkoutComponent {
         });
     }
 
-    /** Done on a rep step: on to the next step, from its full time. */
+    /**
+     * Done on a rep step: on to the next step, from its full time. Done stays put for another
+     * rep step; otherwise it's gone, so focus moves to Pause rather than being lost.
+     */
     finishReps() {
+        const hadFocus = this.doneButton()?.nativeElement === document.activeElement;
         this.run.finishReps();
+        if (hadFocus) {
+            afterNextRender(
+                () => {
+                    if (!this.doneButton()) {
+                        this.mainButton()?.nativeElement.focus();
+                    }
+                },
+                { injector: this.injector }
+            );
+        }
     }
 
     /** Space pauses and resumes, like most media players, or presses Done on a rep step. */
