@@ -10,8 +10,25 @@
     border-left: 4px solid var(--step-color);
     border-radius: 0.75rem;
     background: var(--raised);
-    box-shadow: 0 12px 28px var(--shadow);
     color: var(--text);
+    // Lifted off the list, as a held library card is: a little bigger, its shadow deeper and
+    // further below. `scale`, as the drag moves it with `transform`.
+    scale: 1.03;
+    box-shadow: 0 18px 40px var(--shadow);
+    animation: lift 0.15s ease-out;
+}
+
+@keyframes lift {
+    from {
+        scale: 1;
+        box-shadow: 0 2px 6px var(--shadow);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :host {
+        animation: none;
+    }
 }
 
 :host(.rest) {

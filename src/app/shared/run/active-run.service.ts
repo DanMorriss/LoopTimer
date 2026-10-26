@@ -19,6 +19,9 @@ import { SettingsStore } from '../state/settings-store.service';
 import { WorkoutStore } from '../state/workout-store.service';
 import { KeepAwakeService } from './keep-awake.service';
 
+// How often the clock ticks, in ms, at most
+const TICK_MS = 250;
+
 // How many rounds of alarms to book at a time
 const ALARM_WINDOW = 100;
 
@@ -175,10 +178,17 @@ export class ActiveRunService {
         // forever "busy"; the signal it sets still updates the page.
         const zone = inject(NgZone);
         effect((onCleanup) => {
-            if (this.isRunning()) {
-                const id = zone.runOutsideAngular(() => setInterval(() => this.sync(), 250));
-                onCleanup(() => clearInterval(id));
+            if (!this.isRunning()) {
+                return;
             }
+            let id: ReturnType<typeof setTimeout>;
+            const tick = () => {
+                this.sync();
+                id = setTimeout(tick, this.msToNextTick());
+            };
+            const first = untracked(() => this.msToNextTick());
+            id = zone.runOutsideAngular(() => setTimeout(tick, first));
+            onCleanup(() => clearTimeout(id));
         });
 
         // Log the workout once it's done, wherever the user is. Recording the same run
@@ -424,6 +434,23 @@ export class ActiveRunService {
 
     sync() {
         this.now.set(Date.now());
+    }
+
+    /**
+     * How long until the next tick: the next quarter second of the clock, or the next alarm
+     * if that's sooner. Steps start on whole seconds of the clock, but a time limit's end
+     * needn't (it's moved by the time on rep steps), so a tick lands on each alarm too: the
+     * face rolls on and the phone vibrates in the very tick the beep was booked for, rather
+     * than up to a quarter second after it.
+     */
+    private msToNextTick(): number {
+        const now = Date.now();
+        const elapsedMs = now - (this.store.activeWorkoutStartedAt() ?? now);
+        const toQuarter = TICK_MS - (((elapsedMs % TICK_MS) + TICK_MS) % TICK_MS);
+        const nextAlarm = this.alarmEvents()
+            .map((event) => event.at - now)
+            .filter((ms) => ms > 0);
+        return Math.min(toQuarter, ...nextAlarm);
     }
 
     /**

@@ -40,7 +40,7 @@
 
 - **Add step** (shown as "+ Step") adds a **rep step** at the end, opens it (closing the others) and puts the cursor in its name box.
 - **Changing kind:** a step's kind pill (e.g. "REPS") opens a menu of Reps, Timed and Rest, with the current one ticked. Picking one changes the step, open or collapsed, and focus goes back to the pill. The step keeps its name, exercise and numbers, so changing back finds them; only those its kind uses are saved. Escape, a click elsewhere or tabbing away closes the menu.
-- A step can be moved up or down one place with buttons, or dragged by its handle. The first step can't move up; the last can't move down. A dragged step shows as a compact card held where the handle was grabbed, so it doesn't jump under the pointer.
+- A step can be moved up or down one place with buttons, or dragged by its handle. The first step can't move up; the last can't move down. A dragged step shows as a compact card held where the handle was grabbed, so it doesn't jump under the pointer, and **lifted** off the list as a held library card is: a little bigger, with a deeper shadow (it grows into that as it's picked up, but not with reduced motion).
 - **Deleting** a step happens at once. For one with a name, time or reps, the **Undo bar** says "Deleted Step 2, Squats, 00:45" with **Undo**, which puts it back where it was (see [home-and-navigation](home-and-navigation.md#undo)); an empty one (no name, no time or reps) has nothing to undo.
 
 ### Collapsing

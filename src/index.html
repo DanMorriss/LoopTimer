@@ -10,6 +10,10 @@
         <link rel="icon" type="image/svg+xml" href="favicon.svg" />
         <link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48" />
         <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+        <!-- Added to the Home Screen, it opens on its own like an app, not in a browser tab -->
+        <link rel="manifest" href="manifest.webmanifest" />
+        <!-- The browser's bars in the page colour (--page-bg), dark until the script says -->
+        <meta name="theme-color" content="#070b12" />
         <script>
             // Apply the saved theme before anything draws, so a light theme doesn't flash dark
             // first. ThemeService takes over once the app has loaded.
@@ -19,6 +23,10 @@
                     theme = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
                 }
                 document.documentElement.dataset.theme = theme === 'light' ? 'light' : 'dark';
+                if (theme === 'light') {
+                    // --page-bg in the light theme
+                    document.querySelector('meta[name="theme-color"]').content = '#eef3f9';
+                }
             } catch (e) {
                 // Unreadable settings: stay on the default dark theme
             }

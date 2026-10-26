@@ -6,6 +6,9 @@ import { SettingsStore } from '../state/settings-store.service';
  * switches the colour tokens in styles.scss. "System" follows the device, and
  * changes along with it.
  *
+ * It also sets <meta name="theme-color"> to the page colour (--page-bg), so the browser's
+ * bars match it.
+ *
  * index.html does the same before the app loads, so the page doesn't flash dark first.
  */
 @Service()
@@ -29,7 +32,24 @@ export class ThemeService {
         query.addEventListener('change', onChange);
         inject(DestroyRef).onDestroy(() => query.removeEventListener('change', onChange));
 
-        const root = inject(DOCUMENT).documentElement;
-        effect(() => (root.dataset['theme'] = this.applied()));
+        const document = inject(DOCUMENT);
+        const root = document.documentElement;
+        const themeColor = this.themeColorMeta(document);
+        effect(() => {
+            root.dataset['theme'] = this.applied();
+            // The browser's bars, and an installed app's status bar, in the page's colour
+            themeColor.content = getComputedStyle(root).getPropertyValue('--page-bg').trim();
+        });
+    }
+
+    /** index.html's <meta name="theme-color">, or a new one if it's missing. */
+    private themeColorMeta(document: Document): HTMLMetaElement {
+        let meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+        if (!meta) {
+            meta = document.createElement('meta');
+            meta.name = 'theme-color';
+            document.head.appendChild(meta);
+        }
+        return meta;
     }
 }

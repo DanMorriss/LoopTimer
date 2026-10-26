@@ -144,6 +144,17 @@
     }
 }
 
+// Hidden but for finish(), which shows it and fades it out
+.workout-ring__flash {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: $reps-color;
+    box-shadow: 0 0 24px 4px rgba($reps-color, 0.6);
+    opacity: 0;
+    pointer-events: none;
+}
+
 // Paused: freeze the ring where it is, and carry on from there on resume...
 .workout-ring--paused .workout-ring__fill,
 .workout-ring--paused .workout-ring__tip {

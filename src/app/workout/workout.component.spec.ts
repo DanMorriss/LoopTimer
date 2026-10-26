@@ -1729,6 +1729,27 @@ describe('WorkoutComponent', () => {
             fixture.destroy();
         });
 
+        it('rolls on to the next step and vibrates right as its beep is due, after a pause', () => {
+            const vibrate = vi.spyOn(TestBed.inject(AlarmService), 'vibrate');
+            const run = TestBed.inject(ActiveRunService);
+            start(workout());
+            // Paused and resumed 1.1s in, between the clock's quarter seconds
+            advance(1100);
+            run.togglePause();
+            fixture.detectChanges();
+            advance(400);
+            run.togglePause();
+            fixture.detectChanges();
+            vibrate.mockClear();
+
+            advance(1900);
+
+            // 3s of work done: the rest is on the face and the phone in the beep's tick
+            expect(component.isRestActive()).toBe(true);
+            expect(vibrate.mock.calls).toEqual([['rest']]);
+            fixture.destroy();
+        });
+
         it('does not vibrate for phases missed while the tab was in the background', () => {
             const vibrate = vi.spyOn(TestBed.inject(AlarmService), 'vibrate');
             start(workout());
@@ -1893,6 +1914,31 @@ describe('WorkoutComponent', () => {
             advance(3000);
             TestBed.tick();
             expect(doneButton()!.getAnimations().length).toBe(0);
+            fixture.destroy();
+        });
+
+        it('fills the ring as Done is pressed, with the next beep and a vibration at once', () => {
+            const flash = () =>
+                fixture.nativeElement.querySelector('.workout-ring__flash') as HTMLElement;
+            start(circuit());
+            TestBed.inject(AlarmService).unlock();
+            // Between ticks, as a press would be
+            advance(3000 + 10_100);
+            const vibrate = vi.spyOn(TestBed.inject(AlarmService), 'vibrate');
+
+            pressDone();
+
+            // No tick in between: the rest's beep is booked for now, and the phone vibrates
+            expect(flash().getAnimations().length).toBe(1);
+            expect(audio.scheduledNotes()[0]).toBe('440@13.1');
+            expect(vibrate.mock.calls).toEqual([['rest']]);
+            fixture.destroy();
+
+            fakeReducedMotion(true);
+            start(circuit());
+            advance(3000);
+            pressDone();
+            expect(flash().getAnimations().length).toBe(0);
             fixture.destroy();
         });
 
