@@ -1,11 +1,13 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatIconModule } from '@angular/material/icon';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { map } from 'rxjs';
 import { ExerciseDetailsComponent } from '../../shared/components/exercise-details/exercise-details.component';
 import { ExerciseEditorComponent } from '../../shared/components/exercise-editor/exercise-editor.component';
 import { ExerciseProgressComponent } from './exercise-progress/exercise-progress.component';
+import { PageSlide } from '../../nav/page-slide';
+import { SwipeBackDirective } from '../../nav/swipe-back.directive';
 import { Exercise, exercisePath, isBuiltIn } from '../../models/exercise';
 import { exerciseUsage } from '../../models/exercise-links';
 import { parseMusclesParam, serialiseMusclesParam } from '../muscle-filter-query';
@@ -21,16 +23,16 @@ import { UndoService } from '../../shared/undo/undo.service';
  * workout uses it (one with history is hidden instead, so its history keeps its name).
  *
  * Built-in exercises are at /exercises/<name>, e.g. /exercises/back-squat, and your own at
- * /exercises/<id>.
+ * /exercises/<id>. It slides in over the list, and back off with ‹ Exercises or a swipe right.
  */
 @Component({
     selector: 'app-exercise-page',
     imports: [
         MatIconModule,
-        RouterLink,
         ExerciseDetailsComponent,
         ExerciseEditorComponent,
         ExerciseProgressComponent,
+        SwipeBackDirective,
     ],
     templateUrl: './exercise-page.component.html',
     styleUrl: './exercise-page.component.scss',
@@ -50,7 +52,13 @@ export class ExercisePageComponent {
     private readonly musclesQuery = serialiseMusclesParam(
         parseMusclesParam(this.route.snapshot.queryParamMap.get('muscles'))
     );
-    protected readonly backQueryParams = this.musclesQuery ? { muscles: this.musclesQuery } : {};
+    /** The list to go back to, e.g. "/exercises?muscles=quads". */
+    protected readonly backUrl = this.router.serializeUrl(
+        this.router.createUrlTree(['/exercises'], {
+            queryParams: this.musclesQuery ? { muscles: this.musclesQuery } : {},
+        })
+    );
+    protected readonly slide = inject(PageSlide);
 
     protected readonly exercise = computed(
         () =>
@@ -130,7 +138,7 @@ export class ExercisePageComponent {
         const note = this.note();
         const hidden = this.hidden();
         this.exercises.deleteOwn(exercise.id);
-        void this.router.navigate(['/exercises'], { queryParams: this.backQueryParams }).then(() =>
+        void this.router.navigateByUrl(this.backUrl).then(() =>
             this.undo.offerUndo({
                 message: `Deleted ${exercise.name}`,
                 // Back as it was, and back on its page, where it was deleted from

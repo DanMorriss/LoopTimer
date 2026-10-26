@@ -56,8 +56,7 @@ The Workout page's items are done: the reps and weight on the face are wheels, a
 
 #### Exercises page
 
-- [ ] **Animate going into an exercise and back** to the Exercises list.
-- [ ] **Swipe right on an exercise's page** to go back to the Exercises list.
+The Exercises page's items are done: an exercise's page slides in over the list and back off, and swiping right on it goes back.
 
 #### History page
 
@@ -77,6 +76,7 @@ From reviews against Apple's WWDC design talks (Designing Fluid Interfaces, Prin
 ## 3. Known issues
 
 - [ ] **A progress chart test can fail when the whole suite runs at once:** "narrows the chart to a range, and says when nothing falls in it" failed once in a full local run on 2026-10-24, once in eight on 2026-10-25 and once in two on 2026-10-26, and passes on its own. Ruled out on 2026-10-25: the history's background load landing mid-test (waiting for `HistoryStore.ready` first didn't stop it), and spec files sharing storage (files run at once, but each has its own localStorage). Catch the failure's message next time it happens, since it hasn't been seen yet. The wheel picker's "turns with a mouse drag and snaps to a whole row", which failed with it on 2026-10-24, now waits for the wheel to stop rather than a fixed time.
+- [ ] **Try the swipe back on an exercise's page on an iPhone:** added on 2026-10-26 with pointer events and tested only in Chromium with simulated touches. Check that a swipe right follows the finger and slides back to the list, that scrolling up and down still works, and what happens when the swipe starts at the very left edge, where Safari has its own Back swipe (which plays its own slide and skips ours).
 - [ ] **Try the summary's drag from its content on an iPhone:** added on 2026-10-25 with touch events (Safari has no `touch-action: pan-down`), and tested only in Chromium with simulated touches. Check that, scrolled to the top, a finger moving down on the stats drags the sheet; moving up scrolls; a scrolled-down wheel in the sets still turns; and the button a drag starts on isn't pressed.
 - [ ] **The initial load is close to its 500 kB budget:** 493 kB on 2026-10-25, after the built-in exercises' words moved out to load on demand. Each new built-in exercise still adds about 300 bytes up front (its name, muscles and equipment), so about 20 more would reach the budget. The next saving found then was Material's icon module in the tab bar, run bar and undo bar (about 16 kB), as inline SVG instead.
 - [ ] **The body map can't shade abductors:** react-native-body-highlighter has no abductor shapes on either figure (still none upstream on 2026-10-25, though its slug is mapped in `tools/build-body-shapes.mjs`), so exercises that work them (side plank, hip abduction) list them without shading. Fix by drawing the shapes ourselves, or swap to a diagram that has them.

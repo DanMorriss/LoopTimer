@@ -1,5 +1,5 @@
 @let c = card();
-<a class="exercise-card" [routerLink]="c.path" [queryParams]="c.queryParams">
+<a class="exercise-card" [href]="url()" (click)="slide.follow($event, url(), 'in')">
     <span class="exercise-card__text">
         <span class="exercise-card__name">
             {{ c.exercise.name }}
