@@ -8,6 +8,7 @@ import {
     progressMeasure,
     sessionsByExercise,
     sessionValue,
+    suggestedWeight,
 } from './progress';
 
 const squat = (reps: number, weight?: number, round = 0): LoggedSet => ({
@@ -163,5 +164,43 @@ describe('progress', () => {
         expect(sessionValue(sets, 'time')).toBeNull();
         expect(sessionValue(session(1000, [squat(15)]), 'weight')).toBeNull();
         expect(sessionValue(session(1000, [plank(30), plank(40)]), 'time')).toBe(40);
+    });
+});
+
+describe('suggested weight (PRG-5)', () => {
+    it('goes up a step when every set hit the reps, and stays put when one fell short', () => {
+        expect(suggestedWeight([squat(10, 60), squat(10, 60), squat(10, 60)], 10, 'kg')).toEqual({
+            last: 60,
+            next: 62.5,
+        });
+        expect(suggestedWeight([squat(10, 60), squat(10, 60), squat(8, 60)], 10, 'kg')).toEqual({
+            last: 60,
+            next: 60,
+        });
+    });
+
+    it('counts more reps than asked for as hitting them', () => {
+        expect(suggestedWeight([squat(12, 60)], 10, 'kg')?.next).toBe(62.5);
+    });
+
+    it('goes by the heaviest sets only, so lighter warm-ups short of the reps do not count', () => {
+        expect(suggestedWeight([squat(5, 40), squat(10, 60), squat(10, 60)], 10, 'kg')).toEqual({
+            last: 60,
+            next: 62.5,
+        });
+    });
+
+    it('goes up 5 lb in lb', () => {
+        expect(suggestedWeight([squat(10, 100)], 10, 'lb')).toEqual({ last: 220.5, next: 225.5 });
+    });
+
+    it('stops at the top of the wheel', () => {
+        expect(suggestedWeight([squat(10, 300)], 10, 'kg')).toEqual({ last: 300, next: 300 });
+    });
+
+    it('has nothing to suggest without a weight last time', () => {
+        expect(suggestedWeight([squat(10)], 10, 'kg')).toBeNull();
+        expect(suggestedWeight([plank(60)], 10, 'kg')).toBeNull();
+        expect(suggestedWeight([], 10, 'kg')).toBeNull();
     });
 });

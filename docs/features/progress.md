@@ -1,6 +1,6 @@
 # Progress
 
-Built: last time on each rep step (PRG-1), personal bests on the workout summary (PRG-2), latest and best on the exercises list (PRG-3), progress on the exercise page (PRG-4), the muscles worked this week on the history page (PRG-6), the most rounds in a time limit (PRG-7), a bar per muscle group against the sets a week aimed for (PRG-8), and a suggested next workout (PRG-9). The suggested weight (PRG-5) is planned (see [direction](../direction.md)); its rules are a first draft and get firmed up, with acceptance criteria, when it's built. Builds on [exercises](exercises.md) and the sets in the [history](history.md).
+Built: last time on each rep step (PRG-1), personal bests on the workout summary (PRG-2), latest and best on the exercises list (PRG-3), progress on the exercise page (PRG-4), the muscles worked this week on the history page (PRG-6), the most rounds in a time limit (PRG-7), a bar per muscle group against the sets a week aimed for (PRG-8), a suggested next workout (PRG-9), and a suggested next weight on each rep step (PRG-5). Builds on [exercises](exercises.md) and the sets in the [history](history.md).
 
 ## Stories
 
@@ -79,9 +79,12 @@ Under the body map, a **Progress** section:
 - **Bars per muscle (PRG-8):** under the body map, a bar for each of the 18 muscle groups, most worked first and A to Z on a tie, with its sets this week counted as above. Each track has the **aim** shaded as a band: **10 to 20 sets a week**, the usual advice for building muscle. Under 10 is **under** (a grey bar), 10 to 20 **in range** (cyan), over 20 **over** (pink); the bar ending short of the band or past it says the same without colour, and a screen reader hears e.g. "Glutes: 2 sets, under 10". The tracks run to 25 sets, or further when a muscle has had more. A key under them explains the band and the counting.
 - **Suggested next workout (PRG-9):** a card under the muscles, with the saved workout whose muscles have had the fewest sets this week: the average of this week's sets over the muscles its exercises work, its main muscles counting twice its supporting ones, lowest wins. On a tie, the one done longest ago (never done first), then the library's order. It names up to three of its main muscles, least worked first: "For Chest (0 sets), the least worked this week.", and Start starts it, as the library's Start does. Workouts with no step linked to an exercise aren't suggested; with none to suggest, there's no card. Shown even in a week with no sets, when it's the workout done longest ago.
 
-### Planned
+### Mid-workout: suggested next weight (PRG-5)
 
-- **Suggested weight (PRG-5), later:** double progression: hit the target reps on every set → suggest one step up (2.5 kg, or 5 lb); otherwise suggest the same weight. Shown as a suggestion only; the weight can still be changed mid-workout (RUN-6).
+- By **double progression**, from the same sets as "Last time" (PRG-1): where every set at last time's **heaviest** weight got at least the step's reps, try one step up: **2.5 kg**, or **5 lb**. Lighter sets, e.g. warm-ups, don't count. Otherwise, stay at the same weight.
+- A step up shows under "Last time" as a button, e.g. "↑ Try 62.5 kg". Pressing it puts that weight on the step's weight wheel, as turning the wheel would (RUN-6): for this set, the rest of the workout and next time. It's a suggestion only; the wheel can still be turned to anything.
+- It shows only while the step is still at last time's weight. Once the weight's been changed (by the button, the wheel, or in setup), it's the user's call, and the button goes.
+- Staying at the same weight needs nothing doing, since the wheel already has it, so nothing shows. Nor does anything when last time had no weight, or was at the wheel's top.
 
 ## Acceptance criteria
 
@@ -100,13 +103,16 @@ Under the body map, a **Progress** section:
 - Given two sets of back squats and one of bench press in the last 7 days, and a plank 9 days ago, then the history shows "Muscles worked this week" with 18 bars, starting Glutes (2 sets), Quads (2 sets), Adductors (1 set), all under 10.
 - Given saved workouts Legs (back squats) and Push (bench press), and two sets of back squats this week, then the suggested next workout is Push, "For Chest (0 sets), the least worked this week.", and Start starts it.
 - Given 22 sets for the chest this week, then its bar runs past the band and it's read as "over 20".
+- Given squats of 10, 10, 12 at 60 kg last time, when I reach a squats rep step of 10 reps at 60 kg, then it offers "Try 62.5 kg", and pressing it sets the weight to 62.5 kg and the button goes; in lb, from 132.5 lb it offers "Try 137.5 lb".
+- Given squats of 10, 8 at 60 kg last time, or a rep step since changed to 70 kg, then no weight is suggested.
+- Given 5 at 40 kg then 10, 10 at 60 kg last time, on a 10-rep step, then it offers "Try 62.5 kg".
 
 ## Platform notes
 
-- **Web:** the sums are in `src/app/models/progress.ts` (`sessionsByExercise`, `progressMeasure`, `exerciseBests`, `sessionValue`) and the wording in `src/app/exercises/progress-format.ts`. The page's section is `ExerciseProgressComponent` (`src/app/exercises/exercise-page/exercise-progress/`), an inline SVG chart in the `--accent` colour. `/exercises` now waits for the history to load, as `/exercises/:id` and `/history` do. Last time is `WorkoutComponent.lastTime` (with `describeSets()` from `src/app/history/history-format.ts`), the summary's bests `WorkoutSummaryComponent.personalBests` (most rounds with `isMostRounds()` in `models/progress.ts`), and the muscles this week `HistoryComponent.musclesWorked`, shown with `BodyMapComponent` and `MuscleBarsComponent` (`src/app/history/muscle-bars/`). The counting, the aim (`WEEKLY_SETS_LOW`, `WEEKLY_SETS_HIGH`) and the suggestion are in `src/app/models/muscle-balance.ts`; the bars' colours are the `--balance-*` tokens.
+- **Web:** the sums are in `src/app/models/progress.ts` (`sessionsByExercise`, `progressMeasure`, `exerciseBests`, `sessionValue`) and the wording in `src/app/exercises/progress-format.ts`. The page's section is `ExerciseProgressComponent` (`src/app/exercises/exercise-page/exercise-progress/`), an inline SVG chart in the `--accent` colour. `/exercises` now waits for the history to load, as `/exercises/:id` and `/history` do. Last time is `WorkoutComponent.lastTime` (with `describeSets()` from `src/app/history/history-format.ts`), the summary's bests `WorkoutSummaryComponent.personalBests` (most rounds with `isMostRounds()` in `models/progress.ts`), and the muscles this week `HistoryComponent.musclesWorked`, shown with `BodyMapComponent` and `MuscleBarsComponent` (`src/app/history/muscle-bars/`). The counting, the aim (`WEEKLY_SETS_LOW`, `WEEKLY_SETS_HIGH`) and the suggestion are in `src/app/models/muscle-balance.ts`; the bars' colours are the `--balance-*` tokens. The suggested weight is `suggestedWeight()` in `models/progress.ts` (the step up is `WEIGHT_INCREASE` in `models/weight.ts`), shown by `WorkoutComponent.nextWeight`.
 - **iOS:** Swift Charts (`LineMark` + `PointMark`, with `chartXSelection` for the readout) covers the chart; VoiceOver's audio graphs (`AXChartDescriptor`) can stand in for the arrow keys and the table.
 
 ## Open questions
 
-- Is the weight step for PRG-5 a setting, or per exercise?
+- Is the weight step for PRG-5 a setting, or per exercise? As built, it is 2.5 kg or 5 lb for everything, which is a big jump for small dumbbell moves (e.g. lateral raises).
 - Should the aim of 10 to 20 sets a week (PRG-8) be lower for small muscles (neck, shins, forearms), or a setting for people training for fitness rather than size? As it is, most people's bars are under for those.

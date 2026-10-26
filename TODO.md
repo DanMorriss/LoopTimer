@@ -27,7 +27,7 @@ Timed sets are logged now (a set per timed work step of an exercise that runs to
 
 ### Phase 6: Suggested next weight
 
-- [ ] **Suggested next weight (PRG-5):** double progression, as drafted in `docs/features/progress.md`.
+A rep step offers a step up (2.5 kg or 5 lb) when every set hit its reps last time (PRG-5). Phase 6 is done.
 
 ### Alarms (any time)
 

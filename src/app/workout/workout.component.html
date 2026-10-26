@@ -148,6 +148,18 @@
                                         @if (lastTime()) {
                                             <p class="workout-face__last-time">{{ lastTime() }}</p>
                                         }
+                                        @if (nextWeight(); as next) {
+                                            <!-- Every set hit the reps last time, so a step
+                                                 up; a tap puts it on the wheel (PRG-5) -->
+                                            <button
+                                                type="button"
+                                                class="workout-face__next-weight"
+                                                (click)="setWeight(next)"
+                                            >
+                                                <mat-icon aria-hidden="true">arrow_upward</mat-icon>
+                                                Try {{ next }} {{ weightUnit() }}
+                                            </button>
+                                        }
                                     } @else if (slide.pop) {
                                         <!-- A fresh element each second, so it pops each time -->
                                         @for (time of [slide.time]; track time) {

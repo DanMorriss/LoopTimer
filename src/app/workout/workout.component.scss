@@ -74,6 +74,34 @@
     margin-top: 0.2rem;
 }
 
+// A suggestion, so quieter than the wheels, but still a button you can see is one
+.workout-face__next-weight {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    min-height: 28px;
+    margin-top: 0.3rem;
+    padding: 0 0.6rem;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    background: none;
+    color: $face-muted;
+    font: inherit;
+    font-size: 0.8rem;
+    cursor: pointer;
+
+    mat-icon {
+        width: 1rem;
+        height: 1rem;
+        font-size: 1rem;
+    }
+
+    &:focus-visible {
+        outline: 2px solid $face-muted;
+        outline-offset: 2px;
+    }
+}
+
 .workout-page {
     gap: 0.25rem;
     padding: 0 1rem 2rem;
