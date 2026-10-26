@@ -47,6 +47,14 @@ export const routes: Routes = [
             import('./settings/settings.component').then((m) => m.SettingsComponent),
     },
     {
+        path: 'privacy',
+        loadComponent: () => import('./legal/privacy.component').then((m) => m.PrivacyComponent),
+    },
+    {
+        path: 'terms',
+        loadComponent: () => import('./legal/terms.component').then((m) => m.TermsComponent),
+    },
+    {
         path: 'workout',
         loadComponent: () => import('./workout/workout.component').then((m) => m.WorkoutComponent),
     },

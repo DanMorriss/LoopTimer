@@ -49,7 +49,7 @@
 
 - Each entry's **⋮ menu** offers **Add note** (or **Edit note** and **Remove note** once there is one) and **Delete**. One menu open at a time.
 - A note is up to **120 characters**, trimmed. Saving an empty note removes it. Cancel keeps the note as it was.
-- From the workout summary, **View history** opens the history with that workout highlighted and in view. (`?note=<id>` does the same with its note box open and focused; nothing links there since the note box moved onto the summary.)
+- The workout summary's **Done** opens the history with that workout highlighted and in view. (`?note=<id>` does the same with its note box open and focused; nothing links there since the note box moved onto the summary.)
 
 ### Delete and Undo
 

@@ -1,5 +1,21 @@
 @if (shown()) {
-    <aside class="run-bar" aria-label="Workout in progress" [attr.data-phase]="phase()">
+    <!-- Shows behind the bar as it's swiped right, to end the workout -->
+    @if (!finished()) {
+        <div class="run-bar__end" aria-hidden="true">
+            <mat-icon>stop</mat-icon>
+            End workout
+        </div>
+    }
+    <aside
+        #bar
+        class="run-bar"
+        aria-label="Workout in progress"
+        [attr.data-phase]="phase()"
+        (pointerdown)="onPointerDown($event)"
+        (pointermove)="onPointerMove($event)"
+        (pointerup)="onPointerUp($event)"
+        (pointercancel)="cancel()"
+    >
         <!-- Grows into the workout page as it opens (WorkoutMorph) -->
         <a class="run-bar__open" href="/workout" (click)="morph.follow($event, '/workout')">
             <span class="run-bar__dot" aria-hidden="true"></span>

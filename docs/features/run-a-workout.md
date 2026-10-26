@@ -84,11 +84,11 @@
     - **Personal bests** this workout set (PRG-2), and "Most rounds: 7 rounds + 3" for a time limit beaten (PRG-7; see [progress](progress.md)).
     - **Sets**, one line per step as in the history, e.g. "Squats: 10, 10, 8 @ 60 kg" or "Plank: 3 × 0:45".
     - A **Note** box, saved to this workout in the history as you leave it.
-    - Buttons: **Done** (the main one: on to the library), **View history** (opens the history with this workout highlighted), and **Back to workout** for a workout ended early or one that runs until stopped. Escape does the same as Back to workout, where there is one.
+    - Buttons: **Done** (the main one: on to the history, with this workout highlighted), and **Back to workout** for a workout ended early or one that runs until stopped. Escape does the same as Back to workout, where there is one.
 - **Change reps or weight** (shown when there are rep sets) turns each rep set into a Reps and a Weight wheel, so a set logged wrongly can be corrected (e.g. the last set was 8, not 10). Timed sets ran as set, so they can't be changed. A change goes into this workout's history entry at once, and then asks "**Use these settings next time?**":
     - **Yes, use next time**: each rep step of the saved workout starts next time from its last set in this workout. It says "Saved: next time starts from these."
     - **No, just this time**: only the history changes.
-- A workout ended before its first step was done has nothing logged: the summary says "Nothing to log", with no note box or View history.
+- A workout ended before its first step was done has nothing logged: the summary says "Nothing to log", with no note box. Done still goes to the history.
 - The workout is logged in the history once, when it finishes, wherever the user is in the app (see [history](history.md)). It's dated when it actually finished, even if the app only noticed later.
 
 ### No workout
@@ -112,6 +112,7 @@
 - Given steps Squats (work), Rest, Plank (work), then the strip shows Squats as the first of three, screen readers hear "step 1 of 3", and it says "Next: Rest · 00:15".
 - Given a step named "Bodyweight squat", then the face shows it on two lines at full size; given "Single-leg Romanian deadlift", then it's on two lines on a wide screen, and on three on a phone, never smaller than 70%.
 - Given the workout finishes, then the summary opens with no Back to workout, and a note typed there is saved to it in the history.
+- Given the summary, when I press Done, then the workout is over and the history opens with it highlighted.
 - Given a workout ended early, on a phone, when I drag the summary down past halfway (or flick it down), then it goes back to the workout, paused; when I let go above halfway, then it springs back up.
 - Given 20 push-ups at 40 kg in round 1 and the workout ended in round 2, when I change the set to 18 reps on the summary, then the history has 18; on "Yes, use next time" the saved workout starts from 18 at 40 kg, and on "No, just this time" it stays at 20.
 - Given a workout ended early, when I press Back to workout, then it is paused where it was ended, with focus on Resume.

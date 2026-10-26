@@ -127,23 +127,11 @@
             <mat-icon aria-hidden="true">check</mat-icon>
             Done
         </button>
-        <div class="summary__more">
-            @if (!finished()) {
-                <button type="button" class="btn-pill summary__back" (click)="leave('back')">
-                    <mat-icon aria-hidden="true">arrow_back</mat-icon>
-                    Back to workout
-                </button>
-            }
-            @if (entry()) {
-                <button
-                    type="button"
-                    class="btn-pill summary__history"
-                    (click)="leave('viewHistory')"
-                >
-                    <mat-icon aria-hidden="true">history</mat-icon>
-                    View history
-                </button>
-            }
-        </div>
+        @if (!finished()) {
+            <button type="button" class="btn-pill summary__back" (click)="leave('back')">
+                <mat-icon aria-hidden="true">arrow_back</mat-icon>
+                Back to workout
+            </button>
+        }
     </div>
 </div>

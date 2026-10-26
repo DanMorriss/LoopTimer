@@ -109,3 +109,28 @@
 .settings__about {
     text-align: center;
 }
+
+.settings__legal {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0 1.25rem;
+    margin: 0.5rem 0 0;
+    padding: 0;
+    list-style: none;
+
+    a {
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+        color: var(--glow-text);
+        font-size: 0.85rem;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+
+        &:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+    }
+}

@@ -3,9 +3,42 @@
 
 // The same frosted capsule as the tab bar, just above it
 :host {
+    position: relative;
     display: block;
     width: min(100%, 26rem);
     pointer-events: auto;
+}
+
+// Behind the bar, showing as much as a swipe to the right leaves (--reveal, set while it
+// moves): red, with End workout at its left, coming fully on once letting go would end it.
+// The same as Delete behind a workout card.
+.run-bar__end {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding-left: 1.1rem;
+    border-radius: 999px;
+    background: var(--danger-soft);
+    color: var(--text-danger);
+    font-weight: 600;
+    white-space: nowrap;
+    clip-path: inset(0 calc(100% - var(--reveal, 0px)) 0 0 round 999px);
+    transition:
+        background-color 0.15s ease,
+        color 0.15s ease;
+
+    .mat-icon {
+        width: 1.4rem;
+        height: 1.4rem;
+        font-size: 1.4rem;
+    }
+
+    :host(.run-bar--past-end) & {
+        background: var(--danger-strong);
+        color: #fff;
+    }
 }
 
 // Rises into place when it appears, as if the workout page had folded down into it
@@ -32,6 +65,11 @@
         inset 0 1px 0 var(--chrome-light),
         0 10px 30px var(--shadow);
     animation: run-bar-in var(--spring-duration) var(--ease-spring);
+    // Up and down are the page's; right is the bar's, to end the workout
+    touch-action: pan-y;
+    // Over End workout behind, which only shows where the bar has moved off it
+    position: relative;
+    -webkit-touch-callout: none;
 
     &[data-phase='rest'] {
         --dot: var(--rest);

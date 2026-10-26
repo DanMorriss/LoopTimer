@@ -2847,28 +2847,17 @@ describe('WorkoutComponent', () => {
             fixture.destroy();
         });
 
-        it('ends the run on Done, and goes to the library', async () => {
-            endInRound2();
+        it('ends the run on Done, and opens it in the history', async () => {
+            const run = endInRound2();
             const navigate = mockNavigate();
 
             pressInSummary('Done');
             await fixture.whenStable();
 
             expect(store.activeWorkout()).toBeNull();
-            expect(navigate).toHaveBeenCalledWith(['/library']);
-            expect(entries()).toHaveLength(1);
-            fixture.destroy();
-        });
-
-        it('ends the run on View history, and opens it there', async () => {
-            const run = endInRound2();
-            const navigate = mockNavigate();
-
-            pressInSummary('View history');
-            await fixture.whenStable();
-
-            expect(store.activeWorkout()).toBeNull();
             expect(navigate).toHaveBeenCalledWith(['/history'], { queryParams: { run } });
+            expect(entries()).toHaveLength(1);
+            expect(summaryButton('View history')).toBeUndefined();
             fixture.destroy();
         });
 
@@ -2900,7 +2889,6 @@ describe('WorkoutComponent', () => {
             fixture.detectChanges();
 
             expect(summaryText()).toContain('Nothing to log');
-            expect(summaryButton('View history')).toBeUndefined();
             expect(summary()!.querySelector('#summary-note')).toBeNull();
             expect(entries()).toEqual([]);
             fixture.destroy();

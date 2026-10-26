@@ -1,6 +1,7 @@
 import { ApplicationRef, Component, computed, DOCUMENT, inject, signal } from '@angular/core';
 import { BodyFigure } from '../models/exercise';
 import { WeightUnit } from '../models/weight';
+import { PageSlide } from '../nav/page-slide';
 import { AlarmService } from '../shared/alarms/alarm.service';
 import { BackupService, ImportResult } from '../shared/backup/backup.service';
 import { planPrompt } from '../shared/backup/plan-prompt';
@@ -30,6 +31,8 @@ export class SettingsComponent {
     protected readonly settings = inject(SettingsStore);
     protected readonly alarms = inject(AlarmService);
     protected readonly keepAwake = inject(KeepAwakeService);
+    /** Into the Privacy notice and Terms of use. */
+    protected readonly slide = inject(PageSlide);
     private readonly backup = inject(BackupService);
     private readonly appRef = inject(ApplicationRef);
     private readonly document = inject(DOCUMENT);

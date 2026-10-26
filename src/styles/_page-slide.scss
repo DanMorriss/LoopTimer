@@ -1,16 +1,20 @@
-// Going into an exercise from the Exercises list slides its page in from the right, over the
-// list, which moves a little way left and fades; going back, the page leaves to the right and
-// the list comes back (PageSlide, src/app/nav/page-slide.ts). The two have different names, so
-// each keeps its own place on screen rather than the browser moving one into the other's (the
-// page and the list needn't be scrolled the same). Names only apply while it runs.
+// Going into an exercise from the Exercises list (or Privacy or Terms from Settings) slides its
+// page in from the right, over the list, which moves a little way left and fades; going back,
+// the page leaves to the right and the list comes back (PageSlide, src/app/nav/page-slide.ts).
+// The two have different names, so each keeps its own place on screen rather than the browser
+// moving one into the other's (the page and the list needn't be scrolled the same). Names only
+// apply while it runs.
 
 :root.page-sliding {
-    app-exercise-list {
-        view-transition-name: exercise-list;
+    app-exercise-list,
+    app-settings {
+        view-transition-name: slide-under;
     }
 
-    app-exercise-page {
-        view-transition-name: exercise-page;
+    app-exercise-page,
+    app-privacy,
+    app-terms {
+        view-transition-name: slide-over;
     }
 
     // Its own picture, kept over the pages as they move under it
@@ -19,8 +23,8 @@
     }
 }
 
-// The exercise's page is over the list both ways, and the bars over both
-::view-transition-group(exercise-page) {
+// The page further in is over the list both ways, and the bars over both
+::view-transition-group(slide-over) {
     z-index: 1;
 }
 
@@ -29,28 +33,28 @@
 }
 
 // On the app's spring, or after a swipe back, on one already moving at the finger's speed
-:root.page-sliding::view-transition-old(exercise-list),
-:root.page-sliding::view-transition-new(exercise-list),
-:root.page-sliding::view-transition-old(exercise-page),
-:root.page-sliding::view-transition-new(exercise-page) {
+:root.page-sliding::view-transition-old(slide-under),
+:root.page-sliding::view-transition-new(slide-under),
+:root.page-sliding::view-transition-old(slide-over),
+:root.page-sliding::view-transition-new(slide-over) {
     animation-duration: var(--slide-duration, var(--spring-duration));
     animation-timing-function: var(--slide-easing, var(--ease-spring));
     animation-fill-mode: both;
 }
 
-:root.page-sliding::view-transition-new(exercise-page) {
+:root.page-sliding::view-transition-new(slide-over) {
     animation-name: page-in;
 }
 
-:root.page-sliding::view-transition-old(exercise-list) {
+:root.page-sliding::view-transition-old(slide-under) {
     animation-name: page-under;
 }
 
-:root.page-sliding::view-transition-old(exercise-page) {
+:root.page-sliding::view-transition-old(slide-over) {
     animation-name: page-out;
 }
 
-:root.page-sliding::view-transition-new(exercise-list) {
+:root.page-sliding::view-transition-new(slide-under) {
     animation-name: page-back;
 }
 

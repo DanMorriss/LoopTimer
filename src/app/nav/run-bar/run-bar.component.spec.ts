@@ -117,6 +117,113 @@ describe('RunBarComponent', () => {
         expect(button()!.getAttribute('aria-label')).toBe('Pause');
     });
 
+    describe('swiped right', () => {
+        const pointer = (
+            type: string,
+            x: number,
+            y = 20,
+            {
+                target = bar()!,
+                pointerType = 'touch',
+            }: { target?: Element; pointerType?: string } = {}
+        ) =>
+            target.dispatchEvent(
+                new PointerEvent(type, {
+                    bubbles: true,
+                    pointerId: 7,
+                    isPrimary: true,
+                    pointerType,
+                    clientX: x,
+                    clientY: y,
+                })
+            );
+
+        /** Long enough that letting go after it reads as still, not as a flick. */
+        const pause = () => new Promise((resolve) => setTimeout(resolve, 150));
+
+        beforeEach(() => {
+            // Pointers made up by a test aren't active, so the browser won't capture them
+            vi.spyOn(Element.prototype, 'setPointerCapture').mockImplementation(() => undefined);
+            element.style.width = '400px';
+            start(makeWorkout({ steps: [work(30, 'Plank')] }));
+            // A swipe's speed comes from real time between its moves
+            vi.useRealTimers();
+        });
+
+        it('follows the finger, showing End workout behind as much as it leaves', () => {
+            pointer('pointerdown', 20);
+            pointer('pointermove', 80);
+            pointer('pointermove', 120);
+
+            expect(bar()!.style.transform).toBe('translateX(100px)');
+            expect(element.style.getPropertyValue('--reveal')).toBe('100px');
+            expect(element.querySelector('.run-bar__end')!.textContent).toContain('End workout');
+            expect(element.classList).not.toContain('run-bar--past-end');
+        });
+
+        it('ends the workout and opens its summary once let go past halfway', async () => {
+            pointer('pointerdown', 20);
+            pointer('pointermove', 120);
+            pointer('pointermove', 280);
+            expect(element.classList).toContain('run-bar--past-end');
+            await pause();
+            pointer('pointerup', 280);
+
+            await vi.waitFor(() => expect(TestBed.inject(Router).url).toBe('/workout'), {
+                timeout: 3000,
+            });
+            expect(TestBed.inject(ActiveRunService).summaryOpen()).toBe(true);
+        });
+
+        it('springs back, still going, when let go short of halfway', async () => {
+            pointer('pointerdown', 20);
+            pointer('pointermove', 60);
+            pointer('pointermove', 120);
+            await pause();
+            pointer('pointerup', 120);
+            await fixture.whenStable();
+
+            expect(bar()!.style.transform).toBe('');
+            expect(TestBed.inject(ActiveRunService).summaryOpen()).toBe(false);
+            expect(TestBed.inject(Router).url).toBe('/library');
+        });
+
+        it("doesn't open the workout from the link a swipe starts on", async () => {
+            const link = element.querySelector('a')!;
+            pointer('pointerdown', 20, 20, { target: link });
+            pointer('pointermove', 60);
+            pointer('pointermove', 120);
+            await pause();
+            pointer('pointerup', 120);
+            const click = new MouseEvent('click', { bubbles: true, cancelable: true });
+            link.dispatchEvent(click);
+
+            expect(click.defaultPrevented).toBe(true);
+            expect(TestBed.inject(Router).url).toBe('/library');
+        });
+
+        it('leaves a mouse drag, an up-and-down move, and a move left alone', () => {
+            pointer('pointerdown', 20, 20, { pointerType: 'mouse' });
+            pointer('pointermove', 300, 20, { pointerType: 'mouse' });
+            pointer('pointerup', 300, 20, { pointerType: 'mouse' });
+            expect(bar()!.style.transform).toBe('');
+
+            pointer('pointerdown', 20, 20);
+            pointer('pointermove', 25, 80);
+            pointer('pointermove', 300, 80);
+            pointer('pointerup', 300, 80);
+            expect(bar()!.style.transform).toBe('');
+
+            pointer('pointerdown', 200, 20);
+            pointer('pointermove', 230);
+            pointer('pointermove', 100);
+            expect(bar()!.style.transform).toBe('');
+            pointer('pointercancel', 100);
+
+            expect(TestBed.inject(ActiveRunService).summaryOpen()).toBe(false);
+        });
+    });
+
     it('says when it has finished, with no Pause, and opens its summary', () => {
         start(makeWorkout({ steps: [work(3)], repeats: 1 }));
 

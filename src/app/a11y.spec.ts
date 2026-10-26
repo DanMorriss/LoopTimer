@@ -467,6 +467,16 @@ for (const theme of ['dark', 'light'] as const) {
                 await settle();
                 await expectNoViolations();
             });
+
+            it('the privacy notice', async () => {
+                await open('/privacy');
+                await expectNoViolations();
+            });
+
+            it('the terms of use', async () => {
+                await open('/terms');
+                await expectNoViolations();
+            });
         });
 
         describe('workout', () => {

@@ -274,11 +274,7 @@
 
         <!-- How it went: once finished, or ended with End workout -->
         @if (summaryOpen()) {
-            <app-workout-summary
-                (back)="backToWorkout()"
-                (done)="closeSummary()"
-                (viewHistory)="closeSummary(true)"
-            />
+            <app-workout-summary (back)="backToWorkout()" (done)="closeSummary()" />
         }
     } @else {
         <div
