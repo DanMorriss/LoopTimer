@@ -1,8 +1,9 @@
 import { DatePipe } from '@angular/common';
-import { Component, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
-import { RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { Exercise } from '../../models/exercise';
+import { PageSlide } from '../../nav/page-slide';
 
 /** One exercise in the list, as its card shows it. */
 export interface ExerciseCard {
@@ -29,13 +30,25 @@ export interface CardProgress {
     best: string;
 }
 
-/** One exercise in the Exercises list (EXR-6): a link to its page, with its latest and best. */
+/**
+ * One exercise in the Exercises list (EXR-6): a link to its page, which slides in over the list
+ * (PageSlide), with its latest and best.
+ */
 @Component({
     selector: 'app-exercise-card',
-    imports: [DatePipe, MatIconModule, RouterLink],
+    imports: [DatePipe, MatIconModule],
     templateUrl: './exercise-card.component.html',
     styleUrl: './exercise-card.component.scss',
 })
 export class ExerciseCardComponent {
     readonly card = input.required<ExerciseCard>();
+
+    private readonly router = inject(Router);
+    protected readonly slide = inject(PageSlide);
+    /** Its page, with the muscles picked, e.g. "/exercises/back-squat?muscles=quads". */
+    protected readonly url = computed(() =>
+        this.router.serializeUrl(
+            this.router.createUrlTree([this.card().path], { queryParams: this.card().queryParams })
+        )
+    );
 }

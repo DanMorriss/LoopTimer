@@ -4,9 +4,12 @@
 
 // Room under the page for the bars floating over its bottom, so the last of it can be
 // scrolled clear of them (--bars-height, in styles.scss)
+// Clipped at the sides, so a page moved sideways (a swipe back, SwipeBackDirective) doesn't
+// widen the page on a phone
 main {
     display: block;
     padding-bottom: var(--bars-height);
+    overflow-x: clip;
 }
 
 // Stacked from the bottom, clear of an iPhone's home bar. The strip itself lets taps through
