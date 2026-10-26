@@ -52,8 +52,7 @@ The Library page's items are done (LIB-3–5).
 
 #### Workout page
 
-- [ ] **Change reps or weight from the circle:** remove the button for it, and tapping the reps or the weight in the main circle opens the number wheel.
-- [ ] **Make Done clearly go to the next exercise (rep steps):** it isn't obvious now. Fold the button into the "Next: …" line, with a pill border round it (as when it pulses at the end of a timed step) and an arrow on the right.
+The Workout page's items are done: the reps and weight on the face are wheels, and Done is the "Next:" pill.
 
 #### Exercises page
 
@@ -77,9 +76,10 @@ From reviews against Apple's WWDC design talks (Designing Fluid Interfaces, Prin
 
 ## 3. Known issues
 
-- [ ] **A progress chart test can fail when the whole suite runs at once:** "narrows the chart to a range, and says when nothing falls in it" failed once in a full local run on 2026-10-24 and once in eight on 2026-10-25, and passes on its own. Ruled out on 2026-10-25: the history's background load landing mid-test (waiting for `HistoryStore.ready` first didn't stop it), and spec files sharing storage (files run at once, but each has its own localStorage). Catch the failure's message next time it happens, since it hasn't been seen yet. The wheel picker's "turns with a mouse drag and snaps to a whole row", which failed with it on 2026-10-24, now waits for the wheel to stop rather than a fixed time.
+- [ ] **A progress chart test can fail when the whole suite runs at once:** "narrows the chart to a range, and says when nothing falls in it" failed once in a full local run on 2026-10-24, once in eight on 2026-10-25 and once in two on 2026-10-26, and passes on its own. Ruled out on 2026-10-25: the history's background load landing mid-test (waiting for `HistoryStore.ready` first didn't stop it), and spec files sharing storage (files run at once, but each has its own localStorage). Catch the failure's message next time it happens, since it hasn't been seen yet. The wheel picker's "turns with a mouse drag and snaps to a whole row", which failed with it on 2026-10-24, now waits for the wheel to stop rather than a fixed time.
 - [ ] **Try the summary's drag from its content on an iPhone:** added on 2026-10-25 with touch events (Safari has no `touch-action: pan-down`), and tested only in Chromium with simulated touches. Check that, scrolled to the top, a finger moving down on the stats drags the sheet; moving up scrolls; a scrolled-down wheel in the sets still turns; and the button a drag starts on isn't pressed.
 - [ ] **The initial load is close to its 500 kB budget:** 493 kB on 2026-10-25, after the built-in exercises' words moved out to load on demand. Each new built-in exercise still adds about 300 bytes up front (its name, muscles and equipment), so about 20 more would reach the budget. The next saving found then was Material's icon module in the tab bar, run bar and undo bar (about 16 kB), as inline SVG instead.
 - [ ] **The body map can't shade abductors:** react-native-body-highlighter has no abductor shapes on either figure (still none upstream on 2026-10-25, though its slug is mapped in `tools/build-body-shapes.mjs`), so exercises that work them (side plank, hip abduction) list them without shading. Fix by drawing the shapes ourselves, or swap to a diagram that has them.
 - [ ] **Try holding and dragging a library card on an iPhone:** added on 2026-10-26 and tested only in Chromium with simulated touches. Check that holding a card lifts it (with no text selection or link menu), dragging it then moves it and doesn't scroll the page, letting go of it unmoved opens its options, and a quick swipe left still deletes.
 - [ ] **The library's order won't sync:** it's the order of the saved list, not part of a workout's record, so when sync comes (SYN-3) a workout moved on one device won't move on another (an open question in `docs/features/library.md`).
+- [ ] **Try the face's reps and weight wheels on an iPhone:** added on 2026-10-26 and tested only in Chromium. Check that tapping the count opens its wheel over the ring (not cut off by the circle), a finger can carry straight on and turn it, it closes on its own, and the face doesn't scroll or slide while it's open.

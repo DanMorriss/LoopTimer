@@ -4,13 +4,18 @@
     [class.workout-ring--rest]="phase() === 'rest'"
     [class.workout-ring--reps]="phase() === 'reps'"
     [class.workout-ring--paused]="paused()"
-    role="progressbar"
-    aria-label="Progress through this phase"
-    aria-valuemin="0"
-    aria-valuemax="100"
-    [attr.aria-valuenow]="percent()"
-    [attr.aria-valuetext]="phase() === 'reps' ? 'Waiting for Done' : null"
 >
+    <!-- The progress, for screen readers: a layer of its own rather than the ring itself, as
+         a progress bar's contents are hidden from them, and the face's wheels must be found -->
+    <div
+        class="workout-ring__progress"
+        role="progressbar"
+        aria-label="Progress through this phase"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        [attr.aria-valuenow]="percent()"
+        [attr.aria-valuetext]="phase() === 'reps' ? 'Waiting for Done' : null"
+    ></div>
     @for (sweep of sweeps(); track sweep.key) {
         <!-- Two rotating half-circles; transforms animate without repainting -->
         <div
