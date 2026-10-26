@@ -1,0 +1,22 @@
+<ul class="bars" aria-label="Sets per muscle this week">
+    @for (row of rows(); track row.muscle) {
+        <li class="bars__row" [class]="'bars__row--' + row.status">
+            <span class="bars__label">{{ row.label }}</span>
+            <span class="bars__track" aria-hidden="true">
+                <span
+                    class="bars__band"
+                    [style.left.%]="band().left"
+                    [style.width.%]="band().width"
+                ></span>
+                <span class="bars__fill" [style.width.%]="row.width"></span>
+            </span>
+            <span class="bars__count" aria-hidden="true">{{ row.count }}</span>
+            <span class="sr-only">{{ row.description }}</span>
+        </li>
+    }
+</ul>
+<p class="bars__key">
+    <span class="bars__key-band" aria-hidden="true"></span>
+    {{ low }}–{{ high }} sets a week, the usual aim for each muscle. A set counts 1 for the muscles
+    it mainly works, ½ for the ones that help.
+</p>

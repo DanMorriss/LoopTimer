@@ -74,6 +74,8 @@ Status: ✅ done, ◐ partly, — not started. The iOS column fills in as a port
 | PRG-5  | Get a suggested next weight                                              | —   | —   | [progress](progress.md)                       |
 | PRG-6  | See which muscles I've worked this week, on the body map                 | ✅  | —   | [progress](progress.md)                       |
 | PRG-7  | Be told when I've done the most rounds yet in a time limit               | ✅  | —   | [progress](progress.md)                       |
+| PRG-8  | A bar per muscle group this week, showing what's over and under worked   | ✅  | —   | [progress](progress.md)                       |
+| PRG-9  | A suggested next workout, for the least worked muscles                   | ✅  | —   | [progress](progress.md)                       |
 | SYN-1  | Export all my data to a file                                             | ✅  | —   | [backup-and-sync](backup-and-sync.md)         |
 | SYN-2  | Import a backup without losing what's there                              | ✅  | —   | [backup-and-sync](backup-and-sync.md)         |
 | SYN-3  | Sign in and have the same data on every device                           | —   | —   | [backup-and-sync](backup-and-sync.md)         |
