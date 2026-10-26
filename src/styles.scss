@@ -76,8 +76,8 @@
     --cta-edge: rgba(255, 255, 255, 0.55);
     --cta-shade: rgba(3, 32, 41, 0.28);
     --cta-sheen: rgba(255, 255, 255, 0.55);
-    --cta-near: rgba(34, 211, 238, 0.45);
-    --cta-far: rgba(34, 211, 238, 0.22);
+    --cta-near: rgba(1, 12, 18, 0.7);
+    --cta-far: rgba(1, 12, 18, 0.55);
 
     // The body map: muscles shaded strong for main, darker for supporting, and grey when
     // unworked, apart in lightness as well as colour; each label's ink is for its shade
@@ -151,8 +151,8 @@
     --cta-edge: rgba(255, 255, 255, 0.4);
     --cta-shade: rgba(3, 32, 41, 0.3);
     --cta-sheen: rgba(255, 255, 255, 0.35);
-    --cta-near: rgba(8, 145, 178, 0.35);
-    --cta-far: rgba(8, 145, 178, 0.18);
+    --cta-near: rgba(14, 76, 92, 0.28);
+    --cta-far: rgba(14, 76, 92, 0.22);
 
     // Darkest for main here, so the strongest shade still reads strongest on a pale page
     --muscle-main: #0e7490;

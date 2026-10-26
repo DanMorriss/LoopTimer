@@ -37,8 +37,6 @@ Timed sets are logged now (a set per timed work step of an exercise that runs to
 
 ## 2. Design
 
-- [ ] **Tone down the main button's glow:** the glow under the main button (e.g. **+ Add workout** in the library; `.btn-main` in `src/styles/_buttons.scss`, two glows underneath, one tight and one wide) is a little too strong. Try a few versions side by side with Dan, e.g. a softer or smaller wide glow, the tight glow only, or a tinted shadow, in both themes, then pick one.
-
 ### Apple-style design review
 
 From reviews against Apple's WWDC design talks (Designing Fluid Interfaces, Principles of Great Design) on 2026-10-24 and 2026-10-25. The rest of what they found is done; still to do:
