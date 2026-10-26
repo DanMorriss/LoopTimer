@@ -18,7 +18,7 @@
 - Each step counts down from its full time, in whole seconds, then the next starts at once. Rounds follow straight on.
 - Rest after the last work or rep step of the **last round is skipped** (see [build-a-workout](build-a-workout.md)), so the workout finishes there.
 - A workout that runs **until stopped never finishes** on its own.
-- The countdown is worked out **from the clock** (now minus when it started, less any pauses), never by counting ticks. If the app is held up, it shows the right time as soon as it can, rather than running slow.
+- The countdown is worked out **from the clock** (now minus when it started, less any pauses), never by counting ticks. If the app is held up, it shows the right time as soon as it can, rather than running slow. The clock ticks on each quarter second of the run, and on each alarm, so the face rolls on to a step and the phone vibrates in the same tick the step's beep was booked for.
 - Whole workout length = rounds × (sum of timed steps in a round) − (rest at the end of a round). Rep steps add whatever time they take on top.
 
 ### A time limit (RUN-8)
@@ -34,6 +34,7 @@
 - **Done** is the "Next:" line under the ring: a pill in the next step's colour, e.g. "Next: Rest · 01:00 →", with an arrow on to it. Screen readers hear "Done. Next: Rest · 01:00". It moves on to the next step, which starts from its **full time**. The big button stays **Pause**, as on any other step. While paused, the line is only what's next again, not a button.
 - If Done had focus and the next step isn't a rep step (so Done goes), focus moves to Pause.
 - As a rep step comes round, **Done swells once**, as it's the user's move now (not with reduced motion). The phone vibrates with the step's alarm, as for any step.
+- **Pressing Done** finishes the set: the full ring stays a moment over the next step's, swelling out as it fades (not with reduced motion), in the same frame as the next step's beep and vibration.
 - The time spent on reps doesn't come off any countdown, but it **counts as time spent** in the history.
 
 ### What's on screen

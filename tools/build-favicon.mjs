@@ -1,5 +1,6 @@
 // Draws the favicon (the ∞ and its light on the Start button's cyan, option E of the mock-ups)
-// into public/: favicon.svg, favicon.ico (16, 32 and 48 px) and apple-touch-icon.png (180 px).
+// into public/: favicon.svg, favicon.ico (16, 32 and 48 px), apple-touch-icon.png (180 px), and
+// icon-192.png and icon-512.png for manifest.webmanifest.
 // Run with `node tools/build-favicon.mjs public`. Renders with Playwright's Chromium, which the
 // tests already install.
 import { chromium } from 'playwright';
@@ -75,7 +76,13 @@ for (const size of [16, 32, 48]) {
     pngs.push({ size, data: await png(still, size) });
 }
 // iOS rounds the corners itself, so the home-screen icon is square and fills the edges
-writeFileSync(join(out, 'apple-touch-icon.png'), await png(svg({ rounded: false, animate: false }), 180));
+const square = svg({ rounded: false, animate: false });
+writeFileSync(join(out, 'apple-touch-icon.png'), await png(square, 180));
+// The manifest's, square too: Android masks them to its own shape, and the ∞ sits inside the
+// middle 80% it always keeps
+for (const size of [192, 512]) {
+    writeFileSync(join(out, `icon-${size}.png`), await png(square, size));
+}
 await browser.close();
 
 // An .ico holding PNGs, which every browser that still asks for one reads
@@ -98,4 +105,4 @@ const entries = pngs.map(({ size, data }) => {
     return entry;
 });
 writeFileSync(join(out, 'favicon.ico'), Buffer.concat([header, ...entries, ...pngs.map((p) => p.data)]));
-console.log('Wrote favicon.svg, favicon.ico and apple-touch-icon.png to', out);
+console.log('Wrote favicon.svg, favicon.ico, apple-touch-icon.png, icon-192.png and icon-512.png to', out);

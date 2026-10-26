@@ -29,6 +29,7 @@ describe('ThemeService', () => {
     afterEach(() => {
         localStorage.clear();
         delete document.documentElement.dataset['theme'];
+        document.querySelector('meta[name="theme-color"]')?.remove();
     });
 
     const applied = () => document.documentElement.dataset['theme'];
@@ -87,5 +88,15 @@ describe('ThemeService', () => {
 
         expect(dark).toBe('rgb(7, 11, 18)');
         expect(pageColour()).toBe('rgb(238, 243, 249)');
+    });
+
+    it("colours the browser's bars as the page", () => {
+        start();
+        const themeColor = () =>
+            document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')!.content;
+        expect(themeColor()).toBe('#070b12');
+
+        choose('light');
+        expect(themeColor()).toBe('#eef3f9');
     });
 });

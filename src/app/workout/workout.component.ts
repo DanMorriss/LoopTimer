@@ -483,6 +483,7 @@ export class WorkoutComponent {
     private readonly mainButton = viewChild<ElementRef<HTMLButtonElement>>('mainButton');
     private readonly doneButton = viewChild<ElementRef<HTMLButtonElement>>('doneButton');
     private readonly resumeButton = viewChild<ElementRef<HTMLButtonElement>>('resumeButton');
+    private readonly ring = viewChild(WorkoutRingComponent);
     private readonly reducedMotion = injectPrefersReducedMotion();
     /** Apple's spring for moving something about: no bounce, a 0.4s response. */
     private readonly glide = criticallyDampedSpring(0.4);
@@ -595,9 +596,15 @@ export class WorkoutComponent {
     /**
      * Done on a rep step: on to the next step, from its full time. Done stays put for another
      * rep step; otherwise it's gone, so focus moves to Pause rather than being lost.
+     *
+     * The ring shows the set finished in the same task as the press, so in the same frame as
+     * the next step's beep and vibration, which the run books as it moves on.
      */
     finishReps() {
         const hadFocus = this.doneButton()?.nativeElement === document.activeElement;
+        if (this.isRepsActive() && !this.reducedMotion()) {
+            this.ring()?.finish();
+        }
         this.run.finishReps();
         if (hadFocus) {
             afterNextRender(
