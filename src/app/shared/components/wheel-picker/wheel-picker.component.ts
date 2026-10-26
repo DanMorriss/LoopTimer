@@ -36,7 +36,7 @@ const GLIDE_RESPONSE = 0.3;
 const TYPING_PAUSE = 1000;
 
 /** An open wheel that has been turned closes this many ms after it stops. */
-const CLOSE_AFTER_TURN = 200;
+const CLOSE_AFTER_TURN = 400;
 /** One opened but not turned yet waits longer, so a tap can open it and a second tap pick. */
 const CLOSE_AFTER_OPEN = 1000;
 
