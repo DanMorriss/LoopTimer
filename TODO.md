@@ -37,6 +37,40 @@ Timed sets are logged now (a set per timed work step of an exercise that runs to
 
 ## 2. Design
 
+### Feedback by page (2026-10-26)
+
+From Dan going through the app on 2026-10-26.
+
+#### Library page
+
+- [ ] **Add workout button:** move it to the top right, as a link like the one on the Exercises page.
+- [ ] **Drag to reorder workouts:** so people can change the order they're shown in. This may stop holding a workout from opening its settings, which is fine: the ⋯ button still opens them.
+- [ ] **Page title:** add one to match the other pages.
+- [ ] **More in a workout's settings:** that workout's history, and the muscle groups it works.
+- [ ] **Missing muscle groups:** a section showing any muscle group that none of the library's exercises work.
+
+#### General
+
+- [ ] **Swipe right to end a workout** from the workout bar at the bottom of the page.
+- [ ] **Go to the History page after finishing a workout.**
+- [ ] **Privacy notice and terms of use pages.**
+- [ ] **Favicon.**
+
+#### Workout page
+
+- [ ] **Change reps or weight from the circle:** remove the button for it, and tapping the reps or the weight in the main circle opens the number wheel.
+- [ ] **Make Done clearly go to the next exercise (rep steps):** it isn't obvious now. Fold the button into the "Next: …" line, with a pill border round it (as when it pulses at the end of a timed step) and an arrow on the right.
+
+#### Exercises page
+
+- [ ] **Animate going into an exercise and back** to the Exercises list.
+- [ ] **Swipe right on an exercise's page** to go back to the Exercises list.
+
+#### History page
+
+- [ ] **Bars for "Muscles worked this week":** one per muscle group, showing which are overworked and which are underworked.
+- [ ] **Suggested next workout:** one that works the least-used muscle groups.
+
 ### Apple-style design review
 
 From reviews against Apple's WWDC design talks (Designing Fluid Interfaces, Principles of Great Design) on 2026-10-24 and 2026-10-25. The rest of what they found is done; still to do:
