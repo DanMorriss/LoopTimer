@@ -9,6 +9,9 @@ export const MAX_WEIGHT_KG = 300;
 /** The wheel's top weight in each unit (about 300 kg either way). */
 export const MAX_WEIGHT: Record<WeightUnit, number> = { kg: 300, lb: 660 };
 
+/** How much a suggested next weight goes up by (PRG-5): the smallest usual plates. */
+export const WEIGHT_INCREASE: Record<WeightUnit, number> = { kg: 2.5, lb: 5 };
+
 /** Weights are picked in steps of this, in either unit: e.g. 22.5 kg or 47.5 lb. */
 export const WEIGHT_STEP = 0.5;
 

@@ -2037,6 +2037,86 @@ describe('WorkoutComponent', () => {
             fixture.destroy();
         });
 
+        describe('suggested next weight (PRG-5)', () => {
+            const squats = { name: 'Squats', exerciseId: 'exr:squat' };
+            const nextWeight = () =>
+                fixture.nativeElement.querySelector(
+                    '.workout-face__next-weight'
+                ) as HTMLButtonElement | null;
+
+            function lastTime(...reps: number[]) {
+                const startedAt = Date.now() - 60_000;
+                TestBed.inject(HistoryStore).record({
+                    id: `${startedAt}-legs`,
+                    workoutId: 'legs',
+                    title: 'Legs',
+                    startedAt,
+                    endedAt: startedAt + 1000,
+                    activeSeconds: 1,
+                    roundsCompleted: 1,
+                    totalRounds: 1,
+                    outcome: 'finished',
+                    sets: reps.map((count, round) => ({
+                        round,
+                        step: 1,
+                        reps: count,
+                        weight: 60,
+                        ...squats,
+                    })),
+                });
+            }
+
+            function startSquats(weight = 60) {
+                start(
+                    makeWorkout({
+                        steps: [work(3), { kind: 'reps', reps: 10, weight, ...squats }],
+                        repeats: 2,
+                    })
+                );
+                advance(3000);
+            }
+
+            it('suggests a step up when every set hit the reps, and a tap puts it on', () => {
+                lastTime(10, 10, 12);
+                startSquats();
+
+                expect(nextWeight()!.textContent!.trim()).toBe('arrow_upward Try 62.5 kg');
+                nextWeight()!.click();
+                fixture.detectChanges();
+
+                expect(TestBed.inject(ActiveRunService).state()?.step).toMatchObject({
+                    weight: 62.5,
+                });
+                expect(nextWeight()).toBeNull();
+                fixture.destroy();
+            });
+
+            it('goes up 5 lb in lb', () => {
+                TestBed.inject(SettingsStore).update({ weightUnit: 'lb' });
+                lastTime(10, 10);
+                startSquats();
+
+                expect(nextWeight()!.textContent).toContain('Try 137.5 lb');
+                fixture.destroy();
+            });
+
+            it('suggests nothing when a set fell short of the reps', () => {
+                lastTime(10, 8);
+                startSquats();
+
+                expect(nextWeight()).toBeNull();
+                fixture.destroy();
+            });
+
+            it("suggests nothing when the step's weight has been changed since", () => {
+                lastTime(10, 10);
+                startSquats(70);
+
+                expect(nextWeight()).toBeNull();
+                fixture.destroy();
+            });
+        });
+
         it('makes "Next:" the Done button, keeping Pause as the big one', () => {
             start(circuit());
             expect(doneButton()).toBeNull();

@@ -1,4 +1,5 @@
 import { HistoryEntry, isTimedSet, LoggedSet, RepSet, TimedSet } from './history';
+import { MAX_WEIGHT, WEIGHT_INCREASE, WeightUnit, weightIn } from './weight';
 
 /** How far a workout got in its time limit: full rounds, then steps done of the next. */
 export interface RoundsScore {
@@ -182,4 +183,40 @@ export function sessionValue(session: ExerciseSession, measure: ProgressMeasure)
                       measure === 'reps' ? set.reps : estimatedOneRepMax(set.weight!, set.reps)
                   );
     return values.length > 0 ? Math.max(...values) : null;
+}
+
+/** The weight to try next (PRG-5), and the one it's from, in the unit shown. */
+export interface WeightSuggestion {
+    /** The heaviest weight of the last session. */
+    last: number;
+    /** One step up from it, or the same again. */
+    next: number;
+}
+
+/**
+ * The weight to try next on a rep step of `targetReps`, by double progression: where every
+ * set at the last session's heaviest weight hit the reps, one step up (WEIGHT_INCREASE),
+ * otherwise the same weight. Lighter sets, e.g. warm-ups, don't count. Null where the last
+ * session had no weight.
+ */
+export function suggestedWeight(
+    lastSets: readonly LoggedSet[],
+    targetReps: number,
+    unit: WeightUnit
+): WeightSuggestion | null {
+    const weighted = lastSets.filter(
+        (set): set is RepSet & { weight: number } => !isTimedSet(set) && set.weight !== undefined
+    );
+    if (weighted.length === 0) {
+        return null;
+    }
+    const heaviest = Math.max(...weighted.map((set) => set.weight));
+    const last = weightIn(heaviest, unit);
+    const hitEvery = weighted
+        .filter((set) => set.weight === heaviest)
+        .every((set) => set.reps >= targetReps);
+    return {
+        last,
+        next: hitEvery ? Math.min(MAX_WEIGHT[unit], last + WEIGHT_INCREASE[unit]) : last,
+    };
 }

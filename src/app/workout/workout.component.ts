@@ -22,6 +22,8 @@ import {
     workoutSeconds,
 } from '../models/workout';
 import { formatWeight, weightIn, weightOptions, weightToKg } from '../models/weight';
+import { isTimedSet } from '../models/history';
+import { suggestedWeight } from '../models/progress';
 import { WheelPickerComponent } from '../shared/components/wheel-picker/wheel-picker.component';
 import { WorkoutSummaryComponent } from './workout-summary/workout-summary.component';
 import { ClockDigitsComponent } from './clock-digits/clock-digits.component';
@@ -136,9 +138,36 @@ export class WorkoutComponent {
      * (PRG-1). Not this run's: it's in the history too once it's been ended or the page closed.
      */
     lastTime = computed(() => {
+        const summary = describeSets(
+            this.lastSets(),
+            this.settings.weightUnit(),
+            (id) => this.exercises.byId(id)?.name
+        )
+            .map((line) => line.text)
+            .join(' + ');
+        return summary ? `Last time: ${summary}` : '';
+    });
+    /**
+     * The weight to try (PRG-5), when every set hit the reps last time: one step up from last
+     * time's weight, while the step is still at it. Changed since, it's the user's call.
+     */
+    nextWeight = computed(() => {
+        const step = this.state()?.step;
+        if (step?.kind !== 'reps') {
+            return null;
+        }
+        const suggestion = suggestedWeight(this.lastSets(), step.reps, this.weightUnit());
+        return suggestion &&
+            suggestion.next > suggestion.last &&
+            this.weightValue() === suggestion.last
+            ? suggestion.next
+            : null;
+    });
+    /** The rep sets of the rep step's exercise from the most recent workout with any. */
+    private readonly lastSets = computed(() => {
         const step = this.state()?.step;
         if (step?.kind !== 'reps' || step.exerciseId === undefined) {
-            return '';
+            return [];
         }
         const runId = this.run.runId();
         for (const entry of this.history.entries()) {
@@ -146,21 +175,13 @@ export class WorkoutComponent {
                 continue;
             }
             const sets = (entry.sets ?? []).filter(
-                (set) => !('seconds' in set) && set.exerciseId === step.exerciseId
+                (set) => !isTimedSet(set) && set.exerciseId === step.exerciseId
             );
-            if (sets.length === 0) {
-                continue;
+            if (sets.length > 0) {
+                return sets;
             }
-            const summary = describeSets(
-                sets,
-                this.settings.weightUnit(),
-                (id) => this.exercises.byId(id)?.name
-            )
-                .map((line) => line.text)
-                .join(' + ');
-            return summary ? `Last time: ${summary}` : '';
         }
-        return '';
+        return [];
     });
     // Changing the reps or weight of the rep step being waited on, e.g. going up a weight
     protected readonly repOptions = Array.from({ length: MAX_REPS }, (_, i) => ({
