@@ -12,7 +12,7 @@ import { WorkoutMorph } from './workout-morph';
 const FALLBACK = '/library';
 
 /**
- * The header: the LoopTimer title. Getting about is the tab bar's job (TabBarComponent); on
+ * The header: the Loop Workouts title. Getting about is the tab bar's job (TabBarComponent); on
  * the workout page, which has no tab bar, a ⌄ link at the top left goes back to the page you
  * came from, leaving the workout running in the bar above the tabs (RunBarComponent).
  */

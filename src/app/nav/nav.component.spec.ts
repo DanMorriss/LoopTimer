@@ -45,7 +45,7 @@ describe('NavComponent', () => {
         const title = () => element.querySelector('h1') as HTMLElement;
         const workoutTitle = () => title().querySelector('.site-title__workout');
 
-        it('is in the heading on the workout page, for phones to show in place of LoopTimer', async () => {
+        it('is in the heading on the workout page, for phones to show in place of Loop Workouts', async () => {
             runWorkout('  Sprints ');
             await go('/workout');
 
@@ -59,10 +59,10 @@ describe('NavComponent', () => {
 
             expect(title().classList).not.toContain('site-title--workout');
             expect(workoutTitle()).toBeNull();
-            expect(title().textContent!.trim()).toBe('LoopTimer');
+            expect(title().textContent!.trim()).toBe('Loop Workouts');
         });
 
-        it('is left out for an untitled workout, which keeps LoopTimer', async () => {
+        it('is left out for an untitled workout, which keeps Loop Workouts', async () => {
             runWorkout('');
             await go('/workout');
 

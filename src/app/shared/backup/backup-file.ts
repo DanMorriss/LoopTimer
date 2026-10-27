@@ -36,7 +36,7 @@ export const MAX_BACKUP_BYTES = 50 * 1024 * 1024;
 
 /** Everything the app saves, as one file (see docs/features/backup-and-sync.md). */
 export interface BackupFile {
-    app: 'LoopTimer';
+    app: 'Loop Workouts';
     version: number;
     /** When it was made, in ms since the epoch. */
     exportedAt: number;
@@ -93,14 +93,14 @@ export function makeBackup(
     >,
     exportedAt: number
 ): BackupFile {
-    return { app: 'LoopTimer', version: BACKUP_VERSION, exportedAt, ...contents };
+    return { app: 'Loop Workouts', version: BACKUP_VERSION, exportedAt, ...contents };
 }
 
-/** e.g. "looptimer-2026-10-21.json", dated by the device's own calendar. */
+/** e.g. "loop-workouts-2026-10-21.json", dated by the device's own calendar. */
 export function backupFileName(exportedAt: number): string {
     const date = new Date(exportedAt);
     const pad = (n: number) => String(n).padStart(2, '0');
-    return `looptimer-${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}.json`;
+    return `loop-workouts-${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}.json`;
 }
 
 /**
@@ -124,7 +124,7 @@ export function readBackup(text: string, now = Date.now()): ReadBackup {
     const file =
         (version as number) < 4 ? withWorkoutNames(parsed) : (parsed as Record<string, unknown>);
     if (
-        file['app'] !== 'LoopTimer' ||
+        file['app'] !== 'Loop Workouts' ||
         !Number.isInteger(version) ||
         (version as number) < 1 ||
         !Array.isArray(file['workouts']) ||

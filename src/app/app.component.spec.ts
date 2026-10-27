@@ -15,9 +15,9 @@ describe('AppComponent', () => {
         expect(app).toBeTruthy();
     });
 
-    it(`should have as title 'loop-timer'`, () => {
+    it(`should have as title 'loop-workouts'`, () => {
         const fixture = TestBed.createComponent(AppComponent);
         const app = fixture.componentInstance;
-        expect(app.title).toEqual('loop-timer');
+        expect(app.title).toEqual('loop-workouts');
     });
 });

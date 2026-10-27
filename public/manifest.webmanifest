@@ -1,6 +1,6 @@
 {
-    "name": "LoopTimer",
-    "short_name": "LoopTimer",
+    "name": "Loop Workouts",
+    "short_name": "Loop Workouts",
     "description": "Interval timer and workout log",
     "start_url": "/",
     "scope": "/",

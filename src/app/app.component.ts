@@ -12,5 +12,5 @@ import { UndoBarComponent } from './nav/undo-bar/undo-bar.component';
     imports: [RouterOutlet, NavComponent, RunBarComponent, TabBarComponent, UndoBarComponent],
 })
 export class AppComponent {
-    title = 'loop-timer';
+    title = 'loop-workouts';
 }

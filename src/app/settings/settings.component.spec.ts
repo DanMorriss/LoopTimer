@@ -328,14 +328,14 @@ describe('SettingsComponent', () => {
             create();
             const exportSpy = vi
                 .spyOn(TestBed.inject(BackupService), 'export')
-                .mockResolvedValue('looptimer-2026-10-21.json');
+                .mockResolvedValue('loop-workouts-2026-10-21.json');
 
             button('Export backup').click();
             await fixture.whenStable();
             fixture.detectChanges();
 
             expect(exportSpy).toHaveBeenCalledTimes(1);
-            expect(status()).toBe('Backup saved as looptimer-2026-10-21.json.');
+            expect(status()).toBe('Backup saved as loop-workouts-2026-10-21.json.');
         });
 
         it('opens the file picker from Import backup, keeping the input itself out of reach', () => {
@@ -423,16 +423,16 @@ describe('SettingsComponent', () => {
 
         it('says why a file was turned down', () => {
             expect(importMessage({ ok: false, problem: 'not-a-backup' })).toBe(
-                "That file isn't a LoopTimer backup."
+                "That file isn't a Loop Workouts backup."
             );
             expect(importMessage({ ok: false, problem: 'too-big' })).toBe(
-                "That file isn't a LoopTimer backup."
+                "That file isn't a Loop Workouts backup."
             );
             expect(importMessage({ ok: false, problem: 'unreadable' })).toBe(
-                "That file couldn't be read. Is it a LoopTimer backup?"
+                "That file couldn't be read. Is it a Loop Workouts backup?"
             );
             expect(importMessage({ ok: false, problem: 'too-new' })).toBe(
-                'That backup is from a newer version of LoopTimer. Update the app and try again.'
+                'That backup is from a newer version of Loop Workouts. Update the app and try again.'
             );
         });
     });
