@@ -71,10 +71,12 @@ Decided with Dan on 2026-10-27:
 - **An account is optional.** Without one, the app works as it does now, on the device only.
 - **Signing in is by an email link** to start with (type your email, tap the link it sends). Google and Apple come later (SYN-7). If an iPhone app offers Google, the App Store asks for Sign in with Apple beside it.
 - **An Account tab** in the tab bar is where you sign in, see when it last synced, sign out and **delete your account** (SYN-8). Deleting it removes everything of yours on the server; what's on the device stays.
+- **Signing out keeps the data on the device**, so the app carries on as it would without an account. To remove it too (e.g. on a shared computer), there's a **Clear this device** button, in the Account tab and in Settings → Your data, which asks first and works signed in or not.
 - **The device's copy is the one the app works from.** Nothing waits on the network: changes are saved here first, sent when online, and other devices' changes are merged in as an import's are, record by record, the most recent change winning.
 - **What syncs:** workouts, the library's order, the history, your own exercises, your notes on exercises, hidden exercises and deletions. **Settings don't:** theme, sound, units and your equipment stay a choice for each device, as with import. The run in progress doesn't either.
 - **The first sign-in on a device** merges what's here with what's in the account, as importing a backup does, so nothing is lost on either side.
 - **The privacy notice and terms** are updated before anything is sent off the device: what's stored, where, and who to contact.
+- **The server keeps the data in Europe** (an EU region).
 
 How it's meant to work:
 
@@ -98,7 +100,7 @@ Compared on 2026-10-27, for cost, how it fits the device-first design above, sig
 | Cost at this size     | A free tier (an idle free project is paused after a week) | A free tier, then paid per read and write                                                | Free tiers of Vercel and Neon              |
 | Leaving it            | Easy: it's Postgres                                       | Hard                                                                                     | Nothing to leave                           |
 
-**Picked: Supabase**, unless its current pricing and limits say otherwise when it's set up (check them then). The app already does what Firebase is best at (working offline); Supabase's Postgres fits the one table and leaves a way out, and it adds little to the app.
+**Picked: Supabase**, in an EU region, unless its current pricing and limits say otherwise when it's set up (check them then). The app already does what Firebase is best at (working offline); Supabase's Postgres fits the one table and leaves a way out, and it adds little to the app.
 
 ## Acceptance criteria
 
@@ -125,6 +127,4 @@ Compared on 2026-10-27, for cost, how it fits the device-first design above, sig
 
 ## Open questions
 
-- What signing out does to the data on the device: keep it, or clear it (e.g. on a shared computer).
-- Where the server keeps the data (e.g. an EU region), for the privacy notice.
 - Should there be a nudge to export, or to add the app to the Home Screen, until sync exists?
