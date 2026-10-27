@@ -2,7 +2,7 @@
 // (about 5 MB) doesn't. Each call settles rather than throwing, so a browser without
 // IndexedDB (or a failed write) leaves the history store to keep things in localStorage.
 
-export const DATABASE_NAME = 'looptimer';
+export const DATABASE_NAME = 'loop-workouts';
 export const HISTORY_STORE = 'history';
 const DATABASE_VERSION = 1;
 

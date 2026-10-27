@@ -28,7 +28,7 @@
 - **Play** plays that alarm straight away, even with Sound turned off (it was asked for), without touching any booked alarms.
 - Switching theme **fades** from one to the other, unless reduced motion is on, when it changes at once.
 - The **switches** flip with a tap, or their knob can be dragged across, as on an iPhone: where it's let go (and which way it was flicked) decides. The knob swells as it's pressed and moves on a spring with no bounce. The pickers' highlights slide on the same spring.
-- **About**, last: the ∞ logo (the home page until the tab bar came in), drawing itself in with a light travelling round it, and "LoopTimer: build a workout, then let it loop.", then links to the **Privacy notice** (`/privacy`) and **Terms of use** (`/terms`). Each slides in over Settings, as an exercise's page does over its list, with ‹ Settings at the top to go back (or a swipe right). The privacy notice says what's saved on the device and what leaves it (the hosting and Google Fonts), and must change in the same PR as anything that stores more or sends anything off the device, such as sync.
+- **About**, last: the ∞ logo (the home page until the tab bar came in), drawing itself in with a light travelling round it, and "Loop Workouts: build a workout, then let it loop.", then links to the **Privacy notice** (`/privacy`) and **Terms of use** (`/terms`). Each slides in over Settings, as an exercise's page does over its list, with ‹ Settings at the top to go back (or a swipe right). The privacy notice says what's saved on the device and what leaves it (the hosting and Google Fonts), and must change in the same PR as anything that stores more or sends anything off the device, such as sync.
 
 ## Acceptance criteria
 

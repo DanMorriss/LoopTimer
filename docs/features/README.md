@@ -1,4 +1,4 @@
-# LoopTimer features
+# Loop Workouts features
 
 What the app does, one file per feature, written so it could be rebuilt on another platform (an iPhone app, say) without reading the Angular code.
 

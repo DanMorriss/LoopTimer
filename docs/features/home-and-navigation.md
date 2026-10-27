@@ -29,7 +29,7 @@
 - The bar rises into place as it appears.
 - **The workout grows out of the bar** when it's pressed: the bar's frosted panel grows to fill the screen with the workout fading in on it, on a spring with no bounce, while the tab bar slides down out of the way. **⌄ folds it back** the same way: the panel shrinks into the bar and the tab bar comes back up. Every other change of page is instant, as switching tabs is. With reduced motion, it changes page at once too.
 - The **workout page** has no tab bar. A **⌄** button at its top left goes back to the page you came from (with its address, e.g. a muscle filter), named for it, e.g. "Back to History". The workout keeps running, in the bar. Opened straight from an address, it goes back to the Library.
-- On the workout page on a phone, the workout's title takes the place of "LoopTimer" in the header. An untitled workout keeps "LoopTimer".
+- On the workout page on a phone, the workout's title takes the place of "Loop Workouts" in the header. An untitled workout keeps "Loop Workouts".
 
 ### Undo
 

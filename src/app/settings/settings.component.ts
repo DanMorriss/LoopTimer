@@ -151,12 +151,12 @@ export function importMessage(result: ImportResult): string {
     if (!result.ok) {
         switch (result.problem) {
             case 'too-new':
-                return 'That backup is from a newer version of LoopTimer. Update the app and try again.';
+                return 'That backup is from a newer version of Loop Workouts. Update the app and try again.';
             case 'too-big':
             case 'not-a-backup':
-                return "That file isn't a LoopTimer backup.";
+                return "That file isn't a Loop Workouts backup.";
             case 'unreadable':
-                return "That file couldn't be read. Is it a LoopTimer backup?";
+                return "That file couldn't be read. Is it a Loop Workouts backup?";
         }
     }
     const added = listOf(result.workoutsAdded, result.exercisesAdded, result.entriesAdded);

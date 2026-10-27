@@ -33,7 +33,7 @@ export function planPrompt(): string {
             : exercise.name
     ).join('\n');
     const example = {
-        app: 'LoopTimer',
+        app: 'Loop Workouts',
         version: BACKUP_VERSION,
         workouts: [
             {
@@ -61,11 +61,11 @@ export function planPrompt(): string {
         ],
     };
 
-    return `I use LoopTimer, a workout timer app. I'll give you a workout plan below. Please turn it into a JSON file that LoopTimer can import, following these rules exactly.
+    return `I use Loop Workouts, a workout app. I'll give you a workout plan below. Please turn it into a JSON file that Loop Workouts can import, following these rules exactly.
 
 THE FILE
 Reply with one JSON object, in a code block, that I can save as a .json file:
-- "app": always "LoopTimer"
+- "app": always "Loop Workouts"
 - "version": always ${BACKUP_VERSION}
 - "workouts": a list of workouts
 - "exercises": a list of exercises that aren't built in (see below); leave it empty if every exercise is built in

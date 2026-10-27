@@ -2,7 +2,7 @@ import { DOCUMENT, inject } from '@angular/core';
 import { NavigationError } from '@angular/router';
 
 /** In sessionStorage: when this tab last reloaded to fetch new code, in ms since 1970. */
-const RELOADED_AT = 'loop-timer.stale-code-reload';
+const RELOADED_AT = 'loop-workouts.stale-code-reload';
 /** How soon after one reload another isn't tried, so code that's really missing can't loop. */
 const RETRY_AFTER_MS = 10_000;
 

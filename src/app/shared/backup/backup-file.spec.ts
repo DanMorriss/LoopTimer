@@ -33,7 +33,7 @@ const DELETION: Deletion = { kind: 'history', id: 'gone', deletedAt: 2_000_000 }
 
 const fileWith = (contents: Record<string, unknown>) =>
     JSON.stringify({
-        app: 'LoopTimer',
+        app: 'Loop Workouts',
         version: BACKUP_VERSION,
         exportedAt: 1,
         workouts: [],
@@ -49,7 +49,7 @@ function withoutWorkoutId(entry: Omit<HistoryEntry, 'updatedAt'> & { updatedAt?:
 }
 
 describe('backup file', () => {
-    it('holds everything, marked as a LoopTimer backup with its version', () => {
+    it('holds everything, marked as a Loop Workouts backup with its version', () => {
         const workout = makeWorkout({
             steps: [{ kind: 'reps', reps: 10, name: 'Squats', weight: 60 }],
         });
@@ -68,7 +68,7 @@ describe('backup file', () => {
         );
 
         expect(backup).toEqual({
-            app: 'LoopTimer',
+            app: 'Loop Workouts',
             version: BACKUP_VERSION,
             exportedAt: 5,
             workouts: [workout],
@@ -114,16 +114,18 @@ describe('backup file', () => {
 
     it('is named by the date it was made', () => {
         expect(backupFileName(new Date(2026, 9, 21, 23, 30).getTime())).toBe(
-            'looptimer-2026-10-21.json'
+            'loop-workouts-2026-10-21.json'
         );
-        expect(backupFileName(new Date(2026, 0, 5).getTime())).toBe('looptimer-2026-01-05.json');
+        expect(backupFileName(new Date(2026, 0, 5).getTime())).toBe(
+            'loop-workouts-2026-01-05.json'
+        );
     });
 
     it("says a file that isn't JSON can't be read", () => {
         expect(readBackup('not json')).toEqual({ ok: false, problem: 'unreadable' });
     });
 
-    it("says a file that isn't a LoopTimer backup isn't one", () => {
+    it("says a file that isn't a Loop Workouts backup isn't one", () => {
         for (const text of [
             '[]',
             '"backup"',
@@ -193,7 +195,7 @@ describe('backup file', () => {
 
     describe('written by hand', () => {
         const handMade = (contents: Record<string, unknown>) =>
-            JSON.stringify({ app: 'LoopTimer', version: BACKUP_VERSION, ...contents });
+            JSON.stringify({ app: 'Loop Workouts', version: BACKUP_VERSION, ...contents });
 
         it('needs no history, and gives workouts and exercises with no id new ones, dated now', () => {
             const { id: _id, updatedAt: _at, ...legs } = makeWorkout({ title: 'Legs' });

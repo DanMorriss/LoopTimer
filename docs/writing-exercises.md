@@ -1,6 +1,6 @@
 # Writing the built-in exercises
 
-How the exercises that come with LoopTimer are written, and which are still to write. This is for whoever writes the next batch, a person or an agent (`.claude/agents/exercise-writer.md`). What the app does with them is in [features/exercises](features/exercises.md).
+How the exercises that come with Loop Workouts are written, and which are still to write. This is for whoever writes the next batch, a person or an agent (`.claude/agents/exercise-writer.md`). What the app does with them is in [features/exercises](features/exercises.md).
 
 ## Where they go
 

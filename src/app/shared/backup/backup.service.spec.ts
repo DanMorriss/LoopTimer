@@ -29,7 +29,14 @@ function makeEntry(startedAt: number, overrides: Partial<HistoryEntry> = {}): Hi
 
 const backupOf = (workouts: Workout[], history: HistoryEntry[], deleted: Deletion[] = []) =>
     new Blob([
-        JSON.stringify({ app: 'LoopTimer', version: 4, exportedAt: 1, workouts, history, deleted }),
+        JSON.stringify({
+            app: 'Loop Workouts',
+            version: 4,
+            exportedAt: 1,
+            workouts,
+            history,
+            deleted,
+        }),
     ]);
 
 /** What's here before the import, saved as the app would have saved it. */
@@ -88,13 +95,13 @@ describe('BackupService', () => {
 
             const name = await backup.export();
 
-            expect(name).toMatch(/^looptimer-\d{4}-\d{2}-\d{2}\.json$/);
+            expect(name).toMatch(/^loop-workouts-\d{4}-\d{2}-\d{2}\.json$/);
             expect(click).toHaveBeenCalledTimes(1);
             const link = click.mock.contexts[0] as HTMLAnchorElement;
             expect(link.download).toBe(name);
             expect(link.href).toBe('blob:backup');
             const file: BackupFile = JSON.parse(await blob!.text());
-            expect(file.app).toBe('LoopTimer');
+            expect(file.app).toBe('Loop Workouts');
             expect(file.version).toBe(6);
             expect(file.workouts).toEqual(workouts().workouts());
             expect(file.history).toEqual(history().entries());
@@ -203,7 +210,7 @@ describe('BackupService', () => {
             const settings = TestBed.inject(SettingsStore);
             const file = new Blob([
                 JSON.stringify({
-                    app: 'LoopTimer',
+                    app: 'Loop Workouts',
                     version: 4,
                     exportedAt: 1,
                     workouts: [],
@@ -245,7 +252,7 @@ describe('BackupService', () => {
         const v1Backup = (oldWorkouts: unknown[], oldHistory: unknown[]) =>
             new Blob([
                 JSON.stringify({
-                    app: 'LoopTimer',
+                    app: 'Loop Workouts',
                     version: 1,
                     exportedAt: 1,
                     timers: oldWorkouts,
@@ -317,7 +324,7 @@ describe('BackupService', () => {
         const fileOf = (contents: Record<string, unknown>) =>
             new Blob([
                 JSON.stringify({
-                    app: 'LoopTimer',
+                    app: 'Loop Workouts',
                     version: 5,
                     exportedAt: 1,
                     workouts: [],
@@ -459,7 +466,7 @@ describe('BackupService', () => {
             start();
             const plan = new Blob([
                 JSON.stringify({
-                    app: 'LoopTimer',
+                    app: 'Loop Workouts',
                     version: BACKUP_VERSION,
                     workouts: [
                         {

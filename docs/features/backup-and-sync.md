@@ -16,7 +16,7 @@ Export and import (SYN-1, SYN-2) are built, with a prompt for having an AI turn 
 ### Export and import (SYN-1, SYN-2)
 
 - They're in **Settings → Your data**, under the hint "Your workouts and history are saved on this device only. Export a backup to keep them safe, or to move them to another device."
-- **Export backup** downloads one file of the workouts, history, your own exercises, your notes on exercises, which exercises are hidden from the picker, deletions and settings (your equipment included), e.g. `looptimer-2026-10-21.json` (dated by the device's calendar), and says "Backup saved as looptimer-2026-10-21.json." The file's shape is in [data](data.md#backup-file).
+- **Export backup** downloads one file of the workouts, history, your own exercises, your notes on exercises, which exercises are hidden from the picker, deletions and settings (your equipment included), e.g. `loop-workouts-2026-10-21.json` (dated by the device's calendar), and says "Backup saved as loop-workouts-2026-10-21.json." The file's shape is in [data](data.md#backup-file).
 - **Import backup** opens a file picker. The chosen file is **merged** with what's here, by id:
     - A workout, history entry, exercise of your own, note on an exercise or hidden exercise only in the file is **added**.
     - One in both keeps **the most recent change**: an edit, a note, a change of reps mid-workout. On a tie, this device's stays.
@@ -33,9 +33,9 @@ Export and import (SYN-1, SYN-2) are built, with a prompt for having an AI turn 
     - "Removed 3 items deleted since on the other device."
     - Those that apply, in that order, or "Nothing new: everything in that backup is already here."
     - Either, followed by "1 item in it couldn't be read, so it was left out." when some were.
-    - "That file isn't a LoopTimer backup." (not a backup, or over 50 MB)
-    - "That file couldn't be read. Is it a LoopTimer backup?" (not JSON)
-    - "That backup is from a newer version of LoopTimer. Update the app and try again."
+    - "That file isn't a Loop Workouts backup." (not a backup, or over 50 MB)
+    - "That file couldn't be read. Is it a Loop Workouts backup?" (not JSON)
+    - "That backup is from a newer version of Loop Workouts. Update the app and try again."
 - A file that's turned down changes nothing.
 
 ### Bringing in a plan with AI (SYN-6)
