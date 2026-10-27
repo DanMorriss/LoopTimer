@@ -4,7 +4,7 @@
 
 Loop Workouts is a workout app built around an interval timer (it was called LoopTimer until October 2026). You build a round from work and rest steps, choose how many rounds (or until stopped), save the workout to a library, and run it whenever you need it.
 
-**Try it:** https://loop-timer-eight.vercel.app
+**Try it:** https://loop-workouts.vercel.app
 
 Built with Angular 22 (standalone components, signals and Signal Forms), Angular Material and Tailwind CSS.
 

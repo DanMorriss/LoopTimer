@@ -35,13 +35,6 @@ A rep step offers a step up (2.5 kg or 5 lb) when every set hit its reps last ti
 - [ ] **Alarm order setting (ALM-4):** pick which sound plays for each step, with a preview. Needs the sound files first.
 - [ ] **Alarms on a locked phone:** iPhones suspend web audio when locked, so the beeps stop if the phone is locked by hand ("Keep screen on" stops it locking by itself). Scheduled notifications aren't possible on iOS (no Notification Triggers), and server push needs a backend (possible once Phase 4 adds one). Tried (PR #64, taken out again): playing the beeps as an `<audio>` track made on the spot, unlocked with a moment of silence on the first tap and shown on the lock screen via Media Session. In Safari on an iPhone it was silent once locked, so don't repeat it as it was. Parked for now (ALM-2 in `docs/features/alarms.md`).
 
-### Rename: the rest of the way
-
-The app, code, docs and saved data are called Loop Workouts (`loop-workouts` for the IndexedDB database, backup files and the npm/Angular project). These still say LoopTimer:
-
-- [ ] **Local folder:** rename the checkout from `LoopTimer` to `LoopWorkouts` (the GitHub repo is already `DanMorriss/LoopWorkouts`).
-- [ ] **Live URL:** add a Vercel domain/alias such as `loop-workouts.vercel.app`, then update "Try it" in the README.
-
 ## 2. Design
 
 ### Feedback by page (2026-10-26)
