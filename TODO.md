@@ -39,7 +39,7 @@ A rep step offers a step up (2.5 kg or 5 lb) when every set hit its reps last ti
 
 The app, code, docs and saved data are called Loop Workouts (`loop-workouts` for the IndexedDB database, backup files and the npm/Angular project). These still say LoopTimer:
 
-- [ ] **GitHub repo:** rename `DanMorriss/LoopTimer` to `LoopWorkouts` (GitHub redirects the old URLs), then update the CI badge in the README, the GitHub links on the privacy and terms pages, the `gh` fallback URL in memory, and the local folder.
+- [ ] **Local folder:** rename the checkout from `LoopTimer` to `LoopWorkouts` (the GitHub repo is already `DanMorriss/LoopWorkouts`).
 - [ ] **Live URL:** add a Vercel domain/alias such as `loop-workouts.vercel.app`, then update "Try it" in the README.
 
 ## 2. Design

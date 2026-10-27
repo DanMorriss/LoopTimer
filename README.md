@@ -1,6 +1,6 @@
 # Loop Workouts
 
-[![CI](https://github.com/DanMorriss/LoopTimer/actions/workflows/ci.yml/badge.svg)](https://github.com/DanMorriss/LoopTimer/actions/workflows/ci.yml)
+[![CI](https://github.com/DanMorriss/LoopWorkouts/actions/workflows/ci.yml/badge.svg)](https://github.com/DanMorriss/LoopWorkouts/actions/workflows/ci.yml)
 
 Loop Workouts is a workout app built around an interval timer (it was called LoopTimer until October 2026). You build a round from work and rest steps, choose how many rounds (or until stopped), save the workout to a library, and run it whenever you need it.
 
