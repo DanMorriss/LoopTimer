@@ -102,7 +102,8 @@ describe('BackupService', () => {
             expect(link.href).toBe('blob:backup');
             const file: BackupFile = JSON.parse(await blob!.text());
             expect(file.app).toBe('Loop Workouts');
-            expect(file.version).toBe(6);
+            expect(file.version).toBe(7);
+            expect(file.libraryOrder).toEqual(workouts().libraryOrder());
             expect(file.workouts).toEqual(workouts().workouts());
             expect(file.history).toEqual(history().entries());
             expect(file.deleted).toEqual([
@@ -124,6 +125,31 @@ describe('BackupService', () => {
             expect(history().entries()).toEqual([makeEntry(1_000_000)]);
             expect(JSON.parse(localStorage.getItem('workouts')!)).toEqual([legs]);
             expect(await savedHistory()).toHaveLength(1);
+        });
+
+        it('takes the library order from the file if a workout was moved there more recently', async () => {
+            savedHere([makeWorkout({ id: 'a' }), makeWorkout({ id: 'b' })]);
+            localStorage.setItem('library-moved-at', '100');
+            start();
+            const file = (updatedAt: number) =>
+                new Blob([
+                    JSON.stringify({
+                        app: 'Loop Workouts',
+                        version: BACKUP_VERSION,
+                        workouts: [makeWorkout({ id: 'c' })],
+                        libraryOrder: { ids: ['c', 'b', 'a'], updatedAt },
+                    }),
+                ]);
+            const ids = () =>
+                workouts()
+                    .workouts()
+                    .map((workout) => workout.id);
+
+            await backup.import(file(50));
+            expect(ids()).toEqual(['a', 'b', 'c']);
+
+            await backup.import(file(200));
+            expect(ids()).toEqual(['c', 'b', 'a']);
         });
 
         it('takes the most recent change to each workout and history entry', async () => {

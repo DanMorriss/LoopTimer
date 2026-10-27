@@ -115,3 +115,48 @@ export function isDeletion(value: unknown): value is Deletion {
         (deletion['deletedAt'] as number) > 0
     );
 }
+
+/**
+ * The library's order (LIB-3), synced as one record of its own rather than a place on each
+ * workout, so moving a workout on one device and editing it on another don't overwrite each
+ * other.
+ */
+export interface LibraryOrder {
+    /** The workouts' ids, in the library's order. */
+    ids: string[];
+    /** When a workout was last moved, in ms since the epoch, or 0 if none has been. */
+    updatedAt: number;
+}
+
+/** Whether a saved value is a usable library order. */
+export function isLibraryOrder(value: unknown): value is LibraryOrder {
+    if (typeof value !== 'object' || value === null) {
+        return false;
+    }
+    const order = value as Record<string, unknown>;
+    return (
+        Array.isArray(order['ids']) &&
+        order['ids'].every((id) => typeof id === 'string') &&
+        Number.isInteger(order['updatedAt']) &&
+        (order['updatedAt'] as number) >= 0
+    );
+}
+
+/**
+ * Records put in another copy's order: those it lists first, in its order, then the rest in
+ * the order they're in now (e.g. made here since that copy was last moved).
+ */
+export function inOrder<T extends { id: string }>(
+    records: readonly T[],
+    ids: readonly string[]
+): T[] {
+    const place = new Map<string, number>();
+    ids.forEach((id, i) => {
+        if (!place.has(id)) {
+            place.set(id, i);
+        }
+    });
+    const listed = records.filter((record) => place.has(record.id));
+    listed.sort((a, b) => place.get(a.id)! - place.get(b.id)!);
+    return [...listed, ...records.filter((record) => !place.has(record.id))];
+}

@@ -36,6 +36,10 @@ A JSON list of workouts:
 - A workout with no work (no timed step with time, and no rep step) isn't valid.
 - **Older format:** workouts saved before steps existed (when they were timers of one work and one rest time) have `timerMinutes`, `timerSeconds`, `restMinutes`, `restSeconds` in place of `steps`. They're read as a timed step plus a rest step (left out if 0), and saved in the new format the next time anything changes.
 
+### `library-moved-at`: when the library was last reordered
+
+When a workout was last moved in the library (LIB-3), in ms since 1970, or missing if none has been. `workouts` is saved in the library's order, and with this the order merges as a record of its own: `{ "ids": [...], "updatedAt": … }`, the workouts' ids in order and this time. Another copy's order is taken only if it was moved more recently (see [backup-and-sync](backup-and-sync.md)).
+
 ### `history`: the history
 
 In IndexedDB on the web: the `history` store of the `loop-workouts` database, one record per entry keyed by its `id`, with no limit on how many. Shown here as a list, as in a backup:
@@ -189,13 +193,14 @@ From these, everything on the workout page is worked out (see [run-a-workout](ru
 ```json
 {
     "app": "Loop Workouts",
-    "version": 6,
+    "version": 7,
     "exportedAt": 1761055200000,
     "workouts": [],
     "history": [],
     "exercises": [],
     "exerciseNotes": [],
     "hiddenExercises": [],
+    "libraryOrder": { "ids": [], "updatedAt": 0 },
     "deleted": [],
     "settings": {
         "theme": "dark",
@@ -210,14 +215,15 @@ From these, everything on the workout page is worked out (see [run-a-workout](ru
 }
 ```
 
-- `workouts`, `history`, `exercises`, `exerciseNotes` (as `exercise-notes`), `hiddenExercises` (as `hidden-exercises`), `deleted` and `settings` are in the same shapes as above; `exportedAt` is ms since 1970.
+- `workouts`, `history`, `exercises`, `exerciseNotes` (as `exercise-notes`), `hiddenExercises` (as `hidden-exercises`), `deleted` and `settings` are in the same shapes as above, and `libraryOrder` is the library's order (see `library-moved-at`); `exportedAt` is ms since 1970.
 - `version` goes up whenever the file's shape changes. A file from an older version is converted when imported; one from a newer version is turned down.
 - **Version 1** files (from before random ids) have number workout ids, no `updatedAt` and no `deleted`. They're converted as saved data is: their workouts get new random ids, so they're matched on what they are (title, steps and rounds) rather than by id.
 - **Version 3 and older** files call workouts timers: a `timers` list in place of `workouts`, `timerId` in the history and the kind `timer` in `deleted`. They're renamed as they're read.
+- **Version 6 and older** files have no `libraryOrder`, so the library's order here stays as it is.
 - **Version 5 and older** files have no time limits, so nothing needs converting.
 - **Version 4 and older** files have no `hiddenExercises`, so nothing in them is hidden.
 - **Version 2** files (from before exercises) have no `exercises` or `exerciseNotes`, and their steps and sets aren't linked; they're linked by name as they're imported.
-- **A file written by hand** (e.g. by an AI from a plan, with the prompt in settings) can leave out everything but `app`, `version` and `workouts`, and its workouts and exercises of your own can leave out `id` and `updatedAt`: one with no id is new, and is given a random id and dated now when it's imported (see [backup-and-sync](backup-and-sync.md#bringing-in-a-plan-with-ai-syn-6)). Its steps need no `exerciseId`, since they're linked by name.
+- **A file written by hand** (e.g. by an AI from a plan, with the prompt in settings) can leave out everything but `app`, `version` and `workouts` (`libraryOrder` too), and its workouts and exercises of your own can leave out `id` and `updatedAt`: one with no id is new, and is given a random id and dated now when it's imported (see [backup-and-sync](backup-and-sync.md#bringing-in-a-plan-with-ai-syn-6)). Its steps need no `exerciseId`, since they're linked by name.
 - A file that isn't JSON, doesn't say `"app": "Loop Workouts"`, lacks a `workouts` list, has a `history` that isn't a list, or is over 50 MB isn't a backup.
 
 ## Broken data

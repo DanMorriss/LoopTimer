@@ -1,6 +1,6 @@
 import { ExerciseNote, HiddenExercise, OwnExercise } from '../../models/exercise';
 import { HistoryEntry } from '../../models/history';
-import { Deletion, isDeletion, newId } from '../../models/sync';
+import { Deletion, isDeletion, isLibraryOrder, LibraryOrder, newId } from '../../models/sync';
 import { Workout } from '../../models/workout';
 import {
     readExerciseNote,
@@ -28,8 +28,9 @@ import { readWorkout } from '../state/workout-store.service';
  * 6: time limits, `timeLimitSeconds` on workouts and history entries (with
  *    `stepsIntoRound`). Nothing to convert; an older app turns the file down rather than
  *    running a time limit until stopped.
+ * 7: `libraryOrder`, the library's order and when a workout was last moved in it.
  */
-export const BACKUP_VERSION = 6;
+export const BACKUP_VERSION = 7;
 
 /** Far more than years of workouts take (about 1 KB each), so a bigger file isn't a backup. */
 export const MAX_BACKUP_BYTES = 50 * 1024 * 1024;
@@ -47,6 +48,8 @@ export interface BackupFile {
     exerciseNotes: ExerciseNote[];
     /** Exercises hidden from the picker, built-in or your own. */
     hiddenExercises: HiddenExercise[];
+    /** The library's order, taken by an import if a workout was moved there more recently. */
+    libraryOrder: LibraryOrder;
     /** Records deleted on the device it came from, so importing deletes them here too. */
     deleted: Deletion[];
     settings: Settings;
@@ -64,6 +67,8 @@ export type ReadBackup =
           exerciseNotes: ExerciseNote[];
           /** None before version 5. */
           hiddenExercises: HiddenExercise[];
+          /** None before version 7, or in a file written by hand. */
+          libraryOrder: LibraryOrder | null;
           deleted: Deletion[];
           /**
            * From version 1, whose workout ids were only unique on their device: its workouts have
@@ -88,6 +93,7 @@ export function makeBackup(
         | 'exercises'
         | 'exerciseNotes'
         | 'hiddenExercises'
+        | 'libraryOrder'
         | 'deleted'
         | 'settings'
     >,
@@ -167,6 +173,9 @@ export function readBackup(text: string, now = Date.now()): ReadBackup {
     const hiddenExercises = (Array.isArray(file['hiddenExercises']) ? file['hiddenExercises'] : [])
         .map((item) => readHiddenExercise(item))
         .filter((hidden) => hidden !== null);
+    const libraryOrder = isLibraryOrder(file['libraryOrder'])
+        ? { ids: [...file['libraryOrder'].ids], updatedAt: file['libraryOrder'].updatedAt }
+        : null;
     const skipped =
         savedWorkouts.length -
         workouts.length -
@@ -180,6 +189,7 @@ export function readBackup(text: string, now = Date.now()): ReadBackup {
         exercises,
         exerciseNotes,
         hiddenExercises,
+        libraryOrder,
         deleted,
         fromVersion1,
         newWorkouts,

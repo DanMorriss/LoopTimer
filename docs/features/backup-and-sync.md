@@ -1,6 +1,6 @@
 # Backup and sync
 
-Export and import (SYN-1, SYN-2) are built, with a prompt for having an AI turn a plan into a file to import (SYN-6), the history has room for years (SYN-5), and the data is ready for sync: random ids, `updatedAt` and deletion markers (see [data](data.md)). The rest is planned (see [direction](../direction.md)); its rules are a first draft and get firmed up, with acceptance criteria, when it's built.
+Export and import (SYN-1, SYN-2) are built, with a prompt for having an AI turn a plan into a file to import (SYN-6), the history has room for years (SYN-5), and the data is ready for sync: random ids, `updatedAt` and deletion markers (see [data](data.md)). The library's order is a record of its own, so it merges too. Accounts and sync are next (Phase 4 in [direction](../direction.md)): the decisions made so far, and the backend picked, are under **Sync** below. Its rules are a first draft and get firmed up, with acceptance criteria, as each part is built.
 
 ## Stories
 
@@ -10,19 +10,22 @@ Export and import (SYN-1, SYN-2) are built, with a prompt for having an AI turn 
 - **SYN-4** As a user I want the app to keep working with no connection, and catch up when it's back.
 - **SYN-5** As a user I want to keep years of history, not just the last 500 workouts.
 - **SYN-6** As a user with a plan already (from a coach, a book or a spreadsheet), I want an AI to turn it into workouts I can import, so I don't have to build each one by hand.
+- **SYN-7** As a user I want to sign in with Google or Apple, so I don't have to wait for an email.
+- **SYN-8** As a user I want to delete my account, so nothing of mine is kept on the server.
 
 ## Rules
 
 ### Export and import (SYN-1, SYN-2)
 
 - They're in **Settings → Your data**, under the hint "Your workouts and history are saved on this device only. Export a backup to keep them safe, or to move them to another device."
-- **Export backup** downloads one file of the workouts, history, your own exercises, your notes on exercises, which exercises are hidden from the picker, deletions and settings (your equipment included), e.g. `loop-workouts-2026-10-21.json` (dated by the device's calendar), and says "Backup saved as loop-workouts-2026-10-21.json." The file's shape is in [data](data.md#backup-file).
+- **Export backup** downloads one file of the workouts, the library's order, history, your own exercises, your notes on exercises, which exercises are hidden from the picker, deletions and settings (your equipment included), e.g. `loop-workouts-2026-10-21.json` (dated by the device's calendar), and says "Backup saved as loop-workouts-2026-10-21.json." The file's shape is in [data](data.md#backup-file).
 - **Import backup** opens a file picker. The chosen file is **merged** with what's here, by id:
     - A workout, history entry, exercise of your own, note on an exercise or hidden exercise only in the file is **added**.
     - One in both keeps **the most recent change**: an edit, a note, a change of reps mid-workout. On a tie, this device's stays.
     - Exercises and notes come in first, so the file's workouts and history entries can be **linked** to them: a step or set that isn't linked yet (a file from before exercises), or is linked to an exercise that's neither here nor in the file, is linked by its name, as saved data is (see [data](data.md#data-version)).
     - An **exercise of your own with the same name** as one here (matched as names are, so "sled push" is "Sled push") but another id, e.g. typed on two devices, is taken to be the one here: it isn't added, and the file's steps, sets, note and hidden mark for it go to the one here.
     - One **deleted where the backup came from** is deleted here too, unless it's changed here since. One **deleted here** doesn't come back, unless it changed there after it was deleted here.
+    - The **library's order** in the file is taken if a workout was moved there more recently than here (LIB-3): the workouts it lists go in its order, and any others (e.g. made here since) after them. A library never moved keeps its order. It isn't counted in what the import says it did.
     - Nothing else here is changed or removed.
     - **Settings** in the file are left out: theme, sound, your equipment and so on are a choice for each device.
     - Workouts and history entries in the file that aren't usable are left out, the same as when the app loads its own data, and older workout formats convert.
@@ -61,9 +64,43 @@ Export and import (SYN-1, SYN-2) are built, with a prompt for having an AI turn 
 - Deletions are remembered for the last 5,000, so an old backup can only bring back something deleted that long ago.
 - A backup can be up to 50 MB, far more than years of workouts take.
 
-### Still to come (draft)
+### Sync (SYN-3, SYN-4, SYN-7, SYN-8; draft)
 
-- **Sync (SYN-3, SYN-4):** the device's copy is the one the app works from; changes are sent when online, and the most recent change to a record wins.
+Decided with Dan on 2026-10-27:
+
+- **An account is optional.** Without one, the app works as it does now, on the device only.
+- **Signing in is by an email link** to start with (type your email, tap the link it sends). Google and Apple come later (SYN-7). If an iPhone app offers Google, the App Store asks for Sign in with Apple beside it.
+- **An Account tab** in the tab bar is where you sign in, see when it last synced, sign out and **delete your account** (SYN-8). Deleting it removes everything of yours on the server; what's on the device stays.
+- **Signing out keeps the data on the device**, so the app carries on as it would without an account. To remove it too (e.g. on a shared computer), there's a **Clear this device** button, in the Account tab and in Settings → Your data, which asks first and works signed in or not.
+- **The device's copy is the one the app works from.** Nothing waits on the network: changes are saved here first, sent when online, and other devices' changes are merged in as an import's are, record by record, the most recent change winning.
+- **What syncs:** workouts, the library's order, the history, your own exercises, your notes on exercises, hidden exercises and deletions. **Settings don't:** theme, sound, units and your equipment stay a choice for each device, as with import. The run in progress doesn't either.
+- **The first sign-in on a device** merges what's here with what's in the account, as importing a backup does, so nothing is lost on either side.
+- **The privacy notice and terms** are updated before anything is sent off the device: what's stored, where, and who to contact.
+- **The server keeps the data in Europe** (an EU region).
+
+How it's meant to work:
+
+- **On the server**, one table of records of every kind: the user, the kind (`workout`, `history`, `library-order` and so on), the record's id, its `updatedAt`, `deletedAt` if it was deleted, the record itself as JSON, and a number the server counts up on every write. A deletion is a record with `deletedAt` set, kept for good, so the device's cap of 5,000 doesn't apply there. Each user can only read and write their own rows.
+- **Sending:** the records changed since the last sync go up; the server keeps one only if it's newer than the copy it has.
+- **Fetching:** the device asks for every row written since the last number it saw, merges them as an import does (`mergeRecords()`, `mergeLibraryOrder()`), and remembers the new number.
+- **When:** on opening the app, a few seconds after a change, on coming back online, and on coming back to the tab. One person's devices don't need changes to arrive live.
+- **Clocks:** "most recent wins" goes by each device's clock, so a phone set an hour fast would win every change for an hour. So the server gives its own time with every reply, the device keeps how far its clock is off from that, and dates changes by the server's time once it knows it. As a backstop, the server takes any `updatedAt` more than a minute ahead of its own time as now. A change made offline before a device's first sync goes by its own clock, which is fine for one person's devices.
+- **The code that syncs** is loaded only once someone signs in, so it doesn't add to the app's first load (near its 500 kB budget).
+
+### The backend
+
+Compared on 2026-10-27, for cost, how it fits the device-first design above, sign-in, what it adds to the app's size, and an iPhone app later:
+
+|                       | Supabase                                                  | Firebase (Firestore)                                                                     | Our own (Vercel functions and Postgres)    |
+| --------------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------ |
+| Fits the design above | Well: the one table, with row-level security per user     | Brings its own offline copy, so the stores are rebuilt around it or there are two copies | Well, but we build all of it               |
+| Sign-in               | Email link, Google and Apple built in                     | Email link, Google and Apple built in                                                    | The hard part: a library or service to add |
+| Size in the app       | Small, or none with plain `fetch` to its API              | Large (Firestore and Auth), against a nearly full budget                                 | None                                       |
+| iPhone app            | A Swift library, the same table                           | A strong Swift library                                                                   | Plain HTTP                                 |
+| Cost at this size     | A free tier (an idle free project is paused after a week) | A free tier, then paid per read and write                                                | Free tiers of Vercel and Neon              |
+| Leaving it            | Easy: it's Postgres                                       | Hard                                                                                     | Nothing to leave                           |
+
+**Picked: Supabase**, in an EU region, unless its current pricing and limits say otherwise when it's set up (check them then). The app already does what Firebase is best at (working offline); Supabase's Postgres fits the one table and leaves a way out, and it adds little to the app.
 
 ## Acceptance criteria
 
@@ -75,6 +112,7 @@ Export and import (SYN-1, SYN-2) are built, with a prompt for having an AI turn 
 - Given my own exercise "Sled push" here, when I import a backup with a "Sled push" of its own made on another device, then I still have one "Sled push", and the backup's workouts and history that used its one use mine.
 - Given a version 1 backup with a workout "Legs" and one the same already here, when I import it, then "Legs" isn't added again; a different workout with the same old id as one here is added with a new id, and both are kept.
 - Given a backup with a light theme and lb, when I import it, then my settings don't change.
+- Given I moved "Legs" to the top of the library on another device after any move here, when I import a backup from it, then "Legs" is at the top here too, with any workouts the backup doesn't have after the others.
 - Given a file that isn't a backup, or is from a newer version, when I import it, then nothing changes and I'm told why.
 - Given a backup with a broken workout and two broken history entries, when I import it, then the rest are added and "3 items in it couldn't be read" is shown.
 - Given I press Copy AI prompt, then the prompt is on the clipboard and I'm told so.
@@ -84,10 +122,9 @@ Export and import (SYN-1, SYN-2) are built, with a prompt for having an AI turn 
 
 ## Platform notes
 
-- **Web:** `BackupService`, `backup-file.ts` and the AI prompt, `planPrompt()` in `plan-prompt.ts` (`src/app/shared/backup/`); the stores' `mergeWorkouts()` and `mergeEntries()` (and `importWorkouts()` for version 1 files), using `mergeRecords()` in `models/sync.ts`; deletions are kept by `DeletionStore`, and saved data is converted by `migrate.ts`. The file is downloaded through a link with `download`; on an iPhone, Safari offers to save it to Files. The picker is a file input opened by the Import button, kept out of the keyboard's way.
+- **Web:** `BackupService`, `backup-file.ts` and the AI prompt, `planPrompt()` in `plan-prompt.ts` (`src/app/shared/backup/`); the stores' `mergeWorkouts()` and `mergeEntries()` (and `importWorkouts()` for version 1 files), using `mergeRecords()` in `models/sync.ts`, and `WorkoutStore.mergeLibraryOrder()` for the library's order (with `inOrder()` in `models/sync.ts`); deletions are kept by `DeletionStore`, and saved data is converted by `migrate.ts`. The file is downloaded through a link with `download`; on an iPhone, Safari offers to save it to Files. The picker is a file input opened by the Import button, kept out of the keyboard's way.
 - **iOS:** a share sheet for export and a document picker for import, reading and writing the same file.
 
 ## Open questions
 
-- Which backend (e.g. Supabase, Firebase, or one of our own), and how people sign in (email link, Apple, Google).
 - Should there be a nudge to export, or to add the app to the Home Screen, until sync exists?

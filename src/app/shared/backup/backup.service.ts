@@ -56,6 +56,7 @@ export class BackupService {
                 exercises: this.exercises.own(),
                 exerciseNotes: this.exercises.notes(),
                 hiddenExercises: this.exercises.hidden(),
+                libraryOrder: this.workouts.libraryOrder(),
                 deleted: [...this.deletions.all()],
                 settings: {
                     theme: this.settings.theme(),
@@ -92,6 +93,7 @@ export class BackupService {
      * own in the file with the same name as one here, under another id, is taken to be that
      * one: the one here is kept, and what in the file used the other id uses its id. Workouts
      * with no id (a file written by hand) are added unless the same workout is here already.
+     * The library's order is taken from the file if a workout was moved there more recently.
      * Settings in the file are left out, since they're a choice for each device.
      */
     async import(file: Blob): Promise<ImportResult> {
@@ -137,6 +139,10 @@ export class BackupService {
         const newWorkoutsAdded = this.workouts.importWorkouts(
             backup.newWorkouts.map((workout) => this.linked(workout, idHere))
         );
+        // Once the workouts are in, so new ones take their place in it too
+        if (backup.libraryOrder) {
+            this.workouts.mergeLibraryOrder(backup.libraryOrder);
+        }
         const entries = this.history.mergeEntries(linkedHistory, backup.deleted);
         return {
             ok: true,
