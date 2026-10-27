@@ -1,5 +1,5 @@
 import { HistoryEntry } from '../../models/history';
-import { Deletion } from '../../models/sync';
+import { Deletion, LibraryOrder } from '../../models/sync';
 import { Settings } from '../state/settings-store.service';
 import { makeWorkout } from '../testing/make-workout';
 import { BACKUP_VERSION, backupFileName, makeBackup, readBackup } from './backup-file';
@@ -28,6 +28,8 @@ const ENTRY: HistoryEntry = {
     outcome: 'finished',
     sets: [{ round: 0, step: 0, name: 'Squats', reps: 10, weight: 60 }],
 };
+
+const ORDER: LibraryOrder = { ids: ['workout-1'], updatedAt: 3_000_000 };
 
 const DELETION: Deletion = { kind: 'history', id: 'gone', deletedAt: 2_000_000 };
 
@@ -61,6 +63,7 @@ describe('backup file', () => {
                 exercises: [],
                 exerciseNotes: [],
                 hiddenExercises: [],
+                libraryOrder: ORDER,
                 deleted: [DELETION],
                 settings: SETTINGS,
             },
@@ -76,6 +79,7 @@ describe('backup file', () => {
             exercises: [],
             exerciseNotes: [],
             hiddenExercises: [],
+            libraryOrder: ORDER,
             deleted: [DELETION],
             settings: SETTINGS,
         });
@@ -91,6 +95,7 @@ describe('backup file', () => {
                     exercises: [],
                     exerciseNotes: [],
                     hiddenExercises: [],
+                    libraryOrder: ORDER,
                     deleted: [DELETION],
                     settings: SETTINGS,
                 },
@@ -105,11 +110,19 @@ describe('backup file', () => {
             exercises: [],
             exerciseNotes: [],
             hiddenExercises: [],
+            libraryOrder: ORDER,
             deleted: [DELETION],
             fromVersion1: false,
             newWorkouts: [],
             skipped: 0,
         });
+    });
+
+    it('has no library order when the file has none, or a broken one', () => {
+        for (const libraryOrder of [undefined, { ids: [1], updatedAt: 1 }, { ids: [] }]) {
+            const backup = readBackup(fileWith({ libraryOrder }));
+            expect(backup.ok && backup.libraryOrder).toBeNull();
+        }
     });
 
     it('is named by the date it was made', () => {
@@ -163,6 +176,7 @@ describe('backup file', () => {
             exercises: [],
             exerciseNotes: [],
             hiddenExercises: [],
+            libraryOrder: null,
             deleted: [DELETION],
             fromVersion1: false,
             newWorkouts: [],

@@ -542,6 +542,20 @@ describe('WorkoutStore', () => {
             expect(savedWorkouts()).toEqual([last, first, middle]);
         });
 
+        it('remembers when, for the library order to sync', () => {
+            vi.spyOn(Date, 'now').mockReturnValue(5_000);
+            const store = createStore();
+            const first = store.addWorkout(makeWorkout({ title: 'First' }));
+            const last = store.addWorkout(makeWorkout({ title: 'Last' }));
+            expect(store.libraryOrder()).toEqual({ ids: [first.id, last.id], updatedAt: 0 });
+
+            store.moveWorkout(1, 0);
+
+            expect(store.libraryOrder()).toEqual({ ids: [last.id, first.id], updatedAt: 5_000 });
+            TestBed.resetTestingModule();
+            expect(createStore().libraryOrder().updatedAt).toBe(5_000);
+        });
+
         it('leaves the library as it is for a place outside it', () => {
             const store = createStore();
             const first = store.addWorkout(makeWorkout({ title: 'First' }));
@@ -551,6 +565,52 @@ describe('WorkoutStore', () => {
             store.moveWorkout(-1, 0);
 
             expect(store.workouts()).toEqual([first, last]);
+        });
+    });
+
+    describe('mergeLibraryOrder', () => {
+        const saveLibrary = (ids: string[], movedAt?: number) => {
+            localStorage.setItem(
+                'workouts',
+                JSON.stringify(ids.map((id) => baseWorkout({ id, title: id })))
+            );
+            if (movedAt !== undefined) {
+                localStorage.setItem('library-moved-at', String(movedAt));
+            }
+        };
+        const ids = (store: WorkoutStore) => store.workouts().map((workout) => workout.id);
+
+        it("takes an order moved more recently, with workouts it doesn't list after it", () => {
+            saveLibrary(['a', 'b', 'c', 'new-here'], 100);
+            const store = createStore();
+
+            expect(store.mergeLibraryOrder({ ids: ['c', 'gone', 'a', 'b'], updatedAt: 200 })).toBe(
+                true
+            );
+
+            expect(ids(store)).toEqual(['c', 'a', 'b', 'new-here']);
+            expect(savedWorkouts().map((workout) => workout.id)).toEqual(ids(store));
+            expect(store.libraryOrder().updatedAt).toBe(200);
+            expect(localStorage.getItem('library-moved-at')).toBe('200');
+        });
+
+        it('keeps the order here when it was moved more recently, or at the same time', () => {
+            saveLibrary(['a', 'b'], 200);
+            const store = createStore();
+
+            expect(store.mergeLibraryOrder({ ids: ['b', 'a'], updatedAt: 200 })).toBe(false);
+            expect(store.mergeLibraryOrder({ ids: ['b', 'a'], updatedAt: 100 })).toBe(false);
+
+            expect(ids(store)).toEqual(['a', 'b']);
+        });
+
+        it('takes any moved order over one never moved', () => {
+            saveLibrary(['a', 'b']);
+            const store = createStore();
+
+            store.mergeLibraryOrder({ ids: ['b', 'a'], updatedAt: 1 });
+
+            expect(ids(store)).toEqual(['b', 'a']);
         });
     });
 

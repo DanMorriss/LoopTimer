@@ -11,7 +11,7 @@ import {
 } from '../../models/workout';
 import { MAX_WEIGHT_KG } from '../../models/weight';
 import { isLoggedSet, isTimedSet, RepSet } from '../../models/history';
-import { Deletion, mergeRecords, newId } from '../../models/sync';
+import { Deletion, inOrder, LibraryOrder, mergeRecords, newId } from '../../models/sync';
 import { DeletionStore } from './deletion-store.service';
 import { ExerciseStore } from './exercise-store.service';
 import { linkSteps } from '../../models/exercise-links';
@@ -22,6 +22,7 @@ export class WorkoutStore {
     private readonly deletions = inject(DeletionStore);
     private readonly exercises = inject(ExerciseStore);
     private _workouts = signal<Workout[]>([]);
+    private _movedAt = signal(readMovedAt());
     private _activeWorkout = signal<Workout | null>(null);
     private _activeWorkoutStartedAt = signal<number | null>(null);
     private _activeWorkoutPausedAt = signal<number | null>(null);
@@ -31,6 +32,11 @@ export class WorkoutStore {
     private _activeSets = signal<RepSet[]>([]);
 
     readonly workouts = computed(() => this._workouts());
+    /** The library's order, to sync with other copies (see `mergeLibraryOrder()`). */
+    readonly libraryOrder = computed<LibraryOrder>(() => ({
+        ids: this._workouts().map((workout) => workout.id),
+        updatedAt: this._movedAt(),
+    }));
     readonly activeWorkout = computed(() => this._activeWorkout());
     /** When the active workout was started, in ms since the epoch. Moves forward on resume. */
     readonly activeWorkoutStartedAt = computed(() => this._activeWorkoutStartedAt());
@@ -211,6 +217,26 @@ export class WorkoutStore {
         workouts.splice(to, 0, moved);
         this._workouts.set(workouts);
         this.saveWorkouts();
+        this.saveMovedAt(Date.now());
+    }
+
+    /**
+     * Takes another copy's library order if a workout was moved there more recently than here:
+     * the workouts it lists go in its order, and any others after them. Returns whether the
+     * order here changed.
+     */
+    mergeLibraryOrder(order: LibraryOrder): boolean {
+        if (order.updatedAt <= this._movedAt()) {
+            return false;
+        }
+        this.saveMovedAt(order.updatedAt);
+        const workouts = inOrder(this._workouts(), order.ids);
+        if (workouts.every((workout, i) => workout === this._workouts()[i])) {
+            return false;
+        }
+        this._workouts.set(workouts);
+        this.saveWorkouts();
+        return true;
     }
 
     findWorkoutById(workoutId: string): Workout | null {
@@ -398,6 +424,17 @@ export class WorkoutStore {
     private saveWorkouts() {
         localStorage.setItem('workouts', JSON.stringify(this._workouts()));
     }
+
+    private saveMovedAt(movedAt: number) {
+        this._movedAt.set(movedAt);
+        localStorage.setItem('library-moved-at', String(movedAt));
+    }
+}
+
+/** When a workout was last moved in the library, or 0 if none has been (or it's broken). */
+function readMovedAt(): number {
+    const movedAt = Number(localStorage.getItem('library-moved-at'));
+    return isWholeNumber(movedAt, 0) ? movedAt : 0;
 }
 
 function isWholeNumber(value: unknown, min: number, max = Number.MAX_SAFE_INTEGER): boolean {

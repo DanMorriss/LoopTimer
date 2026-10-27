@@ -18,8 +18,12 @@ Timed sets are logged now (a set per timed work step of an exercise that runs to
 
 ### Phase 4: Sync
 
-- [ ] **Pick a backend and sign-in:** compare options (e.g. Supabase, Firebase, our own) for cost, offline support and an iPhone app later; write it up in `docs/features/backup-and-sync.md`.
-- [ ] **Accounts and sync (SYN-3, SYN-4):** the device's copy stays the working copy; changes go up when online, most recent change wins.
+The plan is in `docs/features/backup-and-sync.md` (Sync and The backend), as agreed with Dan on 2026-10-27: Supabase, an optional account, email sign-in first, settings staying per device, and changes dated by the server's clock. The library's order merges as a record of its own (in backups now, and in sync).
+
+- [ ] **Next: the Account tab, email sign-in and deleting an account (SYN-3, SYN-8):** check Supabase's current pricing and limits, set up the project and its records table (each user only sees their own rows), and add an Account tab to the tab bar (a fifth tab) to sign in by an email link, sign out and delete the account. Settle what signing out does to the device's data. To be fleshed out over a few PRs.
+- [ ] **Sync (SYN-3, SYN-4):** send and fetch changes as described in the doc, merging with the stores' merge functions; the first sign-in merges the device with the account. Load its code only once signed in.
+- [ ] **Sign in with Google and Apple (SYN-7).**
+- [ ] **Privacy notice and terms for sync:** say what's stored on the server, where, and who to contact, before sync sends anything off the device (see the Known issue on having them looked over).
 
 ### Phase 5: Simple planning
 
@@ -80,6 +84,5 @@ From reviews against Apple's WWDC design talks (Designing Fluid Interfaces, Prin
     - **Our own icons instead of Material's (about 15 kB):** `mat-icon` (Material's icon module) is in the tab bar, run bar and undo bar, which are on every page. Swap it for a small icon component or inline SVG, and Material leaves the start-up code.
 - [ ] **The body map can't shade abductors:** react-native-body-highlighter has no abductor shapes on either figure (still none upstream on 2026-10-25, though its slug is mapped in `tools/build-body-shapes.mjs`), so exercises that work them (side plank, hip abduction) list them without shading. Fix by drawing the shapes ourselves, or swap to a diagram that has them.
 - [ ] **Try holding and dragging a library card on an iPhone:** added on 2026-10-26 and tested only in Chromium with simulated touches. Check that holding a card lifts it (with no text selection or link menu), dragging it then moves it and doesn't scroll the page, letting go of it unmoved opens its options, and a quick swipe left still deletes.
-- [ ] **The library's order won't sync:** it's the order of the saved list, not part of a workout's record, so when sync comes (SYN-3) a workout moved on one device won't move on another (an open question in `docs/features/library.md`).
 - [ ] **Try the face's reps and weight wheels on an iPhone:** added on 2026-10-26 and tested only in Chromium. Check that tapping the count opens its wheel over the ring (not cut off by the circle), a finger can carry straight on and turn it, it closes on its own, and the face doesn't scroll or slide while it's open.
 - [ ] **The muscle bars' aim is the same for every muscle:** 10 to 20 sets a week (PRG-8), the usual advice for building muscle, so small muscles hardly anyone trains on their own (neck, shins, abductors) always show as under, and so does most of the body for someone training for fitness rather than size. Decide whether small muscles get a lower aim, or the aim becomes a setting (an open question in `docs/features/progress.md`).
