@@ -4,7 +4,6 @@ import {
     DOCUMENT,
     effect,
     inject,
-    NgZone,
     Service,
     signal,
     untracked,
@@ -174,9 +173,7 @@ export class ActiveRunService {
 
     constructor() {
         // Tick while there's something to count; a paused or finished run stands still.
-        // Outside Angular's zone, so a clock that's always ticking doesn't leave the app
-        // forever "busy"; the signal it sets still updates the page.
-        const zone = inject(NgZone);
+        // The signal each tick sets is what updates the page.
         effect((onCleanup) => {
             if (!this.isRunning()) {
                 return;
@@ -187,7 +184,7 @@ export class ActiveRunService {
                 id = setTimeout(tick, this.msToNextTick());
             };
             const first = untracked(() => this.msToNextTick());
-            id = zone.runOutsideAngular(() => setTimeout(tick, first));
+            id = setTimeout(tick, first);
             onCleanup(() => clearTimeout(id));
         });
 

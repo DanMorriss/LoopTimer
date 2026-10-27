@@ -29,6 +29,10 @@ describe('WheelPickerComponent', () => {
         fixture = TestBed.createComponent(HostComponent);
         host = fixture.componentInstance;
         await settle();
+        // The jump to the value fires its scroll event a frame later; let it, so it isn't
+        // taken for a turn of a wheel the test has opened by then
+        await new Promise(requestAnimationFrame);
+        await new Promise(requestAnimationFrame);
     }
 
     async function settle() {

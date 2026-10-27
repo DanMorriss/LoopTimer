@@ -1187,8 +1187,14 @@ describe('WorkoutSetupComponent', () => {
                 await editInPounds();
                 await press('Step 1, Bench, 10 reps @ 45 lb');
                 const wheel = steps()[0].querySelectorAll('app-wheel-picker')[1];
+                // A frame for the wheel's jump to 45 to land, as it would before a finger could
+                await new Promise(requestAnimationFrame);
+                await new Promise(requestAnimationFrame);
                 el('[data-value="135"]', wheel).click();
                 fixture.detectChanges();
+                // Let it glide there: settling after saving has emptied the form would set a
+                // step that's gone (in the app, the page has gone by then)
+                await new Promise((resolve) => setTimeout(resolve, 600));
 
                 await submit();
 

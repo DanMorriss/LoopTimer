@@ -1,4 +1,4 @@
-import { inject, provideAppInitializer, provideZoneChangeDetection } from '@angular/core';
+import { inject, provideAppInitializer } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { AppComponent } from './app/app.component';
@@ -9,7 +9,6 @@ import { ThemeService } from './app/shared/theme/theme.service';
 
 bootstrapApplication(AppComponent, {
     providers: [
-        provideZoneChangeDetection(),
         provideRouter(routes),
         provideAppInitializer(() => {
             // Start listening for the first tap straight away, so sound is unlocked by the
