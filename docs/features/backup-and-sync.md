@@ -12,6 +12,7 @@ Export and import (SYN-1, SYN-2) are built, with a prompt for having an AI turn 
 - **SYN-6** As a user with a plan already (from a coach, a book or a spreadsheet), I want an AI to turn it into workouts I can import, so I don't have to build each one by hand.
 - **SYN-7** As a user I want to sign in with Google or Apple, so I don't have to wait for an email.
 - **SYN-8** As a user I want to delete my account, so nothing of mine is kept on the server.
+- **SYN-9** As a user I want to clear everything from this device, e.g. a shared computer I'm done with.
 
 ## Rules
 
@@ -64,6 +65,17 @@ Export and import (SYN-1, SYN-2) are built, with a prompt for having an AI turn 
 - Deletions are remembered for the last 5,000, so an old backup can only bring back something deleted that long ago.
 - A backup can be up to 50 MB, far more than years of workouts take.
 
+### Clear this device (SYN-9)
+
+- **Clear this device** is in the **Account tab** (under This device: "Your workouts, history and settings are saved in this browser. Done with it, on a shared computer say? Clear them from it.") and at the end of **Settings → Your data**. It works signed in or not.
+- It can't be undone, so unlike deleting elsewhere it **asks first**: the button opens a warning in its place, "This removes your workouts, history, exercises and settings from this device. It can't be undone, so export a backup first to keep them.", with **Clear everything** and **Cancel**. Focus goes to the warning, so it's read out; Cancel puts it back on the button.
+- **Clear everything** removes all the app keeps on the device: workouts, the library's order, history, your own exercises, notes, hidden exercises, deletions and settings, and the workout in progress, which isn't logged. Then the app starts again, empty, on the page it was on.
+- Signed in (once there's sync), it only clears the device: the account keeps everything, and signing in again brings it back.
+
+### The Account tab, for now
+
+Until sign-in comes, the tab's **Sync** section says what an account will do: "Soon you'll be able to sign in, so your workouts and history are the same on your phone and your laptop. An account will be optional: without one, everything stays on this device, as it does now." Under it is **This device**, with Clear this device.
+
 ### Sync (SYN-3, SYN-4, SYN-7, SYN-8; draft)
 
 Decided with Dan on 2026-10-27:
@@ -71,7 +83,7 @@ Decided with Dan on 2026-10-27:
 - **An account is optional.** Without one, the app works as it does now, on the device only.
 - **Signing in is by an email link** to start with (type your email, tap the link it sends). Google and Apple come later (SYN-7). If an iPhone app offers Google, the App Store asks for Sign in with Apple beside it.
 - **An Account tab** in the tab bar is where you sign in, see when it last synced, sign out and **delete your account** (SYN-8). Deleting it removes everything of yours on the server; what's on the device stays.
-- **Signing out keeps the data on the device**, so the app carries on as it would without an account. To remove it too (e.g. on a shared computer), there's a **Clear this device** button, in the Account tab and in Settings → Your data, which asks first and works signed in or not.
+- **Signing out keeps the data on the device**, so the app carries on as it would without an account. To remove it too, there's **Clear this device** (above).
 - **The device's copy is the one the app works from.** Nothing waits on the network: changes are saved here first, sent when online, and other devices' changes are merged in as an import's are, record by record, the most recent change winning.
 - **What syncs:** workouts, the library's order, the history, your own exercises, your notes on exercises, hidden exercises and deletions. **Settings don't:** theme, sound, units and your equipment stay a choice for each device, as with import. The run in progress doesn't either.
 - **The first sign-in on a device** merges what's here with what's in the account, as importing a backup does, so nothing is lost on either side.
@@ -113,6 +125,8 @@ Compared on 2026-10-27, for cost, how it fits the device-first design above, sig
 - Given a version 1 backup with a workout "Legs" and one the same already here, when I import it, then "Legs" isn't added again; a different workout with the same old id as one here is added with a new id, and both are kept.
 - Given a backup with a light theme and lb, when I import it, then my settings don't change.
 - Given I moved "Legs" to the top of the library on another device after any move here, when I import a backup from it, then "Legs" is at the top here too, with any workouts the backup doesn't have after the others.
+- Given workouts, history and settings here, and a workout going, when I press Clear this device and then Clear everything, then the app starts again with none of them, and the workout isn't in the history.
+- Given I press Clear this device, then nothing is cleared until I press Clear everything; when I press Cancel, then nothing changes and focus is back on Clear this device.
 - Given a file that isn't a backup, or is from a newer version, when I import it, then nothing changes and I'm told why.
 - Given a backup with a broken workout and two broken history entries, when I import it, then the rest are added and "3 items in it couldn't be read" is shown.
 - Given I press Copy AI prompt, then the prompt is on the clipboard and I'm told so.
@@ -122,7 +136,7 @@ Compared on 2026-10-27, for cost, how it fits the device-first design above, sig
 
 ## Platform notes
 
-- **Web:** `BackupService`, `backup-file.ts` and the AI prompt, `planPrompt()` in `plan-prompt.ts` (`src/app/shared/backup/`); the stores' `mergeWorkouts()` and `mergeEntries()` (and `importWorkouts()` for version 1 files), using `mergeRecords()` in `models/sync.ts`, and `WorkoutStore.mergeLibraryOrder()` for the library's order (with `inOrder()` in `models/sync.ts`); deletions are kept by `DeletionStore`, and saved data is converted by `migrate.ts`. The file is downloaded through a link with `download`; on an iPhone, Safari offers to save it to Files. The picker is a file input opened by the Import button, kept out of the keyboard's way.
+- **Web:** `BackupService`, `backup-file.ts` and the AI prompt, `planPrompt()` in `plan-prompt.ts` (`src/app/shared/backup/`); the stores' `mergeWorkouts()` and `mergeEntries()` (and `importWorkouts()` for version 1 files), using `mergeRecords()` in `models/sync.ts`, and `WorkoutStore.mergeLibraryOrder()` for the library's order (with `inOrder()` in `models/sync.ts`); Clear this device is `ClearDeviceComponent` (`shared/components/clear-device/`) and `DeviceDataService` (`shared/state/`), which empties localStorage and sessionStorage, deletes the IndexedDB database and reloads; the Account tab is `AccountComponent` (`src/app/account/`), at `/account`; deletions are kept by `DeletionStore`, and saved data is converted by `migrate.ts`. The file is downloaded through a link with `download`; on an iPhone, Safari offers to save it to Files. The picker is a file input opened by the Import button, kept out of the keyboard's way.
 - **iOS:** a share sheet for export and a document picker for import, reading and writing the same file.
 
 ## Open questions

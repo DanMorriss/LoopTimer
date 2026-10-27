@@ -13,7 +13,7 @@
 
 ### The tab bar
 
-- Along the bottom of every page but the workout's: **Library**, **Exercises**, **History** and **Settings**, each an icon with its name under it.
+- Along the bottom of every page but the workout's: **Library**, **Exercises**, **History**, **Account** and **Settings**, each an icon with its name under it. Five fit a 320px-wide phone, each wider than 44px.
 - It's a capsule floating over the bottom of the page, the same shape on a phone and on a wide screen (up to 26rem wide, centred), in a frosted material the page scrolls under. It sits clear of an iPhone's home bar.
 - The chosen tab has a highlight behind it, which slides to the next one when you change tab, on a spring with no bounce. A tab is chosen on its own page and the pages under it (an exercise's page is under Exercises, the Privacy notice and Terms of use under Settings); making or editing a workout is under **Library**.
 - Screen readers hear it as the "Main" navigation; the chosen tab is the current page on its own page, and the current item on a page under it (e.g. "Library, current" while making a workout).
@@ -33,7 +33,7 @@
 
 ### Undo
 
-- Deleting goes ahead **at once**, with no "Are you sure?": a workout in the library, a step in setup (one with anything in it), your own exercise (or hiding one that's in your history instead), a workout in the history. Then the **Undo bar** offers to put it back.
+- Deleting goes ahead **at once**, with no "Are you sure?" (the one exception is Clear this device, which can't be undone; see [backup-and-sync](backup-and-sync.md#clear-this-device-syn-9)): a workout in the library, a step in setup (one with anything in it), your own exercise (or hiding one that's in your history instead), a workout in the history. Then the **Undo bar** offers to put it back.
 - It floats above the tabs (and the workout's bar), in the same frosted capsule: what happened, e.g. "Deleted "Legs day".", **Undo**, and a close button. It rises in, and sinks out as it goes.
 - **Undo** puts it back as it was, where it was, and focus goes to it (e.g. the workout's ⋮ button). An exercise deleted from its page opens that page again.
 - It **doesn't go on a timer**, so there's always time to read it and reach it. It goes when it's used, closed (or Escape), replaced by another delete, or the page changes.
