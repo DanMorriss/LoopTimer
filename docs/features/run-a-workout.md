@@ -10,6 +10,7 @@
 - **RUN-6** As a user I want to change the reps or weight while I'm on a rep step (e.g. going up a weight, or managing fewer reps), so what I log is what I did, and next time starts from there.
 - **RUN-7** As a user I want a summary of how a workout went when I finish or end it, where I can correct a set, add a note, and go back to the workout if I ended it early.
 - **RUN-8** As a user I want a workout with a time limit to count my rounds up, show the time left, warn me as it runs out, and stop when time's up, so I can just keep going until then.
+- **RUN-9** As a user I want to check how a step's exercise is done, mid-workout, without leaving it.
 
 ## Rules
 
@@ -54,6 +55,7 @@
 - **Face**:
     - An **icon for the step's kind** on its own line (a stopwatch for timed, a seated figure for rest, a dumbbell for reps), so the kinds aren't told apart by colour alone.
     - The step's name under it. Unnamed work shows just the icon over the time; unnamed rest says "Rest"; unnamed reps say "Reps".
+    - An **(i)** to the right of the name of a step that's an exercise (RUN-9), drawn small in the face's quieter text colour but 44px to tap. It opens the exercise's details over the workout, as Create's Details does (EXR-11): what its page shows (its description, your note, the muscles it works, how to do it and tips), without Pick another or its progress. The workout carries on underneath, the clock too; Space and Escape are left to the dialog while it's open. Done (or Escape, or a tap outside) closes it, with focus back on the (i), or on Done or Pause if the workout has moved on to a step with no exercise meanwhile. A step that's only a name, e.g. "Jog", has none. Screen readers hear it as "Details of Push-up". Hidden while paused, with the rest of the face's text.
     - A **long name** is fitted to the circle: at full size on one line if it fits; otherwise on two even lines, e.g. "Bodyweight / squat"; and only if that's still too wide, shrunk as far as it needs to be, to no less than 70% of its size. A name too long even for that, e.g. "Single-leg Romanian deadlift" on a phone, gets a third line in the same way. Past that, its last line ends in "…". It's fitted again when the screen changes size, e.g. a phone turned round.
     - The time left as mm:ss, e.g. "00:45". On each of a timed work step's **last 3 seconds** (for a step longer than that) the time pops in a little large and settles. Not rest.
     - On a rep step, the **count is the big thing**, e.g. "12 reps", with the weight and "Last time" under it.
@@ -131,8 +133,9 @@
 - Given work 0:10, then the time pops at 00:03, 00:02 and 00:01, and not in the rest after.
 - Given Squats, Plank, Rest in round 1 of 2, then the rest's face says "then Squats · 00:03".
 - Given a rep step comes round, then Done swells once; with reduced motion it doesn't.
+- Given Jog (timed, just a name) then Push-ups (the Push-up exercise), then Jog has no (i); at Push-ups an (i) named "Details of Push-up" opens its details, with no Pick another, and the workout still waits on the push-ups; Space there doesn't press Done; Done closes them, with focus back on the (i).
 
 ## Platform notes
 
-- **Web:** the maths is pure and has no Angular in it, so it can be ported line for line: `workoutStateAt()` in `src/app/workout/workout-state.ts` (where a workout is after so many ms, given the rep steps done and, for a time limit, the time they took; `stepsIntoRound()` gives the score's steps) and the helpers in `src/app/models/workout.ts`. The run itself is `ActiveRunService` (`src/app/shared/run/`), and the page is `WorkoutComponent` (`src/app/workout/`), with each kind of step's look and motion in `workout-steps.scss` and `workout-motion.scss`, the step strip in `step-strip/`, and long names fitted to the face by `fitName()` (`fit-name.ts`), which measures the text rather than counting letters.
+- **Web:** the maths is pure and has no Angular in it, so it can be ported line for line: `workoutStateAt()` in `src/app/workout/workout-state.ts` (where a workout is after so many ms, given the rep steps done and, for a time limit, the time they took; `stepsIntoRound()` gives the score's steps) and the helpers in `src/app/models/workout.ts`. The run itself is `ActiveRunService` (`src/app/shared/run/`), and the page is `WorkoutComponent` (`src/app/workout/`), with each kind of step's look and motion in `workout-steps.scss` and `workout-motion.scss`, the step strip in `step-strip/`, an exercise's details in the shared `ExerciseDetailsDialogComponent` (RUN-9), and long names fitted to the face by `fitName()` (`fit-name.ts`), which measures the text rather than counting letters.
 - **iOS:** keep the same "work it out from the clock" design: store when the run started (moved on by pauses and rep steps) and derive everything else. That's also what makes a relaunch carry on correctly (see [pause-and-stop](pause-and-stop.md)). A `TimelineView` or a display-link tick only needs to redraw. The face's drum is a `rotation3DEffect` about the x axis (the y axis for a new round) with an anchor behind the face; a long name can use `ViewThatFits`, or `lineLimit(3)` with `minimumScaleFactor(0.7)`.

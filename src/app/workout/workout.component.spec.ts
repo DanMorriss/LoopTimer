@@ -1875,6 +1875,72 @@ describe('WorkoutComponent', () => {
             expect(note()).toBeNull();
         });
 
+        describe("the exercise's details (RUN-9)", () => {
+            const el = (selector: string) =>
+                fixture.nativeElement.querySelector(selector) as HTMLElement | null;
+            const info = () => el('.workout-face__info') as HTMLButtonElement | null;
+
+            beforeEach(() =>
+                start(
+                    makeWorkout({
+                        steps: [
+                            work(3, 'Jog'),
+                            { ...reps(20, 'Push-ups'), exerciseId: 'builtin:push-up' },
+                        ],
+                        repeats: 1,
+                    })
+                )
+            );
+            afterEach(() => fixture.destroy());
+
+            it('offers them beside the name of a step that is an exercise', () => {
+                // Jog is just a name, not an exercise
+                expect(info()).toBeNull();
+
+                advance(3000);
+
+                expect(info()!.getAttribute('aria-label')).toBe('Details of Push-up');
+                expect(info()!.closest('.workout-face__name')!.textContent).toContain('Push-ups');
+            });
+
+            it('opens them over the workout, which waits under it, and Done goes back', async () => {
+                advance(3000);
+                info()!.focus();
+                info()!.click();
+                fixture.detectChanges();
+
+                const dialog = el('app-exercise-details-dialog [role="dialog"]')!;
+                expect(dialog.querySelector('.details__title')!.textContent!.trim()).toBe(
+                    'Push-up'
+                );
+                // Nothing to pick another for mid-workout
+                expect(dialog.querySelector('.details__pick-another')).toBeNull();
+                expect(component.isRepsActive()).toBe(true);
+
+                (dialog.querySelector('.details__done') as HTMLElement).click();
+                fixture.detectChanges();
+                await fixture.whenStable();
+
+                expect(el('app-exercise-details-dialog')).toBeNull();
+                expect(document.activeElement).toBe(info());
+            });
+
+            it("leaves Space to the dialog while it's open", () => {
+                advance(3000);
+                info()!.click();
+                fixture.detectChanges();
+
+                // On its title, where focus starts
+                el('.details__title')!.dispatchEvent(
+                    new KeyboardEvent('keydown', { key: ' ', code: 'Space', bubbles: true })
+                );
+                fixture.detectChanges();
+
+                // Space would otherwise press Done
+                expect(component.isRepsActive()).toBe(true);
+            });
+        });
+
         it('shows the reps and waits, however long it takes', () => {
             start(circuit());
             advance(3000);

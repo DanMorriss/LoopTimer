@@ -22,8 +22,10 @@ import {
     workoutSeconds,
 } from '../models/workout';
 import { formatWeight, weightIn, weightOptions, weightToKg } from '../models/weight';
+import { Exercise } from '../models/exercise';
 import { isTimedSet } from '../models/history';
 import { suggestedWeight } from '../models/progress';
+import { ExerciseDetailsDialogComponent } from '../shared/components/exercise-details-dialog/exercise-details-dialog.component';
 import { WheelPickerComponent } from '../shared/components/wheel-picker/wheel-picker.component';
 import { WorkoutSummaryComponent } from './workout-summary/workout-summary.component';
 import { ClockDigitsComponent } from './clock-digits/clock-digits.component';
@@ -77,6 +79,7 @@ const MAX_ROUND_DOTS = 15;
         MatIconModule,
         WheelPickerComponent,
         WorkoutSummaryComponent,
+        ExerciseDetailsDialogComponent,
         ClockDigitsComponent,
         RoundDotsComponent,
         StepStripComponent,
@@ -274,6 +277,13 @@ export class WorkoutComponent {
         const step = this.state()?.step;
         return step?.exerciseId ? (this.exercises.noteFor(step.exerciseId) ?? '') : '';
     });
+    /** The step's exercise, for its details from the (i) beside its name (RUN-9). */
+    private readonly stepExercise = computed(() => {
+        const id = this.state()?.step?.exerciseId;
+        return id ? this.exercises.byId(id) : undefined;
+    });
+    /** The exercise whose details are open over the workout, which carries on underneath. */
+    protected readonly exerciseInDetails = signal<Exercise | null>(null);
     /** e.g. "Plank · 00:45", "Squats · 10 reps @ 60 kg", or "finish" when the workout ends after this step. */
     upNext = computed(() => {
         const next = this.nextState();
@@ -326,6 +336,7 @@ export class WorkoutComponent {
                 complete: !step,
                 icon: step ? KIND_ICONS[step.kind] : '',
                 label: this.stepLabel(),
+                exercise: this.stepExercise(),
                 reps: this.isRepsActive() ? this.reps() : null,
                 weight: this.weight(),
                 weightValue: this.weightValue(),
@@ -599,7 +610,12 @@ export class WorkoutComponent {
 
     /** Escape resumes, as it would close a menu or dialog. */
     onEscape() {
-        if (this.isPaused() && !this.isComplete() && !this.summaryOpen()) {
+        if (
+            this.isPaused() &&
+            !this.isComplete() &&
+            !this.summaryOpen() &&
+            !this.exerciseInDetails()
+        ) {
             this.togglePause();
         }
     }
@@ -645,6 +661,7 @@ export class WorkoutComponent {
         if (
             !this.workout() ||
             this.summaryOpen() ||
+            this.exerciseInDetails() ||
             this.isComplete() ||
             (event as KeyboardEvent).repeat ||
             target?.closest?.(SPACE_HANDLED_BY)
@@ -658,6 +675,31 @@ export class WorkoutComponent {
         } else {
             this.togglePause();
         }
+    }
+
+    protected showExercise(exercise: Exercise) {
+        this.exerciseInDetails.set(exercise);
+    }
+
+    /**
+     * Back to the (i) that opened the details; if the workout has moved on to a step with no
+     * exercise meanwhile, to Done or Pause, so focus isn't lost.
+     */
+    protected closeExercise() {
+        this.exerciseInDetails.set(null);
+        afterNextRender(
+            () => {
+                const info = this.host.nativeElement.querySelector<HTMLElement>(
+                    `.workout-face [data-step="${this.stepKey()}"] .workout-face__info`
+                );
+                (
+                    info ??
+                    this.doneButton()?.nativeElement ??
+                    this.mainButton()?.nativeElement
+                )?.focus();
+            },
+            { injector: this.injector }
+        );
     }
 
     /** End workout: the summary opens over the run, which waits, paused, in case of Back. */

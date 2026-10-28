@@ -108,7 +108,23 @@
                                         slide.icon
                                     }}</mat-icon>
                                     @if (slide.label) {
-                                        <p class="workout-face__label">{{ slide.label }}</p>
+                                        <div class="workout-face__name">
+                                            <p class="workout-face__label">{{ slide.label }}</p>
+                                            <!-- How the exercise is done, over the workout,
+                                                 which carries on underneath (RUN-9) -->
+                                            @if (slide.exercise; as exercise) {
+                                                <button
+                                                    type="button"
+                                                    class="workout-face__info"
+                                                    [attr.aria-label]="
+                                                        'Details of ' + exercise.name
+                                                    "
+                                                    (click)="showExercise(exercise)"
+                                                >
+                                                    <mat-icon aria-hidden="true">info</mat-icon>
+                                                </button>
+                                            }
+                                        </div>
                                     }
                                     @if (slide.reps !== null) {
                                         <!-- No clock to compete with, so the count is the big
@@ -287,6 +303,14 @@
         <!-- How it went: once finished, or ended with End workout -->
         @if (summaryOpen()) {
             <app-workout-summary (back)="backToWorkout()" (done)="closeSummary()" />
+        }
+
+        @if (exerciseInDetails(); as exercise) {
+            <app-exercise-details-dialog
+                animate.leave="dialog-leave"
+                [exercise]="exercise"
+                (closed)="closeExercise()"
+            />
         }
     } @else {
         <div
