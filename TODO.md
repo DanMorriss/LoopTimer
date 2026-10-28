@@ -29,7 +29,7 @@ Set up by Dan on 2026-10-28 and tested on his phone (the code in the Home Screen
 - [ ] **Sync (SYN-3, SYN-4):** send and fetch changes as described in the doc, merging with the stores' merge functions; the first sign-in merges the device with the account. Load its code only once signed in. Add the server's clock check (an `updated_at` more than a minute ahead taken as now) to `supabase/schema.sql` with it.
 - [ ] **Sign in with Google and Apple (SYN-7).**
 - [ ] **Move everyone to loopworkouts.com:** the app moved there on 2026-10-28 (Vercel, with www redirecting to it; DNS at GoDaddy), and loop-workouts.vercel.app still serves it, not redirected. Each address keeps its own data, so a redirect would strand what's saved on the old one. Once sync is in, redirect vercel.app to loopworkouts.com (signing in on the new address brings the data back), and take it out of Supabase's Redirect URLs.
-- [ ] **Privacy notice and terms for sync:** they cover accounts (your email address, kept by Supabase in Europe) since PR #140; before sync sends workouts and history, say so, and who to contact (see the Known issue on having them looked over).
+- [ ] **Privacy notice and terms for sync:** they cover accounts (your email address, kept by Supabase in Europe, and the sign-in email sent by Resend) and give dan@loopworkouts.com to contact; before sync sends workouts and history, say so (see the Known issue on having them looked over).
 
 ### Phase 5: Simple planning
 
