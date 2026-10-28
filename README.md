@@ -63,10 +63,10 @@ src/app/
   nav/                 The header, and the bars along the bottom: tabs, the workout's bar, Undo
   history/             Past workouts by day, with delete and undo
   exercises/           The exercises list, and each exercise's page: bests, chart and sessions
-  account/             The Account tab: signing in by email, your data (backups), About, and the way into Settings
+  account/             The Account tab: signing in by email, profile (sex, weight units), your data (backups), About, and the way into Settings
   sync/                Sync with the account (loaded only once signed in), and its status
   legal/               The privacy notice and terms of use
-  settings/            Theme, units, sound and vibration, alarm previews (slides in over Account)
+  settings/            Theme, sound and vibration, alarm previews (slides in over Account)
   workout-setup/       Create or edit a workout (Signal Forms)
   workout-library/     Saved workouts
     workout-card/      One workout: tap to start, swipe to delete, hold to drag (or let go for options)

@@ -239,10 +239,16 @@ describe('AccountComponent', () => {
             expect(link.textContent).toContain('Settings');
             expect(
                 element.querySelector('#' + link.getAttribute('aria-describedby'))!.textContent
-            ).toContain('Theme, units, alarms and sounds');
+            ).toContain('Theme, alarms and sounds');
             link.click();
 
             expect(navigate).toHaveBeenCalledWith('/settings', 'in');
+        });
+
+        it('has your profile, with sex and weight units', () => {
+            expect(element.querySelector('#profile-heading')!.textContent).toBe('Profile');
+            expect(element.querySelector('app-profile input[name="bodyFigure"]')).not.toBeNull();
+            expect(element.querySelector('app-profile input[name="weightUnit"]')).not.toBeNull();
         });
 
         it('has your data, with backups and Clear this device', () => {

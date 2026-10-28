@@ -31,67 +31,6 @@
                     }
                 </div>
             </fieldset>
-
-            <!-- Which figure the body map on exercise pages draws -->
-            <fieldset class="segmented settings__picker" aria-describedby="figure-hint">
-                <legend class="setting__name">Body figure</legend>
-                <div
-                    class="segmented__options"
-                    [style.--count]="figures.length"
-                    [style.--chosen]="chosenFigureIndex()"
-                >
-                    <span class="segmented__thumb" aria-hidden="true"></span>
-                    @for (option of figures; track option.value; let i = $index) {
-                        <label
-                            class="segmented__option"
-                            [class.segmented__option--chosen]="i === chosenFigureIndex()"
-                        >
-                            <input
-                                type="radio"
-                                name="bodyFigure"
-                                class="segmented__input"
-                                [value]="option.value"
-                                [checked]="settings.bodyFigure() === option.value"
-                                (change)="settings.update({ bodyFigure: option.value })"
-                            />
-                            <span class="segmented__label">{{ option.label }}</span>
-                        </label>
-                    }
-                </div>
-                <p class="setting__hint" id="figure-hint">Shows which muscles an exercise works</p>
-            </fieldset>
-        </section>
-
-        <section class="settings__section" aria-labelledby="units-heading">
-            <h3 class="settings__heading" id="units-heading">Units</h3>
-
-            <!-- Weights are always saved in kg, so switching loses nothing -->
-            <fieldset class="segmented">
-                <legend class="setting__name">Weight</legend>
-                <div
-                    class="segmented__options"
-                    [style.--count]="weightUnits.length"
-                    [style.--chosen]="chosenUnitIndex()"
-                >
-                    <span class="segmented__thumb" aria-hidden="true"></span>
-                    @for (option of weightUnits; track option.value; let i = $index) {
-                        <label
-                            class="segmented__option"
-                            [class.segmented__option--chosen]="i === chosenUnitIndex()"
-                        >
-                            <input
-                                type="radio"
-                                name="weightUnit"
-                                class="segmented__input"
-                                [value]="option.value"
-                                [checked]="settings.weightUnit() === option.value"
-                                (change)="settings.update({ weightUnit: option.value })"
-                            />
-                            <span class="segmented__label">{{ option.label }}</span>
-                        </label>
-                    }
-                </div>
-            </fieldset>
         </section>
 
         <section class="settings__section" aria-labelledby="alarms-heading">

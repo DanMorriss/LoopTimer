@@ -33,7 +33,7 @@
 - Each entry shows its title (or "Untitled workout") and a line: start time · time spent · rounds, e.g. "9:05 AM · 12:30 · 3 rounds".
     - Time spent is m:ss, or h:mm:ss over an hour.
     - Rounds: "3 rounds" when finished, "2 of 5 rounds · stopped" when stopped, "12 rounds · until stopped" for a workout that runs until stopped. With a time limit, "7 rounds + 3 in 20:00" (the steps done of the next round, if any), or "4 rounds · stopped before 20:00" when ended before time was up.
-- **Sets**, one line per step, under the entry, in the unit chosen in settings, e.g.:
+- **Sets**, one line per step, under the entry, in the unit chosen in Account → Profile, e.g.:
     - "Squats: 3 × 10 @ 60 kg": the same every set
     - "Squats: 10, 10, 8 @ 60 kg": the reps changed
     - "Squats: 10 @ 60, 8 @ 62.5 kg": the weight changed
