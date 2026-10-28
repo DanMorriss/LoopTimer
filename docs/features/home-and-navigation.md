@@ -16,7 +16,7 @@
 
 ### The tab bar
 
-- Along the bottom of every page but the workout's: **Home**, **Library**, **Exercises**, **History** and **Account**, each an icon with its name under it, each wider than 44px on a 320px-wide phone (about 58px). Home was added as the first tab on 2026-10-28. Settings was a fifth tab until 2026-10-28; it's now a row on Account that slides in over it (see [settings](settings.md)).
+- Along the bottom of every page but the workout's: **Home**, **Exercises**, **Library**, **History** and **Account**, each an icon with its name under it, each wider than 44px on a 320px-wide phone (about 58px). Home was added as the first tab on 2026-10-28, and Exercises moved before Library. Settings was a fifth tab until 2026-10-28; it's now a row on Account that slides in over it (see [settings](settings.md)).
 - It's a capsule floating over the bottom of the page, the same shape on a phone and on a wide screen (up to 26rem wide, centred), in a frosted material the page scrolls under. It sits clear of an iPhone's home bar.
 - The chosen tab has a highlight behind it, which slides to the next one when you change tab, on a spring with no bounce. A tab is chosen on its own page and the pages under it (an exercise's page is under Exercises; Settings, the Privacy notice and Terms of use under Account); making or editing a workout is under **Library**.
 - Screen readers hear it as the "Main" navigation; the chosen tab is the current page on its own page, and the current item on a page under it (e.g. "Library, current" while making a workout).
