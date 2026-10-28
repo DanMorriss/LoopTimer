@@ -3,6 +3,12 @@ import { provideRouter, Router } from '@angular/router';
 import axe from 'axe-core';
 import { AppComponent } from './app.component';
 import { routes } from './app.routes';
+import {
+    FakeAccountClient,
+    fakeAccountClient,
+    provideFakeAccountClient,
+    sessionFor,
+} from './shared/testing/fake-account-client';
 import { makeWorkout, reps, rest, work } from './shared/testing/make-workout';
 import { ExerciseStore } from './shared/state/exercise-store.service';
 import { HistoryStore } from './shared/state/history-store.service';
@@ -39,12 +45,16 @@ for (const theme of ['dark', 'light'] as const) {
         let fixture: ComponentFixture<AppComponent>;
         let router: Router;
         let store: WorkoutStore;
+        let accountClient: FakeAccountClient;
 
         beforeEach(() => {
             document.documentElement.dataset['theme'] = theme;
             localStorage.clear();
             sessionStorage.clear();
-            TestBed.configureTestingModule({ providers: [provideRouter(routes)] });
+            accountClient = fakeAccountClient();
+            TestBed.configureTestingModule({
+                providers: [provideRouter(routes), provideFakeAccountClient(accountClient)],
+            });
             router = TestBed.inject(Router);
             store = TestBed.inject(WorkoutStore);
             fixture = TestBed.createComponent(AppComponent);
@@ -480,8 +490,37 @@ for (const theme of ['dark', 'light'] as const) {
         });
 
         describe('account', () => {
-            it('as first opened', async () => {
+            it('as first opened, signed out', async () => {
                 await open('/account');
+                await expectNoViolations();
+            });
+
+            it('signing in with no email (and its error)', async () => {
+                await open('/account');
+                click('.account__form button[type="submit"]');
+                await settle();
+                await expectNoViolations();
+            });
+
+            it('asking for the code from the email', async () => {
+                await open('/account');
+                const input = fixture.nativeElement.querySelector(
+                    '#account-email'
+                ) as HTMLInputElement;
+                input.value = 'me@example.com';
+                input.dispatchEvent(new Event('input'));
+                click('.account__form button[type="submit"]');
+                await settle();
+                expect(fixture.nativeElement.querySelector('#account-code')).not.toBeNull();
+                await expectNoViolations();
+            });
+
+            it('signed in, asking before deleting the account', async () => {
+                accountClient.change(sessionFor('me@example.com'));
+                await open('/account');
+                await expectNoViolations();
+                click('#account-delete');
+                await settle();
                 await expectNoViolations();
             });
 

@@ -22,10 +22,14 @@ The plan is in `docs/features/backup-and-sync.md` (Sync and The backend), as agr
 
 The Account tab is in (the fifth tab, at `/account`), with **Clear this device** there and in Settings → Your data (SYN-9). Dan made the Supabase project on 2026-10-27, in an EU region: `https://cpgacyzlfyskifzhkotu.supabase.co`, with a publishable key (safe in the app; the service role key never goes in it).
 
-- [ ] **Next: email sign-in and deleting an account (SYN-3, SYN-8):** check Supabase's current pricing and limits, create the records table (each user only sees their own rows), and in the Account tab sign in by an email link, show who's signed in, sign out (keeping the data on the device) and delete the account (a server function, as the browser can't delete a user). Load Supabase's code only on the Account tab and once signed in, to keep it out of the first load.
-- [ ] **Sync (SYN-3, SYN-4):** send and fetch changes as described in the doc, merging with the stores' merge functions; the first sign-in merges the device with the account. Load its code only once signed in.
+Signing in by an email link or its code, signing out and deleting the account are built (PR #140): Supabase's code loads only on the Account tab. Supabase checked on 2026-10-28: the free tier has 50,000 monthly users, a 500 MB database and 5 GB of egress, and pauses after a week unused; Pro is $25 a month.
+
+- [ ] **Dan: run `supabase/schema.sql`** in the project's SQL editor (the records table and `delete_my_account()`); until then Delete account says it couldn't delete.
+- [ ] **Dan: put the code in the sign-in emails:** in Authentication → Emails, add `{{ .Token }}` to the Magic Link and Confirm signup templates, e.g. "Or type this code in Loop Workouts: {{ .Token }}". Until then only the link works, and the Home Screen app on an iPhone can't sign in (links open in Safari).
+- [ ] **Email that reaches everyone (before anyone else signs in):** Supabase's built-in email only sends to the project's team, 2 an hour. Set up a provider (e.g. Resend) under Authentication → SMTP, on a domain with SPF, DKIM and DMARC.
+- [ ] **Sync (SYN-3, SYN-4):** send and fetch changes as described in the doc, merging with the stores' merge functions; the first sign-in merges the device with the account. Load its code only once signed in. Add the server's clock check (an `updated_at` more than a minute ahead taken as now) to `supabase/schema.sql` with it.
 - [ ] **Sign in with Google and Apple (SYN-7).**
-- [ ] **Privacy notice and terms for sync:** say what's stored on the server, that it's kept in the EU, and who to contact, before sync sends anything off the device (see the Known issue on having them looked over).
+- [ ] **Privacy notice and terms for sync:** they cover accounts (your email address, kept by Supabase in Europe) since PR #140; before sync sends workouts and history, say so, and who to contact (see the Known issue on having them looked over).
 
 ### Phase 5: Simple planning
 

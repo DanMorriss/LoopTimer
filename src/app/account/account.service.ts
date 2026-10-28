@@ -1,0 +1,142 @@
+import { DOCUMENT, inject, Service, signal } from '@angular/core';
+import type { Session } from '@supabase/supabase-js';
+import { AccountClient, ACCOUNT_CLIENT } from './account-client';
+
+export type AccountState =
+    | { status: 'loading' }
+    | { status: 'signed-out' }
+    | { status: 'signed-in'; email: string };
+
+export type SendResult = 'sent' | 'too-many' | 'failed';
+
+/** Where a sign-in link brings you back to. */
+export const SIGN_IN_PATH = '/account';
+
+/**
+ * Signing in to an account (SYN-3), by an email link or the code in the same email, signing
+ * out and deleting the account (SYN-8). Signing out and deleting leave this device's data as
+ * it is. Made when the Account tab first opens, which loads Supabase's code.
+ */
+@Service()
+export class AccountService {
+    private readonly makeClient = inject(ACCOUNT_CLIENT);
+    private readonly document = inject(DOCUMENT);
+    private client: Promise<AccountClient> | null = null;
+
+    private readonly _state = signal<AccountState>({ status: 'loading' });
+    readonly state = this._state.asReadonly();
+
+    /**
+     * Why the sign-in link that opened the app didn't work (it's expired, or was used
+     * already), or null.
+     */
+    readonly linkProblem = signal<string | null>(null);
+
+    constructor() {
+        this.linkProblem.set(this.takeLinkProblem());
+        void this.start();
+    }
+
+    private async start() {
+        try {
+            const client = await this.connect();
+            client.auth.onAuthStateChange((_event, session) => this.show(session));
+            const { data } = await client.auth.getSession();
+            // Unless a sign-in or out has been heard since, which is newer
+            if (this._state().status === 'loading') {
+                this.show(data.session);
+            }
+        } catch {
+            // Offline with the code not loaded yet, say: as if signed out, until it's back
+            this._state.set({ status: 'signed-out' });
+        }
+    }
+
+    private connect(): Promise<AccountClient> {
+        this.client ??= this.makeClient();
+        return this.client;
+    }
+
+    private show(session: Session | null) {
+        this._state.set(
+            session
+                ? { status: 'signed-in', email: session.user.email ?? '' }
+                : { status: 'signed-out' }
+        );
+    }
+
+    /** Emails a link (and a code) to sign in with, making the account if it's new. */
+    async sendLink(email: string): Promise<SendResult> {
+        try {
+            const client = await this.connect();
+            const { error } = await client.auth.signInWithOtp({
+                email,
+                options: {
+                    shouldCreateUser: true,
+                    emailRedirectTo: this.document.location.origin + SIGN_IN_PATH,
+                },
+            });
+            if (!error) {
+                return 'sent';
+            }
+            return error.status === 429 ? 'too-many' : 'failed';
+        } catch {
+            return 'failed';
+        }
+    }
+
+    /** Signs in with the code from the email, giving whether it worked. */
+    async enterCode(email: string, code: string): Promise<boolean> {
+        try {
+            const client = await this.connect();
+            const { error } = await client.auth.verifyOtp({ email, token: code, type: 'email' });
+            return !error;
+        } catch {
+            return false;
+        }
+    }
+
+    /** Signs this device out, keeping its data. Gives whether it worked. */
+    async signOut(): Promise<boolean> {
+        try {
+            const client = await this.connect();
+            const { error } = await client.auth.signOut({ scope: 'local' });
+            return !error;
+        } catch {
+            return false;
+        }
+    }
+
+    /**
+     * Deletes the account and everything of it on the server, then signs this device out,
+     * keeping its data. Gives whether the account was deleted.
+     */
+    async deleteAccount(): Promise<boolean> {
+        try {
+            const client = await this.connect();
+            const { error } = await client.rpc('delete_my_account');
+            if (error) {
+                return false;
+            }
+            await client.auth.signOut({ scope: 'local' });
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    /**
+     * A link that didn't work comes back with why in the address, e.g.
+     * `#error=access_denied&error_code=otp_expired`. Takes it out of the address, so a
+     * refresh doesn't show it again, and says what to do.
+     */
+    private takeLinkProblem(): string | null {
+        const location = this.document.location;
+        const params = new URLSearchParams(location.hash.slice(1) || location.search.slice(1));
+        if (!params.has('error') && !params.has('error_code')) {
+            return null;
+        }
+        this.document.defaultView?.history.replaceState(null, '', location.pathname);
+        return 'That sign-in link has expired or was used already. Send yourself another.';
+    }
+}
