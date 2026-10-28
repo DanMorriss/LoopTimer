@@ -35,6 +35,7 @@ describe('TabBarComponent', () => {
     it('is a main navigation linking to every page, labelled under its icon', () => {
         expect(element.querySelector('nav')!.getAttribute('aria-label')).toBe('Main');
         expect(tabs().map((tab) => [label(tab), tab.getAttribute('href')])).toEqual([
+            ['Home', '/home'],
             ['Library', '/library'],
             ['Exercises', '/exercises'],
             ['History', '/history'],
@@ -50,22 +51,22 @@ describe('TabBarComponent', () => {
             '/history'
         );
         expect(element.querySelector<HTMLElement>('nav')!.style.getPropertyValue('--chosen')).toBe(
-            '2'
+            '3'
         );
     });
 
     it('marks Library while making a workout, as the place you are in', async () => {
         await go('/setup');
 
-        expect(tabs()[0].getAttribute('aria-current')).toBe('true');
+        expect(tabs()[1].getAttribute('aria-current')).toBe('true');
     });
 
     it("marks Exercises on an exercise's page, and keeps the filter's address out of it", async () => {
         await go('/exercises/builtin:squat');
-        expect(tabs()[1].getAttribute('aria-current')).toBe('true');
+        expect(tabs()[2].getAttribute('aria-current')).toBe('true');
 
         await go('/exercises?muscles=quads');
-        expect(tabs()[1].getAttribute('aria-current')).toBe('page');
+        expect(tabs()[2].getAttribute('aria-current')).toBe('page');
     });
 
     it('marks Account in Settings and the legal pages, which slide in over it', async () => {

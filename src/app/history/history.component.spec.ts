@@ -227,7 +227,7 @@ describe('HistoryComponent', () => {
             })
         );
 
-        expect(text('.history__muscles-title')).toEqual(['Muscles worked this week']);
+        expect(text('.muscles-week__title')).toEqual(['Muscles worked this week']);
         expect(fixture.nativeElement.querySelector('app-body-map')).not.toBeNull();
         // A bar per muscle group, most worked first; the plank is too long ago to count
         const labels = text('.bars__label');

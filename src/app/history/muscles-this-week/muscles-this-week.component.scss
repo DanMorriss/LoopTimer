@@ -1,0 +1,22 @@
+:host {
+    display: block;
+}
+
+// A card on the panel, as the exercises page's body map is
+.muscles-week {
+    padding: 1rem;
+    border: 1px solid var(--panel-border);
+    border-radius: 0.9rem;
+    background: var(--card);
+}
+
+.muscles-week__title {
+    margin: 0 0 0.75rem;
+    color: var(--text-strong);
+    font-size: 1rem;
+    text-align: center;
+}
+
+.muscles-week__bars {
+    margin-top: 1.25rem;
+}

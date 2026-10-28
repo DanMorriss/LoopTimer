@@ -25,20 +25,13 @@ describe('routes', () => {
     });
     afterEach(() => localStorage.clear());
 
-    it('opens on the library, where workouts are started', async () => {
+    it('opens on Home', async () => {
         const harness = await RouterTestingHarness.create();
 
         await harness.navigateByUrl('/');
 
-        expect(TestBed.inject(Router).url).toBe('/library');
-    });
-
-    it('sends the old home page to the library, for links and bookmarks to it', async () => {
-        const harness = await RouterTestingHarness.create();
-
-        await harness.navigateByUrl('/home');
-
-        expect(TestBed.inject(Router).url).toBe('/library');
+        expect(TestBed.inject(Router).url).toBe('/home');
+        expect(harness.routeNativeElement!.querySelector('app-loop-logo')).not.toBeNull();
     });
 
     // It loads in the background, so the page would otherwise say there's nothing yet
