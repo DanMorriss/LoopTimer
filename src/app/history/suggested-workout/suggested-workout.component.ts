@@ -30,7 +30,7 @@ let nextId = 0;
                 @if (startable()) {
                     <button
                         type="button"
-                        class="btn-pill"
+                        class="btn-main"
                         [attr.aria-label]="'Start ' + suggested.workout.title"
                         (click)="start(suggested.workout)"
                     >
