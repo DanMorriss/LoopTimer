@@ -26,12 +26,10 @@ Signing in by an email link or its code, signing out and deleting the account ar
 
 Set up by Dan on 2026-10-28 and tested on his phone (the code in the Home Screen app, and the link in Safari): `supabase/schema.sql` is run, and sign-in emails come from Loop Workouts <signin@mail.loopworkouts.com>, sent by Resend (EU) through Supabase's custom SMTP, with the code in the Magic Link and Confirm signup templates. The domain, loopworkouts.com, is at GoDaddy, with Microsoft 365 for Dan's own email on the bare domain; Resend's DNS records are on the `mail` subdomain so they don't clash, and GoDaddy's DMARC record covers it.
 
-Sync is built (SYN-3, SYN-4; PR #144): fetch, merge as an import does, then send what's changed, with `pull_records()` and `push_records()` in `supabase/schema.sql` (and the server's clock check there). Its code loads only once signed in. The privacy notice and terms say what's sent.
+Sync is built (SYN-3, SYN-4; PR #144): fetch, merge as an import does, then send what's changed, with `pull_records()` and `push_records()` in `supabase/schema.sql` (and the server's clock check there). Its code loads only once signed in. The privacy notice and terms say what's sent. Dan ran the new `supabase/schema.sql` and tried sync on two devices on 2026-10-28: it all works.
 
-- [ ] **Dan: run `supabase/schema.sql` again** in the SQL editor, before PR #144 is deployed: it adds the `version` column, the two sync functions, and makes the table read-only to the app except through them. Until then, the Account tab says it couldn't sync.
-- [ ] **Try sync on two devices:** sign in on the phone and the laptop, change and delete a workout on each, and check both end up the same.
 - [ ] **Sign in with Google and Apple (SYN-7).**
-- [ ] **Move everyone to loopworkouts.com:** the app moved there on 2026-10-28 (Vercel, with www redirecting to it; DNS at GoDaddy), and loop-workouts.vercel.app still serves it, not redirected. Each address keeps its own data, so a redirect would strand what's saved on the old one. Once sync is in, redirect vercel.app to loopworkouts.com (signing in on the new address brings the data back), and take it out of Supabase's Redirect URLs.
+- [ ] **Move everyone to loopworkouts.com:** the app moved there on 2026-10-28 (Vercel, with www redirecting to it; DNS at GoDaddy), and loop-workouts.vercel.app still serves it, not redirected. Each address keeps its own data, so a redirect would strand what's saved on the old one. Now that sync is in, redirect vercel.app to loopworkouts.com (signing in on the new address brings the data back), and take it out of Supabase's Redirect URLs.
 
 ### Phase 5: Simple planning
 

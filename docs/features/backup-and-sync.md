@@ -18,7 +18,7 @@ Export and import (SYN-1, SYN-2) are built, with a prompt for having an AI turn 
 
 ### Export and import (SYN-1, SYN-2)
 
-- They're in **Settings → Your data**, under the hint "Your workouts and history are saved on this device only. Export a backup to keep them safe, or to move them to another device."
+- They're in **Settings → Your data**, under the hint "Your workouts and history are saved on this device, and with your account if you sign in. Export a backup to keep a copy of your own."
 - **Export backup** downloads one file of the workouts, the library's order, history, your own exercises, your notes on exercises, which exercises are hidden from the picker, deletions and settings (your equipment included), e.g. `loop-workouts-2026-10-21.json` (dated by the device's calendar), and says "Backup saved as loop-workouts-2026-10-21.json." The file's shape is in [data](data.md#backup-file).
 - **Import backup** opens a file picker. The chosen file is **merged** with what's here, by id:
     - A workout, history entry, exercise of your own, note on an exercise or hidden exercise only in the file is **added**.
@@ -97,7 +97,7 @@ Signing in makes the account, if it's new, and starts sync (below).
 
 Decided with Dan on 2026-10-27:
 
-- **An account is optional.** Without one, the app works as it does now, on the device only.
+- **An account is optional.** Without one, the app works as it did before accounts, on the device only.
 - **Signing in is by an email link** to start with (type your email, tap the link it sends). Google and Apple come later (SYN-7). If an iPhone app offers Google, the App Store asks for Sign in with Apple beside it.
 - **An Account tab** in the tab bar is where you sign in, see when it last synced, sign out and **delete your account** (SYN-8). Deleting it removes everything of yours on the server; what's on the device stays.
 - **Signing out keeps the data on the device**, so the app carries on as it would without an account. To remove it too, there's **Clear this device** (above).
