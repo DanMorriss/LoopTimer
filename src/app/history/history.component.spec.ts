@@ -266,8 +266,8 @@ describe('HistoryComponent', () => {
         };
         create(makeEntry({ sets: [squat, { ...squat, round: 1 }] }));
 
-        expect(text('.history__suggestion-title')).toEqual(['Push']);
-        expect(text('.history__suggestion-reason')).toEqual([
+        expect(text('.suggestion__title')).toEqual(['Push']);
+        expect(text('.suggestion__reason')).toEqual([
             'For Chest (0 sets), the least worked this week.',
         ]);
 

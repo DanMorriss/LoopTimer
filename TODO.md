@@ -37,7 +37,9 @@ Sync is built (SYN-3, SYN-4; PR #144): fetch, merge as an import does, then send
 
 ### Phase 6: Suggested next weight
 
-A rep step offers a step up (2.5 kg or 5 lb) when every set hit its reps last time (PRG-5). Phase 6 is done.
+A rep step offers a step up (2.5 kg or 5 lb) when every set hit its reps last time (PRG-5). Phase 6 is done. The workout summary says the same for next time, with one more rep for a step with no weight (PRG-10), and shows the muscles worked (PRG-11) and the suggested next workout (PRG-9).
+
+- [ ] **Next time's step-ups, carried over?** The summary's Next time (PRG-10) only suggests: should it offer to put them on the saved workout, and should the extra rep show mid-workout next time as the weight does? Dan to decide.
 
 ### Alarms (any time)
 

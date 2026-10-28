@@ -8,21 +8,18 @@ import {
     Injector,
     signal,
 } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { MUSCLE_LABELS } from '../models/exercise';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HistoryEntry } from '../models/history';
-import { muscleBalance, setsByMuscle, suggestNextWorkout } from '../models/muscle-balance';
-import { Workout } from '../models/workout';
+import { muscleBalance, setsByMuscle } from '../models/muscle-balance';
 import { BodyMapComponent } from '../shared/components/body-map/body-map.component';
 import { changeSmoothly } from '../shared/layout-change';
 import { injectPrefersReducedMotion } from '../shared/reduced-motion';
 import { ExerciseStore } from '../shared/state/exercise-store.service';
-import { ActiveRunService } from '../shared/run/active-run.service';
 import { HistoryStore } from '../shared/state/history-store.service';
-import { WorkoutStore } from '../shared/state/workout-store.service';
 import { UndoService } from '../shared/undo/undo.service';
 import { HistoryEntryComponent } from './history-entry/history-entry.component';
 import { MuscleBarsComponent } from './muscle-bars/muscle-bars.component';
+import { SuggestedWorkoutComponent } from './suggested-workout/suggested-workout.component';
 import { entryName, formatDuration } from './history-format';
 
 interface DayGroup {
@@ -37,9 +34,6 @@ interface DayGroup {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-/** "Glutes, Quads and Calves". */
-const LIST = new Intl.ListFormat('en-GB');
-
 function dayKey(time: number): string {
     const date = new Date(time);
     const pad = (n: number) => String(n).padStart(2, '0');
@@ -52,7 +46,14 @@ function dayKey(time: number): string {
  */
 @Component({
     selector: 'app-history',
-    imports: [BodyMapComponent, DatePipe, HistoryEntryComponent, MuscleBarsComponent, RouterLink],
+    imports: [
+        BodyMapComponent,
+        DatePipe,
+        HistoryEntryComponent,
+        MuscleBarsComponent,
+        RouterLink,
+        SuggestedWorkoutComponent,
+    ],
     templateUrl: './history.component.html',
     styleUrl: './history.component.scss',
     host: {
@@ -63,9 +64,6 @@ function dayKey(time: number): string {
 export class HistoryComponent {
     private readonly history = inject(HistoryStore);
     private readonly exercises = inject(ExerciseStore);
-    private readonly workouts = inject(WorkoutStore);
-    private readonly run = inject(ActiveRunService);
-    private readonly router = inject(Router);
     private readonly injector = inject(Injector);
     private readonly reducedMotion = injectPrefersReducedMotion();
     private readonly now = Date.now();
@@ -124,35 +122,6 @@ export class HistoryComponent {
         };
     });
 
-    /** The saved workout for the least worked muscles this week (PRG-9). */
-    protected readonly suggestion = computed(() => {
-        const lastDone = new Map<string, number>();
-        // Newest first, so the first of each workout is when it was last done
-        for (const entry of this.history.entries()) {
-            if (!lastDone.has(entry.workoutId)) {
-                lastDone.set(entry.workoutId, entry.startedAt);
-            }
-        }
-        const suggested = suggestNextWorkout(
-            this.workouts.workouts(),
-            this.weekSets(),
-            (id) => this.exercises.byId(id),
-            lastDone
-        );
-        if (!suggested) {
-            return null;
-        }
-        const muscles = suggested.muscles.slice(0, 3).map((muscle) => {
-            const sets = this.weekSets().get(muscle) ?? 0;
-            const count = Number.isInteger(sets) ? `${sets}` : sets.toFixed(1);
-            return `${MUSCLE_LABELS[muscle]} (${count} ${sets === 1 ? 'set' : 'sets'})`;
-        });
-        return {
-            workout: suggested.workout,
-            reason: `For ${LIST.format(muscles)}, the least worked this week.`,
-        };
-    });
-
     private readonly undo = inject(UndoService);
     private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
     /** Whose menu is open, and whose note is being edited: one of each at most. */
@@ -172,12 +141,6 @@ export class HistoryComponent {
             this.editingId.set(noteFor);
             this.bringIntoView(run, !noteFor);
         }
-    }
-
-    /** Starts the suggested workout, as the library's Start does. */
-    protected start(workout: Workout) {
-        this.run.start(workout);
-        this.router.navigate(['/workout']);
     }
 
     protected toggleMenu(id: string) {

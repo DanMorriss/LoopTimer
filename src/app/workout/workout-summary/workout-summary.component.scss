@@ -272,6 +272,15 @@
     }
 }
 
+.summary__body-map {
+    margin-top: 0.75rem;
+}
+
+// The card for the workout to do next, when there is one
+.summary__suggestion:not(:empty) {
+    margin-top: 1.5rem;
+}
+
 .summary__nothing {
     margin: 1.5rem 0 0;
     color: var(--text-muted);

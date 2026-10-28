@@ -104,6 +104,19 @@
 
             <app-summary-sets />
 
+            <app-summary-step-ups />
+
+            @if (muscles().hasExercises) {
+                <section class="summary__section" aria-labelledby="summary-muscles">
+                    <h3 id="summary-muscles">Muscles worked</h3>
+                    <app-body-map
+                        class="summary__body-map"
+                        [main]="muscles().main"
+                        [supporting]="muscles().supporting"
+                    />
+                </section>
+            }
+
             <section class="summary__section">
                 <label class="picker-field" for="summary-note">
                     <span class="picker-field__label">Note</span>
@@ -117,6 +130,9 @@
                     />
                 </label>
             </section>
+
+            <!-- As the history page suggests it; started from there or the library, not here -->
+            <app-suggested-workout class="summary__suggestion" [startable]="false" />
         } @else {
             <p class="summary__nothing">Nothing to log: no step was done before it ended.</p>
         }
