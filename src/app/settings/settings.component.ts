@@ -5,6 +5,7 @@ import { PageSlide } from '../nav/page-slide';
 import { AlarmService } from '../shared/alarms/alarm.service';
 import { BackupService, ImportResult } from '../shared/backup/backup.service';
 import { planPrompt } from '../shared/backup/plan-prompt';
+import { ClearDeviceComponent } from '../shared/components/clear-device/clear-device.component';
 import { ToggleSwitchComponent } from '../shared/components/toggle-switch/toggle-switch.component';
 import { injectPrefersReducedMotion } from '../shared/reduced-motion';
 import { LoopLogoComponent } from '../shared/components/loop-logo/loop-logo.component';
@@ -23,7 +24,7 @@ const SWITCHING_CLASS = 'theme-switching';
 
 @Component({
     selector: 'app-settings',
-    imports: [ToggleSwitchComponent, LoopLogoComponent],
+    imports: [ToggleSwitchComponent, LoopLogoComponent, ClearDeviceComponent],
     templateUrl: './settings.component.html',
     styleUrl: './settings.component.scss',
 })

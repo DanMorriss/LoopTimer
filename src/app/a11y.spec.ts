@@ -479,6 +479,20 @@ for (const theme of ['dark', 'light'] as const) {
             });
         });
 
+        describe('account', () => {
+            it('as first opened', async () => {
+                await open('/account');
+                await expectNoViolations();
+            });
+
+            it('asking before clearing this device', async () => {
+                await open('/account');
+                click('app-clear-device button');
+                await settle();
+                await expectNoViolations();
+            });
+        });
+
         describe('workout', () => {
             it('with no workout selected', async () => {
                 await open('/workout');

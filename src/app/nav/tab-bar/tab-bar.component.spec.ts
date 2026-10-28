@@ -38,6 +38,7 @@ describe('TabBarComponent', () => {
             ['Library', '/library'],
             ['Exercises', '/exercises'],
             ['History', '/history'],
+            ['Account', '/account'],
             ['Settings', '/settings'],
         ]);
     });

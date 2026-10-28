@@ -6,6 +6,7 @@ export const TABS = [
     { path: '/library', label: 'Library', icon: 'view_list', holds: ['/setup'] },
     { path: '/exercises', label: 'Exercises', icon: 'fitness_center', holds: [] },
     { path: '/history', label: 'History', icon: 'history', holds: [] },
+    { path: '/account', label: 'Account', icon: 'account_circle', holds: [] },
     { path: '/settings', label: 'Settings', icon: 'settings', holds: ['/privacy', '/terms'] },
 ] as const;
 

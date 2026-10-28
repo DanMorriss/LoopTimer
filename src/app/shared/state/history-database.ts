@@ -63,3 +63,20 @@ export function write(
         }
     });
 }
+
+/**
+ * Deletes the database and everything in it, settling once it's gone (or couldn't be). Open
+ * connections close themselves for it (see `openDatabase()`).
+ */
+export function deleteDatabase(): Promise<void> {
+    return new Promise((resolve) => {
+        try {
+            const request = indexedDB.deleteDatabase(DATABASE_NAME);
+            request.onsuccess = () => resolve();
+            request.onerror = () => resolve();
+            request.onblocked = () => resolve();
+        } catch {
+            resolve();
+        }
+    });
+}

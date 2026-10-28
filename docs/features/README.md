@@ -85,6 +85,7 @@ Status: ✅ done, ◐ partly, — not started. The iOS column fills in as a port
 | SYN-6  | Have an AI turn a plan I already have into workouts to import            | ✅  | —   | [backup-and-sync](backup-and-sync.md)         |
 | SYN-7  | Sign in with Google or Apple                                             | —   | —   | [backup-and-sync](backup-and-sync.md)         |
 | SYN-8  | Delete my account and what the server keeps                              | —   | —   | [backup-and-sync](backup-and-sync.md)         |
+| SYN-9  | Clear everything from this device                                        | ✅  | —   | [backup-and-sync](backup-and-sync.md)         |
 | PLN-1  | Set which workouts I do on which days                                    | —   | —   | [planning](planning.md)                       |
 | PLN-2  | See what's due today in the library                                      | —   | —   | [planning](planning.md)                       |
 | PLN-3  | See whether I kept to the plan this week                                 | —   | —   | [planning](planning.md)                       |

@@ -1,0 +1,34 @@
+@use 'type' as *;
+
+// Laid out as Settings is: the title in the display face, sections' headings semibold
+.account__title,
+.account__heading {
+    margin: 0;
+    color: var(--text-strong);
+}
+
+.account__title {
+    @include display;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    text-align: center;
+}
+
+.account__heading {
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+.account__section + .account__section {
+    margin-top: 1.75rem;
+}
+
+.account__hint {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.account__clear {
+    margin-top: 0.75rem;
+}
