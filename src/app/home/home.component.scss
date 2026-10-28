@@ -1,0 +1,28 @@
+.home {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.home__logo {
+    width: min(20rem, 100%);
+    margin: 0.5rem auto;
+}
+
+// A card that has nothing to show leaves no gap
+.home__card:empty {
+    display: none;
+}
+
+.home__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    color: var(--text-muted);
+    text-align: center;
+
+    p {
+        margin: 0;
+    }
+}

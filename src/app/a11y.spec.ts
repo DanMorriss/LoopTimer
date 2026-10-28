@@ -262,6 +262,54 @@ for (const theme of ['dark', 'light'] as const) {
             });
         });
 
+        describe('home', () => {
+            it('before any workout', async () => {
+                await open('/home');
+                expect(fixture.nativeElement.querySelector('.home__empty')).not.toBeNull();
+                await expectNoViolations();
+            });
+
+            it('with a suggested workout and the muscles worked this week', async () => {
+                store.addWorkout({
+                    title: 'Push',
+                    repeats: 3,
+                    steps: [
+                        {
+                            kind: 'reps',
+                            reps: 5,
+                            name: 'Bench press',
+                            exerciseId: 'builtin:bench-press',
+                        },
+                    ],
+                });
+                const now = Date.now();
+                TestBed.inject(HistoryStore).record({
+                    id: 'run-0',
+                    workoutId: 'workout-1',
+                    title: 'Legs',
+                    startedAt: now - 60_000,
+                    endedAt: now,
+                    activeSeconds: 60,
+                    roundsCompleted: 1,
+                    totalRounds: 1,
+                    outcome: 'finished',
+                    sets: [
+                        {
+                            round: 0,
+                            step: 0,
+                            name: 'Back squat',
+                            reps: 5,
+                            exerciseId: 'builtin:back-squat',
+                        },
+                    ],
+                });
+                await open('/home');
+                expect(fixture.nativeElement.querySelector('.suggestion')).not.toBeNull();
+                expect(fixture.nativeElement.querySelector('.muscles-week')).not.toBeNull();
+                await expectNoViolations();
+            });
+        });
+
         describe('library', () => {
             it('empty', async () => {
                 await open('/library');

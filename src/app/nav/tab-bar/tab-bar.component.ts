@@ -5,7 +5,7 @@ import { injectCurrentUrl, isOnPage } from '../current-url';
 import { TABS } from './tabs';
 
 /**
- * The tabs along the bottom: Library, Exercises, History and Account, as on an iPhone. A
+ * The tabs along the bottom: Home, Library, Exercises, History and Account, as on an iPhone. A
  * highlight sits behind the chosen one and slides to the next. Not on the workout page,
  * which has the whole screen; the workout shows in the bar above the tabs everywhere else.
  */

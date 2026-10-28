@@ -10,15 +10,12 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HistoryEntry } from '../models/history';
-import { muscleBalance, setsByMuscle } from '../models/muscle-balance';
-import { BodyMapComponent } from '../shared/components/body-map/body-map.component';
 import { changeSmoothly } from '../shared/layout-change';
 import { injectPrefersReducedMotion } from '../shared/reduced-motion';
-import { ExerciseStore } from '../shared/state/exercise-store.service';
 import { HistoryStore } from '../shared/state/history-store.service';
 import { UndoService } from '../shared/undo/undo.service';
 import { HistoryEntryComponent } from './history-entry/history-entry.component';
-import { MuscleBarsComponent } from './muscle-bars/muscle-bars.component';
+import { MusclesThisWeekComponent } from './muscles-this-week/muscles-this-week.component';
 import { SuggestedWorkoutComponent } from './suggested-workout/suggested-workout.component';
 import { entryName, formatDuration } from './history-format';
 
@@ -47,10 +44,9 @@ function dayKey(time: number): string {
 @Component({
     selector: 'app-history',
     imports: [
-        BodyMapComponent,
         DatePipe,
         HistoryEntryComponent,
-        MuscleBarsComponent,
+        MusclesThisWeekComponent,
         RouterLink,
         SuggestedWorkoutComponent,
     ],
@@ -63,7 +59,6 @@ function dayKey(time: number): string {
 })
 export class HistoryComponent {
     private readonly history = inject(HistoryStore);
-    private readonly exercises = inject(ExerciseStore);
     private readonly injector = inject(Injector);
     private readonly reducedMotion = injectPrefersReducedMotion();
     private readonly now = Date.now();
@@ -94,31 +89,6 @@ export class HistoryComponent {
         return {
             workouts: recent.length,
             time: formatDuration(recent.reduce((total, entry) => total + entry.activeSeconds, 0)),
-        };
-    });
-
-    /** Sets per muscle in the last seven days (PRG-6). */
-    private readonly weekSets = computed(() =>
-        setsByMuscle(
-            this.history.entries().filter((entry) => entry.startedAt >= this.now - 7 * DAY_MS),
-            (id) => this.exercises.byId(id)
-        )
-    );
-
-    /**
-     * Which muscles have been used in the last seven days (PRG-6): a muscle with a set or more
-     * shades as main on the body map, under that as supporting. Then a bar per muscle group
-     * against the sets a week aimed for (PRG-8), most worked first.
-     */
-    protected readonly musclesWorked = computed(() => {
-        const balance = muscleBalance(this.weekSets());
-        return {
-            hasData: this.weekSets().size > 0,
-            main: balance.filter(({ sets }) => sets >= 1).map(({ muscle }) => muscle),
-            supporting: balance
-                .filter(({ sets }) => sets > 0 && sets < 1)
-                .map(({ muscle }) => muscle),
-            balance,
         };
     });
 

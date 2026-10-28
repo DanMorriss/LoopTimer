@@ -3,17 +3,20 @@
 ## Stories
 
 - **NAV-1** As a user I want to get to any page from anywhere, and straight back to a workout in progress.
+- **NAV-2** As a user I want the app to open on what to do next and how my week is going.
 
 ## Rules
 
 ### Where the app opens
 
-- The app opens on the **Library**, where workouts are started and **New** at its top right makes a new one. `/` and the old `/home` both go there.
-- There's no separate home page any more. The **∞ logo** that was the home page is in **Account**, under **About**: the loop draws itself in and a light travels round it (it rests where the loops cross with reduced motion on).
+- The app opens on **Home** (NAV-2), at `/home`; `/` goes there. It came back on 2026-10-28, after the app had opened on the Library since the tab bar came in.
+- Home has the **∞ logo** at the top (the loop draws itself in and a light travels round it; it rests where the loops cross with reduced motion on), then the **suggested next workout** card, with Start, and the **muscles worked this week** card (the body map and a bar per muscle group), both the same as on the History page (see [progress](progress.md)). A card with nothing to show isn't there.
+- Before any workout, under the logo it says "Do a workout, and what to do next and the muscles you've worked show here.", with **Go to the library**.
+- The logo is in **Account**, under **About**, too.
 
 ### The tab bar
 
-- Along the bottom of every page but the workout's: **Library**, **Exercises**, **History** and **Account**, each an icon with its name under it, each wider than 44px on a 320px-wide phone. Settings was a fifth tab until 2026-10-28; it's now a row on Account that slides in over it (see [settings](settings.md)).
+- Along the bottom of every page but the workout's: **Home**, **Library**, **Exercises**, **History** and **Account**, each an icon with its name under it, each wider than 44px on a 320px-wide phone (about 58px). Home was added as the first tab on 2026-10-28. Settings was a fifth tab until 2026-10-28; it's now a row on Account that slides in over it (see [settings](settings.md)).
 - It's a capsule floating over the bottom of the page, the same shape on a phone and on a wide screen (up to 26rem wide, centred), in a frosted material the page scrolls under. It sits clear of an iPhone's home bar.
 - The chosen tab has a highlight behind it, which slides to the next one when you change tab, on a spring with no bounce. A tab is chosen on its own page and the pages under it (an exercise's page is under Exercises; Settings, the Privacy notice and Terms of use under Account); making or editing a workout is under **Library**.
 - Screen readers hear it as the "Main" navigation; the chosen tab is the current page on its own page, and the current item on a page under it (e.g. "Library, current" while making a workout).
@@ -41,7 +44,9 @@
 
 ## Acceptance criteria
 
-- Given I open the app, then it's on the Library, with Library chosen in the tab bar.
+- Given I open the app, then it's on Home, with Home chosen in the tab bar.
+- Given no workouts yet, when I open Home, then it shows the logo and Go to the library.
+- Given a workout done this week and a saved workout to suggest, when I open Home, then it shows the logo, then the suggested next workout, then the muscles worked this week.
 - Given the History tab, when I press Account, then Account opens and the highlight slides to it.
 - Given Settings, opened from Account, then Account is chosen in the tab bar.
 - Given I'm making a workout, then Library is chosen.
@@ -56,7 +61,7 @@
 
 ## Platform notes
 
-- **Web:** `TabBarComponent` (`src/app/nav/tab-bar/`, tabs in `tabs.ts`), the ‹ back link at the top of a page that slides in over another in `BackLinkComponent` (`src/app/nav/back-link/`), `RunBarComponent` (`src/app/nav/run-bar/`, which also handles its swipe to end, as the library's workout cards handle theirs to delete), the header and its back link in `NavComponent` (`src/app/nav/`), and the logo in `LoopLogoComponent` (`src/app/shared/components/loop-logo/`). Routes in `src/app/app.routes.ts`. A page whose code fails to load (renamed by a later deploy; Vercel answers for the old name with index.html) is loaded afresh by `reloadOnStaleCode` (`src/app/nav/stale-code.ts`), the router's navigation error handler in `main.ts`. How much of the page the bars cover is `--bars-height`, worked out in `styles.scss` with `:has()` from which bars are showing; pages use it to leave room. `viewport-fit=cover` in `index.html` makes `env(safe-area-inset-*)` work, for the gap above an iPhone's home bar. The Undo bar is `UndoBarComponent` (`src/app/nav/undo-bar/`), showing the offer that pages make through `UndoService` (`src/app/shared/undo/`). The morph is `WorkoutMorph` (`src/app/nav/workout-morph.ts`): the bar and ⌄ start a view transition around their own navigation (the router makes none, so other pages change at once), and `src/styles/_workout-morph.scss` pairs the bar with the workout page by view-transition-name, only while it runs.
+- **Web:** `TabBarComponent` (`src/app/nav/tab-bar/`, tabs in `tabs.ts`), the ‹ back link at the top of a page that slides in over another in `BackLinkComponent` (`src/app/nav/back-link/`), `RunBarComponent` (`src/app/nav/run-bar/`, which also handles its swipe to end, as the library's workout cards handle theirs to delete), the header and its back link in `NavComponent` (`src/app/nav/`), and the logo in `LoopLogoComponent` (`src/app/shared/components/loop-logo/`). Home is `HomeComponent` (`src/app/home/`), showing `SuggestedWorkoutComponent` (`src/app/history/suggested-workout/`) and `MusclesThisWeekComponent` (`src/app/history/muscles-this-week/`), shared with the History page; `/home` waits for the history to load, as `/history` does. Routes in `src/app/app.routes.ts`. A page whose code fails to load (renamed by a later deploy; Vercel answers for the old name with index.html) is loaded afresh by `reloadOnStaleCode` (`src/app/nav/stale-code.ts`), the router's navigation error handler in `main.ts`. How much of the page the bars cover is `--bars-height`, worked out in `styles.scss` with `:has()` from which bars are showing; pages use it to leave room. `viewport-fit=cover` in `index.html` makes `env(safe-area-inset-*)` work, for the gap above an iPhone's home bar. The Undo bar is `UndoBarComponent` (`src/app/nav/undo-bar/`), showing the offer that pages make through `UndoService` (`src/app/shared/undo/`). The morph is `WorkoutMorph` (`src/app/nav/workout-morph.ts`): the bar and ⌄ start a view transition around their own navigation (the router makes none, so other pages change at once), and `src/styles/_workout-morph.scss` pairs the bar with the workout page by view-transition-name, only while it runs.
 - **Web, added to the Home Screen:** `manifest.webmanifest` makes it open on its own, without the browser's bars (`display: standalone`). `<meta name="theme-color">` is the page colour (`--page-bg`) of the theme in use: index.html sets it before the app loads, then `ThemeService` keeps it in step, so the browser's bars, and an installed app's, match the page.
 - **Web, the icon:** the favicon is the ∞ and its light on the Start button's cyan: `public/favicon.svg` (the light moves round the loop in Firefox; other browsers show it still), `favicon.ico` for browsers without SVG icons, `apple-touch-icon.png` for an iPhone's home screen, and `icon-192.png` and `icon-512.png` for `manifest.webmanifest`, all drawn by `tools/build-favicon.mjs`. An iPhone app would use the same artwork, square, as its app icon.
-- **iOS:** a `TabView` with the same four tabs. The workout in progress is a bar above the tabs (`tabViewBottomAccessory`, as Music's mini player), opening the workout full screen with a zoom transition from the bar (`.navigationTransition(.zoom(sourceID:in:))`), and a leading `.swipeActions` (or a drag gesture, if the accessory doesn't take swipe actions) to end it; and a **Live Activity** on the lock screen and Dynamic Island, which also serves ALM-2 and CTL-1.
+- **iOS:** a `TabView` with the same five tabs. The workout in progress is a bar above the tabs (`tabViewBottomAccessory`, as Music's mini player), opening the workout full screen with a zoom transition from the bar (`.navigationTransition(.zoom(sourceID:in:))`), and a leading `.swipeActions` (or a drag gesture, if the accessory doesn't take swipe actions) to end it; and a **Live Activity** on the lock screen and Dynamic Island, which also serves ALM-2 and CTL-1.
