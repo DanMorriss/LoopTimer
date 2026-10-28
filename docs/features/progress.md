@@ -83,7 +83,7 @@ Under the body map, a **Progress** section:
 
 ### On the workout summary: next time, muscles and the next workout (PRG-9–PRG-11)
 
-- **Next time (PRG-10):** under the sets, for each rep step of this workout where **every set got the step's reps**: with a weight, one step up, by the same rule as PRG-5 (the heaviest sets only, 2.5 kg or 5 lb), e.g. "Bench press: try 82.5 kg, up from 80 kg"; with no weight, **one more rep**, e.g. "Push-ups: try 13 reps, up from 12". A step that fell short, or is at the top of its wheel (300 kg, 100 reps), has none, and with none there's no section. The same exercise in two steps stepping up alike is said once. It follows the sets as they're corrected (RUN-7), and goes by the step's reps as it was when the workout ended. It's a suggestion only: nothing on the saved workout changes, and the weight one comes up again mid-workout next time as "Try 82.5 kg" (PRG-5).
+- **Next time (PRG-10):** under the sets, for each rep step of this workout where **every set got the step's reps**: with a weight, one step up, by the same rule as PRG-5 (the heaviest sets only, 2.5 kg or 5 lb), e.g. "Bench press: try 82.5 kg, up from 80 kg"; with no weight, **one more rep**, e.g. "Push-ups: try 13 reps, up from 12". A step that fell short, or is at the top of its wheel (300 kg, 100 reps), has none, and with none there's no section. The same exercise in two steps stepping up alike is said once. It follows the sets as they're corrected (RUN-7), and goes by the step's reps as it was when the workout ended. Each has **Apply** on its right, which puts the step-up on that step of the saved workout (and of this run, so Back to workout carries on with it, as turning the face's wheel would). The line stays, with "Applied" in place of the button and focus moved there, even though this run's sets no longer reach the new reps. A line said once for two steps applies to both. A workout no longer in the library has no Apply. Left unapplied, nothing on the saved workout changes, and the weight one comes up again mid-workout next time as "Try 82.5 kg" (PRG-5). Answering **Yes, use next time** to "Use these settings next time?" after applying puts the steps back to this run's last sets, as it always does.
 - **Muscles worked (PRG-11):** the [exercises](exercises.md) body map, shaded by this workout's sets: main where any set's exercise has the muscle as main, supporting where it only ever helps, with the map's lists saying which. Sets with no exercise, or of one since deleted, don't count; with none that do, there's no section.
 - **Suggested next workout (PRG-9):** the same card as on the history page, counting this week's sets with this workout's in, under the note. There's no Start on the summary: it's started from the history or the library.
 
@@ -114,8 +114,8 @@ Under the body map, a **Progress** section:
 - Given squats of 10, 10, 12 at 60 kg last time, when I reach a squats rep step of 10 reps at 60 kg, then it offers "Try 62.5 kg", and pressing it sets the weight to 62.5 kg and the button goes; in lb, from 132.5 lb it offers "Try 137.5 lb".
 - Given squats of 10, 8 at 60 kg last time, or a rep step since changed to 70 kg, then no weight is suggested.
 - Given 5 at 40 kg then 10, 10 at 60 kg last time, on a 10-rep step, then it offers "Try 62.5 kg".
-- Given a bench press rep step of 5 at 80 kg, when I do 5 and finish, then the summary's Next time says "Bench press: try 82.5 kg, up from 80 kg"; when I correct the set to 4, Next time goes.
-- Given a push-ups rep step of 12 with no weight, when I do 12 and finish, then the summary says "Push-ups: try 13 reps, up from 12", and Muscles worked shades the chest as main.
+- Given a bench press rep step of 5 at 80 kg, when I do 5 and finish, then the summary's Next time says "Bench press: try 82.5 kg, up from 80 kg"; when I correct the set to 4, Next time goes; when I press its Apply instead, the saved workout's step is 82.5 kg and the line says Applied, with focus on it.
+- Given a push-ups rep step of 12 with no weight, when I do 12 and finish, then the summary says "Push-ups: try 13 reps, up from 12", Apply makes the saved step 13 reps, and Muscles worked shades the chest as main.
 - Given a saved Legs workout (back squats), when I finish a workout, then the summary's suggested next workout is the history page's, with no Start button.
 
 ## Platform notes
@@ -125,6 +125,5 @@ Under the body map, a **Progress** section:
 
 ## Open questions
 
-- Should Next time (PRG-10) offer to put its step-ups on the saved workout, as "Use these settings next time?" does, and should the extra rep show mid-workout next time, as the weight step up does?
 - Is the weight step for PRG-5 a setting, or per exercise? As built, it is 2.5 kg or 5 lb for everything, which is a big jump for small dumbbell moves (e.g. lateral raises).
 - Should the aim of 10 to 20 sets a week (PRG-8) be lower for small muscles (neck, shins, forearms), or a setting for people training for fitness rather than size? As it is, most people's bars are under for those.
