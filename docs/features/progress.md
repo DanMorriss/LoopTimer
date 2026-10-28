@@ -13,7 +13,7 @@ Built: last time on each rep step (PRG-1), personal bests on the workout summary
 - **PRG-7** As a user I want to be told when I've done more rounds than ever in a workout with a time limit, so I know I'm getting fitter.
 - **PRG-8** As a user I want a bar per muscle group for this week's sets, so I can see which I'm overworking and which I'm underworking.
 - **PRG-9** As a user I want the history to suggest which of my workouts to do next, one that works the muscles I've used least this week.
-- **PRG-10** As a user I want the workout summary to tell me which exercises to step up next time, with more weight or more reps, when I got every set's reps.
+- **PRG-10** As a user I want the workout summary to tell me which exercises to step up next time, with more weight or more reps, when I got every set's reps, and to put it on the workout with one tap.
 - **PRG-11** As a user I want the workout summary to show which muscles the workout worked, on the body map.
 
 ## Rules
@@ -121,7 +121,7 @@ Under the body map, a **Progress** section:
 ## Platform notes
 
 - **Web:** the sums are in `src/app/models/progress.ts` (`sessionsByExercise`, `progressMeasure`, `exerciseBests`, `sessionValue`) and the wording in `src/app/exercises/progress-format.ts`. The page's section is `ExerciseProgressComponent` (`src/app/exercises/exercise-page/exercise-progress/`), an inline SVG chart in the `--accent` colour. `/exercises` now waits for the history to load, as `/exercises/:id` and `/history` do. Last time is `WorkoutComponent.lastTime` (with `describeSets()` from `src/app/history/history-format.ts`), the summary's bests `WorkoutSummaryComponent.personalBests` (most rounds with `isMostRounds()` in `models/progress.ts`), and the muscles this week `HistoryComponent.musclesWorked`, shown with `BodyMapComponent` and `MuscleBarsComponent` (`src/app/history/muscle-bars/`). The counting, the aim (`WEEKLY_SETS_LOW`, `WEEKLY_SETS_HIGH`) and the suggestion are in `src/app/models/muscle-balance.ts`; the bars' colours are the `--balance-*` tokens. The suggested weight is `suggestedWeight()` in `models/progress.ts` (the step up is `WEIGHT_INCREASE` in `models/weight.ts`), shown by `WorkoutComponent.nextWeight`. On the summary, Next time is `progressionSuggestions()` in `models/progress.ts` (`SummaryStepUpsComponent`, in `src/app/workout/workout-summary/summary-step-ups/`), the muscles `musclesInSets()` in `models/workout-muscles.ts`, and the next workout card `SuggestedWorkoutComponent` (`src/app/history/suggested-workout/`), shared with the history page.
-- **iOS:** Swift Charts (`LineMark` + `PointMark`, with `chartXSelection` for the readout) covers the chart; VoiceOver's audio graphs (`AXChartDescriptor`) can stand in for the arrow keys and the table.
+- **iOS:** the summary's Muscles worked is the same body map view as the history's, and the next workout card one view shared by both screens; Apply writes the step to the saved workout as the face's wheels do, with focus (`AccessibilityFocusState`) moving to its Applied. Swift Charts (`LineMark` + `PointMark`, with `chartXSelection` for the readout) covers the chart; VoiceOver's audio graphs (`AXChartDescriptor`) can stand in for the arrow keys and the table.
 
 ## Open questions
 
