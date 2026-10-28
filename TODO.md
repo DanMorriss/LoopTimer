@@ -24,9 +24,8 @@ The Account tab is in (the fifth tab, at `/account`), with **Clear this device**
 
 Signing in by an email link or its code, signing out and deleting the account are built (PR #140): Supabase's code loads only on the Account tab. Supabase checked on 2026-10-28: the free tier has 50,000 monthly users, a 500 MB database and 5 GB of egress, and pauses after a week unused; Pro is $25 a month.
 
-- [ ] **Dan: run `supabase/schema.sql`** in the project's SQL editor (the records table and `delete_my_account()`); until then Delete account says it couldn't delete.
-- [ ] **Dan: put the code in the sign-in emails:** in Authentication → Emails, add `{{ .Token }}` to the Magic Link and Confirm signup templates, e.g. "Or type this code in Loop Workouts: {{ .Token }}". Until then only the link works, and the Home Screen app on an iPhone can't sign in (links open in Safari).
-- [ ] **Email that reaches everyone (before anyone else signs in):** Supabase's built-in email only sends to the project's team, 2 an hour. Set up a provider (e.g. Resend) under Authentication → SMTP, on a domain with SPF, DKIM and DMARC.
+Set up by Dan on 2026-10-28 and tested on his phone (the code in the Home Screen app, and the link in Safari): `supabase/schema.sql` is run, and sign-in emails come from Loop Workouts <signin@mail.loopworkouts.com>, sent by Resend (EU) through Supabase's custom SMTP, with the code in the Magic Link and Confirm signup templates. The domain, loopworkouts.com, is at GoDaddy, with Microsoft 365 for Dan's own email on the bare domain; Resend's DNS records are on the `mail` subdomain so they don't clash, and GoDaddy's DMARC record covers it.
+
 - [ ] **Sync (SYN-3, SYN-4):** send and fetch changes as described in the doc, merging with the stores' merge functions; the first sign-in merges the device with the account. Load its code only once signed in. Add the server's clock check (an `updated_at` more than a minute ahead taken as now) to `supabase/schema.sql` with it.
 - [ ] **Sign in with Google and Apple (SYN-7).**
 - [ ] **Privacy notice and terms for sync:** they cover accounts (your email address, kept by Supabase in Europe) since PR #140; before sync sends workouts and history, say so, and who to contact (see the Known issue on having them looked over).
