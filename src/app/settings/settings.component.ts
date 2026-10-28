@@ -1,14 +1,11 @@
-import { ApplicationRef, Component, computed, DOCUMENT, inject, signal } from '@angular/core';
+import { ApplicationRef, Component, computed, DOCUMENT, inject } from '@angular/core';
 import { BodyFigure } from '../models/exercise';
 import { WeightUnit } from '../models/weight';
-import { PageSlide } from '../nav/page-slide';
+import { BackLinkComponent } from '../nav/back-link/back-link.component';
+import { SwipeBackDirective } from '../nav/swipe-back.directive';
 import { AlarmService } from '../shared/alarms/alarm.service';
-import { BackupService, ImportResult } from '../shared/backup/backup.service';
-import { planPrompt } from '../shared/backup/plan-prompt';
-import { ClearDeviceComponent } from '../shared/components/clear-device/clear-device.component';
 import { ToggleSwitchComponent } from '../shared/components/toggle-switch/toggle-switch.component';
 import { injectPrefersReducedMotion } from '../shared/reduced-motion';
-import { LoopLogoComponent } from '../shared/components/loop-logo/loop-logo.component';
 import { KeepAwakeService } from '../shared/run/keep-awake.service';
 import { SettingsStore, Theme } from '../shared/state/settings-store.service';
 import { AlarmKind } from '../workout/alarm-schedule';
@@ -22,9 +19,13 @@ interface AlarmPreview {
 /** On <html> while the theme changes, so the picker's highlight can leave the sliding to the fade. */
 const SWITCHING_CLASS = 'theme-switching';
 
+/**
+ * Settings (SET-1–5): this device's choices, as they don't sync. It slides in over Account,
+ * and back off with ‹ Account or a swipe right.
+ */
 @Component({
     selector: 'app-settings',
-    imports: [ToggleSwitchComponent, LoopLogoComponent, ClearDeviceComponent],
+    imports: [BackLinkComponent, SwipeBackDirective, ToggleSwitchComponent],
     templateUrl: './settings.component.html',
     styleUrl: './settings.component.scss',
 })
@@ -32,9 +33,6 @@ export class SettingsComponent {
     protected readonly settings = inject(SettingsStore);
     protected readonly alarms = inject(AlarmService);
     protected readonly keepAwake = inject(KeepAwakeService);
-    /** Into the Privacy notice and Terms of use. */
-    protected readonly slide = inject(PageSlide);
-    private readonly backup = inject(BackupService);
     private readonly appRef = inject(ApplicationRef);
     private readonly document = inject(DOCUMENT);
     private readonly reducedMotion = injectPrefersReducedMotion();
@@ -74,33 +72,6 @@ export class SettingsComponent {
         { kind: 'countdown', name: 'Time limit', description: 'One short tick' },
     ];
 
-    /** What the last export or import did, read out as it changes. */
-    protected readonly backupStatus = signal('');
-
-    protected async exportBackup() {
-        this.backupStatus.set(`Backup saved as ${await this.backup.export()}.`);
-    }
-
-    protected async importBackup(input: HTMLInputElement) {
-        const file = input.files?.[0];
-        // Cleared so choosing the same file again still counts as a change
-        input.value = '';
-        if (!file) {
-            return;
-        }
-        this.backupStatus.set(importMessage(await this.backup.import(file)));
-    }
-
-    /** Copies the prompt for turning a plan into a file to import (see `planPrompt()`). */
-    protected async copyPlanPrompt() {
-        try {
-            await navigator.clipboard.writeText(planPrompt());
-            this.backupStatus.set('Prompt copied. Paste it into an AI chat, then add your plan.');
-        } catch {
-            this.backupStatus.set("The prompt couldn't be copied. Try again, or another browser.");
-        }
-    }
-
     /**
      * Saves the theme, fading the whole page from the old colours to the new with a view
      * transition where the browser has them. The picker's highlight slides across as part of
@@ -129,52 +100,4 @@ export class SettingsComponent {
             }
         });
     }
-}
-
-function count(n: number, thing: string, things = `${thing}s`): string {
-    return `${n} ${n === 1 ? thing : things}`;
-}
-
-/** "2 workouts, 3 exercises and 14 history entries", leaving out any there are none of. */
-function listOf(workouts: number, exercises: number, entries: number): string {
-    const items = [
-        ...(workouts > 0 ? [count(workouts, 'workout')] : []),
-        ...(exercises > 0 ? [count(exercises, 'exercise')] : []),
-        ...(entries > 0 ? [count(entries, 'history entry', 'history entries')] : []),
-    ];
-    return items.length > 1
-        ? `${items.slice(0, -1).join(', ')} and ${items.at(-1)}`
-        : (items[0] ?? '');
-}
-
-/** e.g. "Added 2 workouts and 14 history entries. Updated 1 workout." */
-export function importMessage(result: ImportResult): string {
-    if (!result.ok) {
-        switch (result.problem) {
-            case 'too-new':
-                return 'That backup is from a newer version of Loop Workouts. Update the app and try again.';
-            case 'too-big':
-            case 'not-a-backup':
-                return "That file isn't a Loop Workouts backup.";
-            case 'unreadable':
-                return "That file couldn't be read. Is it a Loop Workouts backup?";
-        }
-    }
-    const added = listOf(result.workoutsAdded, result.exercisesAdded, result.entriesAdded);
-    const updated = listOf(result.workoutsUpdated, result.exercisesUpdated, result.entriesUpdated);
-    const parts = [
-        ...(added ? [`Added ${added}.`] : []),
-        ...(updated ? [`Updated ${updated}.`] : []),
-        ...(result.removed > 0
-            ? [`Removed ${count(result.removed, 'item')} deleted since on the other device.`]
-            : []),
-    ];
-    const summary =
-        parts.length > 0
-            ? parts.join(' ')
-            : 'Nothing new: everything in that backup is already here.';
-    if (result.skipped === 0) {
-        return summary;
-    }
-    return `${summary} ${count(result.skipped, 'item')} in it couldn't be read, so ${result.skipped === 1 ? 'it was' : 'they were'} left out.`;
 }

@@ -39,7 +39,6 @@ describe('TabBarComponent', () => {
             ['Exercises', '/exercises'],
             ['History', '/history'],
             ['Account', '/account'],
-            ['Settings', '/settings'],
         ]);
     });
 
@@ -67,6 +66,13 @@ describe('TabBarComponent', () => {
 
         await go('/exercises?muscles=quads');
         expect(tabs()[1].getAttribute('aria-current')).toBe('page');
+    });
+
+    it('marks Account in Settings and the legal pages, which slide in over it', async () => {
+        for (const url of ['/settings', '/privacy', '/terms']) {
+            await go(url);
+            expect(current().filter(([, mark]) => mark)).toEqual([['Account', 'true']]);
+        }
     });
 
     it('is not on the workout page, which has the whole screen', async () => {

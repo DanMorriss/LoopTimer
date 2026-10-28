@@ -1,7 +1,8 @@
-<div class="flex justify-center">
+<div class="flex justify-center" [appSwipeBack]="'/account'">
     <div
         class="m-4 w-full max-w-md rounded-xl border border-(--panel-border) bg-(--panel) p-6 shadow-xl shadow-(color:--shadow)"
     >
+        <app-back-link url="/account" label="Account" />
         <h2 class="settings__title">Settings</h2>
 
         <section class="settings__section" aria-labelledby="appearance-heading">
@@ -174,80 +175,6 @@
                         </button>
                     </li>
                 }
-            </ul>
-        </section>
-
-        <section class="settings__section" aria-labelledby="data-heading">
-            <h3 class="settings__heading" id="data-heading">Your data</h3>
-
-            <p class="setting__hint" id="data-hint">
-                Your workouts and history are saved on this device, and with your account if you
-                sign in. Export a backup to keep a copy of your own.
-            </p>
-            <div class="backup__actions">
-                <button
-                    type="button"
-                    class="btn-pill"
-                    aria-describedby="data-hint"
-                    (click)="exportBackup()"
-                >
-                    Export backup
-                </button>
-                <button
-                    type="button"
-                    class="btn-pill"
-                    aria-describedby="data-hint"
-                    (click)="backupInput.click()"
-                >
-                    Import backup
-                </button>
-                <!-- Opened by Import backup, so it's kept out of the way of the keyboard -->
-                <input
-                    #backupInput
-                    type="file"
-                    accept=".json,application/json"
-                    class="sr-only"
-                    tabindex="-1"
-                    aria-hidden="true"
-                    (change)="importBackup(backupInput)"
-                />
-            </div>
-            <p class="setting__hint backup__plan-hint" id="plan-hint">
-                Have a plan from a coach, a book or a spreadsheet? Copy this prompt into an AI chat,
-                add your plan, then bring in the file it writes with Import backup.
-            </p>
-            <div class="backup__actions">
-                <button
-                    type="button"
-                    class="btn-pill"
-                    aria-describedby="plan-hint"
-                    (click)="copyPlanPrompt()"
-                >
-                    Copy AI prompt
-                </button>
-            </div>
-            <p class="setting__hint backup__status" role="status">{{ backupStatus() }}</p>
-            <!-- Also in the Account tab, for a shared computer -->
-            <app-clear-device class="settings__clear" />
-        </section>
-
-        <!-- The ∞ logo lives here now the app opens on the library -->
-        <section class="settings__section" aria-labelledby="about-heading">
-            <h3 class="settings__heading" id="about-heading">About</h3>
-            <app-loop-logo class="settings__logo" />
-            <p class="setting__hint settings__about">
-                Loop Workouts: build a workout, then let it loop.
-            </p>
-            <!-- Slide in over Settings, as an exercise does over the list -->
-            <ul class="settings__legal">
-                <li>
-                    <a href="/privacy" (click)="slide.follow($event, '/privacy', 'in')"
-                        >Privacy notice</a
-                    >
-                </li>
-                <li>
-                    <a href="/terms" (click)="slide.follow($event, '/terms', 'in')">Terms of use</a>
-                </li>
             </ul>
         </section>
     </div>

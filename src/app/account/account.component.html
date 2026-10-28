@@ -142,16 +142,46 @@
             <p class="account__hint account__status" role="status">{{ message() }}</p>
         </section>
 
-        <section class="account__section" aria-labelledby="device-heading">
-            <h3 class="account__heading" id="device-heading">This device</h3>
-            <p class="account__hint">
-                Your workouts, history and settings are saved in this browser. Done with it, on a
-                shared computer say? Clear them from it.
-                @if (account.state().status === 'signed-in') {
-                    That signs this device out too; your account keeps what's in it.
-                }
+        <!-- This device's own choices, which don't sync: they slide in over Account -->
+        <a
+            href="/settings"
+            class="account__link"
+            aria-describedby="settings-link-hint"
+            (click)="slide.follow($event, '/settings', 'in')"
+        >
+            <mat-icon class="account__link-icon" aria-hidden="true">settings</mat-icon>
+            <span class="account__link-text">
+                <span class="account__link-name">Settings</span>
+                <span class="account__hint" id="settings-link-hint">
+                    Theme, units, alarms and sounds
+                </span>
+            </span>
+            <mat-icon class="account__link-chevron" aria-hidden="true">chevron_right</mat-icon>
+        </a>
+
+        <section class="account__section" aria-labelledby="data-heading">
+            <h3 class="account__heading" id="data-heading">Your data</h3>
+            <app-your-data [signedIn]="account.state().status === 'signed-in'" />
+        </section>
+
+        <!-- The ∞ logo lives here now the app opens on the library -->
+        <section class="account__section" aria-labelledby="about-heading">
+            <h3 class="account__heading" id="about-heading">About</h3>
+            <app-loop-logo class="account__logo" />
+            <p class="account__hint account__about">
+                Loop Workouts: build a workout, then let it loop.
             </p>
-            <app-clear-device class="account__clear" />
+            <!-- Slide in over Account, as an exercise does over the list -->
+            <ul class="account__legal">
+                <li>
+                    <a href="/privacy" (click)="slide.follow($event, '/privacy', 'in')"
+                        >Privacy notice</a
+                    >
+                </li>
+                <li>
+                    <a href="/terms" (click)="slide.follow($event, '/terms', 'in')">Terms of use</a>
+                </li>
+            </ul>
         </section>
     </div>
 </div>

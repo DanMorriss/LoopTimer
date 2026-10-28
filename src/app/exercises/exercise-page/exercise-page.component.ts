@@ -6,6 +6,7 @@ import { map } from 'rxjs';
 import { ExerciseDetailsComponent } from '../../shared/components/exercise-details/exercise-details.component';
 import { ExerciseEditorComponent } from '../../shared/components/exercise-editor/exercise-editor.component';
 import { ExerciseProgressComponent } from './exercise-progress/exercise-progress.component';
+import { BackLinkComponent } from '../../nav/back-link/back-link.component';
 import { PageSlide } from '../../nav/page-slide';
 import { SwipeBackDirective } from '../../nav/swipe-back.directive';
 import { Exercise, exercisePath, isBuiltIn } from '../../models/exercise';
@@ -29,6 +30,7 @@ import { UndoService } from '../../shared/undo/undo.service';
     selector: 'app-exercise-page',
     imports: [
         MatIconModule,
+        BackLinkComponent,
         ExerciseDetailsComponent,
         ExerciseEditorComponent,
         ExerciseProgressComponent,

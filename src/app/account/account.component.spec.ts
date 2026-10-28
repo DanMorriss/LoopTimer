@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { PageSlide } from '../nav/page-slide';
 import {
     FakeAccountClient,
     fakeAccountClient,
@@ -222,6 +223,44 @@ describe('AccountComponent', () => {
                 "Your account couldn't be deleted. Check your connection and try again."
             );
             expect(text()).toContain('Signed in as me@example.com.');
+        });
+    });
+
+    describe('below sync', () => {
+        beforeEach(() => create());
+
+        it('links to Settings, saying what is in it, sliding it in', () => {
+            const navigate = vi
+                .spyOn(TestBed.inject(PageSlide), 'navigate')
+                .mockImplementation(() => {});
+            const link = element.querySelector<HTMLAnchorElement>('.account__link')!;
+
+            expect(link.getAttribute('href')).toBe('/settings');
+            expect(link.textContent).toContain('Settings');
+            expect(
+                element.querySelector('#' + link.getAttribute('aria-describedby'))!.textContent
+            ).toContain('Theme, units, alarms and sounds');
+            link.click();
+
+            expect(navigate).toHaveBeenCalledWith('/settings', 'in');
+        });
+
+        it('has your data, with backups and Clear this device', () => {
+            expect(element.querySelector('#data-heading')!.textContent).toBe('Your data');
+            expect(button('Export backup')).toBeDefined();
+            expect(button('Clear this device')).toBeDefined();
+        });
+
+        it('links to the privacy notice and terms of use, under About', () => {
+            const links = [...element.querySelectorAll('.account__legal a')].map((a) => [
+                a.textContent!.trim(),
+                a.getAttribute('href'),
+            ]);
+
+            expect(links).toEqual([
+                ['Privacy notice', '/privacy'],
+                ['Terms of use', '/terms'],
+            ]);
         });
     });
 });

@@ -20,7 +20,7 @@ Timed sets are logged now (a set per timed work step of an exercise that runs to
 
 The plan is in `docs/features/backup-and-sync.md` (Sync and The backend), as agreed with Dan on 2026-10-27: Supabase in an EU region, an optional account, email sign-in first, signing out keeping the data on the device, settings staying per device, and changes dated by the server's clock. The library's order merges as a record of its own (in backups now, and in sync).
 
-The Account tab is in (the fifth tab, at `/account`), with **Clear this device** there and in Settings → Your data (SYN-9). Dan made the Supabase project on 2026-10-27, in an EU region: `https://cpgacyzlfyskifzhkotu.supabase.co`, with a publishable key (safe in the app; the service role key never goes in it).
+The Account tab is in (at `/account`); since 2026-10-28 it also holds Your data (backups and **Clear this device**, SYN-9), About, and a row into Settings, which is no longer a tab of its own. Dan made the Supabase project on 2026-10-27, in an EU region: `https://cpgacyzlfyskifzhkotu.supabase.co`, with a publishable key (safe in the app; the service role key never goes in it).
 
 Signing in by an email link or its code, signing out and deleting the account are built (PR #140): Supabase's code loads only on the Account tab. Supabase checked on 2026-10-28: the free tier has 50,000 monthly users, a 500 MB database and 5 GB of egress, and pauses after a week unused; Pro is $25 a month.
 
@@ -55,7 +55,7 @@ The Library page's items are done (LIB-3–5).
 
 #### General
 
-The General items are done: swiping the workout bar right ends the workout and opens its summary, the summary's Done goes on to the workout in the history (View history is gone), the Privacy notice and Terms of use are linked under About in Settings (SET-6), and the favicon is the ∞ and its light on the Start button's cyan (option E of the mock-ups).
+The General items are done: swiping the workout bar right ends the workout and opens its summary, the summary's Done goes on to the workout in the history (View history is gone), the Privacy notice and Terms of use are linked under About (SET-6, in Account since 2026-10-28), and the favicon is the ∞ and its light on the Start button's cyan (option E of the mock-ups).
 
 #### Workout page
 
@@ -76,7 +76,7 @@ From reviews against Apple's WWDC design talks (Designing Fluid Interfaces, Prin
 ## 3. Known issues
 
 - [ ] **Check a tab left open across an update in Chrome on an iPhone:** on 2026-10-27, History, Settings and New did nothing there, because the tab ran an older build whose page code a deploy had renamed. Since #134 the page loads afresh instead. After the next deploy, check that History, Settings and New open in a Chrome tab that was open before it.
-- [ ] **Try adding the app to the Home Screen on an iPhone:** the manifest and `theme-color` were added on 2026-10-26 and checked only in Chromium. Check that it opens on its own (no Safari bars) with the ∞ icon, that the status bar takes the page colour in both themes (switch theme in Settings while it's open), and that nothing at the top of a page hides under the status bar. If it does, the header needs `env(safe-area-inset-top)`.
+- [ ] **Try adding the app to the Home Screen on an iPhone:** the manifest and `theme-color` were added on 2026-10-26 and checked only in Chromium. Check that it opens on its own (no Safari bars) with the ∞ icon, that the status bar takes the page colour in both themes (switch theme in Account → Settings while it's open), and that nothing at the top of a page hides under the status bar. If it does, the header needs `env(safe-area-inset-top)`.
 - [ ] **Try swiping the workout bar right on an iPhone:** added on 2026-10-26 and tested only in Chromium with simulated touches. Check that the bar follows the finger with End workout showing behind it, letting go past halfway ends the workout and opens its summary, short of that it springs back, scrolling up and down over the bar still works, and the link or Pause a swipe starts on isn't pressed.
 - [ ] **Clear this device doesn't reach other open tabs:** another tab of the app keeps what it had in memory, and saves it back the next time anything changes there. Close other tabs first; a fix could tell them to reload (e.g. a `storage` event or BroadcastChannel).
 - [ ] **Have the Privacy notice and Terms of use looked over:** written on 2026-10-26 from what the app does, and updated on 2026-10-28 for accounts and sync (Supabase and Resend in Europe; workouts, history and exercises kept with the account) and dan@loopworkouts.com to contact. They name no country's law, nor who's responsible for the data (as the UK and EU GDPR ask); decide whether they should, now that data leaves the device.

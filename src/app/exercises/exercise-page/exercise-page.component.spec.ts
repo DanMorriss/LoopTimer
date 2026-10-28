@@ -114,14 +114,14 @@ describe('ExercisePageComponent', () => {
         it('keeps the picked muscle on the back link', async () => {
             await open('/exercises/back-squat?muscles=quads');
 
-            const back = el().querySelector('.exercise__back') as HTMLAnchorElement;
+            const back = el().querySelector('.back-link') as HTMLAnchorElement;
             expect(back.getAttribute('href')).toBe('/exercises?muscles=quads');
         });
 
         it('keeps picked muscles on the back link', async () => {
             await open('/exercises/back-squat?muscles=quads,glutes');
 
-            const back = el().querySelector('.exercise__back') as HTMLAnchorElement;
+            const back = el().querySelector('.back-link') as HTMLAnchorElement;
             expect(back.getAttribute('href')).toBe('/exercises?muscles=quads,glutes');
         });
     });
