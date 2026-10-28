@@ -1,5 +1,5 @@
-// Going into an exercise from the Exercises list (or Privacy or Terms from Settings) slides its
-// page in from the right, over the list, which moves a little way left and fades; going back,
+// Going into an exercise from the Exercises list (or Settings, Privacy or Terms from Account)
+// slides its page in from the right, over the list, which moves a little way left and fades; going back,
 // the page leaves to the right and the list comes back (PageSlide, src/app/nav/page-slide.ts).
 // The two have different names, so each keeps its own place on screen rather than the browser
 // moving one into the other's (the page and the list needn't be scrolled the same). Names only
@@ -7,11 +7,12 @@
 
 :root.page-sliding {
     app-exercise-list,
-    app-settings {
+    app-account {
         view-transition-name: slide-under;
     }
 
     app-exercise-page,
+    app-settings,
     app-privacy,
     app-terms {
         view-transition-name: slide-over;

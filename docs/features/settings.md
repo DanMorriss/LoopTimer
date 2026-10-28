@@ -11,6 +11,8 @@
 
 ## Rules
 
+- Settings is opened from **Account**: a row under Sync, with a gear, "Settings", the hint "Theme, units, alarms and sounds" and a ›. It slides in over Account, as an exercise's page does over its list, with ‹ Account at the top to go back (or a swipe right); Account stays chosen in the tab bar. It was a tab of its own until 2026-10-28. It holds only this device's choices, which don't sync; **Your data** (backups, Copy AI prompt and Clear this device) and **About** are on Account (see [backup-and-sync](backup-and-sync.md)).
+
 | Section      | Setting                                           | Default | Hint                                                                                                   | Notes                                                                                                                                                      |
 | ------------ | ------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Appearance   | Theme                                             | Dark    | —                                                                                                      | Dark, Light or System. System follows the device, including when it changes.                                                                               |
@@ -20,15 +22,13 @@
 | Alarms       | Vibration                                         | On      | Buzzes as each phase starts                                                                            | Disabled, saying "This device can't vibrate", where it can't.                                                                                              |
 | Alarms       | Keep screen on                                    | On      | Stops the phone locking mid-workout                                                                    | Disabled, saying "This browser can't keep the screen on", where it can't.                                                                                  |
 | Alarm sounds | Timed, Rest, Finish, Time limit                   | —       | Two short high beeps / One long low tone / Three rising notes / One short tick                         | A Play button for each.                                                                                                                                    |
-| Your data    | Export, Import, Copy AI prompt, Clear this device | —       | Your workouts and history are saved on this device, and with your account… / Have a plan from a coach… | Export backup and Import backup buttons, then Copy AI prompt, then Clear this device (also in the Account tab); see [backup-and-sync](backup-and-sync.md). |
 
 - **Your equipment** and **Only what I have** are saved with the settings too, but set on the Exercises page (see [exercises](exercises.md#the-exercises-list-exr-6)), not here.
 - Changes are **saved at once** and apply at once, mid-workout too (e.g. turning sound off silences alarms already booked).
-- **Copy AI prompt** copies a prompt for turning a plan from a coach, a book or a spreadsheet into a file to import, with an AI (SYN-6, in [backup-and-sync](backup-and-sync.md#bringing-in-a-plan-with-ai-syn-6)). What it did shows under the buttons, where export and import say what they did.
 - **Play** plays that alarm straight away, even with Sound turned off (it was asked for), without touching any booked alarms.
 - Switching theme **fades** from one to the other, unless reduced motion is on, when it changes at once.
 - The **switches** flip with a tap, or their knob can be dragged across, as on an iPhone: where it's let go (and which way it was flicked) decides. The knob swells as it's pressed and moves on a spring with no bounce. The pickers' highlights slide on the same spring.
-- **About**, last: the ∞ logo (the home page until the tab bar came in), drawing itself in with a light travelling round it, and "Loop Workouts: build a workout, then let it loop.", then links to the **Privacy notice** (`/privacy`) and **Terms of use** (`/terms`). Each slides in over Settings, as an exercise's page does over its list, with ‹ Settings at the top to go back (or a swipe right). The privacy notice says what's saved on the device and what leaves it (the hosting, Google Fonts, and, if you sign in, your email address to Supabase and to Resend for the sign-in email, and your workouts, history and exercises to Supabase for sync); questions go to dan@loopworkouts.com, and must change in the same PR as anything that stores more or sends anything off the device, such as sync.
+- **About**, last on **Account**: the ∞ logo (the home page until the tab bar came in), drawing itself in with a light travelling round it, and "Loop Workouts: build a workout, then let it loop.", then links to the **Privacy notice** (`/privacy`) and **Terms of use** (`/terms`). Each slides in over Account, as an exercise's page does over its list, with ‹ Account at the top to go back (or a swipe right). The privacy notice says what's saved on the device and what leaves it (the hosting, Google Fonts, and, if you sign in, your email address to Supabase and to Resend for the sign-in email, and your workouts, history and exercises to Supabase for sync); questions go to dan@loopworkouts.com, and must change in the same PR as anything that stores more or sends anything off the device, such as sync.
 
 ## Acceptance criteria
 
@@ -42,5 +42,5 @@
 
 ## Platform notes
 
-- **Web:** `SettingsStore` (`src/app/shared/state/settings-store.service.ts`), `SettingsComponent` (`src/app/settings/`), `ThemeService`. Export and import: `BackupService` (`src/app/shared/backup/`).
-- **iOS:** `@AppStorage` for each setting. The theme maps onto `preferredColorScheme` (nil for System). Vibration would always be available on an iPhone, so its disabled state goes.
+- **Web:** `SettingsStore` (`src/app/shared/state/settings-store.service.ts`), `SettingsComponent` (`src/app/settings/`), `ThemeService`. The About section is in `AccountComponent` (`src/app/account/`).
+- **iOS:** `@AppStorage` for each setting. Settings is a `NavigationLink` row in the Account tab's `List`, so it pushes in with the system's back button and swipe. The theme maps onto `preferredColorScheme` (nil for System). Vibration would always be available on an iPhone, so its disabled state goes.

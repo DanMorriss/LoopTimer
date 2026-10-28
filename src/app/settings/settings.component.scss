@@ -67,33 +67,14 @@
 }
 
 // The theme's highlight is its own layer in the theme fade, which moves it from the old
-// option to the new (only this one: a name used twice on a page stops the fade)
+// option to the new (only this one: a name used twice on a page stops the fade). Only then:
+// as Settings slides in over Account, it moves with the page.
 .settings__theme-thumb {
-    view-transition-name: theme-thumb;
-
     // During the fade, jump straight to the new option so the fade can do the sliding
     :host-context(.theme-switching) & {
+        view-transition-name: theme-thumb;
         transition: none;
     }
-}
-
-.backup__actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-top: 0.75rem;
-}
-
-.backup__plan-hint {
-    margin: 1.25rem 0 0;
-}
-
-.backup__status:not(:empty) {
-    margin-top: 0.75rem;
-}
-
-.settings__clear {
-    margin-top: 1.25rem;
 }
 
 // A second picker under the theme, e.g. the body figure
@@ -102,39 +83,5 @@
 
     .setting__hint {
         margin: 0.5rem 0 0;
-    }
-}
-
-.settings__logo {
-    width: min(16rem, 100%);
-    margin: 0.5rem auto 0;
-}
-
-.settings__about {
-    text-align: center;
-}
-
-.settings__legal {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0 1.25rem;
-    margin: 0.5rem 0 0;
-    padding: 0;
-    list-style: none;
-
-    a {
-        display: inline-flex;
-        align-items: center;
-        min-height: 44px;
-        color: var(--glow-text);
-        font-size: 0.85rem;
-        text-decoration: underline;
-        text-underline-offset: 2px;
-
-        &:focus-visible {
-            outline: 2px solid var(--accent);
-            outline-offset: 2px;
-        }
     }
 }

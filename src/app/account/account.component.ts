@@ -8,24 +8,29 @@ import {
     signal,
 } from '@angular/core';
 import { email, form, FormField, pattern, required } from '@angular/forms/signals';
-import { ClearDeviceComponent } from '../shared/components/clear-device/clear-device.component';
+import { MatIconModule } from '@angular/material/icon';
+import { PageSlide } from '../nav/page-slide';
+import { LoopLogoComponent } from '../shared/components/loop-logo/loop-logo.component';
 import { SyncStarter } from '../sync/sync-starter.service';
 import { syncText } from '../sync/sync-text';
 import { AccountService } from './account.service';
+import { YourDataComponent } from './your-data/your-data.component';
 
 /**
  * The Account tab (SYN-3, SYN-8, SYN-9): signing in by an email link or its code, who's
- * signed in and how sync is going, signing out and deleting the account, and Clear this
- * device.
+ * signed in and how sync is going, signing out and deleting the account; then Settings, which
+ * slides in over it, your data (backups and Clear this device), and About.
  */
 @Component({
     selector: 'app-account',
-    imports: [ClearDeviceComponent, FormField],
+    imports: [FormField, LoopLogoComponent, MatIconModule, YourDataComponent],
     templateUrl: './account.component.html',
     styleUrl: './account.component.scss',
 })
 export class AccountComponent {
     protected readonly account = inject(AccountService);
+    /** Into Settings, the Privacy notice and Terms of use. */
+    protected readonly slide = inject(PageSlide);
     private readonly injector = inject(Injector);
     private readonly document = inject(DOCUMENT);
 

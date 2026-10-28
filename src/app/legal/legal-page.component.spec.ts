@@ -51,15 +51,15 @@ describe('the Privacy notice and Terms of use', () => {
         expect(TestBed.inject(Router).url).toBe('/privacy');
     });
 
-    it('goes back to Settings, sliding out', async () => {
+    it('goes back to Account, sliding out', async () => {
         const harness = await RouterTestingHarness.create();
         await harness.navigateByUrl('/privacy');
-        const back = harness.routeNativeElement!.querySelector<HTMLAnchorElement>('.legal__back')!;
+        const back = harness.routeNativeElement!.querySelector<HTMLAnchorElement>('.back-link')!;
 
-        expect(back.getAttribute('href')).toBe('/settings');
-        expect(back.textContent).toContain('Settings');
+        expect(back.getAttribute('href')).toBe('/account');
+        expect(back.textContent).toContain('Account');
         back.click();
 
-        expect(navigate).toHaveBeenCalledWith('/settings', 'out');
+        expect(navigate).toHaveBeenCalledWith('/account', 'out');
     });
 });

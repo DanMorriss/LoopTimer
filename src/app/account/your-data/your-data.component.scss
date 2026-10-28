@@ -1,0 +1,29 @@
+:host {
+    display: block;
+}
+
+.data__hint {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.data__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+}
+
+// A new part of the section: the plan prompt, then clearing the device
+.data__gap {
+    margin-top: 1.25rem;
+}
+
+.data__status:not(:empty) {
+    margin-top: 0.75rem;
+}
+
+.data__clear {
+    margin-top: 0.75rem;
+}
