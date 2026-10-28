@@ -1,6 +1,6 @@
 # Backup and sync
 
-Export and import (SYN-1, SYN-2) are built, with a prompt for having an AI turn a plan into a file to import (SYN-6), the history has room for years (SYN-5), and the data is ready for sync: random ids, `updatedAt` and deletion markers (see [data](data.md)). The library's order is a record of its own, so it merges too. Signing in, signing out and deleting an account are built, with Clear this device (SYN-3 in part, SYN-8, SYN-9); sync itself is next (Phase 4 in [direction](../direction.md)), and the decisions made for it, and the backend picked, are under **Sync** below. Its rules are a first draft and get firmed up, with acceptance criteria, as each part is built.
+Export and import (SYN-1, SYN-2) are built, with a prompt for having an AI turn a plan into a file to import (SYN-6), the history has room for years (SYN-5), and the data is ready for sync: random ids, `updatedAt` and deletion markers (see [data](data.md)). The library's order is a record of its own, so it merges too. Signing in, signing out and deleting an account are built, with Clear this device (SYN-8, SYN-9), and so is sync (SYN-3, SYN-4): signed in, the workouts, history and exercises are the same on every device, merged as an import is. How it works, and the backend picked, are under **Sync** below; signing in with Google or Apple (SYN-7) is still to come.
 
 ## Stories
 
@@ -74,9 +74,9 @@ Export and import (SYN-1, SYN-2) are built, with a prompt for having an AI turn 
 
 ### Signing in (SYN-3) and deleting an account (SYN-8)
 
-Signing in makes the account; sync itself comes later, so for now an account holds only its email address.
+Signing in makes the account, if it's new, and starts sync (below).
 
-- **Signed out**, the Account tab's Sync section says "Sign in now, and once sync is ready your workouts and history will be the same on every device you sign in on. An account is optional: without one, everything stays on this device.", then an **Email** field and **Email me a sign-in link**.
+- **Signed out**, the Account tab's Sync section says "Sign in, and your workouts and history will be the same on every device you sign in on. An account is optional: without one, everything stays on this device.", then an **Email** field and **Email me a sign-in link**.
     - An empty or malformed address is caught before anything is sent, on the field: "Enter your email address." or "That isn't an email address. Check it and try again." Focus goes to the field. Errors only show once you've tried.
     - Spaces round the address are dropped.
 - **Sent**, it says "We've sent a sign-in link to me@example.com. Open it on this device, or type the code from the email here.", with focus on it, then a **Code** field, **Sign in**, and **Use another email** (back to the email field).
@@ -86,14 +86,14 @@ Signing in makes the account; sync itself comes later, so for now an account hol
     - Sending fails: "The email couldn't be sent. Check your connection and try again."; too many sent: "Too many sign-in emails for now. Wait a while, then try again."
     - A link that's expired or been used comes back with "That sign-in link has expired or was used already. Send yourself another." above the email field, and the reason is taken out of the address.
     - Signing in with the code says "Signed in.", and focus goes to the page's title.
-- **Signed in**, it says "Signed in as me@example.com.", that sync is on its way, and offers **Sign out** and **Delete account**. This device's hint adds "That signs this device out too; your account keeps what's in it."
+- **Signed in**, it says "Signed in as me@example.com.", then "Your workouts, history and exercises sync between the devices you sign in on. Settings stay a choice for each device.", how sync is going (below), and offers **Sign out** and **Delete account**. This device's hint adds "That signs this device out too; your account keeps what's in it."
     - **Sign out** signs this device out only, and keeps its data: "Signed out. Your data is still on this device."
     - **Delete account** asks first, as Clear this device does: "This deletes your account and everything of yours on the server. What's on this device stays. It can't be undone.", with **Delete my account** and **Cancel** (focus on the warning; Cancel puts it back on Delete account). Deleting signs this device out: "Your account has been deleted. Your data is still on this device." If it fails: "Your account couldn't be deleted. Check your connection and try again.", still signed in.
     - Sign out failing: "You couldn't be signed out. Check your connection and try again."
 - While it checks whether you're signed in: "Checking whether you're signed in…". If Supabase's code can't be loaded (offline, say), it shows as signed out.
 - What each of these did is read out by screen readers, under the section.
 
-### Sync (SYN-3, SYN-4, SYN-7, SYN-8; draft)
+### Sync (SYN-3, SYN-4)
 
 Decided with Dan on 2026-10-27:
 
@@ -107,14 +107,16 @@ Decided with Dan on 2026-10-27:
 - **The privacy notice and terms** are updated before anything is sent off the device: what's stored, where, and who to contact.
 - **The server keeps the data in Europe** (an EU region).
 
-How it's meant to work:
+How it works:
 
-- **On the server**, one table of records of every kind: the user, the kind (`workout`, `history`, `library-order` and so on), the record's id, its `updatedAt`, `deletedAt` if it was deleted, the record itself as JSON, and a number the server counts up on every write. A deletion is a record with `deletedAt` set, kept for good, so the device's cap of 5,000 doesn't apply there. Each user can only read and write their own rows.
-- **Sending:** the records changed since the last sync go up; the server keeps one only if it's newer than the copy it has.
-- **Fetching:** the device asks for every row written since the last number it saw, merges them as an import does (`mergeRecords()`, `mergeLibraryOrder()`), and remembers the new number.
-- **When:** on opening the app, a few seconds after a change, on coming back online, and on coming back to the tab. One person's devices don't need changes to arrive live.
-- **Clocks:** "most recent wins" goes by each device's clock, so a phone set an hour fast would win every change for an hour. So the server gives its own time with every reply, the device keeps how far its clock is off from that, and dates changes by the server's time once it knows it. As a backstop, the server takes any `updatedAt` more than a minute ahead of its own time as now. A change made offline before a device's first sync goes by its own clock, which is fine for one person's devices.
-- **The code that syncs** is loaded only once someone signs in, so it doesn't add to the app's first load (near its 500 kB budget).
+- **On the server**, one table of records of every kind: the user, the kind (`workout`, `history`, `exercise`, `exercise-note`, `hidden-exercise` or `library-order`), the record's id, its `updatedAt`, `deletedAt` if it was deleted, the record itself as JSON, the app's data version it was written in, and a number (`seq`) the server counts up on every write. A deletion is a record with `deletedAt` set, kept for good, so the device's cap of 5,000 doesn't apply there. Each user can only read their own rows, and write them only through the sending function.
+- **Fetching** comes first: the device asks for the rows written since the last `seq` it saw, 500 at a time, merges them as an import does (the same merge, so an exercise of your own made on two devices under one name becomes one), and remembers the new `seq`. A row written by a newer version of the app is left alone, and fetched again until this one is updated; the Account tab says so.
+- **Sending:** then the records changed here since they were last sent or fetched go up, 200 at a time. The server keeps one only if it's newer than its copy, a deletion winning a tie, as merging does. What was fetched isn't sent back, unless it lost to a newer change here. Writes for an account go one at a time, so a device that's fetched up to a `seq` can't miss one written below it.
+- **When:** on opening the app and signing in, 3 seconds after a change (so a burst goes as one), on coming back online, and on coming back to the app. One person's devices don't need changes to arrive live. One that doesn't finish is tried again a minute later.
+- **Clocks:** "most recent wins" goes by each device's clock, so a phone set an hour fast would win every change for an hour. So the server gives its own time with every reply, the device keeps how far its clock is off from that, and dates changes by the server's time once it knows it. As a backstop, the server takes any `updatedAt` more than a minute ahead of its own time as now. A change made offline before a device's first sync goes by its own clock, which is fine for one person's devices. A change is always dated after the one it replaces (a deletion after the record, Undo after the deletion), so it wins even when that one was dated by a clock that was ahead.
+- **Signing out** forgets what was sent and fetched, so signing in again, as this account or another, merges everything again as a first sign-in does. Deleting the account signs out too.
+- **On the Account tab**, signed in, under what syncs: "Syncing…", "Synced at 12:30." (today) or "Last synced on 27 October.", "Not synced yet.", "You're offline: it'll sync when you're back online.", "It couldn't sync just now, and will try again in a minute.", or "Some of your data is from a newer version of Loop Workouts. Reload the app to update it, and it will sync too."
+- **The code that syncs** is loaded only once someone signs in, so it doesn't add to the app's first load (near its 500 kB budget); nor does Supabase's.
 
 ### The backend
 
@@ -156,13 +158,21 @@ Compared on 2026-10-27, for cost, how it fits the device-first design above, sig
 - Given a sign-in link that's expired, when it opens the app, then the Account tab says so, and its address no longer has the reason in it.
 - Given I'm signed in, when I press Sign out, then I'm signed out and my workouts and history are still here.
 - Given I'm signed in, when I press Delete account, then nothing is deleted until I press Delete my account; then the account is gone, I'm signed out, and my workouts and history are still here.
+- Given workouts and history on my phone, when I sign in on my laptop with the same account, then they're on my laptop too, and the laptop's are on my phone the next time it syncs.
+- Given I'm signed in on two devices, when I change a workout on one, then the other has the change the next time it syncs (on opening it, or coming back to it); when I delete one, then it's deleted on the other.
+- Given a workout changed on both devices, when they sync, then both end up with the change made last.
+- Given I'm signed in and offline, when I change a workout, then it's saved here, the Account tab says I'm offline, and it's sent when I'm back online.
+- Given I delete a workout and press Undo after it's synced, then it's back on every device.
+- Given a phone whose clock is an hour fast, when it's synced once, then its changes are dated by the server's clock and don't beat later ones from my other devices.
+- Given I sign out, then my data stays here; when I sign in again, then nothing's lost on either side.
 
 ## Platform notes
 
 - **Web:** `BackupService`, `backup-file.ts` and the AI prompt, `planPrompt()` in `plan-prompt.ts` (`src/app/shared/backup/`); the stores' `mergeWorkouts()` and `mergeEntries()` (and `importWorkouts()` for version 1 files), using `mergeRecords()` in `models/sync.ts`, and `WorkoutStore.mergeLibraryOrder()` for the library's order (with `inOrder()` in `models/sync.ts`); Clear this device is `ClearDeviceComponent` (`shared/components/clear-device/`) and `DeviceDataService` (`shared/state/`), which empties localStorage and sessionStorage, deletes the IndexedDB database and reloads; the Account tab is `AccountComponent` (`src/app/account/`), at `/account`; deletions are kept by `DeletionStore`, and saved data is converted by `migrate.ts`. The file is downloaded through a link with `download`; on an iPhone, Safari offers to save it to Files. The picker is a file input opened by the Import button, kept out of the keyboard's way.
 - **Accounts (web):** `AccountService` (`src/app/account/`) wraps Supabase's client, made by `ACCOUNT_CLIENT` in `account-client.ts` (the project's address and publishable key) and loaded only when the Account tab first opens. It signs in with `signInWithOtp()` (an implicit-flow link back to `/account`, which the client reads from the address) or `verifyOtp()` with the code, signs out with `signOut({ scope: 'local' })`, and deletes with the `delete_my_account()` database function. The server side (the records table, row-level security and that function) is in `supabase/schema.sql`, run in the project's SQL editor. The sign-in emails are sent by Resend (in the EU) through Supabase's custom SMTP, from Loop Workouts <signin@mail.loopworkouts.com>; their templates, set in Supabase (Authentication → Emails), carry both the link (`{{ .ConfirmationURL }}`) and the code (`{{ .Token }}`). Tests use `fakeAccountClient()` (`shared/testing/`).
+- **Sync (web):** `SyncStarter` (`src/app/sync/`, in the first load) loads `SyncService`, and with it Supabase's code, when the app opens on a device that's signed in (`sb-…-auth-token` is saved) or on signing in; it holds the status the Account tab shows (`syncText()`). `SyncService` follows the client's sign-in and out, and syncs with the `pull_records()` and `push_records()` database functions (in `supabase/schema.sql`); `sync-records.ts` turns records into the server's rows and back, using the stores' readers, and `BackupService.merge()` merges them in, as an import does. One Supabase client, from `ACCOUNT_CLIENT`, is shared with `AccountService`. The stores date changes with `SyncClock` (`shared/state/`), which keeps the server's time. Tests use `fakeSyncServer()`, which keeps records as the database does, and `fakeSyncStarter()` (`shared/testing/fake-sync.ts`); the SQL was checked against Postgres (PGlite) when it was written.
 - **iOS:** a share sheet for export and a document picker for import, reading and writing the same file. Supabase's Swift library signs in the same way, with the code (or a universal link) rather than Safari.
 
 ## Open questions
 
-- Should there be a nudge to export, or to add the app to the Home Screen, until sync exists?
+- Should there be a nudge to export, or to add the app to the Home Screen, for those without an account?

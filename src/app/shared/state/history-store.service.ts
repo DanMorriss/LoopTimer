@@ -3,6 +3,7 @@ import { HistoryEntry, isLoggedSet, MAX_NOTE_LENGTH } from '../../models/history
 import { MAX_TIME_LIMIT_SECONDS } from '../../models/workout';
 import { Deletion, mergeRecords } from '../../models/sync';
 import { DeletionStore } from './deletion-store.service';
+import { SyncClock } from './sync-clock.service';
 import { openDatabase, readAll, write } from './history-database';
 import { migrateSavedData } from './migrate';
 
@@ -24,6 +25,7 @@ const PENDING_KEY = 'history-pending';
 @Service()
 export class HistoryStore {
     private readonly deletions = inject(DeletionStore);
+    private readonly clock = inject(SyncClock);
     private readonly _entries = signal<HistoryEntry[]>([]);
     private db: IDBDatabase | null = null;
 
@@ -48,18 +50,19 @@ export class HistoryStore {
      * as stopped when its page closes, so if it's picked up again and later stopped or
      * finished, that replaces the earlier entry, keeping any note added to it meanwhile.
      * A deleted entry isn't recorded again (its run may still be going when it's deleted);
-     * restore() puts one back.
+     * restore() puts one back. It's dated now, or just `after` if that's later (see
+     * `SyncClock.now()`).
      */
-    record(entry: Omit<HistoryEntry, 'updatedAt'>) {
+    record(entry: Omit<HistoryEntry, 'updatedAt'>, after = 0) {
         if (this.deletions.deletedAt('history', entry.id) !== undefined) {
             return;
         }
-        const note =
-            entry.note ?? this._entries().find((existing) => existing.id === entry.id)?.note;
+        const before = this._entries().find((existing) => existing.id === entry.id);
+        const note = entry.note ?? before?.note;
         const updated: HistoryEntry = {
             ...entry,
             ...(note === undefined ? {} : { note }),
-            updatedAt: Date.now(),
+            updatedAt: this.clock.now(Math.max(before?.updatedAt ?? 0, after)),
         };
         this._entries.update((entries) =>
             sorted([updated, ...entries.filter((existing) => existing.id !== entry.id)])
@@ -77,7 +80,7 @@ export class HistoryStore {
         }
         const trimmed = note.trim().slice(0, MAX_NOTE_LENGTH);
         const { note: _old, ...rest } = entry;
-        const changed: HistoryEntry = { ...rest, updatedAt: Date.now() };
+        const changed: HistoryEntry = { ...rest, updatedAt: this.clock.now(entry.updatedAt) };
         const updated = trimmed ? { ...changed, note: trimmed } : changed;
         this._entries.update((entries) =>
             entries.map((existing) => (existing.id === id ? updated : existing))
@@ -86,8 +89,9 @@ export class HistoryStore {
     }
 
     delete(id: string) {
+        const deleted = this._entries().find((entry) => entry.id === id);
         this._entries.update((entries) => entries.filter((entry) => entry.id !== id));
-        this.deletions.add({ kind: 'history', id, deletedAt: Date.now() });
+        this.deletions.add({ kind: 'history', id, deletedAt: this.clock.now(deleted?.updatedAt) });
         this.save([], [id]);
     }
 
@@ -118,10 +122,14 @@ export class HistoryStore {
         return { added: result.added, updated: result.updated, removed: result.removed };
     }
 
-    /** Puts a deleted entry back, e.g. on Undo. */
+    /**
+     * Puts a deleted entry back, e.g. on Undo, dated after its deletion, which may have
+     * reached other devices already.
+     */
     restore(entry: HistoryEntry) {
+        const deletedAt = this.deletions.deletedAt('history', entry.id) ?? 0;
         this.deletions.remove('history', entry.id);
-        this.record(entry);
+        this.record(entry, Math.max(entry.updatedAt, deletedAt));
     }
 
     /**

@@ -27,14 +27,15 @@ describe('the Privacy notice and Terms of use', () => {
         });
     });
 
-    it('has a privacy notice, saying the data stays on the device', async () => {
+    it('has a privacy notice, saying what stays on the device and what syncs', async () => {
         const harness = await RouterTestingHarness.create();
         await harness.navigateByUrl('/privacy');
         const page: HTMLElement = harness.routeNativeElement!;
 
         expect(page.querySelector('h2')!.textContent!.trim()).toBe('Privacy notice');
         expect(page.querySelector('[aria-labelledby="legal-title"]')).not.toBeNull();
-        expect(page.textContent).toContain('never sent to us');
+        expect(page.textContent).toContain('without one, none of it is sent anywhere');
+        expect(page.textContent).toContain("Syncing, while you're signed in.");
         expect(page.textContent).toContain('Last updated');
     });
 

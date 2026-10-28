@@ -13,10 +13,11 @@ import {
     makeBackup,
     MAX_BACKUP_BYTES,
     readBackup,
+    ReadBackup,
 } from './backup-file';
 
-/** What an import changed, counted by kind. */
-export interface ImportCounts {
+/** What a merge changed, counted by kind. */
+export interface MergeCounts {
     workoutsAdded: number;
     workoutsUpdated: number;
     /** History entries: workouts done. */
@@ -27,9 +28,29 @@ export interface ImportCounts {
     exercisesUpdated: number;
     /** Workouts, history entries and exercises removed because they'd been deleted where the backup came from. */
     removed: number;
+}
+
+/** What an import changed, counted by kind. */
+export interface ImportCounts extends MergeCounts {
     /** Items in the file that couldn't be read. */
     skipped: number;
 }
+
+/**
+ * Another copy's records, read and checked, to merge in: from a backup file, or from another
+ * device by sync.
+ */
+export type CopyToMerge = Pick<
+    Extract<ReadBackup, { ok: true }>,
+    | 'workouts'
+    | 'history'
+    | 'exercises'
+    | 'exerciseNotes'
+    | 'hiddenExercises'
+    | 'libraryOrder'
+    | 'deleted'
+> &
+    Partial<Pick<Extract<ReadBackup, { ok: true }>, 'fromVersion1' | 'newWorkouts'>>;
 
 export type ImportResult =
     | ({ ok: true } & ImportCounts)
@@ -84,18 +105,7 @@ export class BackupService {
         return name;
     }
 
-    /**
-     * Merges a backup file in: the most recent change to each workout, history entry, exercise of your
-     * own, note and hidden exercise wins, and what was deleted where the backup came from is deleted here,
-     * unless it's changed here since. Exercises come first, so the workouts and history entries can be
-     * linked to them: steps and sets that aren't linked yet (from a file before version 3, or
-     * to an exercise that isn't here) are linked by name, as saved data is. An exercise of your
-     * own in the file with the same name as one here, under another id, is taken to be that
-     * one: the one here is kept, and what in the file used the other id uses its id. Workouts
-     * with no id (a file written by hand) are added unless the same workout is here already.
-     * The library's order is taken from the file if a workout was moved there more recently.
-     * Settings in the file are left out, since they're a choice for each device.
-     */
+    /** Merges a backup file in, as `merge()` does. Settings in the file are left out. */
     async import(file: Blob): Promise<ImportResult> {
         if (file.size > MAX_BACKUP_BYTES) {
             return { ok: false, problem: 'too-big' };
@@ -111,6 +121,23 @@ export class BackupService {
             return backup;
         }
         await this.history.ready;
+        return { ok: true, ...this.merge(backup), skipped: backup.skipped };
+    }
+
+    /**
+     * Merges another copy in: the most recent change to each workout, history entry, exercise of your
+     * own, note and hidden exercise wins, and what was deleted where the copy came from is deleted here,
+     * unless it's changed here since. Exercises come first, so the workouts and history entries can be
+     * linked to them: steps and sets that aren't linked yet (from a file before version 3, or
+     * to an exercise that isn't here) are linked by name, as saved data is. An exercise of your
+     * own in the copy with the same name as one here, under another id, is taken to be that
+     * one: the one here is kept, and what in the copy used the other id uses its id. Workouts
+     * with no id (a file written by hand) are added unless the same workout is here already.
+     * The library's order is taken from the file if a workout was moved there more recently.
+     * Settings aren't part of it, since they're a choice for each device. Wait for the
+     * history's `ready` first.
+     */
+    merge(backup: CopyToMerge): MergeCounts {
         // An exercise typed on both devices is one exercise: the one here, under its id here
         const sameHere = sameExercisesHere(
             backup.exercises,
@@ -137,7 +164,7 @@ export class BackupService {
             : this.workouts.mergeWorkouts(linkedWorkouts, backup.deleted);
         // Written by hand with no ids, so a file imported twice doesn't add them twice
         const newWorkoutsAdded = this.workouts.importWorkouts(
-            backup.newWorkouts.map((workout) => this.linked(workout, idHere))
+            (backup.newWorkouts ?? []).map((workout) => this.linked(workout, idHere))
         );
         // Once the workouts are in, so new ones take their place in it too
         if (backup.libraryOrder) {
@@ -145,7 +172,6 @@ export class BackupService {
         }
         const entries = this.history.mergeEntries(linkedHistory, backup.deleted);
         return {
-            ok: true,
             workoutsAdded: workouts.added + newWorkoutsAdded,
             workoutsUpdated: workouts.updated,
             entriesAdded: entries.added,
@@ -153,7 +179,6 @@ export class BackupService {
             exercisesAdded: exercises.added,
             exercisesUpdated: exercises.updated,
             removed: workouts.removed + entries.removed + exercises.removed,
-            skipped: backup.skipped,
         };
     }
 

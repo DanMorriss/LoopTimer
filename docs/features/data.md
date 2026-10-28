@@ -176,6 +176,18 @@ The run in progress in a tab moves too (`activeTimerId`, `activeTimerStartedAt` 
 
 Kept by Supabase's client while you're signed in (SYN-3): the sign-in tokens and the account's id and email. Signing out removes it; so does Clear this device, which signs the device out.
 
+### `sync`: what's been synced
+
+While signed in (SYN-3): the account's user id, the last `seq` fetched from the server, and each record's last change sent or fetched (`"workout:<id>": "<updatedAt>"`, or `"d<deletedAt>"` for a deletion), so only what's changed since is sent. Signing out removes it.
+
+### `synced-at`: when this device last synced
+
+In ms since the epoch, by the device's clock, for the Account tab. Signing out removes it.
+
+### `clock-offset`: how far this device's clock is from the server's
+
+In ms, added to the device's clock to date changes (see [backup and sync](backup-and-sync.md), Sync). Kept after signing out, as the clock's no less off.
+
 ## Saved for the run in progress (`sessionStorage` on the web, per tab)
 
 | Key                      | What                                                                                                                               |

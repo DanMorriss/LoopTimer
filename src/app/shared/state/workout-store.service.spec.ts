@@ -494,12 +494,27 @@ describe('WorkoutStore', () => {
         it('leaves a deletion behind, dated, so it can reach other copies', () => {
             const store = createStore();
             const workout = store.addWorkout(makeWorkout());
-            vi.spyOn(Date, 'now').mockReturnValue(9000);
+            vi.spyOn(Date, 'now').mockReturnValue(workout.updatedAt + 9000);
 
             store.deleteWorkout(workout.id);
 
             expect(JSON.parse(localStorage.getItem('deleted')!)).toEqual([
-                { kind: 'workout', id: workout.id, deletedAt: 9000 },
+                { kind: 'workout', id: workout.id, deletedAt: workout.updatedAt + 9000 },
+            ]);
+        });
+
+        it('dates the deletion after the workout, even if its clock was ahead then', () => {
+            const store = createStore();
+            vi.spyOn(Date, 'now').mockReturnValue(5_000_000);
+            const workout = store.addWorkout(makeWorkout());
+            // The clock's been put right since
+            vi.spyOn(Date, 'now').mockReturnValue(1_000_000);
+
+            store.deleteWorkout(workout.id);
+
+            expect(store.workouts()).toEqual([]);
+            expect(JSON.parse(localStorage.getItem('deleted')!)).toEqual([
+                { kind: 'workout', id: workout.id, deletedAt: 5_000_001 },
             ]);
         });
 
@@ -510,10 +525,19 @@ describe('WorkoutStore', () => {
             const last = store.addWorkout(makeWorkout({ title: 'Last' }));
             store.deleteWorkout(middle.id);
 
+            const deletedAt = JSON.parse(localStorage.getItem('deleted')!)[0].deletedAt;
+
             store.restoreWorkout(middle, 1);
 
-            expect(store.workouts()).toEqual([first, middle, last]);
-            expect(savedWorkouts()).toEqual([first, middle, last]);
+            // Dated after its deletion, which may have reached other devices already
+            const restored = store.workouts()[1];
+            expect(restored.updatedAt).toBeGreaterThan(deletedAt);
+            expect(store.workouts()).toEqual([
+                first,
+                { ...middle, updatedAt: restored.updatedAt },
+                last,
+            ]);
+            expect(savedWorkouts()).toEqual(store.workouts());
             expect(JSON.parse(localStorage.getItem('deleted')!)).toEqual([]);
         });
 
@@ -525,7 +549,7 @@ describe('WorkoutStore', () => {
             store.restoreWorkout(workout, 0);
             store.restoreWorkout(workout, 0);
 
-            expect(store.workouts()).toEqual([workout]);
+            expect(store.workouts().map((restored) => restored.id)).toEqual([workout.id]);
         });
     });
 

@@ -7,6 +7,7 @@ import { reloadOnStaleCode } from './app/nav/stale-code';
 import { AlarmService } from './app/shared/alarms/alarm.service';
 import { ActiveRunService } from './app/shared/run/active-run.service';
 import { ThemeService } from './app/shared/theme/theme.service';
+import { SyncStarter } from './app/sync/sync-starter.service';
 
 bootstrapApplication(AppComponent, {
     providers: [
@@ -20,6 +21,8 @@ bootstrapApplication(AppComponent, {
             inject(ThemeService);
             // Pick up a workout already going (after a refresh), whichever page this is
             inject(ActiveRunService);
+            // Sync, if this device is signed in (loading its code only then)
+            inject(SyncStarter).startIfSignedIn();
         }),
     ],
 }).catch((err) => console.error(err));

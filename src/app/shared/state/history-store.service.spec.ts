@@ -186,8 +186,10 @@ describe('HistoryStore', () => {
         expect(await savedHistory()).toEqual([]);
 
         store.restore(entry);
-        expect(store.entries()).toEqual([entry]);
-        expect(await savedHistory()).toEqual([entry]);
+        // Dated after its deletion
+        const restored = { ...entry, updatedAt: NOW + 2 };
+        expect(store.entries()).toEqual([restored]);
+        expect(await savedHistory()).toEqual([restored]);
     });
 
     // The run may still be going, and logs itself again when it finishes or the tab closes
@@ -304,12 +306,15 @@ describe('HistoryStore', () => {
             store.record(makeEntry());
 
             store.delete(makeEntry().id);
+            // Just after it was recorded, as the clock hasn't moved
             expect(JSON.parse(localStorage.getItem('deleted')!)).toEqual([
-                { kind: 'history', id: makeEntry().id, deletedAt: NOW },
+                { kind: 'history', id: makeEntry().id, deletedAt: NOW + 1 },
             ]);
 
             store.restore(makeEntry());
             expect(JSON.parse(localStorage.getItem('deleted')!)).toEqual([]);
+            // Dated after its deletion
+            expect(store.entries()[0].updatedAt).toBe(NOW + 2);
         });
 
         it('dates a saved entry with no date by when it ended', async () => {

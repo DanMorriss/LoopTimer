@@ -1,5 +1,6 @@
 import { DOCUMENT, inject, Service, signal } from '@angular/core';
 import type { Session } from '@supabase/supabase-js';
+import { SyncStarter } from '../sync/sync-starter.service';
 import { AccountClient, ACCOUNT_CLIENT } from './account-client';
 
 export type AccountState =
@@ -21,6 +22,7 @@ export const SIGN_IN_PATH = '/account';
 export class AccountService {
     private readonly makeClient = inject(ACCOUNT_CLIENT);
     private readonly document = inject(DOCUMENT);
+    private readonly sync = inject(SyncStarter);
     private client: Promise<AccountClient> | null = null;
 
     private readonly _state = signal<AccountState>({ status: 'loading' });
@@ -58,6 +60,9 @@ export class AccountService {
     }
 
     private show(session: Session | null) {
+        if (session) {
+            this.sync.start();
+        }
         this._state.set(
             session
                 ? { status: 'signed-in', email: session.user.email ?? '' }

@@ -17,9 +17,10 @@
                         >.
                     </p>
                     <p class="account__hint">
-                        Sync is on its way: once it's ready, your workouts and history will be the
-                        same on every device you sign in on. Until then, they stay on this device.
+                        Your workouts, history and exercises sync between the devices you sign in
+                        on. Settings stay a choice for each device.
                     </p>
+                    <p class="account__text account__sync">{{ syncText() }}</p>
                     @if (confirmingDelete()) {
                         <div
                             class="account__ask"
@@ -101,9 +102,9 @@
                         </form>
                     } @else {
                         <p class="account__hint" id="account-why">
-                            Sign in now, and once sync is ready your workouts and history will be
-                            the same on every device you sign in on. An account is optional: without
-                            one, everything stays on this device.
+                            Sign in, and your workouts and history will be the same on every device
+                            you sign in on. An account is optional: without one, everything stays on
+                            this device.
                         </p>
                         @if (account.linkProblem(); as problem) {
                             <p class="account__error" role="alert">{{ problem }}</p>

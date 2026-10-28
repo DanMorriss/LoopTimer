@@ -239,11 +239,12 @@ describe('ExerciseStore', () => {
             expect(store.noteFor(mine.id)).toBeUndefined();
             expect(store.isHidden(mine.id)).toBe(false);
             expect(saved(EXERCISES_KEY)).toEqual([]);
+            // Each just after what it deletes, as the clock hasn't moved
             expect(saved('deleted')).toEqual(
                 expect.arrayContaining([
-                    { kind: 'exercise', id: mine.id, deletedAt: NOW },
-                    { kind: 'exercise-note', id: mine.id, deletedAt: NOW },
-                    { kind: 'hidden-exercise', id: mine.id, deletedAt: NOW },
+                    { kind: 'exercise', id: mine.id, deletedAt: NOW + 1 },
+                    { kind: 'exercise-note', id: mine.id, deletedAt: NOW + 1 },
+                    { kind: 'hidden-exercise', id: mine.id, deletedAt: NOW + 1 },
                 ])
             );
         });
@@ -266,10 +267,11 @@ describe('ExerciseStore', () => {
 
             store.restoreOwn(mine, 'Heavy', true);
 
-            expect(store.byId(mine.id)).toEqual(mine);
+            // Dated after its deletion
+            expect(store.byId(mine.id)).toEqual({ ...mine, updatedAt: NOW + 2 });
             expect(store.noteFor(mine.id)).toBe('Heavy');
             expect(store.isHidden(mine.id)).toBe(true);
-            expect(saved(EXERCISES_KEY)).toEqual([mine]);
+            expect(saved(EXERCISES_KEY)).toEqual([{ ...mine, updatedAt: NOW + 2 }]);
             // None of it is deleted any more, so a backup won't take it away again
             expect(saved('deleted')).toEqual([]);
         });
@@ -287,7 +289,7 @@ describe('ExerciseStore', () => {
             expect(store.isHidden('builtin:plank')).toBe(false);
             expect(saved(HIDDEN_EXERCISES_KEY)).toEqual([]);
             expect(saved('deleted')).toEqual([
-                { kind: 'hidden-exercise', id: 'builtin:plank', deletedAt: NOW },
+                { kind: 'hidden-exercise', id: 'builtin:plank', deletedAt: NOW + 1 },
             ]);
         });
 
@@ -336,7 +338,7 @@ describe('ExerciseStore', () => {
 
             expect(store.noteFor('builtin:back-squat')).toBeUndefined();
             expect(saved('deleted')).toEqual([
-                { kind: 'exercise-note', id: 'builtin:back-squat', deletedAt: NOW },
+                { kind: 'exercise-note', id: 'builtin:back-squat', deletedAt: NOW + 1 },
             ]);
         });
     });

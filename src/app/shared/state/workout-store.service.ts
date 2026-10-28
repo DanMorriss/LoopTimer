@@ -13,6 +13,7 @@ import { MAX_WEIGHT_KG } from '../../models/weight';
 import { isLoggedSet, isTimedSet, RepSet } from '../../models/history';
 import { Deletion, inOrder, LibraryOrder, mergeRecords, newId } from '../../models/sync';
 import { DeletionStore } from './deletion-store.service';
+import { SyncClock } from './sync-clock.service';
 import { ExerciseStore } from './exercise-store.service';
 import { linkSteps } from '../../models/exercise-links';
 import { LEGACY_WORKOUT_IDS_KEY, migrateSavedData, renameActiveRunKeys } from './migrate';
@@ -20,6 +21,7 @@ import { LEGACY_WORKOUT_IDS_KEY, migrateSavedData, renameActiveRunKeys } from '.
 @Service()
 export class WorkoutStore {
     private readonly deletions = inject(DeletionStore);
+    private readonly clock = inject(SyncClock);
     private readonly exercises = inject(ExerciseStore);
     private _workouts = signal<Workout[]>([]);
     private _movedAt = signal(readMovedAt());
@@ -136,7 +138,7 @@ export class WorkoutStore {
             ...workout,
             steps: linkSteps(workout.steps, this.exercises.finder),
             id: newId(),
-            updatedAt: Date.now(),
+            updatedAt: this.clock.now(),
         };
         this._workouts.update((workouts) => [...workouts, newWorkout]);
         this.saveWorkouts();
@@ -186,21 +188,31 @@ export class WorkoutStore {
     }
 
     deleteWorkout(workoutId: string) {
+        const deleted = this.findWorkoutById(workoutId);
         const updatedWorkoutList = this._workouts().filter((workout) => workout.id !== workoutId);
         this._workouts.set(updatedWorkoutList);
         this.saveWorkouts();
-        this.deletions.add({ kind: 'workout', id: workoutId, deletedAt: Date.now() });
+        this.deletions.add({
+            kind: 'workout',
+            id: workoutId,
+            deletedAt: this.clock.now(deleted?.updatedAt),
+        });
     }
 
-    /** Puts a deleted workout back where it was in the library, e.g. on Undo. */
+    /**
+     * Puts a deleted workout back where it was in the library, e.g. on Undo. It's dated now,
+     * as putting it back is a change made after the deletion, which may have reached other
+     * devices already.
+     */
     restoreWorkout(workout: Workout, index: number) {
         if (this.findWorkoutById(workout.id)) {
             return;
         }
+        const deletedAt = this.deletions.deletedAt('workout', workout.id);
         this.deletions.remove('workout', workout.id);
         this._workouts.update((workouts) => [
             ...workouts.slice(0, index),
-            workout,
+            { ...workout, updatedAt: this.clock.now(Math.max(workout.updatedAt, deletedAt ?? 0)) },
             ...workouts.slice(index),
         ]);
         this.saveWorkouts();
@@ -217,7 +229,7 @@ export class WorkoutStore {
         workouts.splice(to, 0, moved);
         this._workouts.set(workouts);
         this.saveWorkouts();
-        this.saveMovedAt(Date.now());
+        this.saveMovedAt(this.clock.now(this._movedAt()));
     }
 
     /**
@@ -253,7 +265,7 @@ export class WorkoutStore {
             ...workoutUpdate,
             steps: linkSteps(workoutUpdate.steps, this.exercises.finder),
             id: workoutId,
-            updatedAt: Date.now(),
+            updatedAt: this.clock.now(existingWorkout.updatedAt),
         };
 
         this._workouts.update((workouts) =>
@@ -277,7 +289,7 @@ export class WorkoutStore {
             const steps = workout.steps.map((step) =>
                 step.exerciseId === exerciseId ? { ...step, name } : step
             );
-            return { ...workout, steps, updatedAt: Date.now() };
+            return { ...workout, steps, updatedAt: this.clock.now(workout.updatedAt) };
         };
         const workouts = this._workouts().map(renamed);
         if (workouts.some((workout, i) => workout !== this._workouts()[i])) {
@@ -370,7 +382,7 @@ export class WorkoutStore {
         const updated: Workout = {
             ...workout,
             steps: workout.steps.map((existing, i) => (i === stepIndex ? step : existing)),
-            updatedAt: Date.now(),
+            updatedAt: this.clock.now(workout.updatedAt),
         };
         this._activeWorkout.set(updated);
         if (this.findWorkoutById(workout.id)) {

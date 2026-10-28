@@ -6,14 +6,23 @@ import {
     provideFakeAccountClient,
     sessionFor,
 } from '../shared/testing/fake-account-client';
+import {
+    FakeSyncStarter,
+    fakeSyncStarter,
+    provideFakeSyncStarter,
+} from '../shared/testing/fake-sync';
 import { AccountService } from './account.service';
 
 describe('AccountService', () => {
     let client: FakeAccountClient;
+    let sync: FakeSyncStarter;
 
     function start(signedInAs: string | null = null) {
         client = fakeAccountClient(signedInAs);
-        TestBed.configureTestingModule({ providers: [provideFakeAccountClient(client)] });
+        sync = fakeSyncStarter();
+        TestBed.configureTestingModule({
+            providers: [provideFakeAccountClient(client), provideFakeSyncStarter(sync)],
+        });
         return TestBed.inject(AccountService);
     }
 
@@ -27,6 +36,15 @@ describe('AccountService', () => {
         await settled();
 
         expect(account.state()).toEqual({ status: 'signed-out' });
+    });
+
+    it('starts sync once signed in, and not before', async () => {
+        start();
+        await settled();
+        expect(sync.start).not.toHaveBeenCalled();
+
+        client.change(sessionFor('me@example.com'));
+        expect(sync.start).toHaveBeenCalled();
     });
 
     it('is signed in with a session, and follows the client when it changes', async () => {
@@ -139,6 +157,7 @@ describe('AccountService', () => {
             TestBed.configureTestingModule({
                 providers: [
                     provideFakeAccountClient(client),
+                    provideFakeSyncStarter(),
                     {
                         provide: DOCUMENT,
                         useValue: {
