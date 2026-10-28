@@ -1,7 +1,7 @@
 import { makeWorkout, reps, rest, work } from '../shared/testing/make-workout';
 import { BUILT_IN_EXERCISES } from './built-in-exercises';
 import { Step } from './workout';
-import { musclesMissed, musclesWorked } from './workout-muscles';
+import { musclesInSets, musclesMissed, musclesWorked } from './workout-muscles';
 
 const byId = (id: string) => BUILT_IN_EXERCISES.find((exercise) => exercise.id === id);
 const linked = (step: Step, exerciseId: string): Step => ({ ...step, exerciseId });
@@ -33,6 +33,24 @@ describe('musclesWorked', () => {
             supporting: [],
             hasExercises: false,
         });
+    });
+});
+
+describe('musclesInSets', () => {
+    it("takes the muscles of the sets' exercises, leaving out ones with no exercise or one that's gone", () => {
+        const set = { round: 0, step: 0, name: 'Bench', reps: 5 };
+        const sets = [
+            { ...set, exerciseId: 'builtin:bench-press' },
+            { ...set, name: '' },
+            { ...set, exerciseId: 'own:deleted' },
+        ];
+
+        expect(musclesInSets(sets, byId)).toEqual({
+            main: ['chest'],
+            supporting: ['shoulders', 'triceps'],
+            hasExercises: true,
+        });
+        expect(musclesInSets([{ ...set, name: '' }], byId).hasExercises).toBe(false);
     });
 });
 

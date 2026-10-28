@@ -86,7 +86,10 @@
     - When time ran out part-way through a rep step: "**Time ran out during Push-ups. How many reps did you get?**", with a Reps wheel (starting at the step's reps) and **Add set**, which logs that many reps at the step's weight. It's a set like any other after that, and can be changed with the rest, but it doesn't make the score "+ 1", as the step wasn't finished, and "Use these settings next time?" leaves it out.
     - **Personal bests** this workout set (PRG-2), and "Most rounds: 7 rounds + 3" for a time limit beaten (PRG-7; see [progress](progress.md)).
     - **Sets**, one line per step as in the history, e.g. "Squats: 10, 10, 8 @ 60 kg" or "Plank: 3 × 0:45".
+    - **Next time**: a step up for each rep step where every set got its reps, e.g. "Bench press: try 82.5 kg, up from 80 kg" or "Push-ups: try 13 reps, up from 12" (PRG-10).
+    - **Muscles worked**: the body map, shaded by this workout's sets (PRG-11).
     - A **Note** box, saved to this workout in the history as you leave it.
+    - The **suggested next workout**, as on the history page, without its Start button (PRG-9; see [progress](progress.md)).
     - Buttons: **Done** (the main one: on to the history, with this workout highlighted), and **Back to workout** for a workout ended early or one that runs until stopped. Escape does the same as Back to workout, where there is one.
 - **Change reps or weight** (shown when there are rep sets) turns each rep set into a Reps and a Weight wheel, so a set logged wrongly can be corrected (e.g. the last set was 8, not 10). Timed sets ran as set, so they can't be changed. A change goes into this workout's history entry at once, and then asks "**Use these settings next time?**":
     - **Yes, use next time**: each rep step of the saved workout starts next time from its last set in this workout. It says "Saved: next time starts from these."

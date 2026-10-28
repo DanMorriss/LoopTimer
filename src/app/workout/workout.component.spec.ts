@@ -2830,6 +2830,57 @@ describe('WorkoutComponent', () => {
             fixture.destroy();
         });
 
+        it('suggests a step up next time where every set got its reps, and follows corrections', () => {
+            benchOnce(80, []);
+
+            expect(summaryText()).toContain('Next time');
+            expect(summaryText()).toContain('Bench press: try 82.5 kg, up from 80 kg');
+
+            // Corrected to 4 reps, it fell short, so there's nothing to step up
+            TestBed.inject(ActiveRunService).changeSet(0, { reps: 4 });
+            fixture.detectChanges();
+            expect(summaryText()).not.toContain('Next time');
+            fixture.destroy();
+        });
+
+        it('suggests one more rep for a step with no weight, and shows the muscles worked', () => {
+            const pushUps = { name: 'Push-ups', exerciseId: 'builtin:push-up' };
+            start(
+                makeWorkout({
+                    steps: [work(2), { kind: 'reps', reps: 12, ...pushUps } as const],
+                    repeats: 1,
+                })
+            );
+            advance(2000);
+            (fixture.nativeElement.querySelector('.workout-next--done') as HTMLElement).click();
+            fixture.detectChanges();
+
+            expect(summaryText()).toContain('Push-ups: try 13 reps, up from 12');
+
+            // The muscles its sets worked, on the body map with its lists
+            const muscles = summary()!.querySelector('[aria-labelledby="summary-muscles"]')!;
+            expect(muscles.textContent).toContain('Muscles worked');
+            expect(muscles.querySelector('app-body-map')).not.toBeNull();
+            expect(muscles.textContent).toContain('Chest');
+            fixture.destroy();
+        });
+
+        it('suggests the next workout as the history does, without starting it from here', () => {
+            TestBed.inject(WorkoutStore).addWorkout({
+                title: 'Legs',
+                repeats: 3,
+                steps: [
+                    { kind: 'reps', reps: 5, name: 'Back squat', exerciseId: 'builtin:back-squat' },
+                ],
+            });
+            benchOnce(80, []);
+
+            expect(summary()!.querySelector('.suggestion__title')?.textContent).toBe('Legs');
+            expect(summaryText()).toContain('Suggested next workout');
+            expect(summary()!.querySelector('.suggestion button')).toBeNull();
+            fixture.destroy();
+        });
+
         it('sums up a workout ended early, logged as stopped, with focus on its heading', () => {
             endInRound2();
             TestBed.tick();

@@ -1,5 +1,6 @@
 import { HistoryEntry, isTimedSet, LoggedSet, RepSet, TimedSet } from './history';
 import { MAX_WEIGHT, WEIGHT_INCREASE, WeightUnit, weightIn } from './weight';
+import { MAX_REPS, Step } from './workout';
 
 /** How far a workout got in its time limit: full rounds, then steps done of the next. */
 export interface RoundsScore {
@@ -219,4 +220,54 @@ export function suggestedWeight(
         last,
         next: hitEvery ? Math.min(MAX_WEIGHT[unit], last + WEIGHT_INCREASE[unit]) : last,
     };
+}
+
+/** A step up to try next time, from how a rep step went this time (on the workout summary). */
+export interface ProgressionSuggestion {
+    /** Which step of the round it's for, from 0. */
+    step: number;
+    /** A heavier weight, or (with no weight) one more rep. */
+    kind: 'weight' | 'reps';
+    /** The weight (in the unit shown) or reps it's from, and the one to try. */
+    from: number;
+    to: number;
+}
+
+/**
+ * What to step up next time, a rep step at a time, from this run's `sets` of `steps`: where
+ * every set got the step's reps, one weight step up (as `suggestedWeight()` does), or one more
+ * rep for a step with no weight. Nothing for a step that missed its reps, or is at the top.
+ */
+export function progressionSuggestions(
+    sets: readonly LoggedSet[],
+    steps: readonly Step[],
+    unit: WeightUnit
+): ProgressionSuggestion[] {
+    const byStep = new Map<number, RepSet[]>();
+    for (const set of sets) {
+        if (!isTimedSet(set)) {
+            byStep.set(set.step, [...(byStep.get(set.step) ?? []), set]);
+        }
+    }
+    const suggestions: ProgressionSuggestion[] = [];
+    for (const [index, stepSets] of byStep) {
+        const step = steps[index];
+        if (step?.kind !== 'reps') {
+            continue;
+        }
+        const weight = suggestedWeight(stepSets, step.reps, unit);
+        if (weight) {
+            if (weight.next > weight.last) {
+                suggestions.push({
+                    step: index,
+                    kind: 'weight',
+                    from: weight.last,
+                    to: weight.next,
+                });
+            }
+        } else if (step.reps < MAX_REPS && stepSets.every((set) => set.reps >= step.reps)) {
+            suggestions.push({ step: index, kind: 'reps', from: step.reps, to: step.reps + 1 });
+        }
+    }
+    return suggestions.sort((a, b) => a.step - b.step);
 }

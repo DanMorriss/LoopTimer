@@ -18,6 +18,8 @@ import {
     roundsScore,
     sessionsByExercise,
 } from '../../models/progress';
+import { musclesInSets } from '../../models/workout-muscles';
+import { BodyMapComponent } from '../../shared/components/body-map/body-map.component';
 import { WheelPickerComponent } from '../../shared/components/wheel-picker/wheel-picker.component';
 import { ActiveRunService } from '../../shared/run/active-run.service';
 import { ExerciseStore } from '../../shared/state/exercise-store.service';
@@ -29,6 +31,7 @@ import {
     entryName,
     formatDuration,
 } from '../../history/history-format';
+import { SuggestedWorkoutComponent } from '../../history/suggested-workout/suggested-workout.component';
 import { bestLines } from '../../exercises/progress-format';
 import { project, rubberband, VelocityTracker } from '../../shared/gesture';
 import { injectPrefersReducedMotion } from '../../shared/reduced-motion';
@@ -38,6 +41,7 @@ import {
     REP_OPTIONS,
     SummarySetsComponent,
 } from './summary-sets/summary-sets.component';
+import { SummaryStepUpsComponent } from './summary-step-ups/summary-step-ups.component';
 
 /** px/s: let go faster than this, the sheet was thrown rather than set down. */
 const THROWN = 300;
@@ -67,13 +71,23 @@ function scrolledWithin(target: Element, container: Element): boolean {
 
 /**
  * How the workout went, once it's finished or ended with End workout: the time, rounds and
- * sets, which can be corrected, and a note. A workout ended early (or one that runs until
- * stopped) can be taken up again with Back to workout; the run waits, paused, until then.
- * Focus starts on the heading and is trapped inside while it's open.
+ * sets, which can be corrected, what to step up next time, the muscles worked, a note, and
+ * the suggested next workout. A workout ended early (or one that runs until stopped) can be
+ * taken up again with Back to workout; the run waits, paused, until then. Focus starts on
+ * the heading and is trapped inside while it's open.
  */
 @Component({
     selector: 'app-workout-summary',
-    imports: [CdkTrapFocus, FormField, MatIconModule, SummarySetsComponent, WheelPickerComponent],
+    imports: [
+        BodyMapComponent,
+        CdkTrapFocus,
+        FormField,
+        MatIconModule,
+        SuggestedWorkoutComponent,
+        SummarySetsComponent,
+        SummaryStepUpsComponent,
+        WheelPickerComponent,
+    ],
     templateUrl: './workout-summary.component.html',
     styleUrl: './workout-summary.component.scss',
     host: { '[class.summary--dragged-away]': 'draggedAway()' },
@@ -159,6 +173,11 @@ export class WorkoutSummaryComponent {
         }
         return lines;
     });
+
+    /** The muscles this workout's sets worked, main and supporting, for the body map. */
+    protected readonly muscles = computed(() =>
+        musclesInSets(this.run.sets(), (id) => this.exercises.byId(id))
+    );
 
     protected logLastSet() {
         this.run.logLastSet(this.lastSetReps());

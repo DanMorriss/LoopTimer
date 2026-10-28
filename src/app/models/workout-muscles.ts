@@ -1,4 +1,5 @@
 import { Exercise, MUSCLE_LABELS, MuscleGroup } from './exercise';
+import { LoggedSet } from './history';
 import { Workout } from './workout';
 
 /** Every muscle group, in the order the app lists them. */
@@ -21,20 +22,37 @@ export function musclesWorked(
     workouts: readonly Workout[],
     byId: (id: string) => Exercise | undefined
 ): MusclesWorked {
+    return musclesOf(
+        workouts.flatMap((workout) =>
+            workout.steps.map((step) =>
+                step.kind === 'rest' || !step.exerciseId ? undefined : byId(step.exerciseId)
+            )
+        )
+    );
+}
+
+/**
+ * The muscles some logged sets worked, e.g. one workout's on its summary, as `musclesWorked()`
+ * has them: a set with no exercise, or of one that's gone, works nothing that's known.
+ */
+export function musclesInSets(
+    sets: readonly LoggedSet[],
+    byId: (id: string) => Exercise | undefined
+): MusclesWorked {
+    return musclesOf(sets.map((set) => (set.exerciseId ? byId(set.exerciseId) : undefined)));
+}
+
+function musclesOf(exercises: readonly (Exercise | undefined)[]): MusclesWorked {
     const main = new Set<MuscleGroup>();
     const supporting = new Set<MuscleGroup>();
     let hasExercises = false;
-    for (const workout of workouts) {
-        for (const step of workout.steps) {
-            const exercise =
-                step.kind === 'rest' || !step.exerciseId ? undefined : byId(step.exerciseId);
-            if (!exercise) {
-                continue;
-            }
-            hasExercises = true;
-            exercise.mainMuscles.forEach((muscle) => main.add(muscle));
-            exercise.supportingMuscles.forEach((muscle) => supporting.add(muscle));
+    for (const exercise of exercises) {
+        if (!exercise) {
+            continue;
         }
+        hasExercises = true;
+        exercise.mainMuscles.forEach((muscle) => main.add(muscle));
+        exercise.supportingMuscles.forEach((muscle) => supporting.add(muscle));
     }
     return {
         main: ALL_MUSCLES.filter((muscle) => main.has(muscle)),

@@ -1,10 +1,12 @@
 import { HistoryEntry, LoggedSet } from './history';
+import { Step } from './workout';
 import {
     compareScores,
     estimatedOneRepMax,
     exerciseBests,
     ExerciseSession,
     isMostRounds,
+    progressionSuggestions,
     progressMeasure,
     sessionsByExercise,
     sessionValue,
@@ -202,5 +204,45 @@ describe('suggested weight (PRG-5)', () => {
         expect(suggestedWeight([squat(10)], 10, 'kg')).toBeNull();
         expect(suggestedWeight([plank(60)], 10, 'kg')).toBeNull();
         expect(suggestedWeight([], 10, 'kg')).toBeNull();
+    });
+});
+
+describe('next time on the workout summary', () => {
+    const squats: Step = { kind: 'reps', reps: 10, name: 'Squats', exerciseId: 'squat' };
+    const plankStep: Step = { kind: 'work', seconds: 60, name: 'Plank', exerciseId: 'plank' };
+    const pushUps = (reps: number, round = 0): LoggedSet => ({
+        round,
+        step: 2,
+        name: 'Push-ups',
+        reps,
+        exerciseId: 'push-up',
+    });
+    const pushUpStep: Step = { kind: 'reps', reps: 12, name: 'Push-ups', exerciseId: 'push-up' };
+    const steps = [squats, plankStep, pushUpStep];
+
+    it('steps the weight up where every set got its reps, and the reps where there is no weight', () => {
+        const sets = [squat(10, 60), plank(60), pushUps(12), squat(10, 60, 1), pushUps(13, 1)];
+
+        expect(progressionSuggestions(sets, steps, 'kg')).toEqual([
+            { step: 0, kind: 'weight', from: 60, to: 62.5 },
+            { step: 2, kind: 'reps', from: 12, to: 13 },
+        ]);
+    });
+
+    it('suggests nothing for a step that missed its reps, or is at the top', () => {
+        const sets = [squat(10, 60), squat(8, 60), pushUps(12), pushUps(11, 1)];
+        expect(progressionSuggestions(sets, steps, 'kg')).toEqual([]);
+
+        expect(progressionSuggestions([squat(10, 300)], steps, 'kg')).toEqual([]);
+        const hundred: Step = { ...pushUpStep, reps: 100 };
+        expect(progressionSuggestions([pushUps(100)], [squats, plankStep, hundred], 'kg')).toEqual(
+            []
+        );
+    });
+
+    it('never adds reps to a weighted step, even where its last set had none', () => {
+        expect(progressionSuggestions([squat(10, 60), squat(10)], steps, 'lb')).toEqual([
+            { step: 0, kind: 'weight', from: 132.5, to: 137.5 },
+        ]);
     });
 });

@@ -1,0 +1,46 @@
+@use 'type' as *;
+
+:host {
+    display: block;
+}
+
+// A card, as the history's muscles are, for the workout to do next
+.suggestion {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 1rem;
+    border: 1px solid var(--panel-border);
+    border-radius: 0.9rem;
+    background: var(--card);
+    text-align: center;
+
+    p {
+        margin: 0;
+    }
+
+    .btn-pill {
+        margin-top: 0.4rem;
+    }
+}
+
+.suggestion__label {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.suggestion__title {
+    @include display;
+    color: var(--text-strong);
+    font-size: 1.2rem;
+}
+
+.suggestion__reason {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}

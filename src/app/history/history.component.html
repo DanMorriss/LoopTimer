@@ -26,23 +26,7 @@
                 </section>
             }
 
-            @if (suggestion(); as suggested) {
-                <section class="history__suggestion" aria-labelledby="suggestion-title">
-                    <h3 class="history__suggestion-label" id="suggestion-title">
-                        Suggested next workout
-                    </h3>
-                    <p class="history__suggestion-title">{{ suggested.workout.title }}</p>
-                    <p class="history__suggestion-reason">{{ suggested.reason }}</p>
-                    <button
-                        type="button"
-                        class="btn-pill"
-                        [attr.aria-label]="'Start ' + suggested.workout.title"
-                        (click)="start(suggested.workout)"
-                    >
-                        Start
-                    </button>
-                </section>
-            }
+            <app-suggested-workout class="history__suggestion" />
 
             @for (group of groups(); track group.key) {
                 <section class="history__day" [attr.aria-labelledby]="'day-' + group.key">
