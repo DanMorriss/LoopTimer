@@ -9,12 +9,14 @@ import {
 } from '@angular/core';
 import { email, form, FormField, pattern, required } from '@angular/forms/signals';
 import { ClearDeviceComponent } from '../shared/components/clear-device/clear-device.component';
+import { SyncStarter } from '../sync/sync-starter.service';
+import { syncText } from '../sync/sync-text';
 import { AccountService } from './account.service';
 
 /**
  * The Account tab (SYN-3, SYN-8, SYN-9): signing in by an email link or its code, who's
- * signed in, signing out and deleting the account, and Clear this device. Sync itself comes
- * later; until then signing in only makes the account.
+ * signed in and how sync is going, signing out and deleting the account, and Clear this
+ * device.
  */
 @Component({
     selector: 'app-account',
@@ -32,6 +34,10 @@ export class AccountComponent {
         const state = this.account.state();
         return state.status === 'signed-in' ? state.email : '';
     });
+
+    private readonly sync = inject(SyncStarter);
+    /** How sync is going, e.g. "Synced at 12:30." */
+    protected readonly syncText = computed(() => syncText(this.sync.status()));
 
     /** Where the email was sent, once it has been: then the code is asked for. */
     protected readonly sentTo = signal<string | null>(null);

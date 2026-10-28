@@ -4,7 +4,7 @@ import { AccountClient, ACCOUNT_CLIENT } from '../../account/account-client';
 
 /** A session for `email`, as much of one as the app reads. */
 export function sessionFor(email: string): Session {
-    return { user: { email } } as Session;
+    return { user: { id: `user-${email}`, email } } as Session;
 }
 
 /**
@@ -22,6 +22,8 @@ export function fakeAccountClient(email: string | null = null) {
     const auth = {
         onAuthStateChange: vi.fn((callback: typeof listener) => {
             listener = callback;
+            // As the real one does, says who's signed in to start with
+            queueMicrotask(() => listener?.('INITIAL_SESSION', session));
             return { data: { subscription: { unsubscribe: () => (listener = null) } } };
         }),
         getSession: vi.fn(async () => ({ data: { session }, error: null })),
@@ -38,7 +40,10 @@ export function fakeAccountClient(email: string | null = null) {
             return { error: null as unknown };
         }),
     };
-    const rpc = vi.fn(async (_fn: string) => ({ data: null, error: null as unknown }));
+    const rpc = vi.fn(async (_fn: string, _args?: unknown) => ({
+        data: null as unknown,
+        error: null as unknown,
+    }));
     return { auth, rpc, change };
 }
 

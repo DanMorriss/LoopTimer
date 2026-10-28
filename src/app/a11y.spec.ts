@@ -9,6 +9,7 @@ import {
     provideFakeAccountClient,
     sessionFor,
 } from './shared/testing/fake-account-client';
+import { provideFakeSyncStarter } from './shared/testing/fake-sync';
 import { makeWorkout, reps, rest, work } from './shared/testing/make-workout';
 import { ExerciseStore } from './shared/state/exercise-store.service';
 import { HistoryStore } from './shared/state/history-store.service';
@@ -53,7 +54,11 @@ for (const theme of ['dark', 'light'] as const) {
             sessionStorage.clear();
             accountClient = fakeAccountClient();
             TestBed.configureTestingModule({
-                providers: [provideRouter(routes), provideFakeAccountClient(accountClient)],
+                providers: [
+                    provideRouter(routes),
+                    provideFakeAccountClient(accountClient),
+                    provideFakeSyncStarter(),
+                ],
             });
             router = TestBed.inject(Router);
             store = TestBed.inject(WorkoutStore);

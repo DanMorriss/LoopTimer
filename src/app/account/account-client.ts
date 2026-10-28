@@ -9,27 +9,43 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 export const SUPABASE_URL = 'https://cpgacyzlfyskifzhkotu.supabase.co';
 export const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_YnL-skDr7iSBsqSqaIbWBg_vE-kGXQa';
 
+/** Where the client keeps the sign-in, in localStorage: there while this device is signed in. */
+export const AUTH_STORAGE_KEY = 'sb-cpgacyzlfyskifzhkotu-auth-token';
+
 /** The parts of the Supabase client accounts use. */
 export type AccountClient = Pick<SupabaseClient, 'auth' | 'rpc'>;
 
 /**
- * Makes the Supabase client, loading its code only when it's first needed (the Account tab),
- * so it stays out of the app's first load. Tests provide a fake.
+ * Gives the Supabase client, loading its code only when it's first needed (the Account tab,
+ * or sync once signed in), so it stays out of the app's first load. There's one client, which
+ * accounts and sync share. Tests provide a fake.
  */
 export const ACCOUNT_CLIENT = new InjectionToken<() => Promise<AccountClient>>('ACCOUNT_CLIENT', {
     providedIn: 'root',
-    factory: () => () =>
-        import('@supabase/supabase-js').then(({ createClient }) =>
-            createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-                auth: {
-                    // The link's tokens come back in the address, so a link opened in another
-                    // browser on the device signs that browser in (the code is for the Home
-                    // Screen app, which keeps its storage apart from Safari's)
-                    flowType: 'implicit',
-                    detectSessionInUrl: true,
-                    persistSession: true,
-                    autoRefreshToken: true,
-                },
-            })
-        ),
+    factory: () => {
+        let client: Promise<AccountClient> | null = null;
+        return () =>
+            (client ??= makeClient().catch((error: unknown) => {
+                // Offline, say: try again next time
+                client = null;
+                throw error;
+            }));
+    },
 });
+
+function makeClient(): Promise<AccountClient> {
+    return import('@supabase/supabase-js').then(({ createClient }) =>
+        createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+            auth: {
+                storageKey: AUTH_STORAGE_KEY,
+                // The link's tokens come back in the address, so a link opened in another
+                // browser on the device signs that browser in (the code is for the Home
+                // Screen app, which keeps its storage apart from Safari's)
+                flowType: 'implicit',
+                detectSessionInUrl: true,
+                persistSession: true,
+                autoRefreshToken: true,
+            },
+        })
+    );
+}

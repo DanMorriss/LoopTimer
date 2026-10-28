@@ -20,6 +20,7 @@ import {
 import { ExerciseFinder, findByName } from '../../models/exercise-links';
 import { Deletion, mergeRecords, newId } from '../../models/sync';
 import { DeletionStore } from './deletion-store.service';
+import { SyncClock } from './sync-clock.service';
 import { migrateSavedData } from './migrate';
 
 export const EXERCISES_KEY = 'exercises';
@@ -33,6 +34,7 @@ export const HIDDEN_EXERCISES_KEY = 'hidden-exercises';
 @Service()
 export class ExerciseStore {
     private readonly deletions = inject(DeletionStore);
+    private readonly clock = inject(SyncClock);
     private readonly _own = signal<OwnExercise[]>(loadList(EXERCISES_KEY, readOwnExercise));
     private readonly _notes = signal<ExerciseNote[]>(
         loadList(EXERCISE_NOTES_KEY, readExerciseNote)
@@ -110,7 +112,11 @@ export class ExerciseStore {
         if (!existing || name === '' || this.nameTaken(name, id)) {
             return null;
         }
-        const updated: OwnExercise = { ...existing, ...tidied(details), updatedAt: Date.now() };
+        const updated: OwnExercise = {
+            ...existing,
+            ...tidied(details),
+            updatedAt: this.clock.now(existing.updatedAt),
+        };
         this._own.update((own) => own.map((exercise) => (exercise.id === id ? updated : exercise)));
         this.saveOwn();
         return updated;
@@ -121,7 +127,7 @@ export class ExerciseStore {
         const exercise: OwnExercise = {
             ...blankOwnExercise(tidyName(name), measuredBy),
             id: newId(),
-            updatedAt: Date.now(),
+            updatedAt: this.clock.now(),
         };
         this._own.update((own) => [...own, exercise]);
         this.saveOwn();
@@ -141,7 +147,7 @@ export class ExerciseStore {
             ...blankOwnExercise(name, details.measuredBy),
             ...tidied(details),
             id: newId(),
-            updatedAt: Date.now(),
+            updatedAt: this.clock.now(),
         };
         this._own.update((own) => [...own, exercise]);
         this.saveOwn();
@@ -155,11 +161,12 @@ export class ExerciseStore {
      * `exerciseUsage()`.
      */
     deleteOwn(id: string) {
-        if (!this._own().some((exercise) => exercise.id === id)) {
+        const deleted = this._own().find((exercise) => exercise.id === id);
+        if (!deleted) {
             return;
         }
         this._own.update((own) => own.filter((exercise) => exercise.id !== id));
-        this.deletions.add({ kind: 'exercise', id, deletedAt: Date.now() });
+        this.deletions.add({ kind: 'exercise', id, deletedAt: this.clock.now(deleted.updatedAt) });
         this.saveOwn();
         this.setNote(id, '');
         this.setHidden(id, false);
@@ -167,14 +174,17 @@ export class ExerciseStore {
 
     /**
      * Puts an exercise of your own back as it was before deleteOwn(), e.g. on Undo: with your
-     * note on it, and hidden from the picker if it was.
+     * note on it, and hidden from the picker if it was. It's dated now, as restoreWorkout()
+     * dates a workout.
      */
     restoreOwn(exercise: OwnExercise, note: string | undefined, hidden: boolean) {
         if (this._own().some((own) => own.id === exercise.id)) {
             return;
         }
+        const deletedAt = this.deletions.deletedAt('exercise', exercise.id) ?? 0;
         this.deletions.remove('exercise', exercise.id);
-        this._own.update((own) => [...own, exercise]);
+        const updatedAt = this.clock.now(Math.max(exercise.updatedAt, deletedAt));
+        this._own.update((own) => [...own, { ...exercise, updatedAt }]);
         this.saveOwn();
         if (note) {
             this.setNote(exercise.id, note);
@@ -196,11 +206,24 @@ export class ExerciseStore {
             return;
         }
         if (hidden) {
-            this._hidden.update((list) => [...list, { id: exerciseId, updatedAt: Date.now() }]);
+            this._hidden.update((list) => [
+                ...list,
+                {
+                    id: exerciseId,
+                    updatedAt: this.clock.now(
+                        this.deletions.deletedAt('hidden-exercise', exerciseId)
+                    ),
+                },
+            ]);
             this.deletions.remove('hidden-exercise', exerciseId);
         } else {
+            const shown = this._hidden().find((h) => h.id === exerciseId);
             this._hidden.update((list) => list.filter((h) => h.id !== exerciseId));
-            this.deletions.add({ kind: 'hidden-exercise', id: exerciseId, deletedAt: Date.now() });
+            this.deletions.add({
+                kind: 'hidden-exercise',
+                id: exerciseId,
+                deletedAt: this.clock.now(shown?.updatedAt),
+            });
         }
         localStorage.setItem(HIDDEN_EXERCISES_KEY, JSON.stringify(this._hidden()));
     }
@@ -217,12 +240,22 @@ export class ExerciseStore {
     setNote(exerciseId: string, text: string) {
         const trimmed = text.trim().slice(0, MAX_EXERCISE_NOTE_LENGTH);
         const others = this._notes().filter((note) => note.id !== exerciseId);
+        const before =
+            this._notes().find((note) => note.id === exerciseId)?.updatedAt ??
+            this.deletions.deletedAt('exercise-note', exerciseId);
         if (trimmed) {
-            this._notes.set([...others, { id: exerciseId, text: trimmed, updatedAt: Date.now() }]);
+            this._notes.set([
+                ...others,
+                { id: exerciseId, text: trimmed, updatedAt: this.clock.now(before) },
+            ]);
             this.deletions.remove('exercise-note', exerciseId);
         } else if (others.length < this._notes().length) {
             this._notes.set(others);
-            this.deletions.add({ kind: 'exercise-note', id: exerciseId, deletedAt: Date.now() });
+            this.deletions.add({
+                kind: 'exercise-note',
+                id: exerciseId,
+                deletedAt: this.clock.now(before),
+            });
         }
         this.saveNotes();
     }

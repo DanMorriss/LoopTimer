@@ -4,16 +4,25 @@ import {
     fakeAccountClient,
     provideFakeAccountClient,
 } from '../shared/testing/fake-account-client';
+import {
+    FakeSyncStarter,
+    fakeSyncStarter,
+    provideFakeSyncStarter,
+} from '../shared/testing/fake-sync';
 import { AccountComponent } from './account.component';
 
 describe('AccountComponent', () => {
     let fixture: ComponentFixture<AccountComponent>;
     let element: HTMLElement;
     let client: FakeAccountClient;
+    let sync: FakeSyncStarter;
 
     async function create(signedInAs: string | null = null) {
         client = fakeAccountClient(signedInAs);
-        TestBed.configureTestingModule({ providers: [provideFakeAccountClient(client)] });
+        sync = fakeSyncStarter();
+        TestBed.configureTestingModule({
+            providers: [provideFakeAccountClient(client), provideFakeSyncStarter(sync)],
+        });
         fixture = TestBed.createComponent(AccountComponent);
         element = fixture.nativeElement;
         document.body.appendChild(element);
@@ -149,11 +158,28 @@ describe('AccountComponent', () => {
     describe('signed in', () => {
         beforeEach(() => create('me@example.com'));
 
-        it('says who, that sync is coming, and that clearing the device signs it out', () => {
+        it('says who, what syncs, and that clearing the device signs it out', () => {
             expect(text()).toContain('Signed in as me@example.com.');
-            expect(text()).toContain('Sync is on its way');
+            expect(text()).toContain('Settings stay a choice for each device.');
             expect(text()).toContain('That signs this device out too');
             expect(element.querySelector('#account-email')).toBeNull();
+        });
+
+        it('says how sync is going', async () => {
+            const syncLine = () => element.querySelector('.account__sync')!.textContent!.trim();
+            expect(syncLine()).toBe('Not synced yet.');
+
+            sync.status.set({ syncing: true, lastSyncedAt: null, problem: null });
+            await settle();
+            expect(syncLine()).toBe('Syncing…');
+
+            sync.status.set({ syncing: false, lastSyncedAt: Date.now(), problem: null });
+            await settle();
+            expect(syncLine()).toMatch(/^Synced at .+\.$/);
+
+            sync.status.set({ syncing: false, lastSyncedAt: Date.now(), problem: 'offline' });
+            await settle();
+            expect(syncLine()).toBe("You're offline: it'll sync when you're back online.");
         });
 
         it('signs out, keeping the data on the device', async () => {

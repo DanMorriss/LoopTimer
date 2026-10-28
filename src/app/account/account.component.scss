@@ -75,3 +75,8 @@
 .account__status:not(:empty) {
     margin-top: 0.75rem;
 }
+
+// How sync is going, under what syncs
+.account__sync {
+    margin-top: 0.5rem;
+}

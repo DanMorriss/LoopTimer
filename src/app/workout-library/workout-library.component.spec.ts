@@ -335,8 +335,11 @@ describe('WorkoutLibraryComponent', () => {
                 undo().undo();
                 await settle();
 
-                expect(store.workouts()).toEqual([first, second]);
-                expect(JSON.parse(localStorage.getItem('workouts')!)).toEqual([first, second]);
+                // Dated after its deletion, which may have reached other devices already
+                const restored = { ...first, updatedAt: store.workouts()[0].updatedAt };
+                expect(restored.updatedAt).toBeGreaterThan(first.updatedAt);
+                expect(store.workouts()).toEqual([restored, second]);
+                expect(JSON.parse(localStorage.getItem('workouts')!)).toEqual([restored, second]);
                 expect(
                     TestBed.inject(DeletionStore).deletedAt('workout', first.id)
                 ).toBeUndefined();
