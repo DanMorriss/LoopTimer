@@ -6,7 +6,7 @@ Loop Workouts is a workout app built around an interval timer (it was called Loo
 
 **Try it:** https://loopworkouts.com
 
-Built with Angular 22 (standalone components, signals and Signal Forms), Angular Material and Tailwind CSS.
+Built with Angular 22 (standalone components, signals and Signal Forms), Angular Material and Tailwind CSS, with Supabase (in Europe) for accounts and sync. The server side is in `supabase/schema.sql`.
 
 ## What it does today
 
@@ -15,10 +15,11 @@ Built with Angular 22 (standalone components, signals and Signal Forms), Angular
 - **Hear each phase start.** Two short high beeps for timed steps, a long low tone for rest, and three rising notes at the finish, with matching vibrations on phones that support them (not iPhones). The beeps are scheduled ahead on the audio clock, so they stay on time in a background tab. They keep going on any page of the app, not just the workout, and by default the screen is kept on during a workout (Screen Wake Lock) so the phone doesn't lock and silence them. Browsers only allow sound after a tap, so after a refresh the workout page shows a "Tap to turn on sound" button.
 - **Pause, resume or stop** while it runs, or press Space to pause and resume (a "Space" key under Pause shows this on computers). Pausing freezes the countdown and the ring where they are; stopping (End workout, or swiping the bar along the bottom to the right) shows how it went, and Done then opens it in the history.
 - **Keep accurate time.** The countdown is worked out from the clock, not by counting ticks. It stays correct if the tab is in the background or the phone is locked, and catches up as soon as you come back. Refreshing the page carries on where you were, paused or not.
-- **Get anywhere from the tab bar** along the bottom: Library (where the app opens), Exercises, History and Settings. A workout that's going shows in a bar above the tabs, with its step, time and Pause, like a music app's mini player; tap it to go back to the workout, or ⌄ on the workout to leave it running.
+- **Get anywhere from the tab bar** along the bottom: Library (where the app opens), Exercises, History, Account and Settings. A workout that's going shows in a bar above the tabs, with its step, time and Pause, like a music app's mini player; tap it to go back to the workout, or ⌄ on the workout to leave it running.
 - **Settings**: a dark, light or match-system theme, which fades from one to the other as you switch; show weights in kg or lb; turn sound, vibration or keeping the screen on off; play each alarm sound to hear what it is; export and import a backup; and copy a prompt that has an AI turn a plan from a coach, a book or a spreadsheet into workouts to import. Saved in the browser, like workouts. The privacy notice and terms of use are linked under About.
 - **History**: every finished workout, and any stopped after at least one step (including one ended by starting another workout, or by closing the tab: it's logged as stopped then, and updated if a refresh carries it on), grouped by day with its start time, time spent (not counting pauses) and rounds, plus a total for the last seven days. Each entry lists the sets of its rep steps, e.g. "Squats: 10, 10, 8 @ 60 kg". Each entry's ⋮ menu adds, edits or removes a short note (e.g. "felt strong"), or deletes it, with Undo. When a workout finishes, its summary's Done opens it in the history. Saved in the browser.
 - **Save and reuse workouts** in the library: start, edit or delete any of them, hold one to drag it to another place, and see a workout's details (the muscles it works and its history). Under the workouts, the muscle groups none of them work, each a link to exercises for it. Workouts are saved in the browser (`localStorage`), so they stay on that device.
+- **Sync, if you sign in.** An account is optional. Sign in on the Account tab with a link or code sent to your email, and your workouts, history and exercises are the same on every device you sign in on. Everything is saved on the device first, so the app works offline and catches up when it's back online; settings stay a choice for each device. Sign out (keeping the data on the device), delete the account, or clear this device there too.
 - **Accessible:**
     - Everything works with a keyboard, and Space pauses and resumes the workout.
     - Screen readers hear "Timed, round 1 of 3", "Rest" and "Finished" as each phase starts, and "Paused" when paused.
@@ -49,9 +50,10 @@ Other commands:
 
 Every pull request runs the format check, these tests and the production build in GitHub Actions (`.github/workflows/ci.yml`).
 
-There are around 140 unit tests, run with [Vitest](https://vitest.dev) in browser mode: a real headless Chromium via Playwright, so layout and colour contrast are checked as a browser renders them. Workout tests use Vitest's fake clock (`vi.useFakeTimers()`). As well as the usual component and service tests, they include:
+There are around 1,260 unit tests, run with [Vitest](https://vitest.dev) in browser mode: a real headless Chromium via Playwright, so layout and colour contrast are checked as a browser renders them. Workout tests use Vitest's fake clock (`vi.useFakeTimers()`). As well as the usual component and service tests, they include:
 
 - **Workout logic** (`src/app/workout/workout-state.ts`): phase changes on exact seconds, no rest after the last round, zero rest skipped, and catching up after delayed ticks.
+- **Sync** (`src/app/sync/`): fetching, merging and sending against a fake server that keeps records as the database does, and clocks that are off.
 - **Accessibility** (`src/app/a11y.spec.ts`): renders the whole app and runs [axe-core](https://github.com/dequelabs/axe-core) over every page and state, including the delete dialog and the workout mid-workout. Any WCAG 2.1 A/AA or best-practice violation fails the test.
 
 ## Project layout
@@ -60,7 +62,11 @@ There are around 140 unit tests, run with [Vitest](https://vitest.dev) in browse
 src/app/
   nav/                 The header, and the bars along the bottom: tabs, the workout's bar, Undo
   history/             Past workouts by day, with delete and undo
-  settings/            Sound and vibration switches, and alarm previews
+  exercises/           The exercises list, and each exercise's page: bests, chart and sessions
+  account/             The Account tab: signing in by email, signing out, deleting the account
+  sync/                Sync with the account (loaded only once signed in), and its status
+  legal/               The privacy notice and terms of use
+  settings/            Theme, units, sound and vibration, alarm previews, and your data
   workout-setup/       Create or edit a workout (Signal Forms)
   workout-library/     Saved workouts
     workout-card/      One workout: tap to start, swipe to delete, hold to drag (or let go for options)
@@ -74,6 +80,8 @@ src/app/
     state/workout-store.service.ts  Saved workouts and the active workout
     state/settings-store.service.ts Saved settings
     state/history-store.service.ts  Saved workout history
+    state/sync-clock.service.ts     Dates changes, by the server's clock once sync has heard it
+    backup/backup.service.ts        Export and import, and the merge sync uses too
     theme/theme.service.ts          Applies the theme (colour tokens are in src/styles.scss)
     alarms/alarm.service.ts         Plays alarms on the audio clock, and vibrates
     components/wheel-picker/        iPhone-style number wheel (a Signal Forms control)
@@ -91,18 +99,15 @@ src/styles/
   _interaction.scss  Hover and press feedback, and 44px hit areas for small controls
   _type.scss         The two faces, display tracking by size, and small-text tracking
   _dialog.scss, _menu.scss  How dialogs and menus arrive and leave
+supabase/schema.sql  The server side: the records table, and the sync and delete-account functions
 ```
 
 ## Roadmap
 
-Loop Workouts is becoming a workout helper that shows you how you're improving: see [docs/direction.md](docs/direction.md). Not built yet, in order:
+Loop Workouts is becoming a workout helper that shows you how you're improving: see [docs/direction.md](docs/direction.md). Done so far: exercises with a body map, last time and personal bests in the workout, progress pages, sync, and a suggested next weight. Still to come:
 
-1. **Foundations:** exercises as things in their own right (a built-in list with descriptions and a muscle body map, plus your own), and data ready for sync. (Export and import are done: Settings → Your data.)
-2. **Feedback in the workout:** what you did last time, and personal bests.
-3. **Progress pages:** a chart, bests and recent sessions for each exercise.
-4. **Sync:** an account, so every device has the same data.
-5. **Simple planning:** a weekly plan, and what's due today.
-6. **Suggested next weight.**
+1. **Sign in with Google or Apple**, as well as by email.
+2. **Simple planning:** a weekly plan, and what's due today.
 
 Also planned: proper alarm sounds, choosing the sound for each step, and alarms on a locked phone.
 

@@ -46,3 +46,5 @@ Agreed October 2026. This sets the direction; the stories are in [features](feat
 6. **Suggested next weight.**
 
 Sync sits after the progress pages so the app's most useful features arrive first, but its groundwork is in step 1, so nothing needs reshaping again.
+
+Where it's got to (October 2026): steps 1–4 and 6 are done, with sync on Supabase in Europe and email sign-in; Google and Apple sign-in come next, then simple planning (step 5).
