@@ -5,8 +5,8 @@
  */
 export const TABS = [
     { path: '/home', label: 'Home', icon: 'home', holds: [] },
-    { path: '/library', label: 'Library', icon: 'view_list', holds: ['/setup'] },
     { path: '/exercises', label: 'Exercises', icon: 'fitness_center', holds: [] },
+    { path: '/library', label: 'Library', icon: 'view_list', holds: ['/setup'] },
     { path: '/history', label: 'History', icon: 'history', holds: [] },
     {
         path: '/account',
