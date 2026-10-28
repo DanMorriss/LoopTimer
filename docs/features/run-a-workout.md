@@ -80,13 +80,14 @@
 - It's a sheet: the whole screen on a phone, a card in the middle on anything wider. Focus starts on its heading and stays inside it.
 - It **rises in** on a spring with no bounce (from the bottom of the screen on a phone, a little way on a wider one) as the page behind dims, and **sinks back out the same way** when it closes.
 - On a phone, a workout ended early can be **dragged down** by the grabber at the top of the sheet to go back to it, as Back to workout does; while it's scrolled to the top, its heading and title drag it too. The sheet follows the finger, resists being pulled up, and the page behind brightens as it goes. On letting go, where the flick would carry it decides: past halfway it carries on down at the finger's speed and goes back to the workout; short of that it springs back up, with a little bounce if it was flicked. It can be grabbed again mid-spring, even on its way down, and then it stays. A finished workout has no grabber, as there's nothing to go back to.
+- It fits the screen however much it shows: its content scrolls, with the buttons always in reach under it.
 - It shows:
     - "**Workout finished**", "**Time's up**" (a time limit that ran out) or "**Workout ended**", and the workout's title.
     - **Time** (as in the history, pauses left out) and **Rounds**, e.g. "1 of 3 rounds · stopped", or "7 rounds + 3 in 20:00" for a time limit.
     - When time ran out part-way through a rep step: "**Time ran out during Push-ups. How many reps did you get?**", with a Reps wheel (starting at the step's reps) and **Add set**, which logs that many reps at the step's weight. It's a set like any other after that, and can be changed with the rest, but it doesn't make the score "+ 1", as the step wasn't finished, and "Use these settings next time?" leaves it out.
     - **Personal bests** this workout set (PRG-2), and "Most rounds: 7 rounds + 3" for a time limit beaten (PRG-7; see [progress](progress.md)).
     - **Sets**, one line per step as in the history, e.g. "Squats: 10, 10, 8 @ 60 kg" or "Plank: 3 × 0:45".
-    - **Next time**: a step up for each rep step where every set got its reps, e.g. "Bench press: try 82.5 kg, up from 80 kg" or "Push-ups: try 13 reps, up from 12" (PRG-10).
+    - **Next time**: a step up for each rep step where every set got its reps, e.g. "Bench press: try 82.5 kg, up from 80 kg" or "Push-ups: try 13 reps, up from 12", each with **Apply** to put it on the saved workout (PRG-10).
     - **Muscles worked**: the body map, shaded by this workout's sets (PRG-11).
     - A **Note** box, saved to this workout in the history as you leave it.
     - The **suggested next workout**, as on the history page, without its Start button (PRG-9; see [progress](progress.md)).

@@ -8,6 +8,9 @@
     inset: 0;
     z-index: 40;
     display: grid;
+    // One cell the size of the screen, not of the content, so the sheet's height and
+    // max-height hold and its content scrolls inside it rather than running off the screen
+    grid-template: minmax(0, 1fr) / minmax(0, 1fr);
     place-items: center;
 }
 

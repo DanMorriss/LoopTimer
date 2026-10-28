@@ -2865,6 +2865,93 @@ describe('WorkoutComponent', () => {
             fixture.destroy();
         });
 
+        describe('applying a step-up', () => {
+            const bench = { name: 'Bench press', exerciseId: 'builtin:bench-press' };
+            const pushUps = { name: 'Push-ups', exerciseId: 'builtin:push-up' };
+
+            /** Saves Push day to the library, runs it once through, and opens the summary. */
+            function finishPushDay(): Workout {
+                const saved = TestBed.inject(WorkoutStore).addWorkout({
+                    title: 'Push day',
+                    repeats: 1,
+                    steps: [
+                        work(2),
+                        { kind: 'reps', reps: 5, weight: 80, ...bench },
+                        { kind: 'reps', reps: 12, ...pushUps },
+                    ],
+                });
+                start(saved);
+                advance(2000);
+                for (let i = 0; i < 2; i++) {
+                    (
+                        fixture.nativeElement.querySelector('.workout-next--done') as HTMLElement
+                    ).click();
+                    fixture.detectChanges();
+                }
+                return saved;
+            }
+            /** Apply, by its label: e.g. "Apply: Squats: try 62.5 kg, up from 60 kg". */
+            const apply = (line: string) =>
+                summary()!.querySelector<HTMLButtonElement>(`button[aria-label="Apply: ${line}"]`);
+            const savedSteps = (id: string) =>
+                TestBed.inject(WorkoutStore).findWorkoutById(id)!.steps;
+
+            it('puts the heavier weight or the extra rep on the saved workout', async () => {
+                const saved = finishPushDay();
+                expect(apply('Bench press: try 82.5 kg, up from 80 kg')).not.toBeNull();
+
+                apply('Bench press: try 82.5 kg, up from 80 kg')!.click();
+                fixture.detectChanges();
+                await fixture.whenStable();
+                expect(savedSteps(saved.id)[1]).toEqual(expect.objectContaining({ weight: 82.5 }));
+                // Still said, now as applied, with focus on it
+                expect(summaryText()).toContain('Bench press: try 82.5 kg, up from 80 kg');
+                expect(document.activeElement?.textContent).toContain('Applied');
+
+                apply('Push-ups: try 13 reps, up from 12')!.click();
+                fixture.detectChanges();
+                expect(savedSteps(saved.id)[2]).toEqual(expect.objectContaining({ reps: 13 }));
+                expect(summaryText()).toContain('Push-ups: try 13 reps, up from 12');
+                expect(apply('Push-ups: try 13 reps, up from 12')).toBeNull();
+                fixture.destroy();
+            });
+
+            it('has no Apply for a workout no longer in the library', () => {
+                const saved = finishPushDay();
+                TestBed.inject(WorkoutStore).deleteWorkout(saved.id);
+                fixture.detectChanges();
+
+                expect(summaryText()).toContain('Bench press: try 82.5 kg, up from 80 kg');
+                expect(apply('Bench press: try 82.5 kg, up from 80 kg')).toBeNull();
+                fixture.destroy();
+            });
+        });
+
+        it('fits the screen however much it shows, scrolling its content with Done in reach', () => {
+            const pushUps = { name: 'Push-ups', exerciseId: 'builtin:push-up' };
+            start(
+                makeWorkout({
+                    steps: [work(2), { kind: 'reps', reps: 12, ...pushUps } as const],
+                    repeats: 1,
+                })
+            );
+            advance(2000);
+            (fixture.nativeElement.querySelector('.workout-next--done') as HTMLElement).click();
+            fixture.detectChanges();
+
+            // Where it settles once it has risen in
+            summary()!
+                .getAnimations({ subtree: true })
+                .forEach((animation) => animation.finish());
+            const sheet = summary()!.querySelector('.summary')!.getBoundingClientRect();
+            const done = summaryButton('Done')!.getBoundingClientRect();
+            const body = summary()!.querySelector('.summary__body')!;
+            expect(sheet.top).toBeGreaterThanOrEqual(0);
+            expect(done.bottom).toBeLessThanOrEqual(window.innerHeight);
+            expect(body.scrollHeight).toBeGreaterThan(body.clientHeight);
+            fixture.destroy();
+        });
+
         it('suggests the next workout as the history does, without starting it from here', () => {
             TestBed.inject(WorkoutStore).addWorkout({
                 title: 'Legs',

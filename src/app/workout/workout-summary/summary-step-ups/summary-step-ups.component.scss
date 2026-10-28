@@ -18,7 +18,7 @@
     font-size: 0.9rem;
 }
 
-// A rep step to step up a line, each with an up arrow
+// A rep step to step up a line: an up arrow, what to try, and Apply on the right
 .step-ups__list {
     margin: 0;
     padding: 0;
@@ -32,7 +32,7 @@
     }
 
     li + li {
-        margin-top: 0.3rem;
+        margin-top: 0.5rem;
     }
 
     mat-icon {
@@ -41,5 +41,34 @@
         height: 1.1rem;
         color: var(--accent);
         font-size: 1.1rem;
+    }
+}
+
+.step-ups__text {
+    flex: 1;
+    min-width: 0;
+}
+
+.step-ups__apply,
+.step-ups__applied {
+    flex: none;
+}
+
+// Said in place of Apply once it's on the workout; focus moves here from the button
+.step-ups__applied {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+
+    &:focus {
+        outline: none;
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+        border-radius: 0.25rem;
     }
 }
