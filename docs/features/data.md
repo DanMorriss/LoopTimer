@@ -1,6 +1,6 @@
 # Data
 
-What the app saves, and in what shape. Everything is on the device; there's no account or server.
+What the app saves, and in what shape. Everything is on the device. An account, if you sign in, holds only your email address so far (see [backup-and-sync](backup-and-sync.md)).
 
 **Ready for sync:** every workout and history entry has an id that can't clash with another device's (random, not 1, 2, 3) and an `updatedAt`, the time it last changed in ms since 1970. Deleting one leaves a marker in `deleted`. Merging two copies (a backup now, another device later) goes by id: the most recent change to each record wins, and a deletion wins over changes made before it. See [backup-and-sync](backup-and-sync.md).
 
@@ -171,6 +171,10 @@ The run in progress in a tab moves too (`activeTimerId`, `activeTimerStartedAt` 
 ```
 
 `theme` is `dark`, `light` or `system`. `weightUnit` is `kg` or `lb`. `bodyFigure` is `male` or `female`. `myEquipment` is the equipment you have, picked on the Exercises page, in the order it's offered there (unknown pieces are dropped); `onlyMyEquipment` is its Only what I have switch.
+
+### `sb-cpgacyzlfyskifzhkotu-auth-token`: who's signed in
+
+Kept by Supabase's client while you're signed in (SYN-3): the sign-in tokens and the account's id and email. Signing out removes it; so does Clear this device, which signs the device out.
 
 ## Saved for the run in progress (`sessionStorage` on the web, per tab)
 

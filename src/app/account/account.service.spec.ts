@@ -1,0 +1,172 @@
+import { DOCUMENT } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import {
+    FakeAccountClient,
+    fakeAccountClient,
+    provideFakeAccountClient,
+    sessionFor,
+} from '../shared/testing/fake-account-client';
+import { AccountService } from './account.service';
+
+describe('AccountService', () => {
+    let client: FakeAccountClient;
+
+    function start(signedInAs: string | null = null) {
+        client = fakeAccountClient(signedInAs);
+        TestBed.configureTestingModule({ providers: [provideFakeAccountClient(client)] });
+        return TestBed.inject(AccountService);
+    }
+
+    // Lets the client's promises settle
+    const settled = () => new Promise((resolve) => setTimeout(resolve));
+
+    it('is loading at first, then signed out with no session', async () => {
+        const account = start();
+        expect(account.state()).toEqual({ status: 'loading' });
+
+        await settled();
+
+        expect(account.state()).toEqual({ status: 'signed-out' });
+    });
+
+    it('is signed in with a session, and follows the client when it changes', async () => {
+        const account = start('me@example.com');
+        await settled();
+        expect(account.state()).toEqual({ status: 'signed-in', email: 'me@example.com' });
+
+        client.change(null);
+        expect(account.state()).toEqual({ status: 'signed-out' });
+        client.change(sessionFor('other@example.com'));
+        expect(account.state()).toEqual({ status: 'signed-in', email: 'other@example.com' });
+    });
+
+    it("is signed out if the client can't load, e.g. offline", async () => {
+        TestBed.configureTestingModule({
+            providers: [
+                {
+                    provide: (await import('./account-client')).ACCOUNT_CLIENT,
+                    useValue: () => Promise.reject(new Error('offline')),
+                },
+            ],
+        });
+        const account = TestBed.inject(AccountService);
+        await settled();
+
+        expect(account.state()).toEqual({ status: 'signed-out' });
+        expect(await account.sendLink('me@example.com')).toBe('failed');
+    });
+
+    describe('sendLink', () => {
+        it('emails a link back to the Account tab, making the account if it is new', async () => {
+            const account = start();
+
+            expect(await account.sendLink('me@example.com')).toBe('sent');
+
+            expect(client.auth.signInWithOtp).toHaveBeenCalledWith({
+                email: 'me@example.com',
+                options: {
+                    shouldCreateUser: true,
+                    emailRedirectTo: `${location.origin}/account`,
+                },
+            });
+        });
+
+        it('says when too many have been sent, and when it failed', async () => {
+            const account = start();
+            client.auth.signInWithOtp.mockResolvedValueOnce({ data: {}, error: { status: 429 } });
+            client.auth.signInWithOtp.mockResolvedValueOnce({ data: {}, error: { status: 500 } });
+            client.auth.signInWithOtp.mockRejectedValueOnce(new Error('network'));
+
+            expect(await account.sendLink('me@example.com')).toBe('too-many');
+            expect(await account.sendLink('me@example.com')).toBe('failed');
+            expect(await account.sendLink('me@example.com')).toBe('failed');
+        });
+    });
+
+    it('signs in with the code from the email, or says it did not work', async () => {
+        const account = start();
+
+        expect(await account.enterCode('me@example.com', '123456')).toBe(true);
+        expect(client.auth.verifyOtp).toHaveBeenCalledWith({
+            email: 'me@example.com',
+            token: '123456',
+            type: 'email',
+        });
+        expect(account.state()).toEqual({ status: 'signed-in', email: 'me@example.com' });
+
+        client.auth.verifyOtp.mockResolvedValueOnce({ data: {}, error: { status: 403 } });
+        expect(await account.enterCode('me@example.com', '000000')).toBe(false);
+    });
+
+    it('signs only this device out', async () => {
+        const account = start('me@example.com');
+        await settled();
+
+        expect(await account.signOut()).toBe(true);
+
+        expect(client.auth.signOut).toHaveBeenCalledWith({ scope: 'local' });
+        expect(account.state()).toEqual({ status: 'signed-out' });
+    });
+
+    describe('deleteAccount', () => {
+        it('deletes the account on the server, then signs this device out', async () => {
+            const account = start('me@example.com');
+            await settled();
+
+            expect(await account.deleteAccount()).toBe(true);
+
+            expect(client.rpc).toHaveBeenCalledWith('delete_my_account');
+            expect(client.auth.signOut).toHaveBeenCalledWith({ scope: 'local' });
+            expect(account.state()).toEqual({ status: 'signed-out' });
+        });
+
+        it("stays signed in when the account couldn't be deleted", async () => {
+            const account = start('me@example.com');
+            await settled();
+            client.rpc.mockResolvedValueOnce({ data: null, error: { message: 'failed' } });
+
+            expect(await account.deleteAccount()).toBe(false);
+
+            expect(client.auth.signOut).not.toHaveBeenCalled();
+            expect(account.state().status).toBe('signed-in');
+        });
+    });
+
+    describe('a sign-in link that did not work', () => {
+        function startAt(hash: string, search = '') {
+            const replaceState = vi.fn();
+            client = fakeAccountClient();
+            TestBed.configureTestingModule({
+                providers: [
+                    provideFakeAccountClient(client),
+                    {
+                        provide: DOCUMENT,
+                        useValue: {
+                            location: { hash, search, pathname: '/account', origin: 'https://x' },
+                            defaultView: { history: { replaceState } },
+                        },
+                    },
+                ],
+            });
+            return { account: TestBed.inject(AccountService), replaceState };
+        }
+
+        it('says so, and takes why out of the address', () => {
+            const { account, replaceState } = startAt(
+                '#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid'
+            );
+
+            expect(account.linkProblem()).toBe(
+                'That sign-in link has expired or was used already. Send yourself another.'
+            );
+            expect(replaceState).toHaveBeenCalledWith(null, '', '/account');
+        });
+
+        it('says nothing for an address without a problem', () => {
+            const { account, replaceState } = startAt('#access_token=abc');
+
+            expect(account.linkProblem()).toBeNull();
+            expect(replaceState).not.toHaveBeenCalled();
+        });
+    });
+});

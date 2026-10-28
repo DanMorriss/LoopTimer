@@ -1,0 +1,156 @@
+<div class="flex justify-center">
+    <div
+        class="m-4 w-full max-w-md rounded-xl border border-(--panel-border) bg-(--panel) p-6 shadow-xl shadow-(color:--shadow)"
+    >
+        <h2 class="account__title" id="account-title" tabindex="-1">Account</h2>
+
+        <section class="account__section" aria-labelledby="sync-heading">
+            <h3 class="account__heading" id="sync-heading">Sync</h3>
+
+            @switch (account.state().status) {
+                @case ('loading') {
+                    <p class="account__hint">Checking whether you're signed in…</p>
+                }
+                @case ('signed-in') {
+                    <p class="account__text">
+                        Signed in as <strong class="account__email">{{ signedInAs() }}</strong
+                        >.
+                    </p>
+                    <p class="account__hint">
+                        Sync is on its way: once it's ready, your workouts and history will be the
+                        same on every device you sign in on. Until then, they stay on this device.
+                    </p>
+                    @if (confirmingDelete()) {
+                        <div
+                            class="account__ask"
+                            role="group"
+                            aria-labelledby="account-delete-warning"
+                        >
+                            <p class="account__warning" id="account-delete-warning" tabindex="-1">
+                                This deletes your account and everything of yours on the server.
+                                What's on this device stays. It can't be undone.
+                            </p>
+                            <div class="account__actions">
+                                <button
+                                    type="button"
+                                    class="btn-pill btn-pill--danger"
+                                    [disabled]="busy()"
+                                    (click)="deleteAccount()"
+                                >
+                                    Delete my account
+                                </button>
+                                <button type="button" class="btn-pill" (click)="cancelDelete()">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    } @else {
+                        <div class="account__actions">
+                            <button
+                                type="button"
+                                class="btn-pill"
+                                [disabled]="busy()"
+                                (click)="signOut()"
+                            >
+                                Sign out
+                            </button>
+                            <button
+                                type="button"
+                                class="btn-pill btn-pill--danger"
+                                id="account-delete"
+                                (click)="askToDelete()"
+                            >
+                                Delete account
+                            </button>
+                        </div>
+                    }
+                }
+                @case ('signed-out') {
+                    @if (sentTo(); as address) {
+                        <p class="account__text" id="account-sent" tabindex="-1">
+                            We've sent a sign-in link to
+                            <strong class="account__email">{{ address }}</strong
+                            >. Open it on this device, or type the code from the email here.
+                        </p>
+                        <form class="account__form" novalidate (submit)="enterCode($event)">
+                            <label class="picker-field" for="account-code">
+                                <span class="picker-field__label">Code</span>
+                                <input
+                                    class="picker-field__input"
+                                    id="account-code"
+                                    inputmode="numeric"
+                                    autocomplete="one-time-code"
+                                    [formField]="codeForm.code"
+                                    [attr.aria-invalid]="!!codeError()"
+                                    [attr.aria-describedby]="
+                                        codeError() ? 'account-code-error' : null
+                                    "
+                                />
+                            </label>
+                            @if (codeError(); as error) {
+                                <p id="account-code-error" class="account__error">{{ error }}</p>
+                            }
+                            <div class="account__actions">
+                                <button type="submit" class="btn-pill" [disabled]="busy()">
+                                    Sign in
+                                </button>
+                                <button type="button" class="btn-pill" (click)="useAnotherEmail()">
+                                    Use another email
+                                </button>
+                            </div>
+                        </form>
+                    } @else {
+                        <p class="account__hint" id="account-why">
+                            Sign in now, and once sync is ready your workouts and history will be
+                            the same on every device you sign in on. An account is optional: without
+                            one, everything stays on this device.
+                        </p>
+                        @if (account.linkProblem(); as problem) {
+                            <p class="account__error" role="alert">{{ problem }}</p>
+                        }
+                        <form class="account__form" novalidate (submit)="sendLink($event)">
+                            <label class="picker-field" for="account-email">
+                                <span class="picker-field__label">Email</span>
+                                <input
+                                    class="picker-field__input"
+                                    id="account-email"
+                                    type="email"
+                                    autocomplete="email"
+                                    spellcheck="false"
+                                    [formField]="emailForm.email"
+                                    [attr.aria-invalid]="!!emailError()"
+                                    [attr.aria-describedby]="
+                                        emailError()
+                                            ? 'account-email-error account-why'
+                                            : 'account-why'
+                                    "
+                                />
+                            </label>
+                            @if (emailError(); as error) {
+                                <p id="account-email-error" class="account__error">{{ error }}</p>
+                            }
+                            <div class="account__actions">
+                                <button type="submit" class="btn-pill" [disabled]="busy()">
+                                    Email me a sign-in link
+                                </button>
+                            </div>
+                        </form>
+                    }
+                }
+            }
+            <p class="account__hint account__status" role="status">{{ message() }}</p>
+        </section>
+
+        <section class="account__section" aria-labelledby="device-heading">
+            <h3 class="account__heading" id="device-heading">This device</h3>
+            <p class="account__hint">
+                Your workouts, history and settings are saved in this browser. Done with it, on a
+                shared computer say? Clear them from it.
+                @if (account.state().status === 'signed-in') {
+                    That signs this device out too; your account keeps what's in it.
+                }
+            </p>
+            <app-clear-device class="account__clear" />
+        </section>
+    </div>
+</div>

@@ -1,6 +1,6 @@
 # Backup and sync
 
-Export and import (SYN-1, SYN-2) are built, with a prompt for having an AI turn a plan into a file to import (SYN-6), the history has room for years (SYN-5), and the data is ready for sync: random ids, `updatedAt` and deletion markers (see [data](data.md)). The library's order is a record of its own, so it merges too. Accounts and sync are next (Phase 4 in [direction](../direction.md)): the decisions made so far, and the backend picked, are under **Sync** below. Its rules are a first draft and get firmed up, with acceptance criteria, as each part is built.
+Export and import (SYN-1, SYN-2) are built, with a prompt for having an AI turn a plan into a file to import (SYN-6), the history has room for years (SYN-5), and the data is ready for sync: random ids, `updatedAt` and deletion markers (see [data](data.md)). The library's order is a record of its own, so it merges too. Signing in, signing out and deleting an account are built, with Clear this device (SYN-3 in part, SYN-8, SYN-9); sync itself is next (Phase 4 in [direction](../direction.md)), and the decisions made for it, and the backend picked, are under **Sync** below. Its rules are a first draft and get firmed up, with acceptance criteria, as each part is built.
 
 ## Stories
 
@@ -70,11 +70,28 @@ Export and import (SYN-1, SYN-2) are built, with a prompt for having an AI turn 
 - **Clear this device** is in the **Account tab** (under This device: "Your workouts, history and settings are saved in this browser. Done with it, on a shared computer say? Clear them from it.") and at the end of **Settings → Your data**. It works signed in or not.
 - It can't be undone, so unlike deleting elsewhere it **asks first**: the button opens a warning in its place, "This removes your workouts, history, exercises and settings from this device. It can't be undone, so export a backup first to keep them.", with **Clear everything** and **Cancel**. Focus goes to the warning, so it's read out; Cancel puts it back on the button.
 - **Clear everything** removes all the app keeps on the device: workouts, the library's order, history, your own exercises, notes, hidden exercises, deletions and settings, and the workout in progress, which isn't logged. Then the app starts again, empty, on the page it was on.
-- Signed in (once there's sync), it only clears the device: the account keeps everything, and signing in again brings it back.
+- Signed in, it signs this device out too, as the sign-in is kept on the device. The account keeps what it holds, and signing in again brings it back.
 
-### The Account tab, for now
+### Signing in (SYN-3) and deleting an account (SYN-8)
 
-Until sign-in comes, the tab's **Sync** section says what an account will do: "Soon you'll be able to sign in, so your workouts and history are the same on your phone and your laptop. An account will be optional: without one, everything stays on this device, as it does now." Under it is **This device**, with Clear this device.
+Signing in makes the account; sync itself comes later, so for now an account holds only its email address.
+
+- **Signed out**, the Account tab's Sync section says "Sign in now, and once sync is ready your workouts and history will be the same on every device you sign in on. An account is optional: without one, everything stays on this device.", then an **Email** field and **Email me a sign-in link**.
+    - An empty or malformed address is caught before anything is sent, on the field: "Enter your email address." or "That isn't an email address. Check it and try again." Focus goes to the field. Errors only show once you've tried.
+    - Spaces round the address are dropped.
+- **Sent**, it says "We've sent a sign-in link to me@example.com. Open it on this device, or type the code from the email here.", with focus on it, then a **Code** field, **Sign in**, and **Use another email** (back to the email field).
+    - **The link** comes back to the Account tab, signed in. Opened in another browser on the same device, it signs that browser in.
+    - **The code** (6 to 10 digits, as the project sends) signs in where it's typed. It's there for the app added to an iPhone's Home Screen, which keeps its storage apart from Safari's, where email links open.
+    - A code that's too short or has letters in it: "The code is the number in the email, e.g. 123456." One the server turns down: "That code didn't work: it may be wrong, or expired. Check it, or send another email."
+    - Sending fails: "The email couldn't be sent. Check your connection and try again."; too many sent: "Too many sign-in emails for now. Wait a while, then try again."
+    - A link that's expired or been used comes back with "That sign-in link has expired or was used already. Send yourself another." above the email field, and the reason is taken out of the address.
+    - Signing in with the code says "Signed in.", and focus goes to the page's title.
+- **Signed in**, it says "Signed in as me@example.com.", that sync is on its way, and offers **Sign out** and **Delete account**. This device's hint adds "That signs this device out too; your account keeps what's in it."
+    - **Sign out** signs this device out only, and keeps its data: "Signed out. Your data is still on this device."
+    - **Delete account** asks first, as Clear this device does: "This deletes your account and everything of yours on the server. What's on this device stays. It can't be undone.", with **Delete my account** and **Cancel** (focus on the warning; Cancel puts it back on Delete account). Deleting signs this device out: "Your account has been deleted. Your data is still on this device." If it fails: "Your account couldn't be deleted. Check your connection and try again.", still signed in.
+    - Sign out failing: "You couldn't be signed out. Check your connection and try again."
+- While it checks whether you're signed in: "Checking whether you're signed in…". If Supabase's code can't be loaded (offline, say), it shows as signed out.
+- What each of these did is read out by screen readers, under the section.
 
 ### Sync (SYN-3, SYN-4, SYN-7, SYN-8; draft)
 
@@ -134,10 +151,17 @@ Compared on 2026-10-27, for cost, how it fits the device-first design above, sig
 - Given 600 workouts in the history, when I open the app again, then all 600 are there.
 - Given a history saved before it moved to IndexedDB, when I open the app, then every entry is still there.
 
+- Given I'm signed out, when I press Email me a sign-in link with the field empty, then "Enter your email address." shows on the field, and nothing is sent.
+- Given I've asked for a sign-in email, when I type its code and press Sign in, then I'm signed in, and the tab says "Signed in as" my address.
+- Given a sign-in link that's expired, when it opens the app, then the Account tab says so, and its address no longer has the reason in it.
+- Given I'm signed in, when I press Sign out, then I'm signed out and my workouts and history are still here.
+- Given I'm signed in, when I press Delete account, then nothing is deleted until I press Delete my account; then the account is gone, I'm signed out, and my workouts and history are still here.
+
 ## Platform notes
 
 - **Web:** `BackupService`, `backup-file.ts` and the AI prompt, `planPrompt()` in `plan-prompt.ts` (`src/app/shared/backup/`); the stores' `mergeWorkouts()` and `mergeEntries()` (and `importWorkouts()` for version 1 files), using `mergeRecords()` in `models/sync.ts`, and `WorkoutStore.mergeLibraryOrder()` for the library's order (with `inOrder()` in `models/sync.ts`); Clear this device is `ClearDeviceComponent` (`shared/components/clear-device/`) and `DeviceDataService` (`shared/state/`), which empties localStorage and sessionStorage, deletes the IndexedDB database and reloads; the Account tab is `AccountComponent` (`src/app/account/`), at `/account`; deletions are kept by `DeletionStore`, and saved data is converted by `migrate.ts`. The file is downloaded through a link with `download`; on an iPhone, Safari offers to save it to Files. The picker is a file input opened by the Import button, kept out of the keyboard's way.
-- **iOS:** a share sheet for export and a document picker for import, reading and writing the same file.
+- **Accounts (web):** `AccountService` (`src/app/account/`) wraps Supabase's client, made by `ACCOUNT_CLIENT` in `account-client.ts` (the project's address and publishable key) and loaded only when the Account tab first opens. It signs in with `signInWithOtp()` (an implicit-flow link back to `/account`, which the client reads from the address) or `verifyOtp()` with the code, signs out with `signOut({ scope: 'local' })`, and deletes with the `delete_my_account()` database function. The server side (the records table, row-level security and that function) is in `supabase/schema.sql`, run in the project's SQL editor. Tests use `fakeAccountClient()` (`shared/testing/`).
+- **iOS:** a share sheet for export and a document picker for import, reading and writing the same file. Supabase's Swift library signs in the same way, with the code (or a universal link) rather than Safari.
 
 ## Open questions
 
