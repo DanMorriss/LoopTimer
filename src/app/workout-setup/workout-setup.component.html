@@ -502,6 +502,7 @@
     <app-exercise-details-dialog
         animate.leave="dialog-leave"
         [exercise]="opened.exercise"
+        [canPickAnother]="true"
         (closed)="closeDetails()"
         (pickAnother)="pickAnother()"
     />

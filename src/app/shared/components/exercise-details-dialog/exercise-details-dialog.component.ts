@@ -1,14 +1,15 @@
 import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { afterNextRender, Component, ElementRef, input, output, viewChild } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
-import { ExerciseDetailsComponent } from '../../shared/components/exercise-details/exercise-details.component';
-import { Exercise } from '../../models/exercise';
-import { growFromClick } from '../../shared/dialog-origin';
+import { ExerciseDetailsComponent } from '../exercise-details/exercise-details.component';
+import { Exercise } from '../../../models/exercise';
+import { growFromClick } from '../../dialog-origin';
 
 /**
- * The exercise picked for a step, in full, so you can see it's the one you want (EXR-11):
- * what its page shows, without leaving the workout. Pick another takes you back to the name
- * box to choose again. Focus starts on its name and is trapped inside while it's open.
+ * An exercise in full: what its page shows, without leaving the workout. In Create it's the
+ * exercise picked for a step, so you can see it's the one you want (EXR-11), and Pick another
+ * takes you back to the name box to choose again; in a workout it's the step's exercise, to
+ * check how it's done (RUN-9). Focus starts on its name and is trapped inside while it's open.
  */
 @Component({
     selector: 'app-exercise-details-dialog',
@@ -41,14 +42,16 @@ import { growFromClick } from '../../shared/dialog-origin';
                 </h2>
                 <app-exercise-details [exercise]="exercise()" />
                 <div class="details__actions">
-                    <button
-                        type="button"
-                        class="btn-pill details__pick-another"
-                        (click)="pickAnother.emit()"
-                    >
-                        <mat-icon aria-hidden="true">swap_horiz</mat-icon>
-                        Pick another
-                    </button>
+                    @if (canPickAnother()) {
+                        <button
+                            type="button"
+                            class="btn-pill details__pick-another"
+                            (click)="pickAnother.emit()"
+                        >
+                            <mat-icon aria-hidden="true">swap_horiz</mat-icon>
+                            Pick another
+                        </button>
+                    }
                     <button type="button" class="btn-pill details__done" (click)="closed.emit()">
                         Done
                     </button>
@@ -60,6 +63,8 @@ import { growFromClick } from '../../shared/dialog-origin';
 })
 export class ExerciseDetailsDialogComponent {
     readonly exercise = input.required<Exercise>();
+    /** Offers Pick another, for a step being set up. */
+    readonly canPickAnother = input(false);
     readonly closed = output<void>();
     /** Back to the step's name box, to choose a different exercise. */
     readonly pickAnother = output<void>();

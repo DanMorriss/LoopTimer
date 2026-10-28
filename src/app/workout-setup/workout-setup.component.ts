@@ -40,7 +40,7 @@ import { WeightUnit, weightIn, weightOptions, weightToKg } from '../models/weigh
 import { Exercise, isBuiltIn, MAX_EXERCISE_NAME_LENGTH } from '../models/exercise';
 import { findByName } from '../models/exercise-links';
 import { ExerciseEditorComponent } from '../shared/components/exercise-editor/exercise-editor.component';
-import { ExerciseDetailsDialogComponent } from './exercise-details-dialog/exercise-details-dialog.component';
+import { ExerciseDetailsDialogComponent } from '../shared/components/exercise-details-dialog/exercise-details-dialog.component';
 import { ExerciseStore } from '../shared/state/exercise-store.service';
 import { ExercisePickerComponent } from './exercise-picker/exercise-picker.component';
 import { InfinitySwitchComponent } from '../shared/components/infinity-switch/infinity-switch.component';

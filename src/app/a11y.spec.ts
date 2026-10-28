@@ -577,6 +577,32 @@ for (const theme of ['dark', 'light'] as const) {
                 await expectNoViolations();
             });
 
+            it('on an exercise, with the (i) by its name and then its details open', async () => {
+                store.setActiveWorkout(
+                    store.addWorkout(
+                        makeWorkout({
+                            steps: [
+                                {
+                                    kind: 'reps',
+                                    reps: 8,
+                                    name: 'Inverted row',
+                                    exerciseId: 'builtin:inverted-row',
+                                },
+                            ],
+                        })
+                    )
+                );
+                await open('/workout');
+                await expectNoViolations();
+
+                click('.workout-face__info');
+                await settle();
+                expect(
+                    fixture.nativeElement.querySelector('app-exercise-details-dialog')
+                ).not.toBeNull();
+                await expectNoViolations();
+            });
+
             it('changing the reps of a rep step, its wheel open on the face', async () => {
                 store.setActiveWorkout(
                     store.addWorkout(
