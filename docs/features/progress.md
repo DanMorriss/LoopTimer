@@ -54,7 +54,7 @@ Under the body map, a **Progress** section:
     - **Reading it**: hovering snaps to the nearest workout and shows its value, date and workout. With the keyboard, the chart takes focus, starts on the latest workout, and the left and right arrows (and Home and End) step through them; screen readers hear each, e.g. "105 kg, 21 October 2026, Legs".
     - **Show as a table** lists the same points: date, workout and value.
 - **Recent sessions**, newest first: the 5 latest, then "Show all N". Each has its date and workout, linking to it in the history (`/history?run=<id>`), and its sets as the history writes them.
-- Weights are in the unit chosen in settings.
+- Weights are in the unit chosen in Account → Profile.
 
 ### Mid-workout: last time (PRG-1)
 

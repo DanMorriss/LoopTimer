@@ -1,6 +1,4 @@
 import { ApplicationRef, Component, computed, DOCUMENT, inject } from '@angular/core';
-import { BodyFigure } from '../models/exercise';
-import { WeightUnit } from '../models/weight';
 import { BackLinkComponent } from '../nav/back-link/back-link.component';
 import { SwipeBackDirective } from '../nav/swipe-back.directive';
 import { AlarmService } from '../shared/alarms/alarm.service';
@@ -20,7 +18,7 @@ interface AlarmPreview {
 const SWITCHING_CLASS = 'theme-switching';
 
 /**
- * Settings (SET-1–5): this device's choices, as they don't sync. It slides in over Account,
+ * Settings (SET-1–3): this device's choices, as they don't sync. It slides in over Account,
  * and back off with ‹ Account or a swipe right.
  */
 @Component({
@@ -47,22 +45,6 @@ export class SettingsComponent {
     /** Where the picker's highlight sits: 0, 1 or 2. */
     protected readonly chosenIndex = computed(() =>
         this.themes.findIndex((option) => option.value === this.settings.theme())
-    );
-
-    protected readonly weightUnits: { value: WeightUnit; label: string }[] = [
-        { value: 'kg', label: 'Kilograms (kg)' },
-        { value: 'lb', label: 'Pounds (lb)' },
-    ];
-    protected readonly chosenUnitIndex = computed(() =>
-        this.weightUnits.findIndex((option) => option.value === this.settings.weightUnit())
-    );
-
-    protected readonly figures: { value: BodyFigure; label: string }[] = [
-        { value: 'male', label: 'Male' },
-        { value: 'female', label: 'Female' },
-    ];
-    protected readonly chosenFigureIndex = computed(() =>
-        this.figures.findIndex((option) => option.value === this.settings.bodyFigure())
     );
 
     protected readonly previews: AlarmPreview[] = [

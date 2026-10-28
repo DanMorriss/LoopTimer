@@ -142,6 +142,11 @@
             <p class="account__hint account__status" role="status">{{ message() }}</p>
         </section>
 
+        <section class="account__section" aria-labelledby="profile-heading">
+            <h3 class="account__heading" id="profile-heading">Profile</h3>
+            <app-profile />
+        </section>
+
         <!-- This device's own choices, which don't sync: they slide in over Account -->
         <a
             href="/settings"
@@ -153,7 +158,7 @@
             <span class="account__link-text">
                 <span class="account__link-name">Settings</span>
                 <span class="account__hint" id="settings-link-hint">
-                    Theme, units, alarms and sounds
+                    Theme, alarms and sounds
                 </span>
             </span>
             <mat-icon class="account__link-chevron" aria-hidden="true">chevron_right</mat-icon>

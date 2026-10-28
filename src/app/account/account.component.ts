@@ -14,16 +14,18 @@ import { LoopLogoComponent } from '../shared/components/loop-logo/loop-logo.comp
 import { SyncStarter } from '../sync/sync-starter.service';
 import { syncText } from '../sync/sync-text';
 import { AccountService } from './account.service';
+import { ProfileComponent } from './profile/profile.component';
 import { YourDataComponent } from './your-data/your-data.component';
 
 /**
  * The Account tab (SYN-3, SYN-8, SYN-9): signing in by an email link or its code, who's
- * signed in and how sync is going, signing out and deleting the account; then Settings, which
- * slides in over it, your data (backups and Clear this device), and About.
+ * signed in and how sync is going, signing out and deleting the account; then your profile
+ * (sex and weight units), Settings, which slides in over it, your data (backups and Clear
+ * this device), and About.
  */
 @Component({
     selector: 'app-account',
-    imports: [FormField, LoopLogoComponent, MatIconModule, YourDataComponent],
+    imports: [FormField, LoopLogoComponent, MatIconModule, ProfileComponent, YourDataComponent],
     templateUrl: './account.component.html',
     styleUrl: './account.component.scss',
 })

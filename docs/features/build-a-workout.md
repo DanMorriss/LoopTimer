@@ -66,7 +66,7 @@
 
 ### Weights (BLD-7)
 
-- A rep step has a **Weight** wheel beside its Reps wheel, labelled with the unit chosen in settings: "Weight (kg)" or "Weight (lb)".
+- A rep step has a **Weight** wheel beside its Reps wheel, labelled with the unit chosen in Account → Profile: "Weight (kg)" or "Weight (lb)".
 - It starts at **–** (none, read out as "none"), for bodyweight moves, which then show just "20 reps".
 - It goes up in steps of **0.5**: to 300 kg, or 660 lb. Typing a number works, with a decimal point (or comma) for halves, e.g. "62.5".
 - A collapsed rep step shows the weight with the reps: "10 reps @ 60 kg". A step with only a weight still asks before it's deleted.

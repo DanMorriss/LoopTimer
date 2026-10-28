@@ -11,13 +11,14 @@
 
 ## Rules
 
-- Settings is opened from **Account**: a row under Sync, with a gear, "Settings", the hint "Theme, units, alarms and sounds" and a ›. It slides in over Account, as an exercise's page does over its list, with ‹ Account at the top to go back (or a swipe right); Account stays chosen in the tab bar. It was a tab of its own until 2026-10-28. It holds only this device's choices, which don't sync; **Your data** (backups, Copy AI prompt and Clear this device) and **About** are on Account (see [backup-and-sync](backup-and-sync.md)).
+- Settings is opened from **Account**: a row under Sync, with a gear, "Settings", the hint "Theme, alarms and sounds" and a ›. It slides in over Account, as an exercise's page does over its list, with ‹ Account at the top to go back (or a swipe right); Account stays chosen in the tab bar. It was a tab of its own until 2026-10-28. It holds only this device's choices, which don't sync; **Profile**, **Your data** (backups, Copy AI prompt and Clear this device) and **About** are on Account (see [backup-and-sync](backup-and-sync.md)).
+- **Profile**, on Account between Sync and the Settings row (since 2026-10-28; until then in Settings, as Body figure and Units → Weight), holds two more choices saved with the settings, so they stay a choice for each device too:
+    - **Sex** (SET-5): Male (the default) or Female, with the hint "The body the muscle maps show": the figure the body map draws (see [exercises](exercises.md)). Called Sex, not Gender, as it picks an anatomical drawing.
+    - **Weight units** (SET-4): Kilograms (kg) (the default) or Pounds (lb). Weights are always saved in kg, so switching loses nothing.
 
 | Section      | Setting                                           | Default | Hint                                                                                                   | Notes                                                                                                                                                      |
 | ------------ | ------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Appearance   | Theme                                             | Dark    | —                                                                                                      | Dark, Light or System. System follows the device, including when it changes.                                                                               |
-| Appearance   | Body figure                                       | Male    | Shows which muscles an exercise works                                                                  | Male or Female: the figure the body map draws (see [exercises](exercises.md)).                                                                             |
-| Units        | Weight                                            | kg      | —                                                                                                      | Kilograms (kg) or Pounds (lb). Weights are always saved in kg, so switching loses nothing.                                                                 |
 | Alarms       | Sound                                             | On      | Beeps as each phase starts                                                                             |                                                                                                                                                            |
 | Alarms       | Vibration                                         | On      | Buzzes as each phase starts                                                                            | Disabled, saying "This device can't vibrate", where it can't.                                                                                              |
 | Alarms       | Keep screen on                                    | On      | Stops the phone locking mid-workout                                                                    | Disabled, saying "This browser can't keep the screen on", where it can't.                                                                                  |
@@ -38,9 +39,9 @@
 - Given Sound is off, when I press Play on Rest, then the rest alarm plays.
 - Given saved settings are broken, then the defaults are used.
 - Given weights in kg, when I choose Pounds, then a step saved at 61.235 kg shows as 135 lb on the workout and in setup.
-- Given a first visit, then the body figure is Male; given I choose Female and reload, then Female is still chosen.
+- Given a first visit, then Account → Profile has Male chosen for Sex; given I choose Female and reload, then Female is still chosen.
 
 ## Platform notes
 
-- **Web:** `SettingsStore` (`src/app/shared/state/settings-store.service.ts`), `SettingsComponent` (`src/app/settings/`), `ThemeService`. The About section is in `AccountComponent` (`src/app/account/`).
+- **Web:** `SettingsStore` (`src/app/shared/state/settings-store.service.ts`), `SettingsComponent` (`src/app/settings/`), `ThemeService`. Profile is `ProfileComponent` (`src/app/account/profile/`), and the About section is in `AccountComponent` (`src/app/account/`).
 - **iOS:** `@AppStorage` for each setting. Settings is a `NavigationLink` row in the Account tab's `List`, so it pushes in with the system's back button and swipe. The theme maps onto `preferredColorScheme` (nil for System). Vibration would always be available on an iPhone, so its disabled state goes.
