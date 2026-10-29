@@ -22,7 +22,36 @@
                         animate.enter="slide-in-sideways"
                         animate.leave="slide-out-sideways"
                     >
-                        @if (slide.timeLimited) {
+                        @if (slide.set; as set) {
+                            <!-- An exercise's sets, and the whole workout's round after them
+                                 when it has more than one -->
+                            <p class="text-2xl" [class.workout-status__last]="slide.last">
+                                @if (slide.last) {
+                                    Last one!
+                                } @else {
+                                    set {{ set.set + 1 }} of {{ set.of }}
+                                }
+                                @if (slide.timeLimited) {
+                                    · round {{ slide.round }}
+                                } @else if (slide.untilStopped) {
+                                    · round {{ slide.round }} of
+                                    <span class="symbol-infinity" aria-hidden="true">∞</span>
+                                    <span class="sr-only">until stopped</span>
+                                } @else if (slide.totalRounds > 1) {
+                                    · round {{ slide.round }} of {{ slide.totalRounds }}
+                                }
+                            </p>
+                            @if (slide.timeLimited) {
+                                <p
+                                    class="workout-status__time-left"
+                                    [class.workout-status__time-left--nearly-up]="
+                                        slide.timeNearlyUp
+                                    "
+                                >
+                                    {{ slide.timeLeft }} left
+                                </p>
+                            }
+                        } @else if (slide.timeLimited) {
                             <p class="text-2xl">round {{ slide.round }}</p>
                             <p
                                 class="workout-status__time-left"

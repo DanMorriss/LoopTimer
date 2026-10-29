@@ -3337,4 +3337,118 @@ describe('WorkoutComponent', () => {
             });
         });
     });
+
+    describe('sets (BLD-9)', () => {
+        const legPress = { ...reps(10, 'Leg press'), exerciseId: 'builtin:leg-press' };
+        /** Leg press, 3 × 10 with 0:05 between, then a 0:03 plank once. */
+        const legDay = (repeats = 1): Workout => ({
+            ...makeWorkout({ repeats }),
+            blocks: [
+                { kind: 'group', rounds: 3, restSeconds: 5, steps: [legPress] },
+                { kind: 'group', rounds: 1, restSeconds: 0, steps: [work(3, 'Plank')] },
+            ],
+        });
+        const status = () =>
+            (fixture.nativeElement.querySelector('.workout-status') as HTMLElement)
+                .textContent!.replace(/\s+/g, ' ')
+                .trim();
+        const dots = () =>
+            Array.from(
+                fixture.nativeElement.querySelectorAll('.round-dot') as NodeListOf<Element>
+            ).map((dot) => dot.className.match(/round-dot--(\w+)/)![1]);
+        const said = () =>
+            (fixture.nativeElement.querySelector('[aria-live]') as HTMLElement).textContent?.trim();
+        function pressDone() {
+            (fixture.nativeElement.querySelector('.workout-next--done') as HTMLElement).click();
+            fixture.detectChanges();
+        }
+
+        beforeEach(() => localStorage.clear());
+        afterEach(() => localStorage.clear());
+
+        it('says which set it is on, with a dot per set, and Last one! on the last', () => {
+            start(legDay());
+
+            expect(status()).toBe('set 1 of 3');
+            expect(dots()).toEqual(['current', 'left', 'left']);
+            // The round is said as it starts, as for any workout
+            expect(said()).toBe('Leg press, 10 reps, set 1 of 3, round 1 of 1');
+
+            pressDone();
+            // Resting before set 2 is part of it
+            expect(component.isRestActive()).toBe(true);
+            expect(status()).toBe('set 2 of 3');
+            expect(dots()).toEqual(['done', 'current', 'left']);
+            expect(text()).toContain('then Leg press · set 2 of 3 · 10 reps');
+
+            advance(5000);
+            expect(component.isRepsActive()).toBe(true);
+            expect(said()).toBe('Leg press, 10 reps, set 2 of 3');
+            pressDone();
+            advance(5000);
+
+            expect(status()).toBe('Last one!');
+            expect(said()).toBe('Leg press, 10 reps, last set');
+            fixture.destroy();
+        });
+
+        it('goes straight on to the next step after the last set, with no rest', () => {
+            start(legDay());
+            pressDone();
+            advance(5000);
+            pressDone();
+            advance(5000);
+
+            expect(text()).toContain('Next: Plank · 00:03');
+            pressDone();
+
+            expect(component.isWorkActive()).toBe(true);
+            expect(text()).toContain('Plank');
+            // One set: no set line, and the workout runs once, so no round line either
+            expect(status()).toBe('');
+            fixture.destroy();
+        });
+
+        it("adds the whole workout's round when it repeats", () => {
+            start(legDay(2));
+
+            expect(status()).toBe('set 1 of 3 · round 1 of 2');
+            fixture.destroy();
+        });
+
+        it("doesn't show a strip of steps, whose sets the round line says", () => {
+            start(legDay());
+
+            expect(fixture.nativeElement.querySelector('app-step-strip')).toBeNull();
+            fixture.destroy();
+        });
+
+        it('logs each set with which it was, and a change carries on to the sets to come', () => {
+            const saved = store.addWorkout(legDay());
+            start(saved);
+
+            pressDone();
+            advance(5000);
+            component['setReps'](8);
+            fixture.detectChanges();
+            pressDone();
+            advance(5000);
+
+            // Set 3 starts from set 2's change, and so does next time
+            expect(component.reps()).toBe(8);
+            expect(allSteps(store.workouts()[0])[0]).toEqual(expect.objectContaining({ reps: 8 }));
+            pressDone();
+            advance(3000);
+            const [entry] = TestBed.inject(HistoryStore).entries();
+            expect(
+                entry.sets!.map((set) => [set.step, set.set ?? 0, 'reps' in set && set.reps])
+            ).toEqual([
+                [0, 0, 10],
+                [0, 1, 8],
+                [0, 2, 8],
+                [1, 0, false],
+            ]);
+            fixture.destroy();
+        });
+    });
 });

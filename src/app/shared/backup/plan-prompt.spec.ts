@@ -28,6 +28,10 @@ describe('planPrompt', () => {
             return;
         }
         expect(result.newWorkouts).toHaveLength(1);
+        // Sets as groups: 3 × 8 squats with 90 seconds between
+        expect(result.newWorkouts[0].blocks[1]).toEqual(
+            expect.objectContaining({ kind: 'group', rounds: 3, restSeconds: 90 })
+        );
         expect(result.exercises).toHaveLength(1);
         expect(result.skipped).toBe(0);
     });

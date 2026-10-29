@@ -22,7 +22,14 @@ import { SettingsStore } from '../shared/state/settings-store.service';
 import { WorkoutStore } from '../shared/state/workout-store.service';
 import { ExerciseStore } from '../shared/state/exercise-store.service';
 import { UndoService } from '../shared/undo/undo.service';
-import { reps, rest, unlinked, unlinkedWorkout, work } from '../shared/testing/make-workout';
+import {
+    eachAGroup,
+    reps,
+    rest,
+    unlinked,
+    unlinkedWorkout,
+    work,
+} from '../shared/testing/make-workout';
 import { WorkoutSetupComponent } from './workout-setup.component';
 
 /** The step a new workout starts with, as `shown()` reads it. */
@@ -256,7 +263,7 @@ describe('WorkoutSetupComponent', () => {
                 expect(info().getAttribute('aria-describedby')).toBe('steps-info-tip');
                 expect(tip().getAttribute('role')).toBe('tooltip');
                 expect(tip().textContent).toContain(
-                    'Each round runs these in order. Steps left at 00:00 or 0 reps are skipped.'
+                    'Each round runs these in order, each for its sets. Steps left at 00:00 or 0 reps are skipped.'
                 );
                 expect(isShowing()).toBe(false);
             });
@@ -336,7 +343,7 @@ describe('WorkoutSetupComponent', () => {
                 id: expect.any(String),
                 updatedAt: expect.any(Number),
                 title: 'Sprints',
-                blocks: asOneGroup([work(90, 'Hill sprint'), rest(20)]),
+                blocks: eachAGroup([work(90, 'Hill sprint'), rest(20)]),
                 repeats: 6,
             };
             expect(store.workouts().map(unlinkedWorkout)).toEqual([expected]);
@@ -480,12 +487,12 @@ describe('WorkoutSetupComponent', () => {
                 expect(shown().steps[2]).toEqual({ kind: 'Reps', name: '', time: '0 reps' });
                 const step = steps()[2];
                 expect(step.classList).toContain('step--reps');
-                expect(step.querySelectorAll('app-wheel-picker')).toHaveLength(2);
+                expect(step.querySelectorAll('app-wheel-picker')).toHaveLength(3);
                 expect(
                     Array.from(step.querySelectorAll('.picker-row .picker-field__label')).map(
                         (label) => label.textContent!.trim()
                     )
-                ).toEqual(['Reps', 'Weight (kg)']);
+                ).toEqual(['Reps', 'Weight (kg)', 'Sets']);
                 expect(el<HTMLInputElement>('input', step).placeholder).toBe('e.g. Push-ups');
                 expect(document.activeElement).toBe(el('input', step));
                 expect(fixture.nativeElement.textContent).toContain('Added a rep step, step 3');
@@ -851,6 +858,105 @@ describe('WorkoutSetupComponent', () => {
                 });
 
             expect(label).toEqual(['Step 2, rest', 'Seconds']);
+        });
+    });
+
+    describe('sets', () => {
+        /** Picks a number on one of a step's wheels, by the end of its id, e.g. "sets". */
+        function choose(step: number, wheel: string, value: string) {
+            el(`[id$="-${wheel}"] [data-value="${value}"]`, steps()[step]).click();
+            fixture.detectChanges();
+        }
+        const wheel = (step: number, name: string) =>
+            el(`[id$="-${name}"] [role="spinbutton"]`, steps()[step])?.getAttribute(
+                'aria-valuenow'
+            ) ?? null;
+
+        it('gives a timed or rep step a Sets wheel at 1, with no rest to begin with', async () => {
+            await setup();
+            await create();
+
+            expect(wheel(0, 'sets')).toBe('1');
+            expect(wheel(0, 'rest-minutes')).toBeNull();
+            // A rest step is just a time
+            expect(steps()[1].querySelectorAll('app-wheel-picker')).toHaveLength(2);
+            expect(wheel(1, 'sets')).toBeNull();
+
+            await addStep();
+            expect(wheel(2, 'sets')).toBe('1');
+        });
+
+        it('shows Rest between sets at 01:00 once there is more than one', async () => {
+            await setup();
+            await create();
+
+            choose(0, 'sets', '3');
+
+            expect(steps()[0].textContent).toContain('Rest between sets');
+            expect(wheel(0, 'rest-minutes')).toBe('1');
+            expect(wheel(0, 'rest-seconds')).toBe('0');
+        });
+
+        it('saves a group of each step, with its sets and the rest between them', async () => {
+            await setup();
+            await create({ empty: true });
+            typeName(0, 'Leg press');
+            chooseReps(0, '10');
+            choose(0, 'sets', '3');
+            choose(0, 'rest-seconds', '30');
+
+            await submit();
+
+            expect(unlinkedWorkout(store.workouts()[0])!.blocks).toEqual(
+                eachAGroup([reps(10, 'Leg press')], 3, 90)
+            );
+        });
+
+        it('saves no rest for one set, whatever the wheels were left at', async () => {
+            await setup();
+            await create({ empty: true });
+            chooseReps(0, '10');
+            choose(0, 'sets', '3');
+            choose(0, 'sets', '1');
+
+            await submit();
+
+            expect(unlinkedWorkout(store.workouts()[0])!.blocks).toEqual(
+                eachAGroup([reps(10)], 1, 0)
+            );
+        });
+
+        it('says its sets and rest when collapsed, as the history would', async () => {
+            await setup();
+            await create();
+            chooseTime(0, 'seconds', '45');
+            choose(0, 'sets', '3');
+            choose(0, 'rest-seconds', '30');
+            await press('Step 1, timed, 3 × 00:45 · rest 01:30');
+
+            expect(el('.step__summary-time', steps()[0]).textContent!.trim()).toBe(
+                '3 × 00:45 · rest 01:30'
+            );
+        });
+
+        it('opens a saved workout with its sets and rest', async () => {
+            await setup({ editId: 'workout-1' });
+            store.addWorkout({
+                ...savedWorkout,
+                blocks: [
+                    { kind: 'group', rounds: 3, restSeconds: 45, steps: [reps(10, 'Bench')] },
+                    { kind: 'group', rounds: 1, restSeconds: 0, steps: [work(60, 'Plank')] },
+                ],
+            });
+            await create();
+
+            expect(el('.step__summary-time', steps()[0]).textContent!.trim()).toBe(
+                '3 × 10 · rest 00:45'
+            );
+            await press('Step 1, Bench, 3 × 10 · rest 00:45');
+            expect(wheel(0, 'sets')).toBe('3');
+            expect(wheel(0, 'rest-minutes')).toBe('0');
+            expect(wheel(0, 'rest-seconds')).toBe('45');
         });
     });
 
@@ -1249,7 +1355,7 @@ describe('WorkoutSetupComponent', () => {
                 id: 'workout-1',
                 updatedAt: expect.any(Number),
                 title: 'Renamed',
-                blocks: savedWorkout.blocks,
+                blocks: eachAGroup(allSteps(savedWorkout)),
                 repeats: 2,
             });
             expect(store.activeWorkout()?.id).toBe('workout-1');

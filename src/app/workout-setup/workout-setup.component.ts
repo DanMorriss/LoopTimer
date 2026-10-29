@@ -28,7 +28,7 @@ import {
     hasWork,
     MAX_REPEATS,
     allSteps,
-    asOneGroup,
+    Block,
     MAX_REPS,
     MAX_STEPS,
     Step,
@@ -80,6 +80,14 @@ interface StepModel {
      * for the wheel doesn't change it. Null for a new step.
      */
     savedWeight: number | null;
+    /** How many times a work or rep step runs, 1 to MAX_REPEATS. A rest step runs once. */
+    sets: number;
+    /**
+     * The rest between sets, for its two wheels: used once there's more than one set, and
+     * 1:00 until it's set, so it starts there the first time Sets goes above 1.
+     */
+    restMinutes: number;
+    restSeconds: number;
 }
 
 /** How a workout goes on: a number of rounds (or until stopped), or a time limit. */
@@ -162,6 +170,7 @@ export class WorkoutSetupComponent {
     protected readonly minuteOptions = pickerOptions(0, 99, padded);
     protected readonly secondOptions = pickerOptions(0, 59, padded);
     protected readonly repOptions = pickerOptions(0, MAX_REPS, String);
+    protected readonly setOptions = pickerOptions(1, MAX_REPEATS, String);
     protected readonly weightOptions = weightOptions(this.weightUnit);
     protected readonly nameExamples = NAME_EXAMPLES;
     protected readonly isBuiltIn = isBuiltIn;
@@ -183,7 +192,7 @@ export class WorkoutSetupComponent {
             applyEach(setup.steps, (step) => maxLength(step.name, MAX_EXERCISE_NAME_LENGTH));
             // The wheels only offer valid times, so the one rule is that there's some work
             validate(setup, ({ value }) =>
-                hasWork(toSteps(value().steps, this.weightUnit))
+                hasWork(allSteps({ blocks: toBlocks(value().steps, this.weightUnit) }))
                     ? undefined
                     : { kind: 'noTime', message: 'Workout needs a timed step or some reps' }
             );
@@ -280,7 +289,7 @@ export class WorkoutSetupComponent {
             const limit = workoutToEdit.timeLimitSeconds;
             this.model.set({
                 title: workoutToEdit.title,
-                steps: allSteps(workoutToEdit).map((step) => this.stepModel(step)),
+                steps: this.stepModels(workoutToEdit),
                 // A time limit is saved with UNTIL_STOPPED, which Rounds shouldn't start on
                 repeats: limit === undefined ? workoutToEdit.repeats : 1,
                 repeatMode: limit === undefined ? 'rounds' : 'time',
@@ -316,11 +325,19 @@ export class WorkoutSetupComponent {
      * "10 reps @ 60 kg".
      */
     protected amountText(step: StepModel): string {
-        if (step.kind === 'reps') {
-            const reps = step.reps === 1 ? '1 rep' : `${step.reps} reps`;
-            return step.weight > 0 ? `${reps} @ ${step.weight} ${this.weightUnit}` : reps;
+        const sets = step.kind !== 'rest' && step.sets > 1;
+        const weight = step.weight > 0 ? ` @ ${step.weight} ${this.weightUnit}` : '';
+        const time = `${padded(step.minutes)}:${padded(step.seconds)}`;
+        if (!sets) {
+            if (step.kind === 'reps') {
+                return `${step.reps === 1 ? '1 rep' : `${step.reps} reps`}${weight}`;
+            }
+            return time;
         }
-        return `${padded(step.minutes)}:${padded(step.seconds)}`;
+        // As the history says sets, e.g. "3 × 10 @ 60 kg", with the rest between them
+        const amount = step.kind === 'reps' ? `${step.reps}${weight}` : time;
+        const rest = step.restMinutes * 60 + step.restSeconds;
+        return `${step.sets} × ${amount}${rest > 0 ? ` · rest ${padded(step.restMinutes)}:${padded(step.restSeconds)}` : ''}`;
     }
 
     /**
@@ -594,9 +611,27 @@ export class WorkoutSetupComponent {
         return new Set(this.model().steps.map((step) => step.key));
     }
 
-    private stepModel(step: Step): StepModel {
+    /**
+     * A saved workout's steps as the form holds them, each with its group's sets and rest.
+     * A group of one step is an exercise and its sets; one of several (only from a file, until
+     * supersets can be made here) has its rounds given to each of them.
+     */
+    private stepModels(workout: Workout): StepModel[] {
+        return workout.blocks.flatMap((block) =>
+            block.kind === 'group'
+                ? block.steps.map((step) =>
+                      this.stepModel(step, block.rounds, block.rounds > 1 ? block.restSeconds : 60)
+                  )
+                : []
+        );
+    }
+
+    private stepModel(step: Step, sets = 1, rest = 60): StepModel {
         const seconds = step.kind === 'reps' ? 0 : step.seconds;
         return {
+            sets: step.kind === 'rest' ? 1 : sets,
+            restMinutes: Math.floor(rest / 60),
+            restSeconds: rest % 60,
             key: this.nextKey++,
             kind: step.kind,
             name: step.name,
@@ -639,13 +674,13 @@ export class WorkoutSetupComponent {
             setup.repeatMode === 'time'
                 ? {
                       title,
-                      blocks: asOneGroup(toSteps(steps, this.weightUnit)),
+                      blocks: toBlocks(steps, this.weightUnit),
                       repeats: UNTIL_STOPPED,
                       timeLimitSeconds: timeLimitSeconds(setup),
                   }
                 : {
                       title,
-                      blocks: asOneGroup(toSteps(steps, this.weightUnit)),
+                      blocks: toBlocks(steps, this.weightUnit),
                       repeats: setup.repeats,
                   };
 
@@ -673,31 +708,41 @@ function timeLimitSeconds(setup: WorkoutSetupModel): number {
 }
 
 /**
- * The steps to save: whole seconds, trimmed names, weights in kg and any exercise picked,
- * leaving out any left at 0:00 or 0 reps.
+ * The workout to save, a group for each step with its sets and the rest between them, leaving
+ * out steps left at 0:00 or 0 reps. A run of steps of one set runs as a circuit's round
+ * always has, each straight after the last.
  */
-function toSteps(steps: readonly StepModel[], unit: WeightUnit): Step[] {
+function toBlocks(steps: readonly StepModel[], unit: WeightUnit): Block[] {
     return steps
-        .map(
-            (step): Step =>
-                step.kind === 'reps'
-                    ? {
-                          kind: 'reps',
-                          reps: step.reps,
-                          name: step.name.trim(),
-                          ...(step.weight > 0 ? { weight: savedWeight(step, unit) } : {}),
-                          ...(step.exerciseId ? { exerciseId: step.exerciseId } : {}),
-                      }
-                    : {
-                          kind: step.kind,
-                          seconds: step.minutes * 60 + step.seconds,
-                          name: step.name.trim(),
-                          ...(step.kind === 'work' && step.exerciseId
-                              ? { exerciseId: step.exerciseId }
-                              : {}),
-                      }
-        )
-        .filter((step) => (step.kind === 'reps' ? step.reps > 0 : step.seconds > 0));
+        .map((model) => ({ model, step: toStep(model, unit) }))
+        .filter(({ step }) => (step.kind === 'reps' ? step.reps > 0 : step.seconds > 0))
+        .map(({ model, step }) => {
+            const sets = step.kind === 'rest' ? 1 : model.sets;
+            return {
+                kind: 'group',
+                rounds: sets,
+                restSeconds: sets > 1 ? model.restMinutes * 60 + model.restSeconds : 0,
+                steps: [step],
+            };
+        });
+}
+
+/** A step to save: whole seconds, a trimmed name, a weight in kg and any exercise picked. */
+function toStep(step: StepModel, unit: WeightUnit): Step {
+    return step.kind === 'reps'
+        ? {
+              kind: 'reps',
+              reps: step.reps,
+              name: step.name.trim(),
+              ...(step.weight > 0 ? { weight: savedWeight(step, unit) } : {}),
+              ...(step.exerciseId ? { exerciseId: step.exerciseId } : {}),
+          }
+        : {
+              kind: step.kind,
+              seconds: step.minutes * 60 + step.seconds,
+              name: step.name.trim(),
+              ...(step.kind === 'work' && step.exerciseId ? { exerciseId: step.exerciseId } : {}),
+          };
 }
 
 /** A rep step's weight in kg: as it was saved, if the wheel hasn't moved, so it isn't rounded. */

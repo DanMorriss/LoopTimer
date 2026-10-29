@@ -23,7 +23,7 @@ Status: ✅ done, ◐ partly, — not started. The iOS column fills in as a port
 | BLD-6  | Edit a saved workout                                                     | ✅  | —   | [build-a-workout](build-a-workout.md)         |
 | BLD-7  | Add a weight to a rep step, in kg or lb                                  | ✅  | —   | [build-a-workout](build-a-workout.md)         |
 | BLD-8  | Give a workout a time limit, for as many rounds as possible              | ✅  | —   | [build-a-workout](build-a-workout.md)         |
-| BLD-9  | Give an exercise sets, with a rest between them                          | —   | —   | [sets-and-supersets](sets-and-supersets.md)   |
+| BLD-9  | Give an exercise sets, with a rest between them                          | ✅  | —   | [build-a-workout](build-a-workout.md)         |
 | BLD-10 | Do an exercise one side at a time                                        | —   | —   | [sets-and-supersets](sets-and-supersets.md)   |
 | BLD-11 | Give each set its own reps and weight                                    | —   | —   | [sets-and-supersets](sets-and-supersets.md)   |
 | BLD-12 | Superset or giant set: exercises in a row, then rest, for rounds         | —   | —   | [sets-and-supersets](sets-and-supersets.md)   |
@@ -37,7 +37,7 @@ Status: ✅ done, ◐ partly, — not started. The iOS column fills in as a port
 | RUN-7  | See a summary when I finish or end a workout, and correct its sets       | ✅  | —   | [run-a-workout](run-a-workout.md)             |
 | RUN-8  | Run to a time limit: rounds counting up, time left, the score at the end | ✅  | —   | [run-a-workout](run-a-workout.md)             |
 | RUN-9  | Check how a step's exercise is done, mid-workout                         | ✅  | —   | [run-a-workout](run-a-workout.md)             |
-| RUN-10 | See which set, side or round I'm on, and the section I'm in              | —   | —   | [sets-and-supersets](sets-and-supersets.md)   |
+| RUN-10 | See which set, side or round I'm on, and the section I'm in              | ◐   | —   | [sets-and-supersets](sets-and-supersets.md)   |
 | CTL-1  | Pause and resume                                                         | ✅  | —   | [pause-and-stop](pause-and-stop.md)           |
 | CTL-2  | Stop a workout early                                                     | ✅  | —   | [pause-and-stop](pause-and-stop.md)           |
 | CTL-3  | Pick up where I was if the app is closed or reloaded                     | ✅  | —   | [pause-and-stop](pause-and-stop.md)           |

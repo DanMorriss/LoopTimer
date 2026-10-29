@@ -47,7 +47,7 @@ Export and import (SYN-1, SYN-2) are built, with a prompt for having an AI turn 
 - Under the backup buttons: "Have a plan from a coach, a book or a spreadsheet? Copy this prompt into an AI chat, add your plan, then bring in the file it writes with Import backup." and a **Copy AI prompt** button.
 - It copies the prompt to the clipboard and says "Prompt copied. Paste it into an AI chat, then add your plan." If the browser won't allow it: "The prompt couldn't be copied. Try again, or another browser."
 - The prompt asks for one JSON object, in a code block, in the backup file's shape (see [data](data.md#backup-file)) cut down to what a plan needs: `app`, `version` (the app's current one), `workouts` and `exercises`, **with no ids or dates**. It's made from the app itself, so it keeps up with it:
-    - the workout and step fields, with their limits (steps per workout, rounds or until stopped, a time limit, seconds, reps, a weight in kg, converting lb, a name's length), and how a plan's sets become rounds or steps
+    - the workout and step fields, with their limits (steps per workout, rounds or until stopped, a time limit, seconds, reps, a weight in kg, converting lb, a name's length), and each exercise as a group of its sets with the rest between them
     - every built-in exercise's name and other names, to name steps by where they match
     - for any other exercise, an entry in `exercises` with how it's measured, the equipment and muscles to choose from, and an optional description, how-to steps and tips
     - an example file, and to pick a sensible value for what doesn't fit (e.g. the low end of 8–12 reps, or a weight given as a percentage of a max) and list what it changed under the JSON as "Notes:"

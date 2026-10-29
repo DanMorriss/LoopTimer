@@ -35,7 +35,8 @@
                         id="steps-info-tip"
                         role="tooltip"
                     >
-                        Each round runs these in order. Steps left at 00:00 or 0 reps are skipped.
+                        Each round runs these in order, each for its sets. Steps left at 00:00 or 0
+                        reps are skipped.
                     </span>
                 </span>
             </div>
@@ -380,6 +381,104 @@
                                             </div>
                                         </div>
                                     }
+
+                                    <!-- How many times it runs, with a rest between, never after
+                                         the last. A rest step is just a time. -->
+                                    @if (kind !== 'rest') {
+                                        <div class="picker-row">
+                                            <div class="picker-field">
+                                                <span
+                                                    class="picker-field__label"
+                                                    [id]="'step-' + key + '-sets-label'"
+                                                >
+                                                    Sets
+                                                </span>
+                                                <app-wheel-picker
+                                                    [id]="'step-' + key + '-sets'"
+                                                    [formField]="step.sets"
+                                                    [options]="setOptions"
+                                                    [labelledBy]="
+                                                        'step-' +
+                                                        key +
+                                                        '-title step-' +
+                                                        key +
+                                                        '-sets-label'
+                                                    "
+                                                />
+                                            </div>
+                                        </div>
+                                        @if (step().value().sets > 1) {
+                                            <!-- One label over both wheels, which read as a time -->
+                                            <div
+                                                class="picker-field"
+                                                role="group"
+                                                [attr.aria-labelledby]="
+                                                    'step-' + key + '-rest-label'
+                                                "
+                                            >
+                                                <span
+                                                    class="picker-field__label"
+                                                    [id]="'step-' + key + '-rest-label'"
+                                                >
+                                                    Rest between sets (mm:ss)
+                                                </span>
+                                                <div class="picker-row">
+                                                    <div class="picker-field">
+                                                        <span
+                                                            class="sr-only"
+                                                            [id]="
+                                                                'step-' +
+                                                                key +
+                                                                '-rest-minutes-label'
+                                                            "
+                                                        >
+                                                            Minutes
+                                                        </span>
+                                                        <app-wheel-picker
+                                                            [id]="'step-' + key + '-rest-minutes'"
+                                                            [formField]="step.restMinutes"
+                                                            [options]="minuteOptions"
+                                                            [labelledBy]="
+                                                                'step-' +
+                                                                key +
+                                                                '-title step-' +
+                                                                key +
+                                                                '-rest-label step-' +
+                                                                key +
+                                                                '-rest-minutes-label'
+                                                            "
+                                                        />
+                                                    </div>
+                                                    <div class="picker-field">
+                                                        <span
+                                                            class="sr-only"
+                                                            [id]="
+                                                                'step-' +
+                                                                key +
+                                                                '-rest-seconds-label'
+                                                            "
+                                                        >
+                                                            Seconds
+                                                        </span>
+                                                        <app-wheel-picker
+                                                            [id]="'step-' + key + '-rest-seconds'"
+                                                            [formField]="step.restSeconds"
+                                                            [options]="secondOptions"
+                                                            [labelledBy]="
+                                                                'step-' +
+                                                                key +
+                                                                '-title step-' +
+                                                                key +
+                                                                '-rest-label step-' +
+                                                                key +
+                                                                '-rest-seconds-label'
+                                                            "
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    }
                                 </div>
                             </div>
                         }
@@ -405,7 +504,7 @@
                 <p class="setup-hint">That's the most steps a workout can have ({{ maxSteps }}).</p>
             }
 
-            <h2 class="setup-heading" id="repeat-heading">Repeat</h2>
+            <h2 class="setup-heading" id="repeat-heading">Repeat the whole workout</h2>
 
             <!-- A number of rounds, or as many as fit in a time limit -->
             <fieldset class="segmented mb-4" aria-labelledby="repeat-heading">
