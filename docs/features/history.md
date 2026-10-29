@@ -20,6 +20,7 @@
     - the full **rounds done**, and the rounds it was set to (or "until stopped"), or its **time limit**, and when that ran out, the steps done of the round it ran out in (RUN-8)
     - finished or stopped
     - an optional note
+    - the workout's **headings** as it ran (BLD-13), each with the number of the step after it, so its sets can be grouped under them. Renaming or deleting a heading later doesn't change past entries. Workouts logged before this have none.
     - the **sets** done (HIS-5), in order:
         - for each Done on a rep step: the round, the step, its name, the reps and the weight. A set is only logged on Done, so a workout stopped mid-set doesn't log that set.
         - for each timed work step of an exercise that ran to its end: the round, the step, its name and its length in seconds. One stopped part-way isn't a set, and nor is a rest or an unnamed step. Workouts logged before this have no timed sets.
@@ -43,6 +44,7 @@
     - The name links to its exercise's page (PRG-4), where the line is linked to an exercise that's still there.
     - A line is named as the step was when it ran, except for an exercise of your own, which shows its name now, so renaming it (EXR-3) renames it here too. Built-in exercises can't be renamed, so a set from a step called "Squats" stays "Squats".
     - Screen readers hear words, e.g. "Squats, 3 sets of 10 reps at 60 kg".
+    - **Under the workout's headings** as they were when it ran (BLD-13), in order: e.g. "Warmup", then "Exercise bike: 5:00"; "Knee rehabilitation", then its lines. Lines before the first heading come first, with none over them, and a heading with no sets under it (e.g. a part stopped before) isn't shown. Screen readers hear them as headings within the entry. The workout summary's sets are grouped the same way.
 - The note, if any, sits under the entry.
 - With no workouts: "No workouts yet. Finished and stopped workouts show up here." with a link to the library.
 
@@ -62,6 +64,7 @@
 
 - Given 3 sets of 10 squats at 60 kg, then the entry shows "Squats: 3 × 10 @ 60 kg"; given 10 then 8 at 62.5 kg, then "Squats: 10 @ 60, 8 @ 62.5 kg".
 - Given weights in lb, then a set saved at 61.235 kg shows as 135 lb.
+- Given a workout with headings "Warmup" and "Knee rehabilitation", when it's done, then its entry shows the bike's line under "Warmup" and the knee lines under "Knee rehabilitation"; when the heading is renamed afterwards, then the entry still says "Knee rehabilitation".
 - Given a 45-second plank step in a workout of 3 rounds, when it finishes, then the entry shows "Plank: 3 × 0:45"; when it's ended 20 seconds into the third plank, then "Plank: 2 × 0:45".
 - Given an unnamed 30-second work step, then no set is logged for it.
 - Given workouts today, yesterday and last Tuesday, then they're grouped under Today, Yesterday and the date, newest first.

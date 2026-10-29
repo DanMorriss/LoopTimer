@@ -1,5 +1,12 @@
 import { RepSet, TimedSet } from '../models/history';
-import { Block, runPlan, Step, UNTIL_STOPPED, workoutSeconds } from '../models/workout';
+import {
+    Block,
+    placedHeadings,
+    runPlan,
+    Step,
+    UNTIL_STOPPED,
+    workoutSeconds,
+} from '../models/workout';
 import { makeWorkout, reps, rest, work } from '../shared/testing/make-workout';
 import { nextRepStep, placeAt, setsDone, stepsIntoRound, workoutStateAt } from './workout-state';
 
@@ -504,6 +511,63 @@ describe('groups', () => {
             ...legSets,
             timed(0),
             timed(1),
+        ]);
+    });
+
+    it('knows the heading and exercise each step is part of (RUN-10)', () => {
+        const sections = runPlan(workout).sections;
+
+        expect(runPlan(workout).exercises).toBe(3);
+        expect(sections.map(({ heading, exercise }) => `${heading} ${exercise}`)).toEqual([
+            'Warmup 1',
+            'Legs 2',
+            'Legs 2',
+            'Legs 2',
+            'Legs 2',
+            'Legs 2',
+            'Legs 3',
+            'Legs 3',
+            'Legs 3',
+        ]);
+        // Each exercise starts once, on its first set, not on the sets or rests after it
+        expect(sections.map((section) => section.starts)).toEqual([
+            true,
+            true,
+            false,
+            false,
+            false,
+            false,
+            true,
+            false,
+            false,
+        ]);
+    });
+
+    it("doesn't count rest steps as exercises, and has no heading before the first", () => {
+        const plan = runPlan({
+            blocks: [
+                { kind: 'group', rounds: 1, restSeconds: 0, steps: [rest(30)] },
+                { kind: 'group', rounds: 1, restSeconds: 0, steps: [reps(10, 'Squats')] },
+                { kind: 'group', rounds: 1, restSeconds: 0, steps: [rest(30)] },
+                { kind: 'heading', text: 'Core' },
+                { kind: 'group', rounds: 1, restSeconds: 0, steps: [work(30, 'Plank')] },
+            ],
+        });
+
+        expect(plan.exercises).toBe(2);
+        // A rest is part of the exercise before it, or the first before any
+        expect(plan.sections).toEqual([
+            { heading: null, exercise: 1, starts: false },
+            { heading: null, exercise: 1, starts: true },
+            { heading: null, exercise: 1, starts: false },
+            { heading: 'Core', exercise: 2, starts: true },
+        ]);
+    });
+
+    it('places each heading before the number of the step after it', () => {
+        expect(placedHeadings(workout)).toEqual([
+            { text: 'Warmup', step: 0 },
+            { text: 'Legs', step: 1 },
         ]);
     });
 

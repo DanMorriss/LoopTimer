@@ -17,7 +17,13 @@ import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 import { HistoryEntry, MAX_NOTE_LENGTH } from '../../models/history';
 import { HistoryStore } from '../../shared/state/history-store.service';
-import { describeRounds, describeSets, entryName, formatDuration } from '../history-format';
+import {
+    describeRounds,
+    describeSets,
+    entryName,
+    formatDuration,
+    sectionsOf,
+} from '../history-format';
 import { SettingsStore } from '../../shared/state/settings-store.service';
 import { ExerciseStore } from '../../shared/state/exercise-store.service';
 import { exercisePath, isBuiltIn } from '../../models/exercise';
@@ -81,6 +87,8 @@ export class HistoryEntryComponent {
             return { ...line, path: exercise ? exercisePath(exercise) : null };
         })
     );
+    /** Its lines under the workout's headings as they were when it ran (BLD-13). */
+    protected readonly sections = computed(() => sectionsOf(this.sets(), this.entry().headings));
     protected readonly id = computed(() => this.entry().id);
 
     // The box starts from the saved note each time it opens

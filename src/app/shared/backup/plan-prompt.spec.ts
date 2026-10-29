@@ -28,12 +28,14 @@ describe('planPrompt', () => {
             return;
         }
         expect(result.newWorkouts).toHaveLength(1);
+        // Headings over its parts
+        expect(result.newWorkouts[0].blocks[0]).toEqual({ kind: 'heading', text: 'Warmup' });
         // Sets as groups: 3 × 8 squats with 90 seconds between
-        expect(result.newWorkouts[0].blocks[1]).toEqual(
+        expect(result.newWorkouts[0].blocks[3]).toEqual(
             expect.objectContaining({ kind: 'group', rounds: 3, restSeconds: 90 })
         );
         // And one done each side
-        expect(result.newWorkouts[0].blocks[2]).toEqual(
+        expect(result.newWorkouts[0].blocks[4]).toEqual(
             expect.objectContaining({ steps: [expect.objectContaining({ eachSide: true })] })
         );
         expect(result.exercises).toHaveLength(1);

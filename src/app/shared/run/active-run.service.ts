@@ -11,6 +11,7 @@ import {
 import { HistoryEntry, historyId, RepSet } from '../../models/history';
 import {
     allSteps,
+    placedHeadings,
     RepStep,
     RunningWorkout,
     runPlan,
@@ -508,6 +509,7 @@ export class ActiveRunService {
         const countdownMs = finished ? finishMs : elapsedMs;
         const activeSeconds = Math.floor((countdownMs + repMs) / 1000);
         const sets = this.sets();
+        const headings = placedHeadings(workout);
         const timeLimit =
             limit === undefined
                 ? {}
@@ -528,6 +530,7 @@ export class ActiveRunService {
             outcome,
             ...timeLimit,
             ...(sets.length > 0 ? { sets } : {}),
+            ...(headings.length > 0 ? { headings } : {}),
         });
     }
 }

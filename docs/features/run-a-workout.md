@@ -44,6 +44,7 @@
 ### What's on screen
 
 - **Title**: the workout's title. On a phone it takes the place of the app name in the header.
+- **Section line** (RUN-10), above the round line: the heading of the part it's in, if there's one before it, and how far through the workout's exercises it is, e.g. "Knee rehabilitation · 2 of 7". Rest steps and headings don't count (and supersets will count as one); a rest step is part of the exercise before it, or the first before any. Only for a workout with headings or more than one exercise, and its room is kept for the whole run, so the ring doesn't move as it changes. One line, cut short with "…" if it's too long. Screen readers hear the count as "exercise 2 of 7", and "Knee rehabilitation, exercise 2 of 7" as each exercise starts (not on each of its sets).
 - **Round line**:
 
     - "round 2 of 5" for a workout of more than one round, with a dot per round (done, current, to go) when there are 15 rounds or fewer.
@@ -51,7 +52,7 @@
     - "round 3 of ∞" for a workout that runs until stopped.
     - "round 3" for a time limit, with the **time left** under it, e.g. "12:34 left", in the accent colour for its last 10 seconds. Screen readers hear it with the round as each round starts, e.g. "Timed, round 3, 12:34 left"; the time left itself isn't read out as it ticks.
     - Nothing for a single-round workout.
-    - **On a step with sets** (BLD-9), its sets instead: "set 2 of 3", with a dot per set when there are 15 or fewer, and "**Last one!**" in the last set. The rest between sets is part of the set it leads to, so resting before the last set already says "Last one!". When the whole workout repeats, its round follows on the same line: "set 2 of 3 · round 1 of 2", "· round 3 of ∞", or "· round 3" with the time left under it for a time limit. Screen readers hear "set 2 of 3", or "last set", with each set. (RUN-10, in part.)
+    - **On a step with sets** (BLD-9), its sets instead: "set 2 of 3", with a dot per set when there are 15 or fewer, and "**Last one!**" in the last set. The rest between sets is part of the set it leads to, so resting before the last set already says "Last one!". When the whole workout repeats, its round follows on the same line: "set 2 of 3 · round 1 of 2", "· round 3 of ∞", or "· round 3" with the time left under it for a time limit. Screen readers hear "set 2 of 3", or "last set", with each set. (RUN-10; the section line is above.)
     - The **time left of the whole workout**, e.g. "01:20 left", beside the dots, for a set number of rounds of timed steps only. Not with rep steps, which take as long as they take, nor until stopped.
     - A **strip of the round's steps** under it, one segment per step in its kind's colour: an outline to go, filled but quieter when done, and taller with a glow for the one in progress. Only when a round has more than one work or rep step (a plain work-and-rest workout leaves it out), and no step has sets (whose round line says where it is); hidden from screen readers, which hear the step number, e.g. "step 2 of 5", with each step.
 
@@ -109,6 +110,8 @@
 
 ## Acceptance criteria
 
+- Given headings "Warmup" and "Legs", a bike, then leg press 2 × 10, a rest and a plank, then on the bike the section line says "Warmup · 1 of 3"; on leg press, its rest between sets and the rest step after it, "Legs · 2 of 3"; on the plank, "Legs · 3 of 3". Screen readers hear "Legs, exercise 2 of 3" as leg press starts, and not on its second set.
+- Given a workout of one exercise and no headings, then there's no section line.
 - Given work 0:03, rest 0:02, 2 rounds, then it shows work 00:03 at the start, switches to rest exactly at 3s, starts round 2 at 5s, and finishes at 8s with no rest after the last work.
 - Given rest of 0:00, then there's no rest phase at all.
 - Given a workout of 5 rounds in its last round, then it says "Last one!".

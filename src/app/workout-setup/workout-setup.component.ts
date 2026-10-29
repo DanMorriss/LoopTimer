@@ -29,6 +29,8 @@ import {
     MAX_REPEATS,
     allSteps,
     Block,
+    MAX_HEADING_LENGTH,
+    MAX_HEADINGS,
     MAX_REPS,
     MAX_STEPS,
     Step,
@@ -57,14 +59,18 @@ import { ActiveRunService } from '../shared/run/active-run.service';
 import { SettingsStore } from '../shared/state/settings-store.service';
 import { WorkoutStore } from '../shared/state/workout-store.service';
 
+/** What a row in Create is: a kind of step, or a heading (BLD-13). */
+type ItemKind = StepKind | 'heading';
+
 /**
  * One step as the form holds it: minutes and seconds for a timed step's two wheels, or
  * reps and weight for a rep step's. A step keeps them all, and only uses those for its kind.
+ * A heading is a row of its own kind, with its text as its name and nothing else used.
  */
 interface StepModel {
     /** Stays with the step as it moves, for tracking and element ids. */
     key: number;
-    kind: StepKind;
+    kind: ItemKind;
     name: string;
     minutes: number;
     seconds: number;
@@ -169,6 +175,7 @@ export class WorkoutSetupComponent {
     protected readonly weightUnit = inject(SettingsStore).weightUnit();
 
     protected readonly maxSteps = MAX_STEPS;
+    protected readonly maxHeadings = MAX_HEADINGS;
     /** In the order the kind menu lists them. */
     protected readonly editingWorkoutId = signal<string | null>(null);
     protected readonly minuteOptions = pickerOptions(0, 99, padded);
@@ -192,8 +199,12 @@ export class WorkoutSetupComponent {
     protected readonly workoutForm = form(
         this.model,
         (setup) => {
-            // Long enough for a name, short enough to fit on the workout
-            applyEach(setup.steps, (step) => maxLength(step.name, MAX_EXERCISE_NAME_LENGTH));
+            // Long enough for a name (or a heading), short enough to fit on the workout
+            applyEach(setup.steps, (step) =>
+                maxLength(step.name, ({ valueOf }) =>
+                    valueOf(step.kind) === 'heading' ? MAX_HEADING_LENGTH : MAX_EXERCISE_NAME_LENGTH
+                )
+            );
             // The wheels only offer valid times, so the one rule is that there's some work
             validate(setup, ({ value }) =>
                 hasWork(allSteps({ blocks: toBlocks(value().steps, this.weightUnit) }))
@@ -217,7 +228,15 @@ export class WorkoutSetupComponent {
         }
     );
 
-    protected readonly stepCount = computed(() => this.model().steps.length);
+    /** Steps, which count towards MAX_STEPS; headings don't. */
+    protected readonly stepCount = computed(
+        () => this.model().steps.filter((step) => step.kind !== 'heading').length
+    );
+    protected readonly headingCount = computed(
+        () => this.model().steps.filter((step) => step.kind === 'heading').length
+    );
+    /** Steps and headings, the rows of the list. */
+    protected readonly itemCount = computed(() => this.model().steps.length);
     protected readonly anyExpanded = computed(() => {
         const expanded = this.expandedKeys();
         return this.model().steps.some((step) => expanded.has(step.key));
@@ -261,7 +280,9 @@ export class WorkoutSetupComponent {
 
     // Not until something's been put in a step: a new workout opens with an empty one
     protected readonly noTimeError = computed(() =>
-        this.model().steps.every((step) => !step.name.trim() && !hasAmount(step))
+        this.model()
+            .steps.filter((step) => step.kind !== 'heading')
+            .every((step) => !step.name.trim() && !hasAmount(step))
             ? undefined
             : this.workoutForm()
                   .errors()
@@ -318,10 +339,27 @@ export class WorkoutSetupComponent {
         this.model.update((setup) => ({ ...setup, repeats }));
     }
 
-    /** How a step is named to screen readers, e.g. "Step 2, rest" or "Step 1, Squats". */
+    /** A step's number, counting steps only, as headings aren't steps. */
+    protected stepNumber(index: number): number {
+        return this.stepNumbers()[index];
+    }
+
+    /** Each row's step number, a heading having the number of the step before it. */
+    private readonly stepNumbers = computed(() => {
+        let count = 0;
+        return this.model().steps.map((step) => (step.kind === 'heading' ? count : ++count));
+    });
+
+    /**
+     * How a step is named to screen readers, e.g. "Step 2, rest" or "Step 1, Squats"; a
+     * heading is "Heading, Warmup".
+     */
     protected stepTitle(index: number): string {
         const step = this.model().steps[index];
-        return `Step ${index + 1}, ${step.name.trim() || stepKindName(step.kind).toLowerCase()}`;
+        if (step.kind === 'heading') {
+            return step.name.trim() ? `Heading, ${step.name.trim()}` : 'Heading';
+        }
+        return `Step ${this.stepNumber(index)}, ${step.name.trim() || stepKindName(step.kind).toLowerCase()}`;
     }
 
     /**
@@ -329,6 +367,9 @@ export class WorkoutSetupComponent {
      * "10 reps @ 60 kg", and "each side" for one done each side.
      */
     protected amountText(step: StepModel): string {
+        if (step.kind === 'heading') {
+            return '';
+        }
         const sets = step.kind !== 'rest' && step.sets > 1;
         const eachSide = step.kind !== 'rest' && step.eachSide ? ' each side' : '';
         const weight = step.weight > 0 ? ` @ ${step.weight} ${this.weightUnit}` : '';
@@ -353,7 +394,7 @@ export class WorkoutSetupComponent {
      * a name no exercise has yet.
      */
     protected exerciseFor(step: StepModel): Exercise | undefined {
-        if (step.kind === 'rest') {
+        if (step.kind === 'rest' || step.kind === 'heading') {
             return undefined;
         }
         return (
@@ -416,6 +457,7 @@ export class WorkoutSetupComponent {
                     step.key === opened.stepKey ||
                     step.exerciseId === saved.id ||
                     (step.kind !== 'rest' &&
+                        step.kind !== 'heading' &&
                         !step.exerciseId &&
                         findByName(step.name, [opened.exercise]) !== undefined);
                 return isIt ? { ...step, name: saved.name, exerciseId: saved.id } : step;
@@ -475,6 +517,21 @@ export class WorkoutSetupComponent {
         this.focusAfterRender(`step-${step.key}-name`);
     }
 
+    /**
+     * Adds a heading at the end, e.g. "Warmup", opened with the cursor in its box. Headings
+     * aren't steps, so they have a limit of their own.
+     */
+    protected addHeading() {
+        if (this.headingCount() >= MAX_HEADINGS) {
+            return;
+        }
+        const heading: StepModel = { ...this.newStep(), kind: 'heading' };
+        this.updateSteps((steps) => [...steps, heading]);
+        this.expandedKeys.set(new Set([heading.key]));
+        this.stepAnnouncement.set('Added a heading');
+        this.focusAfterRender(`step-${heading.key}-name`);
+    }
+
     protected toggleKindMenu(key: number) {
         this.kindMenuFor.update((open) => (open === key ? null : key));
     }
@@ -516,7 +573,7 @@ export class WorkoutSetupComponent {
         }
         // Focus follows the step to its new place: the same button, or the other move
         // button if that one has just been disabled (at the top or bottom)
-        const atEnd = by === -1 ? target === 0 : target === this.stepCount() - 1;
+        const atEnd = by === -1 ? target === 0 : target === this.itemCount() - 1;
         const button = by === -1 ? (atEnd ? 'down' : 'up') : atEnd ? 'up' : 'down';
         this.focusAfterRender(`step-${moved.key}-${button}`);
     }
@@ -549,8 +606,16 @@ export class WorkoutSetupComponent {
         moveItemInArray(steps, from, to);
         this.updateSteps(() => steps);
         const moved = steps[to];
+        if (moved.kind === 'heading') {
+            // Said by what's after it now, as a heading isn't numbered
+            const after = steps.slice(to + 1).findIndex((step) => step.kind !== 'heading');
+            const place =
+                after === -1 ? 'the end' : `before step ${this.stepNumber(to + 1 + after)}`;
+            this.stepAnnouncement.set(`Moved ${this.stepTitle(to).toLowerCase()} to ${place}`);
+            return moved;
+        }
         this.stepAnnouncement.set(
-            `Moved ${moved.name.trim() || stepKindName(moved.kind).toLowerCase()} to step ${to + 1}`
+            `Moved ${moved.name.trim() || stepKindName(moved.kind).toLowerCase()} to step ${this.stepNumber(to)}`
         );
         return moved;
     }
@@ -574,7 +639,11 @@ export class WorkoutSetupComponent {
             message: `Deleted ${title}${time}`,
             undo: () => {
                 this.updateSteps((all) => [...all.slice(0, index), step, ...all.slice(index)]);
-                this.stepAnnouncement.set(`Step ${index + 1} is back`);
+                this.stepAnnouncement.set(
+                    step.kind === 'heading'
+                        ? `${this.stepTitle(index)} is back`
+                        : `Step ${this.stepNumber(index)} is back`
+                );
                 this.focusAfterRender(
                     `step-${step.key}-${this.isExpanded(step.key) ? 'delete' : 'toggle'}`
                 );
@@ -585,8 +654,12 @@ export class WorkoutSetupComponent {
 
     private removeStep(index: number) {
         const deleted = this.model().steps[index];
+        const said =
+            deleted.kind === 'heading'
+                ? 'Deleted a heading'
+                : `Deleted step ${this.stepNumber(index)}`;
         this.updateSteps((all) => all.filter((step) => step.key !== deleted.key));
-        this.stepAnnouncement.set(`Deleted step ${index + 1}`);
+        this.stepAnnouncement.set(said);
     }
 
     /**
@@ -619,9 +692,9 @@ export class WorkoutSetupComponent {
     }
 
     /**
-     * A saved workout's steps as the form holds them, each with its group's sets and rest.
-     * A group of one step is an exercise and its sets; one of several (only from a file, until
-     * supersets can be made here) has its rounds given to each of them.
+     * A saved workout's steps and headings as the form holds them, each step with its group's
+     * sets and rest. A group of one step is an exercise and its sets; one of several (only from
+     * a file, until supersets can be made here) has its rounds given to each of them.
      */
     private stepModels(workout: Workout): StepModel[] {
         return workout.blocks.flatMap((block) =>
@@ -629,7 +702,7 @@ export class WorkoutSetupComponent {
                 ? block.steps.map((step) =>
                       this.stepModel(step, block.rounds, block.rounds > 1 ? block.restSeconds : 60)
                   )
-                : []
+                : [{ ...this.newStep(), kind: 'heading' as const, name: block.text }]
         );
     }
 
@@ -704,8 +777,11 @@ export class WorkoutSetupComponent {
     }
 }
 
-/** Whether a step has a time, reps or a weight, as its kind uses. */
+/** Whether a step has a time, reps or a weight, as its kind uses. A heading has none. */
 function hasAmount(step: StepModel): boolean {
+    if (step.kind === 'heading') {
+        return false;
+    }
     return step.kind === 'reps'
         ? step.reps > 0 || step.weight > 0
         : step.minutes > 0 || step.seconds > 0;
@@ -716,30 +792,38 @@ function timeLimitSeconds(setup: WorkoutSetupModel): number {
 }
 
 /**
- * The workout to save, a group for each step with its sets and the rest between them, leaving
- * out steps left at 0:00 or 0 reps. A run of steps of one set runs as a circuit's round
- * always has, each straight after the last.
+ * The workout to save, a group for each step with its sets and the rest between them, and its
+ * headings, trimmed, in their places. Steps left at 0:00 or 0 reps are left out, and so are
+ * headings left empty. A run of steps of one set runs as a circuit's round always has, each
+ * straight after the last.
  */
 function toBlocks(steps: readonly StepModel[], unit: WeightUnit): Block[] {
-    return steps
-        .map((model) => ({ model, step: toStep(model, unit) }))
-        .filter(({ step }) => (step.kind === 'reps' ? step.reps > 0 : step.seconds > 0))
-        .map(({ model, step }) => {
-            const sets = step.kind === 'rest' ? 1 : model.sets;
-            return {
+    return steps.flatMap((model): Block[] => {
+        if (model.kind === 'heading') {
+            const text = model.name.trim();
+            return text ? [{ kind: 'heading', text }] : [];
+        }
+        const step = toStep({ ...model, kind: model.kind }, unit);
+        if (step.kind === 'reps' ? step.reps === 0 : step.seconds === 0) {
+            return [];
+        }
+        const sets = step.kind === 'rest' ? 1 : model.sets;
+        return [
+            {
                 kind: 'group',
                 rounds: sets,
                 restSeconds: sets > 1 ? model.restMinutes * 60 + model.restSeconds : 0,
                 steps: [step],
-            };
-        });
+            },
+        ];
+    });
 }
 
 /**
  * A step to save: whole seconds, a trimmed name, a weight in kg, any exercise picked, and
  * each side if it's done each side.
  */
-function toStep(step: StepModel, unit: WeightUnit): Step {
+function toStep(step: StepModel & { kind: StepKind }, unit: WeightUnit): Step {
     const eachSide = step.kind !== 'rest' && step.eachSide ? { eachSide: true as const } : {};
     return step.kind === 'reps'
         ? {

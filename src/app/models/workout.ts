@@ -142,6 +142,32 @@ export const MAX_STEPS = 20;
 /** The longest a heading can be, as for a step's name. */
 export const MAX_HEADING_LENGTH = 40;
 
+/** The most headings a workout can have, on top of its steps. */
+export const MAX_HEADINGS = 10;
+
+/**
+ * A workout's heading and where it is: `step` is the number of the first step after it, in
+ * `allSteps()`, so it's counted as a logged set's `step` is.
+ */
+export interface PlacedHeading {
+    text: string;
+    step: number;
+}
+
+/** A workout's headings, in order, each with the number of the step after it. */
+export function placedHeadings(workout: Pick<Workout, 'blocks'>): PlacedHeading[] {
+    const headings: PlacedHeading[] = [];
+    let step = 0;
+    for (const block of workout.blocks) {
+        if (block.kind === 'heading') {
+            headings.push({ text: block.text, step });
+        } else {
+            step += block.steps.length;
+        }
+    }
+    return headings;
+}
+
 /** A step's countdown in seconds: 0 for a rep step, which has none. */
 export function stepSeconds(step: Step): number {
     return step.kind === 'reps' ? 0 : step.seconds;
@@ -196,12 +222,29 @@ export interface RunPlan {
      * group has: a rest between rounds is part of the round it leads to.
      */
     sets: GroupSet[];
+    /** For each of `steps`, the part of the workout it's in (RUN-10). */
+    sections: PlanSection[];
+    /** How many exercises the workout has: groups with a step that isn't rest. */
+    exercises: number;
 }
 
 /** Which round of its group a step of the run is in, e.g. set 1 (from 0) of 3. */
 export interface GroupSet {
     set: number;
     of: number;
+}
+
+/** Where a step of the run is in the workout, for the section line, e.g. "Upper body · 5 of 7". */
+export interface PlanSection {
+    /** The last heading before its group, or null if there's none. */
+    heading: string | null;
+    /**
+     * Which exercise it's part of, from 1, a superset counting as one: for a rest step, the
+     * one before it (or 1 before any), as it's still that one's part of the workout.
+     */
+    exercise: number;
+    /** The first step of its exercise, where screen readers are told which one it is. */
+    starts: boolean;
 }
 
 // Workouts don't change once made (a change makes a new one), so each one's plan is made once
@@ -219,40 +262,50 @@ export function runPlan(workout: Pick<RunningWorkout, 'blocks' | 'sides'>): RunP
     }
     const { first: firstSide, switchSeconds } = workout.sides ?? DEFAULT_RUN_SIDES;
     const sides: Side[] = firstSide === 'left' ? ['left', 'right'] : ['right', 'left'];
-    const plan: RunPlan = { steps: [], places: [], sets: [] };
+    const plan: RunPlan = { steps: [], places: [], sets: [], sections: [], exercises: 0 };
     let first = 0;
+    let heading: string | null = null;
     for (const block of workout.blocks) {
         if (block.kind !== 'group') {
+            heading = block.text;
             continue;
         }
+        const isExercise = block.steps.some((step) => step.kind !== 'rest');
+        if (isExercise) {
+            plan.exercises++;
+        }
+        const exercise = Math.max(1, plan.exercises);
+        let starting = isExercise;
+        const push = (step: Step, place: StepPlace | null, of: GroupSet) => {
+            const starts = starting && place !== null && step.kind !== 'rest';
+            if (starts) {
+                starting = false;
+            }
+            plan.steps.push(step);
+            plan.places.push(place);
+            plan.sets.push(of);
+            plan.sections.push({ heading, exercise, starts });
+        };
         for (let set = 0; set < block.rounds; set++) {
             const of = { set, of: block.rounds };
             if (set > 0 && block.restSeconds > 0) {
-                plan.steps.push({ kind: 'rest', seconds: block.restSeconds, name: '' });
-                plan.places.push(null);
-                plan.sets.push(of);
+                push({ kind: 'rest', seconds: block.restSeconds, name: '' }, null, of);
             }
             block.steps.forEach((step, i) => {
                 if (!step.eachSide || step.kind === 'rest') {
-                    plan.steps.push(step);
-                    plan.places.push({ step: first + i, set });
-                    plan.sets.push(of);
+                    push(step, { step: first + i, set }, of);
                     return;
                 }
                 sides.forEach((side, s) => {
                     // A rep step's second side waits for Done, so only a timed one needs this
                     if (s > 0 && step.kind === 'work' && switchSeconds > 0) {
-                        plan.steps.push({
-                            kind: 'rest',
-                            seconds: switchSeconds,
-                            name: SWITCH_SIDES,
-                        });
-                        plan.places.push(null);
-                        plan.sets.push(of);
+                        push(
+                            { kind: 'rest', seconds: switchSeconds, name: SWITCH_SIDES },
+                            null,
+                            of
+                        );
                     }
-                    plan.steps.push(step);
-                    plan.places.push({ step: first + i, set, side });
-                    plan.sets.push(of);
+                    push(step, { step: first + i, set, side }, of);
                 });
             });
         }

@@ -14,6 +14,7 @@
     - Rep steps add the count, and the weight if there is one: "Push-ups, 20 reps", "Squats, 10 reps at 60 kg".
     - A step with sets says which, e.g. "Leg press, 10 reps, set 2 of 3", or "last set" for its last.
     - A step done each side says which after its name: "Step-up, left side, 10 reps".
+    - As each exercise starts, in a workout with headings or more than one exercise, its part and number come first: "Legs, exercise 2 of 3, Leg press, 10 reps" (RUN-10). Not on each of its sets.
     - "last round" in place of the count in the final round (but "round 1 of 1" for a one-round workout); "round 4" with no total when it runs until stopped.
     - "Paused" when paused; "Finished" at the end.
 - ∞ is read as "until stopped". The round dots, the step strip and each step's kind icon are hidden (the announcements say the same), and so is what's after a rest on the face, which "Next:" says.
@@ -23,6 +24,7 @@
 - Adding, moving, deleting or changing the kind of a step is announced, e.g. "Moved squats to step 3", "Step 2 is now rest".
 - A step's kind pill is a button named with its kind and step, e.g. "Reps, change type of step 1", saying whether its menu is open; the menu marks the current kind as pressed.
 - The (i) button by setup's Steps heading is described by its tip (`role="tooltip"`), so screen readers read the tip without opening it.
+- A workout's headings (BLD-13) are named to screen readers in Create as "Heading, Warmup", and aren't counted as steps. In the history and the workout summary they're headings (`h4`) within the entry, over the lines of their part.
 
 ### Keyboard and focus
 

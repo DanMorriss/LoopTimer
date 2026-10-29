@@ -10,6 +10,24 @@
         <!-- Fixed-height slot, so the ring doesn't jump when this line changes -->
         <!-- Read out by screen readers when the phase changes; the countdown itself stays quiet -->
         <div class="sr-only" aria-live="polite" aria-atomic="true">{{ announcement() }}</div>
+        <!-- The part of the workout it's in, and which exercise of how many (RUN-10). Its
+             room is kept for the whole run, so the ring doesn't move when it changes. -->
+        @if (showSection()) {
+            <p class="workout-section">
+                @if (section(); as section) {
+                    @if (section.heading) {
+                        <span class="workout-section__heading">{{ section.heading }}</span>
+                    }
+                    @if (section.heading && section.count) {
+                        <span aria-hidden="true"> · </span><span class="sr-only">, </span>
+                    }
+                    @if (section.count; as count) {
+                        <span class="sr-only">exercise </span>{{ count.exercise }} of
+                        {{ count.of }}
+                    }
+                }
+            </p>
+        }
         <div
             class="workout-status text-(--text-strong)"
             [class.workout-status--steps]="stepStrip().length"

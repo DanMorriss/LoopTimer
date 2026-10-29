@@ -62,17 +62,23 @@
                     </div>
                 }
             } @else {
-                <ul class="summary__lines">
-                    @for (line of setLines(); track $index) {
-                        <li>
-                            <span aria-hidden="true"
-                                ><strong>{{ line.name }}</strong
-                                >: {{ line.text }}</span
-                            >
-                            <span class="sr-only">{{ line.name }}, {{ line.spoken }}</span>
-                        </li>
+                <!-- Under the workout's headings, as in the history -->
+                @for (section of sections(); track $index) {
+                    @if (section.heading) {
+                        <h4 class="summary__part">{{ section.heading }}</h4>
                     }
-                </ul>
+                    <ul class="summary__lines">
+                        @for (line of section.lines; track $index) {
+                            <li>
+                                <span aria-hidden="true"
+                                    ><strong>{{ line.name }}</strong
+                                    >: {{ line.text }}</span
+                                >
+                                <span class="sr-only">{{ line.name }}, {{ line.spoken }}</span>
+                            </li>
+                        }
+                    </ul>
+                }
             }
         </div>
 

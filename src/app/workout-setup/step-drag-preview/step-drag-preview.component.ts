@@ -2,8 +2,8 @@ import { Component, input } from '@angular/core';
 import { StepKind, stepKindName } from '../../models/workout';
 
 /**
- * What follows the pointer while a step is dragged in Create: a compact card of its kind,
- * name and time, as the wheels don't copy well.
+ * What follows the pointer while a step (or a heading) is dragged in Create: a compact card
+ * of its kind, name and time, as the wheels don't copy well.
  */
 @Component({
     selector: 'app-step-drag-preview',
@@ -12,13 +12,16 @@ import { StepKind, stepKindName } from '../../models/workout';
     host: {
         '[class.rest]': "kind() === 'rest'",
         '[class.reps]': "kind() === 'reps'",
+        '[class.heading]': "kind() === 'heading'",
     },
 })
 export class StepDragPreviewComponent {
-    readonly kind = input.required<StepKind>();
+    readonly kind = input.required<StepKind | 'heading'>();
     readonly name = input('');
     /** e.g. "00:30", or "10 reps". */
     readonly time = input('');
 
-    protected readonly kindName = stepKindName;
+    protected kindName(kind: StepKind | 'heading'): string {
+        return kind === 'heading' ? 'Heading' : stepKindName(kind);
+    }
 }

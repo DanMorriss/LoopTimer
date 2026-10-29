@@ -1,10 +1,10 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
-import { describeSets } from '../../../history/history-format';
+import { describeSets, sectionsOf } from '../../../history/history-format';
 import { isBuiltIn } from '../../../models/exercise';
 import { RepSet } from '../../../models/history';
 import { weightIn, weightOptions, weightToKg } from '../../../models/weight';
-import { MAX_REPS } from '../../../models/workout';
+import { MAX_REPS, placedHeadings } from '../../../models/workout';
 import { WheelPickerComponent } from '../../../shared/components/wheel-picker/wheel-picker.component';
 import { ActiveRunService } from '../../../shared/run/active-run.service';
 import { ExerciseStore } from '../../../shared/state/exercise-store.service';
@@ -57,6 +57,12 @@ export class SummarySetsComponent {
     protected readonly setLines = computed(() =>
         describeSets(this.run.sets(), this.weightUnit(), this.exerciseName)
     );
+
+    /** The lines under the workout's headings, as the history will have them (BLD-13). */
+    protected readonly sections = computed(() => {
+        const workout = this.run.workout();
+        return sectionsOf(this.setLines(), workout ? placedHeadings(workout) : []);
+    });
 
     protected readonly changingSets = signal(false);
     protected readonly setGroups = computed((): SetGroup[] => {

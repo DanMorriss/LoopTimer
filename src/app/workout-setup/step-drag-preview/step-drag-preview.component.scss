@@ -39,6 +39,10 @@
     --step-color: var(--reps);
 }
 
+:host(.heading) {
+    --step-color: var(--text-muted);
+}
+
 // As the step's own kind pill
 .badge {
     padding: 0.15rem 0.6rem;

@@ -55,6 +55,21 @@
     &--reps {
         --step-color: var(--reps);
     }
+
+    // A label rather than a step: no kind colour, and set back from the cards around it
+    &--heading {
+        --step-color: var(--border-strong);
+        background: transparent;
+    }
+}
+
+// Where a step has its kind pill: what a heading is, as a plain label
+.step__heading-badge {
+    padding: 0 0.25rem;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
 }
 
 // The open/close chevron is always the rightmost thing in the header. Where everything fits
@@ -153,6 +168,15 @@
     }
 }
 
+// A collapsed heading reads as a section title, as the Steps heading does
+.step__summary--heading {
+    overflow: hidden;
+    color: var(--text-strong);
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .step__summary-time {
     color: var(--text-muted);
     font-size: 0.85rem;
@@ -202,8 +226,11 @@
     }
 }
 
+// + Step, the main one, with + Heading beside it
 .add-steps {
     display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 0.5rem;
     margin: 0.75rem 0;
 }
 
