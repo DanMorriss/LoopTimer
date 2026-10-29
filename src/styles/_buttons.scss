@@ -6,6 +6,7 @@
 //             a raised pill that a band of light crosses once, soon after the
 //             screen opens. .btn-main--round makes it a circle for an icon (the workout's
 //             Pause/Resume), with no band: nothing should catch the eye mid-workout.
+//             .btn-main--small is the pill's height, beside a page's title (+ New).
 //
 // Every button shrinks a little the moment it's pressed (see _interaction.scss).
 // .btn-pill   Any smaller action (Play, Collapse all, Cancel, links that act like buttons).
@@ -104,6 +105,22 @@
         &::after {
             display: none;
         }
+    }
+}
+
+// The small version, the pill's size, for the main action beside a page's title (the
+// library's and the exercises' + New)
+.btn-main--small {
+    flex-shrink: 0;
+    gap: 0.4rem;
+    min-height: 44px;
+    padding: 0 1.1rem;
+    font-size: 0.95rem;
+
+    .mat-icon {
+        width: 1.2rem;
+        height: 1.2rem;
+        font-size: 1.2rem;
     }
 }
 
