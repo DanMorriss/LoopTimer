@@ -70,6 +70,7 @@ Export and import (SYN-1, SYN-2) are built, with a prompt for having an AI turn 
 - **Clear this device** is at the end of **Account → Your data**, under "Done with this device, on a shared computer say? Clear your workouts, history and settings from it." (and, signed in, "That signs this device out too; your account keeps what's in it."). It works signed in or not.
 - It can't be undone, so unlike deleting elsewhere it **asks first**: the button opens a warning in its place, "This removes your workouts, history, exercises and settings from this device. It can't be undone, so export a backup first to keep them.", with **Clear everything** and **Cancel**. Focus goes to the warning, so it's read out; Cancel puts it back on the button.
 - **Clear everything** removes all the app keeps on the device: workouts, the library's order, history, your own exercises, notes, hidden exercises, deletions and settings, and the workout in progress, which isn't logged. Then the app starts again, empty, on the page it was on.
+- **Other open tabs** of the app start again empty too, on the page each was on: they're told as it clears, so none keeps what it had in memory and saves it back. A workout going in one of them is dropped, not logged.
 - Signed in, it signs this device out too, as the sign-in is kept on the device. The account keeps what it holds, and signing in again brings it back.
 
 ### Signing in (SYN-3) and deleting an account (SYN-8)
@@ -145,6 +146,7 @@ Compared on 2026-10-27, for cost, how it fits the device-first design above, sig
 - Given a backup with a light theme and lb, when I import it, then my settings don't change.
 - Given I moved "Legs" to the top of the library on another device after any move here, when I import a backup from it, then "Legs" is at the top here too, with any workouts the backup doesn't have after the others.
 - Given workouts, history and settings here, and a workout going, when I press Clear this device and then Clear everything, then the app starts again with none of them, and the workout isn't in the history.
+- Given the app open in two tabs, with a workout going in the other, when I clear this device in one, then the other starts again empty too, and the workout isn't in the history.
 - Given I press Clear this device, then nothing is cleared until I press Clear everything; when I press Cancel, then nothing changes and focus is back on Clear this device.
 - Given a file that isn't a backup, or is from a newer version, when I import it, then nothing changes and I'm told why.
 - Given a backup with a broken workout and two broken history entries, when I import it, then the rest are added and "3 items in it couldn't be read" is shown.
