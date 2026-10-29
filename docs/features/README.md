@@ -37,7 +37,7 @@ Status: ✅ done, ◐ partly, — not started. The iOS column fills in as a port
 | RUN-7  | See a summary when I finish or end a workout, and correct its sets       | ✅  | —   | [run-a-workout](run-a-workout.md)             |
 | RUN-8  | Run to a time limit: rounds counting up, time left, the score at the end | ✅  | —   | [run-a-workout](run-a-workout.md)             |
 | RUN-9  | Check how a step's exercise is done, mid-workout                         | ✅  | —   | [run-a-workout](run-a-workout.md)             |
-| RUN-10 | See which set, side or round I'm on, and the section I'm in              | ◐   | —   | [run-a-workout](run-a-workout.md)             |
+| RUN-10 | See which set, side or round I'm on, and the section I'm in              | ✅  | —   | [run-a-workout](run-a-workout.md)             |
 | CTL-1  | Pause and resume                                                         | ✅  | —   | [pause-and-stop](pause-and-stop.md)           |
 | CTL-2  | Stop a workout early                                                     | ✅  | —   | [pause-and-stop](pause-and-stop.md)           |
 | CTL-3  | Pick up where I was if the app is closed or reloaded                     | ✅  | —   | [pause-and-stop](pause-and-stop.md)           |

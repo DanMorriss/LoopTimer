@@ -1,6 +1,6 @@
 # Sets and supersets
 
-Agreed with Dan on 2026-10-29, and built (all six steps below). As each part is built, its rules move into [build-a-workout](build-a-workout.md), [run-a-workout](run-a-workout.md), [history](history.md), [progress](progress.md) and [data](data.md), and this file shrinks to what's still to come.
+Agreed with Dan on 2026-10-29, and built (all six steps below). Its rules now live in [build-a-workout](build-a-workout.md), [run-a-workout](run-a-workout.md), [history](history.md), [progress](progress.md), [settings](settings.md) and [data](data.md), which are the ones to go by where they differ from this plan. This file is kept as the plan as agreed, and for the shape of the data's version 5 (linked from the code). What's left over is in TODO.md's Known issues: the history doesn't name supersets, and a superset moves by its buttons rather than by dragging.
 
 Today a workout is one list of steps that loops as a whole. A gym plan is written differently: each exercise has its own sets, with a rest between them, e.g.
 

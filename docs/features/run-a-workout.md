@@ -11,6 +11,7 @@
 - **RUN-7** As a user I want a summary of how a workout went when I finish or end it, where I can correct a set, add a note, and go back to the workout if I ended it early.
 - **RUN-8** As a user I want a workout with a time limit to count my rounds up, show the time left, warn me as it runs out, and stop when time's up, so I can just keep going until then.
 - **RUN-9** As a user I want to check how a step's exercise is done, mid-workout, without leaving it.
+- **RUN-10** As a user I want the workout to show which set, side or round I'm on, and the section I'm in, so I know where I am in a long gym workout.
 
 ## Rules
 
