@@ -23,6 +23,7 @@ describe('SettingsStore', () => {
             keepScreenOn: true,
             weightUnit: 'kg',
             bodyFigure: 'male',
+            trainingGoal: 'muscle',
             myEquipment: [],
             onlyMyEquipment: false,
             eachSideFirst: 'left',
@@ -67,6 +68,18 @@ describe('SettingsStore', () => {
         TestBed.resetTestingModule();
         localStorage.setItem('settings', '{"bodyFigure": "female"}');
         expect(createStore().bodyFigure()).toBe('female');
+    });
+
+    it('aims for muscle by default, and keeps only a goal it knows', () => {
+        expect(createStore().trainingGoal()).toBe('muscle');
+
+        TestBed.resetTestingModule();
+        localStorage.setItem('settings', '{"trainingGoal": "speed"}');
+        expect(createStore().trainingGoal()).toBe('muscle');
+
+        TestBed.resetTestingModule();
+        localStorage.setItem('settings', '{"trainingGoal": "fitness"}');
+        expect(createStore().trainingGoal()).toBe('fitness');
     });
 
     it('has no equipment to begin with, and keeps only equipment it knows, in order', () => {

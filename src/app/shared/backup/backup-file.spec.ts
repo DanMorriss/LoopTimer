@@ -11,6 +11,7 @@ const SETTINGS: Settings = {
     keepScreenOn: true,
     weightUnit: 'kg',
     bodyFigure: 'male',
+    trainingGoal: 'muscle',
     myEquipment: ['barbell', 'rack'],
     onlyMyEquipment: true,
     eachSideFirst: 'right',

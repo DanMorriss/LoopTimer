@@ -1,11 +1,12 @@
 import { Component, computed, inject } from '@angular/core';
 import { BodyFigure } from '../../models/exercise';
+import { TrainingGoal, WEEKLY_AIMS } from '../../models/muscle-balance';
 import { WeightUnit } from '../../models/weight';
 import { SettingsStore } from '../../shared/state/settings-store.service';
 
 /**
- * Account → Profile: your sex, for the body map's figure (SET-5), and the weight unit you
- * lift in (SET-4). They're saved with the settings, so they stay a choice for each device.
+ * Account → Profile: your sex, for the body map's figure (SET-5), what you train for, for
+ * the muscle bars' aims (PRG-8), and the weight unit you lift in (SET-4). They're saved with the settings, so they stay a choice for each device.
  */
 @Component({
     selector: 'app-profile',
@@ -38,6 +39,35 @@ import { SettingsStore } from '../../shared/state/settings-store.service';
                 }
             </div>
             <p class="profile__hint" id="sex-hint">The body the muscle maps show</p>
+        </fieldset>
+
+        <!-- Sets the sets a week each muscle bar aims at -->
+        <fieldset class="segmented profile__picker" aria-describedby="goal-hint">
+            <legend class="profile__name">Training for</legend>
+            <div
+                class="segmented__options"
+                [style.--count]="goals.length"
+                [style.--chosen]="chosenGoalIndex()"
+            >
+                <span class="segmented__thumb" aria-hidden="true"></span>
+                @for (option of goals; track option.value; let i = $index) {
+                    <label
+                        class="segmented__option"
+                        [class.segmented__option--chosen]="i === chosenGoalIndex()"
+                    >
+                        <input
+                            type="radio"
+                            name="trainingGoal"
+                            class="segmented__input"
+                            [value]="option.value"
+                            [checked]="settings.trainingGoal() === option.value"
+                            (change)="settings.update({ trainingGoal: option.value })"
+                        />
+                        <span class="segmented__label">{{ option.label }}</span>
+                    </label>
+                }
+            </div>
+            <p class="profile__hint" id="goal-hint">{{ goalHint() }}</p>
         </fieldset>
 
         <!-- Weights are always saved in kg, so switching loses nothing -->
@@ -103,6 +133,18 @@ export class ProfileComponent {
     protected readonly chosenSexIndex = computed(() =>
         this.sexes.findIndex((option) => option.value === this.settings.bodyFigure())
     );
+
+    protected readonly goals: { value: TrainingGoal; label: string }[] = [
+        { value: 'muscle', label: 'Muscle' },
+        { value: 'fitness', label: 'Fitness' },
+    ];
+    protected readonly chosenGoalIndex = computed(() =>
+        this.goals.findIndex((option) => option.value === this.settings.trainingGoal())
+    );
+    protected readonly goalHint = computed(() => {
+        const { large, small } = WEEKLY_AIMS[this.settings.trainingGoal()];
+        return `Aim for ${large.low} to ${large.high} sets a week on each muscle, ${small.low} to ${small.high} on small ones`;
+    });
 
     protected readonly weightUnits: { value: WeightUnit; label: string }[] = [
         { value: 'kg', label: 'Kilograms (kg)' },
