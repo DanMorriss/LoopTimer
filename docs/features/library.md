@@ -10,7 +10,7 @@
 
 ## Rules
 
-- The page has a **title**, "Library", as Exercises and History do, with **New** at its top right, which makes a new workout.
+- The page has a **title**, "Library", as Exercises and History do, with **New** at its top right (the filled main button, small enough to sit by the title), which makes a new workout.
 - The library lists every saved workout as a card, in the order they were made, unless they've been moved (see **Moving**).
 - Each card shows:
     - The **title**, or "Untitled workout".

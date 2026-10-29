@@ -63,7 +63,7 @@ The component is built (`BodyMapComponent`); it goes on the exercise pages when 
 
 The **Exercises** tab, after Library. Top to bottom:
 
-- **Exercises** and a **New** button, which opens the exercise dialog for a new exercise of your own (see below). Saving it makes it and goes to its page; Cancel makes nothing.
+- **Exercises** and a **New** button at its right (the filled main button, small enough to sit by the title), which opens the exercise dialog for a new exercise of your own (see below). Saving it makes it and goes to its page; Cancel makes nothing.
 - **Search**: finds by name and other names, as the picker does (case, spaces and a plural "s" don't count), best match first. A match on another name says so on its card ("Also called Press-up").
 - **Only what I have**, a switch, with **My equipment: 3 pieces** ("none" to begin with, "1 piece") under it, which opens the equipment as chips to pick from (every piece but "none"). On, the list shows only exercises you can do with what's picked: every piece an exercise lists, where a choice is met by any one of it; one that needs nothing always shows, and so does one of your own that lists none. Both the switch and the equipment are **remembered** (saved with the settings), so they're set once. Off to begin with, and nothing picked.
 - **Muscles**: one row of chips, scrolling sideways: **All muscles**, then each muscle group. Muscle chips toggle on/off, **All muscles** clears all picks, and the list shows exercises with **any** picked muscle as a main muscle.
@@ -174,7 +174,7 @@ Past logged sets are linked the same way. Unnamed steps stay unnamed and aren't 
 - Given Quads picked, when I open Back squat and press ‹ Exercises, then I'm back on `/exercises?muscles=quads` with Quads still picked.
 - Given I pick a pull-up bar as my equipment and turn on Only what I have, then Pull-up and Push-up are listed and Back squat isn't, and after a reload it's still so.
 - Given I type "squat" in a step's name box, then Back squat's option says "Quads, glutes · Barbell, rack" and Goblet squat's "Quads, glutes · Dumbbells or kettlebell".
-- Given a step linked to Front squat, when I press Details, then a dialog titled "Front squat" shows its description, body map and how-to steps; Done closes it and focus goes back to Details.
+- Given a step linked to Front squat, when I press Details, then a dialog titled "Front squat" shows its description, body map and how-to steps; ✕ at its top right (or Done) closes it and focus goes back to Details.
 - Given the details of the step's exercise, when I press Pick another, then the dialog closes and the step's name is selected in its box, ready to type over.
 - Given Plank is hidden, then it's left out of the list and shown under "Hidden from the picker (1)", and the picker in Create doesn't offer it for "plan" but does for "plank".
 - Given New on the Exercises list, when I name it "Sled drag" and save, then it's made and its page opens.
