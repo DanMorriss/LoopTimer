@@ -1925,6 +1925,23 @@ describe('WorkoutComponent', () => {
                 expect(document.activeElement).toBe(info());
             });
 
+            it('closes them with ✕ at the top right, without scrolling down to Done', async () => {
+                advance(3000);
+                info()!.focus();
+                info()!.click();
+                fixture.detectChanges();
+
+                const close = el('.details__header .details__close') as HTMLButtonElement;
+                expect(close.getAttribute('aria-label')).toBe('Close');
+                close.click();
+                fixture.detectChanges();
+                await fixture.whenStable();
+
+                expect(el('app-exercise-details-dialog')).toBeNull();
+                expect(document.activeElement).toBe(info());
+                expect(component.isRepsActive()).toBe(true);
+            });
+
             it("leaves Space to the dialog while it's open", () => {
                 advance(3000);
                 info()!.click();
