@@ -153,10 +153,29 @@ describe('suggestNextWorkout', () => {
             ['triceps', 6],
         ] as const);
 
-        expect(suggestNextWorkout([legs, push], counts, byId, new Map())).toEqual({
+        expect(suggestNextWorkout([legs, push], counts, byId, new Map(), 'muscle')).toEqual({
             workout: push,
             muscles: ['chest'],
         });
+    });
+
+    it('goes by how far each muscle is from its aim, which is lower for small muscles', () => {
+        const grip = makeWorkout({
+            id: 'grip',
+            title: 'Grip',
+            steps: [linked(reps(1), 'builtin:dead-hang')],
+        });
+        // Fewer forearm sets than chest, but forearms are in range (4 to 10) and the chest under
+        const counts = new Map<MuscleGroup, number>([
+            ['forearms', 5],
+            ['chest', 8],
+            ['shoulders', 8],
+            ['triceps', 8],
+        ]);
+
+        expect(suggestNextWorkout([grip, push], counts, byId, new Map(), 'muscle')?.workout).toBe(
+            push
+        );
     });
 
     it('on a tie, picks the one done longest ago, and one never done before that', () => {
@@ -165,13 +184,17 @@ describe('suggestNextWorkout', () => {
             ['push', 100],
         ]);
 
-        expect(suggestNextWorkout([legs, push], new Map(), byId, lastDone)?.workout).toBe(push);
-        expect(suggestNextWorkout([legs, push, calves], new Map(), byId, lastDone)?.workout).toBe(
-            calves
+        expect(suggestNextWorkout([legs, push], new Map(), byId, lastDone, 'muscle')?.workout).toBe(
+            push
         );
+        expect(
+            suggestNextWorkout([legs, push, calves], new Map(), byId, lastDone, 'muscle')?.workout
+        ).toBe(calves);
     });
 
     it('is null when no workout has a step linked to an exercise', () => {
-        expect(suggestNextWorkout([makeWorkout()], new Map(), byId, new Map())).toBeNull();
+        expect(
+            suggestNextWorkout([makeWorkout()], new Map(), byId, new Map(), 'muscle')
+        ).toBeNull();
     });
 });

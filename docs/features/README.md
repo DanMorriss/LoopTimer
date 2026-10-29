@@ -84,7 +84,7 @@ Status: ✅ done, ◐ partly, — not started. The iOS column fills in as a port
 | PRG-6  | See which muscles I've worked this week, on the body map                 | ✅  | —   | [progress](progress.md)                       |
 | PRG-7  | Be told when I've done the most rounds yet in a time limit               | ✅  | —   | [progress](progress.md)                       |
 | PRG-8  | A bar per muscle group this week, showing what's over and under worked   | ✅  | —   | [progress](progress.md)                       |
-| PRG-9  | A suggested next workout, for the least worked muscles                   | ✅  | —   | [progress](progress.md)                       |
+| PRG-9  | A suggested next workout, for the muscles furthest short of their aims   | ✅  | —   | [progress](progress.md)                       |
 | PRG-10 | Be told what to step up next time, more weight or reps, on the summary   | ✅  | —   | [progress](progress.md)                       |
 | PRG-11 | See the muscles a workout worked, on its summary                         | ✅  | —   | [progress](progress.md)                       |
 | SYN-1  | Export all my data to a file                                             | ✅  | —   | [backup-and-sync](backup-and-sync.md)         |
