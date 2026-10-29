@@ -5,6 +5,7 @@ import {
     Block,
     hasWork,
     MAX_HEADING_LENGTH,
+    MAX_HEADINGS,
     MAX_REPEATS,
     MAX_REPS,
     MAX_STEP_SECONDS,
@@ -578,7 +579,8 @@ function sameWorkout(a: Workout, b: Workout): boolean {
 
 /**
  * A workout's saved blocks, or null if they aren't usable. A broken group makes the workout
- * unusable, as a broken step always has; a broken heading is only a label, so it's dropped.
+ * unusable, as a broken step always has; a broken heading is only a label, so it's dropped,
+ * as are any past MAX_HEADINGS.
  */
 function readBlocks(saved: unknown): Block[] | null {
     if (!Array.isArray(saved)) {
@@ -592,7 +594,8 @@ function readBlocks(saved: unknown): Block[] | null {
         const block = value as Record<string, unknown>;
         if (block['kind'] === 'heading') {
             const text = typeof block['text'] === 'string' ? block['text'].trim() : '';
-            if (text && text.length <= MAX_HEADING_LENGTH) {
+            const headings = blocks.filter((kept) => kept.kind === 'heading').length;
+            if (text && text.length <= MAX_HEADING_LENGTH && headings < MAX_HEADINGS) {
                 blocks.push({ kind: 'heading', text });
             }
             continue;

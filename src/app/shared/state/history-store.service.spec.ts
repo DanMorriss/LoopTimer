@@ -341,6 +341,33 @@ describe('HistoryStore', () => {
         expect(withBroken).toEqual(makeEntry({ startedAt: 1_000 }));
     });
 
+    it("loads the workout's headings, dropping broken ones but keeping the workout", async () => {
+        const warmup = { text: 'Warmup', step: 0 };
+        localStorage.setItem(
+            'history',
+            JSON.stringify([
+                makeEntry({
+                    startedAt: 3_000,
+                    headings: [
+                        warmup,
+                        { text: '  Legs ', step: 2 },
+                        { text: '', step: 3 },
+                        { text: 'Arms', step: -1 },
+                    ],
+                }),
+                { ...makeEntry({ startedAt: 2_000 }), headings: [{ text: 7, step: 1 }] },
+                makeEntry({ startedAt: 1_000 }),
+            ])
+        );
+
+        const [withHeadings, allBroken, before] = (await createStore()).entries();
+
+        expect(withHeadings.headings).toEqual([warmup, { text: 'Legs', step: 2 }]);
+        expect(allBroken).toEqual(makeEntry({ startedAt: 2_000 }));
+        // Entries from before headings have none
+        expect('headings' in before).toBe(false);
+    });
+
     it('loads timed sets, dropping ones that are also reps or weighed', async () => {
         const held = { round: 0, step: 0, name: 'Plank', seconds: 45, exerciseId: 'plank' };
         localStorage.setItem(

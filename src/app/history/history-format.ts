@@ -1,6 +1,7 @@
 import { HistoryEntry, isTimedSet, LoggedSet, RepSet, TimedSet } from '../models/history';
 import { roundsScore, RoundsScore } from '../models/progress';
 import { WeightUnit, weightIn } from '../models/weight';
+import { PlacedHeading } from '../models/workout';
 
 /** e.g. 75 → "1:15", 3725 → "1:02:05" */
 export function formatDuration(seconds: number): string {
@@ -51,6 +52,8 @@ export interface SetsSummary {
     spoken: string;
     /** The exercise it was, as its last set was linked. Missing for an unnamed step. */
     exerciseId?: string;
+    /** Which step of the workout it was, as its sets have it. */
+    step: number;
 }
 
 /**
@@ -81,10 +84,46 @@ export function describeSets(
         const timed = stepSets.some((set) => isTimedSet(set));
         return {
             name: name || (timed ? 'Work' : 'Reps'),
+            step: last.step,
             ...link,
             ...describeSides(stepSets, unit),
         };
     });
+}
+
+/** Lines of sets under one of the workout's headings, or none for those before the first. */
+export interface SetsSection<Line extends SetsSummary = SetsSummary> {
+    heading: string | null;
+    lines: Line[];
+}
+
+/**
+ * Lines of sets grouped under the headings the workout had when it ran (BLD-13), in order:
+ * each under the last heading before its step. Lines before the first heading come first,
+ * under none, and a heading with no lines under it isn't there. With no headings, it's one
+ * section of every line.
+ */
+export function sectionsOf<Line extends SetsSummary>(
+    lines: readonly Line[],
+    headings: readonly PlacedHeading[] = []
+): SetsSection<Line>[] {
+    const sections: (SetsSection<Line> & { under: number })[] = [];
+    for (const line of lines) {
+        // Which heading it's under, by its place, as two headings can say the same thing
+        let under = -1;
+        headings.forEach((placed, i) => {
+            if (placed.step <= line.step) {
+                under = i;
+            }
+        });
+        const last = sections.at(-1);
+        if (last && last.under === under) {
+            last.lines.push(line);
+        } else {
+            sections.push({ heading: headings[under]?.text ?? null, under, lines: [line] });
+        }
+    }
+    return sections.map(({ heading, lines }) => ({ heading, lines }));
 }
 
 /**

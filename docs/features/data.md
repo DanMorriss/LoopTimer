@@ -39,7 +39,7 @@ A JSON list of workouts:
 - `repeats`: 1–30, or **0 for until stopped**.
 - `blocks`: the workout in order (see [sets-and-supersets](sets-and-supersets.md)), each a **group** or a **heading**, with at least one group.
     - A group: `rounds`, how many times its `steps` run, 1–30 (an exercise's sets, or a superset's rounds); `restSeconds`, the rest between its rounds, never after the last, 0–5999 (0 for none); and `steps`, at least one, as below. A broken one (or a block of any other `kind`) makes the workout unusable.
-    - A heading: `text`, a label, trimmed, 1–40 characters, which takes no time. A broken one is dropped, keeping the workout.
+    - A heading: `text`, a label, trimmed, 1–40 characters, which takes no time (BLD-13). Up to 10; a broken one, or any past 10, is dropped, keeping the workout.
     - A workout's steps are numbered in order across its groups, from 0, each once however many rounds its group has: that's a set's `step` in the history.
 - `timeLimitSeconds` (optional): a time limit, 1–5999 (99:59), for as many rounds as fit in it (BLD-8). Only with `repeats` 0, so a copy of the app from before time limits runs it until stopped. Missing for none; one that's broken, or with `repeats` above 0, is dropped when loading, leaving the workout as it was set to repeat.
 - `seconds`: 1–5999 (99:59). `reps`: 1–100. `name`: may be empty.
@@ -72,6 +72,7 @@ In IndexedDB on the web: the `history` store of the `loop-workouts` database, on
         "totalRounds": 5,
         "outcome": "finished",
         "note": "felt strong",
+        "headings": [{ "text": "Circuit", "step": 0 }],
         "sets": [
             { "round": 0, "step": 0, "name": "Squats", "reps": 10, "weight": 60 },
             {
@@ -94,6 +95,7 @@ In IndexedDB on the web: the `history` store of the `loop-workouts` database, on
 - `totalRounds` is 0 for a workout that runs until stopped or to a time limit. `outcome` is `finished` or `stopped`; a time limit that ran out is `finished`.
 - `timeLimitSeconds` (optional): the workout's time limit, when it had one. `stepsIntoRound` (optional): when the time limit ran out, how many steps of the round it ran out in were done, rests left out, so "7 rounds + 3" is `roundsCompleted` 7 and `stepsIntoRound` 3. Both are dropped when broken, and `stepsIntoRound` is missing for a run stopped before its time limit. `note` is missing when there isn't one (up to 120 characters).
 - `sets` (missing when there were none), in order: one per Done on a rep step, and one per timed work step of an exercise that ran to its end. `round` (of the whole workout) and `step` (of the workout's steps, each counted once; see `blocks`) count from 0. `set` (optional) is which round of its group it was in, from 0, and is missing for 0, as in every entry from before groups. `side` (optional) is `left` or `right`, for a step done each side, each side being a set of its own. A rep set has `reps`, at least 1, and `weight` in kg (missing for none); a timed set has `seconds` (1–5999, the step's length) and no `reps` or `weight`. Entries from before timed sets were logged have rep sets only. `exerciseId` is the exercise it was, from its step (missing for an unnamed step). A broken set is dropped when loading, keeping the rest of the entry.
+- `headings` (optional): the workout's headings when it ran (BLD-13), in order, each `text` (trimmed, not empty) and `step`, the number of the first step after it, counted as a set's `step` is. The history groups an entry's sets under them. Missing for none, as in every entry from before headings; a broken one is dropped when loading, keeping the rest.
 
 **`history-pending` (`localStorage`):** each change to the history is kept here too until IndexedDB confirms it, as a JSON list of entries, since a write started as the page closes (logging a run left mid-way) may never finish. On the next load anything still here is saved to IndexedDB, the most recent change to each entry winning, and a deletion made after an entry's last change (in `deleted`) wins over it. If IndexedDB can't be used at all, the history stays here.
 
@@ -228,7 +230,7 @@ From these, everything on the workout page is worked out (see [run-a-workout](ru
 ```json
 {
     "app": "Loop Workouts",
-    "version": 9,
+    "version": 10,
     "exportedAt": 1761055200000,
     "workouts": [],
     "history": [],
@@ -256,6 +258,7 @@ From these, everything on the workout page is worked out (see [run-a-workout](ru
 - `version` goes up whenever the file's shape changes. A file from an older version is converted when imported; one from a newer version is turned down.
 - **Version 1** files (from before random ids) have number workout ids, no `updatedAt` and no `deleted`. They're converted as saved data is: their workouts get new random ids, so they're matched on what they are (title, steps and rounds) rather than by id.
 - **Version 3 and older** files call workouts timers: a `timers` list in place of `workouts`, `timerId` in the history and the kind `timer` in `deleted`. They're renamed as they're read.
+- **Version 9 and older** files have no `headings` on history entries: nothing to convert.
 - **Version 8 and older** files have no steps done each side, nor sides on sets: nothing to convert.
 - **Version 7 and older** files have workouts with `steps` in place of `blocks`, read as one group as saved data is.
 - **Version 6 and older** files have no `libraryOrder`, so the library's order here stays as it is.

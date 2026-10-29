@@ -6,7 +6,7 @@ import { ActiveRunService } from '../shared/run/active-run.service';
 import { HistoryStore } from '../shared/state/history-store.service';
 import { WorkoutStore } from '../shared/state/workout-store.service';
 import { UndoService } from '../shared/undo/undo.service';
-import { describeRounds, describeSets, formatDuration } from './history-format';
+import { describeRounds, describeSets, formatDuration, sectionsOf } from './history-format';
 import { SettingsStore } from '../shared/state/settings-store.service';
 import { ExerciseStore } from '../shared/state/exercise-store.service';
 import { HistoryComponent } from './history.component';
@@ -131,6 +131,40 @@ describe('HistoryComponent', () => {
         expect(text('.entry__sets li .sr-only')).toEqual(['Bench, 2 sets of 5 reps at 135 lb']);
         // The workout without rep steps has no list
         expect(fixture.nativeElement.querySelectorAll('.entry__sets')).toHaveLength(1);
+    });
+
+    it("groups the sets under the workout's headings as they were when it ran (BLD-13)", () => {
+        create(
+            makeEntry({
+                sets: [
+                    { round: 0, step: 0, name: 'Bike', seconds: 300 },
+                    { round: 0, step: 1, name: 'Leg press', reps: 10 },
+                    { round: 0, step: 2, name: 'Step-down', reps: 10 },
+                ],
+                headings: [
+                    { text: 'Warmup', step: 0 },
+                    { text: 'Knee rehabilitation', step: 1 },
+                    // Nothing was done under it, so it isn't shown
+                    { text: 'Upper body', step: 3 },
+                ],
+            })
+        );
+
+        const items = Array.from(
+            fixture.nativeElement.querySelectorAll(
+                '.entry__section, .entry__sets li [aria-hidden]'
+            ),
+            (el: Element) => el.textContent!.replace(/\s+/g, ' ').trim()
+        );
+        expect(items).toEqual([
+            'Warmup',
+            'Bike: 5:00',
+            'Knee rehabilitation',
+            'Leg press: 10 reps',
+            'Step-down: 10 reps',
+        ]);
+        // Headings within the entry, for screen readers
+        expect(fixture.nativeElement.querySelectorAll('h4.entry__section')).toHaveLength(2);
     });
 
     it('names sets of your own exercise as it is now called, and built-in ones as they ran', () => {
@@ -556,18 +590,25 @@ describe('HistoryComponent', () => {
 
         it('sums up sets that were all the same', () => {
             expect(describeSets([set(0, 10, 60), set(1, 10, 60), set(2, 10, 60)], 'kg')).toEqual([
-                { name: 'Squats', text: '3 × 10 @ 60 kg', spoken: '3 sets of 10 reps at 60 kg' },
+                {
+                    name: 'Squats',
+                    step: 1,
+                    text: '3 × 10 @ 60 kg',
+                    spoken: '3 sets of 10 reps at 60 kg',
+                },
             ]);
         });
 
         it('lists the reps when they changed, and each set when the weight did', () => {
             expect(describeSets([set(0, 10, 60), set(1, 10, 60), set(2, 8, 60)], 'kg')[0]).toEqual({
                 name: 'Squats',
+                step: 1,
                 text: '10, 10, 8 @ 60 kg',
                 spoken: 'sets of 10, 10, 8 reps at 60 kg',
             });
             expect(describeSets([set(0, 10, 60), set(1, 8, 62.5)], 'kg')[0]).toEqual({
                 name: 'Squats',
+                step: 1,
                 text: '10 @ 60, 8 @ 62.5 kg',
                 spoken: '10 reps at 60 kg, 8 reps at 62.5 kg',
             });
@@ -576,7 +617,7 @@ describe('HistoryComponent', () => {
         it('leaves out the weight when there was none, and names an unnamed step "Reps"', () => {
             expect(
                 describeSets([set(0, 20, undefined, 0, ''), set(1, 20, undefined, 0, '')], 'kg')
-            ).toEqual([{ name: 'Reps', text: '2 × 20', spoken: '2 sets of 20 reps' }]);
+            ).toEqual([{ name: 'Reps', step: 0, text: '2 × 20', spoken: '2 sets of 20 reps' }]);
             expect(describeSets([set(0, 12)], 'kg')[0].text).toBe('12 reps');
         });
 
@@ -605,6 +646,7 @@ describe('HistoryComponent', () => {
             expect(describeSets([plank(0, 45), plank(1, 45), plank(2, 45)], 'kg')).toEqual([
                 {
                     name: 'Plank',
+                    step: 0,
                     text: '3 × 0:45',
                     spoken: '3 sets of 45 seconds',
                     exerciseId: 'builtin:plank',
@@ -613,12 +655,14 @@ describe('HistoryComponent', () => {
             expect(describeSets([plank(0, 90)], 'kg')[0]).toEqual({
                 exerciseId: 'builtin:plank',
                 name: 'Plank',
+                step: 0,
                 text: '1:30',
                 spoken: '1 minute 30 seconds',
             });
             expect(describeSets([plank(0, 60), plank(1, 45)], 'kg')[0]).toEqual({
                 exerciseId: 'builtin:plank',
                 name: 'Plank',
+                step: 0,
                 text: '1:00, 0:45',
                 spoken: 'sets of 1 minute, 45 seconds',
             });
@@ -632,6 +676,41 @@ describe('HistoryComponent', () => {
             expect(describeSets([{ ...linked, exerciseId: 'other' }], 'kg', names)[0].name).toBe(
                 'Squats'
             );
+        });
+
+        describe('under headings (BLD-13)', () => {
+            const lines = describeSets(
+                [set(0, 10, 60, 0, 'Bench'), set(0, 8, 60, 1, 'Row'), set(0, 5, 20, 2, 'Curl')],
+                'kg'
+            );
+            const names = (sections: ReturnType<typeof sectionsOf>) =>
+                sections.map(({ heading, lines }) => [heading, ...lines.map((line) => line.name)]);
+
+            it('is one section of every line, with no headings', () => {
+                expect(names(sectionsOf(lines))).toEqual([[null, 'Bench', 'Row', 'Curl']]);
+            });
+
+            it('puts lines before the first heading first, under none', () => {
+                expect(names(sectionsOf(lines, [{ text: 'Arms', step: 2 }]))).toEqual([
+                    [null, 'Bench', 'Row'],
+                    ['Arms', 'Curl'],
+                ]);
+            });
+
+            it('leaves out a heading with nothing under it, and keeps two that say the same', () => {
+                const headings = [
+                    { text: 'Push', step: 0 },
+                    { text: 'Pull', step: 1 },
+                    { text: 'Push', step: 1 },
+                    { text: 'Push', step: 2 },
+                ];
+
+                expect(names(sectionsOf(lines, headings))).toEqual([
+                    ['Push', 'Bench'],
+                    ['Push', 'Row'],
+                    ['Push', 'Curl'],
+                ]);
+            });
         });
 
         describe('done each side (BLD-10)', () => {
@@ -649,6 +728,7 @@ describe('HistoryComponent', () => {
                 expect(describeSets(sets, 'kg')).toEqual([
                     {
                         name: 'Squats',
+                        step: 1,
                         text: '2 × 10 each side',
                         spoken: '2 sets of 10 reps each side',
                     },

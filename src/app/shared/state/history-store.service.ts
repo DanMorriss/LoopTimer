@@ -1,6 +1,6 @@
 import { computed, DestroyRef, inject, Service, signal } from '@angular/core';
 import { HistoryEntry, isLoggedSet, MAX_NOTE_LENGTH } from '../../models/history';
-import { MAX_TIME_LIMIT_SECONDS } from '../../models/workout';
+import { MAX_TIME_LIMIT_SECONDS, PlacedHeading } from '../../models/workout';
 import { Deletion, mergeRecords } from '../../models/sync';
 import { DeletionStore } from './deletion-store.service';
 import { SyncClock } from './sync-clock.service';
@@ -254,7 +254,7 @@ export function readHistoryEntry(value: unknown): HistoryEntry | null {
     if (!isHistoryEntry(value)) {
         return null;
     }
-    const entry = withUsableTimeLimit(withUsableSets(value));
+    const entry = withUsableHeadings(withUsableTimeLimit(withUsableSets(value)));
     return isWholeNumber(entry.updatedAt) ? entry : { ...entry, updatedAt: entry.endedAt };
 }
 
@@ -274,6 +274,24 @@ function withUsableSets(entry: HistoryEntry): HistoryEntry {
     const { sets, ...rest } = entry;
     const usable = Array.isArray(sets) ? sets.filter(isLoggedSet) : [];
     return usable.length > 0 ? { ...rest, sets: usable } : rest;
+}
+
+// A broken heading is only a label, so it's dropped; with none left, so are the headings
+function withUsableHeadings(entry: HistoryEntry): HistoryEntry {
+    const { headings, ...rest } = entry;
+    const usable = Array.isArray(headings)
+        ? headings.filter(
+              (heading: unknown) =>
+                  typeof heading === 'object' &&
+                  heading !== null &&
+                  typeof (heading as PlacedHeading).text === 'string' &&
+                  (heading as PlacedHeading).text.trim() !== '' &&
+                  isWholeNumber((heading as PlacedHeading).step)
+          )
+        : [];
+    return usable.length > 0
+        ? { ...rest, headings: usable.map(({ text, step }) => ({ text: text.trim(), step })) }
+        : rest;
 }
 
 function isWholeNumber(value: unknown, min = 0): value is number {

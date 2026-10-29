@@ -12,8 +12,9 @@
 - **BLD-8** As a user I want a workout with a time limit (e.g. 20 minutes) in which I do as many rounds as I can, so I can work to the clock rather than to a count.
 - **BLD-9** As a user I want to give an exercise a number of sets and a rest between them (e.g. 3 × 10 with 60 seconds rest), so a gym plan goes in as it's written.
 - **BLD-10** As a user I want an exercise done one side at a time (e.g. 10 reps each leg), so it runs the left, then the right, before the rest.
+- **BLD-13** As a user I want to add headings to a workout (e.g. "Warmup", "Upper body"), so a long workout is easy to follow.
 
-Still to come, in [sets-and-supersets](sets-and-supersets.md): sets of their own reps and weight (BLD-11), supersets (BLD-12) and headings (BLD-13).
+Still to come, in [sets-and-supersets](sets-and-supersets.md): sets of their own reps and weight (BLD-11), and supersets (BLD-12).
 
 ## Rules
 
@@ -54,6 +55,15 @@ Still to come, in [sets-and-supersets](sets-and-supersets.md): sets of their own
 - A timed or rep step has an **Each side** switch beside its Sets wheel, off to start with. A rest step has none, and a step changed to rest is saved without it.
 - On, each set runs **both sides**, the reps (or time) and weight being for each side: "10 reps each side" is 10 left and 10 right. Which side goes first, and the countdown between a timed step's two sides, are settings (see [settings](settings.md)); running it is in [run-a-workout](run-a-workout.md).
 - Collapsed, the step says so: "10 reps each side", "00:30 each side", or with sets, "2 × 10 each side · rest 00:45".
+
+### Headings (BLD-13)
+
+- **+ Heading**, beside + Step, adds a heading at the end, opened (closing the others) with the cursor in its box: **Heading**, "e.g. Warmup", up to 40 characters, trimmed when saved. One left empty is left out when the workout's saved.
+- A heading is a label, not a step: it has no kind pill, wheels or number, and takes no time. The steps after it are numbered as if it weren't there.
+- It moves, collapses and is deleted (with Undo: "Deleted Heading, Warmup") as a step is. Moved, screen readers hear where it went by the step after it, e.g. "Moved heading, warmup to before step 3".
+- Collapsed, it shows its text in the style of a section title, so a collapsed workout reads as its plan.
+- **Up to 10 headings**, which don't count towards the 20 steps. At 10, + Heading is disabled and the page says "That's the most headings a workout can have (10)."
+- Saved, each is a heading in its place among the workout's groups (see [data](data.md)). Running, it's the section line (RUN-10, in [run-a-workout](run-a-workout.md)); in the history and the summary, the sets are grouped under it.
 
 ### Adding, moving and deleting
 
@@ -107,6 +117,9 @@ Still to come, in [sets-and-supersets](sets-and-supersets.md): sets of their own
 - Given a workout with only rep steps, when I start, then it starts (reps count as work).
 - Given 20 steps, then "+ Step" is disabled, with the reason shown.
 - Given one step, when I delete it, then there are none, the hint shows, and focus goes to "Add step".
+- Given + Heading, then a heading is added at the end with the cursor in its box; given " Warmup " typed in it and the workout saved, then it's saved as "Warmup" in its place, and the step after it is numbered as if it weren't there.
+- Given a heading left empty, when I save, then it's left out.
+- Given 10 headings, then + Heading is disabled, with the reason shown, and + Step still works.
 - Given a step named "Squats" at 0:45, when I delete it, then it goes at once and "Deleted Step 1, Squats, 00:45" offers Undo; when I press Undo, then it's back in its place.
 - Given steps A, B, C, when I move C up, then the order is A, C, B, and C keeps its name and time.
 - Given the Until stopped switch is turned on after picking 5 rounds, when it's turned off, then rounds go back to 5.

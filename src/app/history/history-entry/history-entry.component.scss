@@ -70,6 +70,14 @@
     overflow-wrap: anywhere;
 }
 
+// A heading of the workout's, e.g. "Warmup", over the lines of its part
+.entry__section {
+    margin: 0.4rem 0 0;
+    color: var(--text-strong);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
 // The exercise's name goes to its page, with its progress (PRG-4)
 .entry__exercise {
     color: var(--glow-text);

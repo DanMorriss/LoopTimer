@@ -14,8 +14,8 @@
 // .btn-icon   An icon on its own: a 44px outlined circle. Add .btn-icon--danger for delete
 //             buttons.
 // .btn-add    Adds a new thing to a list (setup's "+ Step"): dashed, in
-//             the colour of what it adds. Add .btn-add--rest or .btn-add--reps for those
-//             colours.
+//             the colour of what it adds. Add .btn-add--rest, .btn-add--reps or
+//             .btn-add--heading for those colours.
 
 .btn-main {
     position: relative;
@@ -292,6 +292,10 @@
 
     &--reps {
         --btn-add-color: var(--reps);
+    }
+
+    &--heading {
+        --btn-add-color: var(--text-muted);
     }
 
     @include hover {

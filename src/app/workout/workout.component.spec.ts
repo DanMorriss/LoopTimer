@@ -997,6 +997,51 @@ describe('WorkoutComponent', () => {
             fixture.destroy();
         });
 
+        it("logs the workout's headings, so its sets can be grouped under them (BLD-13)", () => {
+            start({
+                ...makeWorkout({ repeats: 1 }),
+                blocks: [
+                    { kind: 'heading', text: 'Warmup' },
+                    // Timed sets are logged for exercises
+                    {
+                        kind: 'group',
+                        rounds: 1,
+                        restSeconds: 0,
+                        steps: [{ ...work(1, 'Bike'), exerciseId: 'b' }],
+                    },
+                    { kind: 'heading', text: 'Core' },
+                    {
+                        kind: 'group',
+                        rounds: 1,
+                        restSeconds: 0,
+                        steps: [{ ...work(1, 'Plank'), exerciseId: 'p' }],
+                    },
+                ],
+            });
+
+            advance(2000);
+
+            expect(entries()[0].headings).toEqual([
+                { text: 'Warmup', step: 0 },
+                { text: 'Core', step: 1 },
+            ]);
+            // And the summary groups them the same way
+            const summary = Array.from(
+                fixture.nativeElement.querySelectorAll('.summary__part, .summary__lines li'),
+                (el: Element) => el.querySelector('[aria-hidden]')?.textContent ?? el.textContent
+            ).map((line) => line!.replace(/\s+/g, ' ').trim());
+            expect(summary).toEqual(['Warmup', 'Bike: 0:01', 'Core', 'Plank: 0:01']);
+            fixture.destroy();
+        });
+
+        it('logs no headings for a workout without them', () => {
+            start(makeWorkout({ workSeconds: 1, restSeconds: 0, repeats: 1 }));
+            advance(1000);
+
+            expect('headings' in entries()[0]).toBe(false);
+            fixture.destroy();
+        });
+
         it('logs it once, even if the summary is shown again', () => {
             start(makeWorkout({ workSeconds: 1, repeats: 1 }));
             advance(1000);
@@ -3371,8 +3416,8 @@ describe('WorkoutComponent', () => {
 
             expect(status()).toBe('set 1 of 3');
             expect(dots()).toEqual(['current', 'left', 'left']);
-            // The round is said as it starts, as for any workout
-            expect(said()).toBe('Leg press, 10 reps, set 1 of 3, round 1 of 1');
+            // The round is said as it starts, as for any workout, and the exercise as it does
+            expect(said()).toBe('exercise 1 of 2, Leg press, 10 reps, set 1 of 3, round 1 of 1');
 
             pressDone();
             // Resting before set 2 is part of it
@@ -3522,6 +3567,114 @@ describe('WorkoutComponent', () => {
             fixture.detectChanges();
 
             expect(face()).toContain('Right side');
+            fixture.destroy();
+        });
+    });
+
+    describe('the section line (RUN-10)', () => {
+        /** Bike once under Warmup, then leg press 2 × 10 with 0:05 between and a 0:03 plank under Legs. */
+        const plan = (blocks: Workout['blocks'] = []): Workout => ({
+            ...makeWorkout({ repeats: 1 }),
+            blocks: blocks.length
+                ? blocks
+                : [
+                      { kind: 'heading', text: 'Warmup' },
+                      { kind: 'group', rounds: 1, restSeconds: 0, steps: [work(3, 'Bike')] },
+                      { kind: 'heading', text: 'Legs' },
+                      { kind: 'group', rounds: 2, restSeconds: 5, steps: [reps(10, 'Leg press')] },
+                      { kind: 'group', rounds: 1, restSeconds: 0, steps: [rest(2)] },
+                      { kind: 'group', rounds: 1, restSeconds: 0, steps: [work(3, 'Plank')] },
+                  ],
+        });
+        const line = () =>
+            (fixture.nativeElement.querySelector('.workout-section') as HTMLElement | null)
+                ?.textContent!.replace(/\s+/g, ' ')
+                .trim() ?? null;
+        /** What it shows, leaving out what only screen readers hear. */
+        function shown() {
+            const copy = (
+                fixture.nativeElement.querySelector('.workout-section') as HTMLElement
+            ).cloneNode(true) as HTMLElement;
+            copy.querySelectorAll('.sr-only').forEach((hidden) => hidden.remove());
+            return copy.textContent!.replace(/\s+/g, ' ').trim();
+        }
+        const said = () =>
+            (fixture.nativeElement.querySelector('[aria-live]') as HTMLElement).textContent?.trim();
+        function pressDone() {
+            (fixture.nativeElement.querySelector('.workout-next--done') as HTMLElement).click();
+            fixture.detectChanges();
+        }
+
+        it("says the part it's in and which exercise of how many, rests and supersets aside", () => {
+            start(plan());
+
+            expect(shown()).toBe('Warmup · 1 of 3');
+            // Screen readers hear it as words
+            expect(line()).toContain('exercise 1 of 3');
+
+            advance(3000);
+            expect(shown()).toBe('Legs · 2 of 3');
+            // The rest between sets, and the rest step after, are still part of leg press
+            pressDone();
+            expect(shown()).toBe('Legs · 2 of 3');
+            advance(5000);
+            pressDone();
+            expect(component.isRestActive()).toBe(true);
+            expect(shown()).toBe('Legs · 2 of 3');
+
+            advance(2000);
+            expect(shown()).toBe('Legs · 3 of 3');
+            fixture.destroy();
+        });
+
+        it('tells screen readers as each exercise starts, not on each set', () => {
+            start(plan());
+            expect(said()).toBe('Warmup, exercise 1 of 3, Bike, round 1 of 1');
+
+            advance(3000);
+            expect(said()).toBe('Legs, exercise 2 of 3, Leg press, 10 reps, set 1 of 2');
+            pressDone();
+            advance(5000);
+            expect(said()).toBe('Leg press, 10 reps, last set');
+            fixture.destroy();
+        });
+
+        it('has no heading before the first', () => {
+            start(
+                plan([
+                    { kind: 'group', rounds: 1, restSeconds: 0, steps: [work(3, 'Bike')] },
+                    { kind: 'heading', text: 'Cool-down' },
+                    { kind: 'group', rounds: 1, restSeconds: 0, steps: [work(3, 'Stretch')] },
+                ])
+            );
+            // Two exercises, so a count; its heading comes once it's reached
+            expect(shown()).toBe('1 of 2');
+
+            advance(3000);
+            expect(shown()).toBe('Cool-down · 2 of 2');
+            fixture.destroy();
+        });
+
+        it('keeps its room for a heading with one exercise before it comes', () => {
+            start(
+                plan([
+                    { kind: 'group', rounds: 1, restSeconds: 0, steps: [rest(3)] },
+                    { kind: 'heading', text: 'Core' },
+                    { kind: 'group', rounds: 1, restSeconds: 0, steps: [work(3, 'Plank')] },
+                ])
+            );
+            // One exercise: nothing to count, and no heading before the first
+            expect(line()).toBe('');
+
+            advance(3000);
+            expect(line()).toBe('Core');
+            fixture.destroy();
+        });
+
+        it('is left out of a workout with one exercise and no headings', () => {
+            start(makeWorkout());
+
+            expect(line()).toBeNull();
             fixture.destroy();
         });
     });

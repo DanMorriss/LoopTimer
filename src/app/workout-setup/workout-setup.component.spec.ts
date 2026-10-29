@@ -13,6 +13,7 @@ import { BehaviorSubject } from 'rxjs';
 import {
     allSteps,
     asOneGroup,
+    MAX_HEADINGS,
     MAX_STEPS,
     UNTIL_STOPPED,
     Workout,
@@ -1002,6 +1003,141 @@ describe('WorkoutSetupComponent', () => {
 
             await submit();
             expect(allSteps(unlinkedWorkout(store.workouts()[0])!)[0]).toEqual(rest(30));
+        });
+    });
+
+    describe('headings (BLD-13)', () => {
+        const headingBox = (step: number) => el<HTMLInputElement>('input', steps()[step]);
+
+        it('adds a heading at the end with "+ Heading", opened with the cursor in its box', async () => {
+            await setup();
+            await create({ empty: true });
+
+            await press('Add heading');
+
+            expect(steps()).toHaveLength(2);
+            expect(steps()[1].classList).toContain('step--heading');
+            expect(document.activeElement).toBe(headingBox(1));
+            expect(headingBox(1).placeholder).toBe('e.g. Warmup');
+            // Only it is open, as for a step just added
+            expect(collapsed()).toEqual([true, false]);
+            // It has no kind, Sets or wheels: it's only a label
+            expect(steps()[1].querySelector('app-step-kind-menu')).toBeNull();
+            expect(steps()[1].querySelectorAll('app-wheel-picker')).toHaveLength(0);
+        });
+
+        it("saves its text trimmed, in its place, and doesn't number it as a step", async () => {
+            await setup();
+            await create({ empty: true });
+            typeName(0, 'Bike');
+            chooseReps(0, '10');
+            await press('Add heading');
+            typeInto(headingBox(1), '  Knee rehabilitation ');
+            await addStep();
+            typeName(2, 'Leg press');
+            chooseReps(2, '10');
+
+            // The step after it is step 2
+            expect(el('.step__number', steps()[2]).textContent).toContain('Step 2, Leg press');
+            await submit();
+
+            expect(unlinkedWorkout(store.workouts()[0])!.blocks).toEqual([
+                ...eachAGroup([reps(10, 'Bike')]),
+                { kind: 'heading', text: 'Knee rehabilitation' },
+                ...eachAGroup([reps(10, 'Leg press')]),
+            ]);
+        });
+
+        it('leaves out a heading left empty', async () => {
+            await setup();
+            await create({ empty: true });
+            chooseReps(0, '10');
+            await press('Add heading');
+            typeInto(headingBox(1), '   ');
+
+            await submit();
+
+            expect(unlinkedWorkout(store.workouts()[0])!.blocks).toEqual(eachAGroup([reps(10)]));
+        });
+
+        it('shows a collapsed heading as its text, as a section title', async () => {
+            await setup();
+            await create({ empty: true });
+            await press('Add heading');
+            typeInto(headingBox(1), 'Warmup');
+
+            await press('Heading, Warmup');
+
+            expect(el('.step__summary--heading', steps()[1]).textContent!.trim()).toBe('Warmup');
+        });
+
+        it('moves and deletes as a step does, offering Undo', async () => {
+            await setup();
+            await create({ empty: true });
+            await press('Add heading');
+            typeInto(headingBox(1), 'Warmup');
+
+            await press('Move Heading, Warmup up');
+            expect(steps()[0].classList).toContain('step--heading');
+            expect(el('[aria-live]').textContent).toContain(
+                'Moved heading, warmup to before step 1'
+            );
+
+            await press('Delete Heading, Warmup');
+            expect(steps()).toHaveLength(1);
+            const undo = TestBed.inject(UndoService);
+            expect(undo.offer()?.message).toBe('Deleted Heading, Warmup');
+            undo.undo();
+            fixture.detectChanges();
+            expect(steps()[0].classList).toContain('step--heading');
+        });
+
+        it(`stops at ${MAX_HEADINGS} headings, which don't count towards the steps`, async () => {
+            await setup();
+            await create({ empty: true });
+            for (let i = 0; i < MAX_HEADINGS; i++) {
+                await press('Add heading');
+            }
+
+            expect(button('Add heading').disabled).toBe(true);
+            expect(button('Add step').disabled).toBe(false);
+            expect(fixture.nativeElement.textContent).toContain(
+                `That's the most headings a workout can have (${MAX_HEADINGS})`
+            );
+        });
+
+        it('opens a saved workout with its headings in their places', async () => {
+            // Bike is made an exercise of your own first, as workout-1
+            await setup({ editId: 'workout-2' });
+            store.addWorkout({
+                ...savedWorkout,
+                blocks: [
+                    { kind: 'heading', text: 'Warmup' },
+                    ...eachAGroup([work(300, 'Bike')]),
+                    { kind: 'heading', text: 'Legs' },
+                    ...eachAGroup([reps(10, 'Leg press')]),
+                ],
+            });
+            await create();
+
+            expect(steps().map((step) => step.classList.contains('step--heading'))).toEqual([
+                true,
+                false,
+                true,
+                false,
+            ]);
+            expect(
+                Array.from(
+                    fixture.nativeElement.querySelectorAll('.step__summary--heading'),
+                    (heading: Element) => heading.textContent!.trim()
+                )
+            ).toEqual(['Warmup', 'Legs']);
+            // Saved again as it was
+            await submit();
+            expect(unlinkedWorkout(store.workouts()[0])!.blocks[2]).toEqual({
+                kind: 'heading',
+                text: 'Legs',
+            });
         });
     });
 

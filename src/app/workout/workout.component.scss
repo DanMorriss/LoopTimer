@@ -114,6 +114,31 @@
     }
 }
 
+// The section line, e.g. "Upper body · 5 of 7": one line, cut short rather than wrapping, so
+// it keeps its height
+.workout-section {
+    min-height: 1.5em;
+    max-width: 100%;
+    margin: 0 0 0.25rem;
+    padding: 0 1rem;
+    overflow: hidden;
+    color: var(--text-muted);
+    font-size: 1rem;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.workout-section__heading {
+    color: var(--text-strong);
+    font-weight: 600;
+
+    .workout-page--paused & {
+        color: var(--text-muted);
+    }
+}
+
 // Tall enough for the round line and its dots, so the ring stays put when they go at the end
 .workout-status {
     min-height: 3.5rem;

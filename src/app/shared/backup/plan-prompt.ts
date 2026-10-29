@@ -10,6 +10,8 @@ import {
 } from '../../models/exercise';
 import { MAX_WEIGHT_KG } from '../../models/weight';
 import {
+    MAX_HEADING_LENGTH,
+    MAX_HEADINGS,
     MAX_REPEATS,
     MAX_REPS,
     MAX_STEP_SECONDS,
@@ -40,12 +42,14 @@ export function planPrompt(): string {
                 title: 'Day A: Legs',
                 repeats: 1,
                 blocks: [
+                    { kind: 'heading', text: 'Warmup' },
                     {
                         kind: 'group',
                         rounds: 1,
                         restSeconds: 0,
                         steps: [{ kind: 'work', seconds: 60, name: 'Plank' }],
                     },
+                    { kind: 'heading', text: 'Main sets' },
                     {
                         kind: 'group',
                         rounds: 3,
@@ -93,7 +97,7 @@ Leave out ids and dates ("id", "updatedAt"): the app adds them.
 
 A WORKOUT
 - "title": its name, e.g. "Day A: Legs"
-- "blocks": its exercises, in order, each as a group (below), up to ${MAX_STEPS} steps in all
+- "blocks": its exercises, in order, each as a group (below), up to ${MAX_STEPS} steps in all, with headings between them where the plan has them
 - "repeats": how many times the whole workout runs, 1–${MAX_REPEATS}; or 0 for until stopped. Nearly always 1; more for a circuit done several times through.
 - "timeLimitSeconds" (optional): for as many rounds of the whole workout as fit in a time, 1–${MAX_TIME_LIMIT_SECONDS} seconds. Only with "repeats": 0.
 A workout needs at least one step that isn't rest.
@@ -103,6 +107,8 @@ A GROUP is one exercise and its sets: { "kind": "group", "rounds": 3, "restSecon
 - "restSeconds": the rest between sets, 0–${MAX_STEP_SECONDS} seconds; it never comes after the last set. 0 for none, or for one set.
 - "steps": the one step it is, as below
 So "3 × 8 squats, 90 seconds rest" is one group with "rounds": 3 and "restSeconds": 90. A rest between one exercise and the next is a group of one rest step, with "rounds": 1. Something done once, e.g. a warm-up, is a group with "rounds": 1.
+
+A HEADING is a label over the part of the workout after it, e.g. "Warmup" or "Upper body": { "kind": "heading", "text": "Warmup" }. Use the plan's own section titles, up to ${MAX_HEADINGS} of them, each up to ${MAX_HEADING_LENGTH} characters. Leave them out if the plan has none; they don't count as steps.
 
 A STEP is one of:
 - Reps: { "kind": "reps", "reps": 1–${MAX_REPS}, "name": "Bench press", "weight": 60 } — the app waits until I press Done. "weight" is optional, in kilograms (more than 0, up to ${MAX_WEIGHT_KG}); convert pounds (1 lb = 0.45359237 kg). Leave it out for bodyweight.

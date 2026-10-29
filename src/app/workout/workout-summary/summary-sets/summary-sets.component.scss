@@ -21,6 +21,18 @@
     margin-bottom: 0.5rem;
 }
 
+// A heading of the workout's, e.g. "Warmup", over the lines of its part
+.summary__part {
+    margin: 0.5rem 0 0;
+    color: var(--text-strong);
+    font-size: 0.9rem;
+    font-weight: 600;
+
+    &:first-child {
+        margin-top: 0;
+    }
+}
+
 .summary__lines {
     margin: 0;
     padding: 0;

@@ -305,6 +305,40 @@ export class WorkoutComponent {
         const side = state && workout ? placeAt(workout, state.stepIndex)?.side : undefined;
         return side ? sideName(side) : '';
     });
+    /**
+     * Whether the run has a section line (RUN-10): it has headings, or more than one exercise
+     * to count. Kept for the whole run, so its room doesn't come and go.
+     */
+    showSection = computed(() => {
+        const workout = this.running();
+        return (
+            !!workout &&
+            (runPlan(workout).exercises > 1 ||
+                workout.blocks.some((block) => block.kind === 'heading'))
+        );
+    });
+    /**
+     * What the section line says: the heading of the part it's in, if there's one before it,
+     * and which exercise it's on of how many, a superset counting as one, e.g. "Knee
+     * rehabilitation · 2 of 7". Null once finished.
+     */
+    section = computed(() => {
+        const state = this.state();
+        const workout = this.running();
+        if (!state || !workout || state.phase === 'complete' || !this.showSection()) {
+            return null;
+        }
+        const plan = runPlan(workout);
+        const at = plan.sections[state.stepIndex];
+        if (!at) {
+            return null;
+        }
+        return {
+            heading: at.heading,
+            count: plan.exercises > 1 ? { exercise: at.exercise, of: plan.exercises } : null,
+            starts: at.starts,
+        };
+    });
     /** Your note on the step's exercise (EXR-10), e.g. "Pause at the bottom", or ''. */
     exerciseNote = computed(() => {
         const step = this.state()?.step;
@@ -583,7 +617,16 @@ export class WorkoutComponent {
         if (!state.step) {
             return 'Finished';
         }
-        const parts = [state.step.name || kindName(state.step)];
+        const parts: string[] = [];
+        // Which part of the workout, as each exercise starts
+        const section = this.section();
+        if (section?.starts && (section.heading || section.count)) {
+            const count = section.count
+                ? `exercise ${section.count.exercise} of ${section.count.of}`
+                : '';
+            parts.push([section.heading, count].filter(Boolean).join(', '));
+        }
+        parts.push(state.step.name || kindName(state.step));
         if (this.sideLabel()) {
             parts.push(this.sideLabel().toLowerCase());
         }

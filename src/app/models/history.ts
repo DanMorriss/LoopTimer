@@ -1,6 +1,6 @@
 import { Synced } from './sync';
 import { MAX_WEIGHT_KG } from './weight';
-import { MAX_STEP_SECONDS, Side } from './workout';
+import { MAX_STEP_SECONDS, PlacedHeading, Side } from './workout';
 
 /** One workout in the history: a workout run that finished, or was stopped part-way. */
 export interface HistoryEntry extends Synced {
@@ -34,6 +34,11 @@ export interface HistoryEntry extends Synced {
      * timed work step of an exercise that ran to its end. Missing when there were none.
      */
     sets?: LoggedSet[];
+    /**
+     * The workout's headings as they were when it ran, each with the number of the first step
+     * after it, so its sets can be grouped under them (BLD-13). Missing for none.
+     */
+    headings?: PlacedHeading[];
 }
 
 /** Long enough for a line about how it went, short enough to sit under the entry. */
