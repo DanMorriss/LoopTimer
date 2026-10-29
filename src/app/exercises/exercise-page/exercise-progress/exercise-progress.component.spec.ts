@@ -9,9 +9,11 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 describe('ExerciseProgressComponent', () => {
     let fixture: ComponentFixture<ExerciseProgressComponent>;
-    const now = Date.now();
+    // Read in each test: a spy left by another spec file can still mock Date.now as this one loads
+    let now: number;
 
     beforeEach(() => {
+        now = Date.now();
         localStorage.clear();
         localStorage.setItem('data-version', '4');
         TestBed.configureTestingModule({ providers: [provideRouter([])] });
