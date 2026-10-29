@@ -12,8 +12,9 @@
 ## Rules
 
 - Settings is opened from **Account**: a row under Sync, with a gear, "Settings", the hint "Theme, alarms and sounds" and a ›. It slides in over Account, as an exercise's page does over its list, with ‹ Account at the top to go back (or a swipe right); Account stays chosen in the tab bar. It was a tab of its own until 2026-10-28. It holds only this device's choices, which don't sync; **Profile**, **Your data** (backups, Copy AI prompt and Clear this device) and **About** are on Account (see [backup-and-sync](backup-and-sync.md)).
-- **Profile**, on Account between Sync and the Settings row (since 2026-10-28; until then in Settings, as Body figure and Units → Weight), holds two more choices saved with the settings, so they stay a choice for each device too:
+- **Profile**, on Account between Sync and the Settings row (since 2026-10-28; until then in Settings, as Body figure and Units → Weight), holds three more choices saved with the settings, so they stay a choice for each device too:
     - **Sex** (SET-5): Male (the default) or Female, with the hint "The body the muscle maps show": the figure the body map draws (see [exercises](exercises.md)). Called Sex, not Gender, as it picks an anatomical drawing.
+    - **Training for** (PRG-8): Muscle (the default) or Fitness, with the hint "Aim for 10 to 20 sets a week on each muscle, 4 to 10 on small ones" (or 6 to 12 and 2 to 6 for Fitness): the sets a week the muscle bars aim at (see [progress](progress.md)).
     - **Weight units** (SET-4): Kilograms (kg) (the default) or Pounds (lb). Weights are always saved in kg, so switching loses nothing.
 
 | Section      | Setting                                           | Default | Hint                                                                                                   | Notes                                                                                                                                                      |
@@ -42,6 +43,7 @@
 - Given saved settings are broken, then the defaults are used.
 - Given weights in kg, when I choose Pounds, then a step saved at 61.235 kg shows as 135 lb on the workout and in setup.
 - Given a first visit, then Account → Profile has Male chosen for Sex; given I choose Female and reload, then Female is still chosen.
+- Given a first visit, then Account → Profile has Muscle chosen for Training for; given I choose Fitness, then the hint says 6 to 12 sets a week and the muscle bars' bands move down.
 
 ## Platform notes
 

@@ -86,6 +86,7 @@ export class BackupService {
                     keepScreenOn: this.settings.keepScreenOn(),
                     weightUnit: this.settings.weightUnit(),
                     bodyFigure: this.settings.bodyFigure(),
+                    trainingGoal: this.settings.trainingGoal(),
                     myEquipment: this.settings.myEquipment(),
                     onlyMyEquipment: this.settings.onlyMyEquipment(),
                     eachSideFirst: this.settings.eachSideFirst(),

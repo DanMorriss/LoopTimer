@@ -3,12 +3,38 @@ import { HistoryEntry } from './history';
 import { allSteps, Workout } from './workout';
 import { ALL_MUSCLES } from './workout-muscles';
 
+/** What you train for (PRG-8), chosen on Profile: it sets the sets a week each muscle aims at. */
+export type TrainingGoal = 'muscle' | 'fitness';
+export const TRAINING_GOALS: readonly TrainingGoal[] = ['muscle', 'fitness'];
+
+/** The sets a week a muscle aims at: fewer is under, more is over. */
+export interface WeeklyAim {
+    low: number;
+    high: number;
+}
+
+/** Muscles that are rarely trained on their own and need fewer sets, so they aim lower. */
+export const SMALL_MUSCLES: ReadonlySet<MuscleGroup> = new Set<MuscleGroup>([
+    'abductors',
+    'adductors',
+    'forearms',
+    'neck',
+    'obliques',
+    'shins',
+]);
+
 /**
- * The sets a week each muscle group is aimed at: 10 to 20 is the usual advice for building
- * muscle. Fewer is under, more is over.
+ * 10 to 20 sets a week is the usual advice for building muscle; small muscles get about half
+ * that, and training for fitness about two thirds of either.
  */
-export const WEEKLY_SETS_LOW = 10;
-export const WEEKLY_SETS_HIGH = 20;
+export const WEEKLY_AIMS: Record<TrainingGoal, { large: WeeklyAim; small: WeeklyAim }> = {
+    muscle: { large: { low: 10, high: 20 }, small: { low: 4, high: 10 } },
+    fitness: { large: { low: 6, high: 12 }, small: { low: 2, high: 6 } },
+};
+
+export function weeklyAim(muscle: MuscleGroup, goal: TrainingGoal): WeeklyAim {
+    return WEEKLY_AIMS[goal][SMALL_MUSCLES.has(muscle) ? 'small' : 'large'];
+}
 
 export type MuscleStatus = 'under' | 'in-range' | 'over';
 
@@ -16,6 +42,7 @@ export interface MuscleBalance {
     muscle: MuscleGroup;
     /** Sets this week: 1 for each set where it's a main muscle, ½ where it's supporting. */
     sets: number;
+    aim: WeeklyAim;
     status: MuscleStatus;
 }
 
@@ -48,18 +75,22 @@ export function setsByMuscle(
     return counts;
 }
 
-export function muscleStatus(sets: number): MuscleStatus {
-    if (sets < WEEKLY_SETS_LOW) {
+export function muscleStatus(sets: number, { low, high }: WeeklyAim): MuscleStatus {
+    if (sets < low) {
         return 'under';
     }
-    return sets > WEEKLY_SETS_HIGH ? 'over' : 'in-range';
+    return sets > high ? 'over' : 'in-range';
 }
 
-/** Every muscle group with its sets and status, most worked first, A to Z on a tie. */
-export function muscleBalance(counts: ReadonlyMap<MuscleGroup, number>): MuscleBalance[] {
+/** Every muscle group with its sets, aim and status, most worked first, A to Z on a tie. */
+export function muscleBalance(
+    counts: ReadonlyMap<MuscleGroup, number>,
+    goal: TrainingGoal
+): MuscleBalance[] {
     return ALL_MUSCLES.map((muscle) => {
         const sets = counts.get(muscle) ?? 0;
-        return { muscle, sets, status: muscleStatus(sets) };
+        const aim = weeklyAim(muscle, goal);
+        return { muscle, sets, aim, status: muscleStatus(sets, aim) };
     }).sort(
         (a, b) => b.sets - a.sets || MUSCLE_LABELS[a.muscle].localeCompare(MUSCLE_LABELS[b.muscle])
     );

@@ -5,6 +5,7 @@ import {
     Equipment,
     EQUIPMENT_CHOICES,
 } from '../../models/exercise';
+import { TRAINING_GOALS, TrainingGoal } from '../../models/muscle-balance';
 import { WEIGHT_UNITS, WeightUnit } from '../../models/weight';
 import { DEFAULT_RUN_SIDES, MAX_SWITCH_SECONDS, Side } from '../../models/workout';
 
@@ -24,6 +25,8 @@ export interface Settings {
     weightUnit: WeightUnit;
     /** Which figure the body map draws. */
     bodyFigure: BodyFigure;
+    /** What you train for, which sets the sets a week the muscle bars aim at (PRG-8). */
+    trainingGoal: TrainingGoal;
     /** The equipment you have, picked on the Exercises page, in the order it's offered. */
     myEquipment: Equipment[];
     /** Show only the exercises you can do with `myEquipment` on the Exercises page. */
@@ -41,6 +44,7 @@ const DEFAULT_SETTINGS: Settings = {
     keepScreenOn: true,
     weightUnit: 'kg',
     bodyFigure: 'male',
+    trainingGoal: 'muscle',
     myEquipment: [],
     onlyMyEquipment: false,
     eachSideFirst: DEFAULT_RUN_SIDES.first,
@@ -59,6 +63,7 @@ export class SettingsStore {
     readonly keepScreenOn = computed(() => this.settings().keepScreenOn);
     readonly weightUnit = computed(() => this.settings().weightUnit);
     readonly bodyFigure = computed(() => this.settings().bodyFigure);
+    readonly trainingGoal = computed(() => this.settings().trainingGoal);
     readonly myEquipment = computed(() => this.settings().myEquipment);
     readonly onlyMyEquipment = computed(() => this.settings().onlyMyEquipment);
     readonly eachSideFirst = computed(() => this.settings().eachSideFirst);
@@ -95,6 +100,9 @@ function loadSettings(): Settings {
         bodyFigure:
             BODY_FIGURE_CHOICES.find((f) => f === saved['bodyFigure']) ??
             DEFAULT_SETTINGS.bodyFigure,
+        trainingGoal:
+            TRAINING_GOALS.find((g) => g === saved['trainingGoal']) ??
+            DEFAULT_SETTINGS.trainingGoal,
         // Kept in the order it's offered, so it reads the same however it was picked
         myEquipment: Array.isArray(saved['myEquipment'])
             ? EQUIPMENT_CHOICES.filter((choice) =>

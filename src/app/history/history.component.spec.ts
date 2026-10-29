@@ -271,7 +271,8 @@ describe('HistoryComponent', () => {
         expect(labels.slice(0, 3).map((label, i) => `${label}: ${rows[i]}`)).toEqual([
             'Glutes: 2 sets, under 10',
             'Quads: 2 sets, under 10',
-            'Adductors: 1 set, under 10',
+            // A small muscle aims lower
+            'Adductors: 1 set, under 4',
         ]);
         expect(labels.at(-1)).toBe('Upper back');
     });

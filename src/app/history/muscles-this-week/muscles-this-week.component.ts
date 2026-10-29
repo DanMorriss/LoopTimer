@@ -3,6 +3,7 @@ import { muscleBalance, setsByMuscle } from '../../models/muscle-balance';
 import { BodyMapComponent } from '../../shared/components/body-map/body-map.component';
 import { ExerciseStore } from '../../shared/state/exercise-store.service';
 import { HistoryStore } from '../../shared/state/history-store.service';
+import { SettingsStore } from '../../shared/state/settings-store.service';
 import { MuscleBarsComponent } from '../muscle-bars/muscle-bars.component';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -25,7 +26,11 @@ let nextId = 0;
                     [main]="musclesWorked().main"
                     [supporting]="musclesWorked().supporting"
                 />
-                <app-muscle-bars class="muscles-week__bars" [balance]="musclesWorked().balance" />
+                <app-muscle-bars
+                    class="muscles-week__bars"
+                    [balance]="musclesWorked().balance"
+                    [goal]="settings.trainingGoal()"
+                />
             </section>
         }
     `,
@@ -34,6 +39,7 @@ let nextId = 0;
 export class MusclesThisWeekComponent {
     private readonly history = inject(HistoryStore);
     private readonly exercises = inject(ExerciseStore);
+    protected readonly settings = inject(SettingsStore);
     private readonly now = Date.now();
     protected readonly id = `muscles-week-title-${nextId++}`;
 
@@ -50,7 +56,7 @@ export class MusclesThisWeekComponent {
      * the bars go most worked first.
      */
     protected readonly musclesWorked = computed(() => {
-        const balance = muscleBalance(this.weekSets());
+        const balance = muscleBalance(this.weekSets(), this.settings.trainingGoal());
         return {
             hasData: this.weekSets().size > 0,
             main: balance.filter(({ sets }) => sets >= 1).map(({ muscle }) => muscle),
