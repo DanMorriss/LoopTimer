@@ -19,15 +19,16 @@
     }
 }
 
+// Shrunk to nothing where it is, not taken out with display: none, so a drag (which orders
+// the rows by where they are on screen) still finds it after its superset's row. Hidden from
+// screen readers and the tab order as display: none would be, and the list's gap taken back.
 .step--hidden {
-    display: none;
-}
-
-// Where the others have their drag handle: a superset moves with its buttons, with its steps
-.step__handle--none {
-    background: transparent;
-    color: var(--accent);
-    cursor: default;
+    height: 0;
+    margin-top: -0.75rem;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    visibility: hidden;
 }
 
 // + Step, Join with next and Take out

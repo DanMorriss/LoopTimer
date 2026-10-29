@@ -2,8 +2,10 @@
 :host {
     --step-color: var(--work);
     display: flex;
+    // Its time goes under the name if they don't fit side by side
+    flex-wrap: wrap;
     align-items: center;
-    gap: 0.6rem;
+    gap: 0.4rem 0.6rem;
     box-sizing: border-box;
     padding: 0.75rem 1rem;
     border: 1px solid var(--border-strong);
@@ -39,6 +41,10 @@
     --step-color: var(--reps);
 }
 
+:host(.superset) {
+    --step-color: var(--accent);
+}
+
 :host(.heading) {
     --step-color: var(--text-muted);
 }
@@ -52,6 +58,20 @@
     font-size: 0.8rem;
     letter-spacing: 0.06em;
     text-transform: uppercase;
+}
+
+.badge,
+.time {
+    flex: none;
+    white-space: nowrap;
+}
+
+.name {
+    flex: 1 1 0;
+    min-width: 6rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .time {
