@@ -13,6 +13,8 @@ import {
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import {
+    GroupSet,
+    hasSets,
     MAX_REPS,
     RepStep,
     repStepsPerRound,
@@ -20,6 +22,7 @@ import {
     runsUntilStopped,
     Step,
     StepKind,
+    Workout,
     workoutSeconds,
 } from '../models/workout';
 import { formatWeight, weightIn, weightOptions, weightToKg } from '../models/weight';
@@ -258,14 +261,28 @@ export class WorkoutComponent {
     roundNumber = computed(() => (this.state()?.round ?? 0) + 1);
 
     /**
+     * The set in progress of an exercise with more than one, e.g. set 1 (from 0) of 3, or
+     * null. A rest between sets is part of the set it leads to.
+     */
+    groupSet = computed(() => {
+        const state = this.state();
+        const workout = this.workout();
+        return state && workout && state.phase !== 'complete'
+            ? this.setOf(workout, state.stepIndex)
+            : null;
+    });
+
+    /**
      * Whether to say which step it is (the step strip, and to screen readers). Only for rounds
      * with more than one work or rep step: a plain work-and-rest workout doesn't need
-     * "step 1 of 2".
+     * "step 1 of 2". Nor does a workout with sets, whose round line says which set it's on.
      */
     showStepCount = computed(() => {
         const workout = this.workout();
         return (
-            !!workout && runPlan(workout).steps.filter((step) => step.kind !== 'rest').length > 1
+            !!workout &&
+            !hasSets(workout) &&
+            runPlan(workout).steps.filter((step) => step.kind !== 'rest').length > 1
         );
     });
     /**
@@ -298,7 +315,9 @@ export class WorkoutComponent {
             return 'finish';
         }
         const step = next.step;
-        const name = step.name || kindName(step);
+        const workout = this.workout();
+        const set = step.kind !== 'rest' && workout ? this.setOf(workout, next.stepIndex) : null;
+        const name = `${step.name || kindName(step)}${set ? ` · set ${set.set + 1} of ${set.of}` : ''}`;
         if (step.kind === 'reps') {
             const weight = this.weightText(step);
             return `${name} · ${step.reps} reps${weight ? ` @ ${weight}` : ''}`;
@@ -355,26 +374,73 @@ export class WorkoutComponent {
             },
         ];
     });
-    roundSlides = computed(() => [
-        {
-            key: `${this.workoutStore.activeRunStartedAt()}-${this.roundNumber()}`,
-            round: this.roundNumber(),
-            untilStopped: this.untilStopped(),
-            timeLimited: this.timeLimited(),
-            timeLeft: this.timeLeft(),
-            timeNearlyUp: this.timeNearlyUp(),
-            totalRounds: this.totalRounds(),
-            totalLeft: this.totalLeft(),
-            last: this.repeats() === 1,
-            dots: this.totalRounds() > 1 ? this.roundDots() : [],
-            strip: this.stepStrip(),
-        },
-    ]);
-    /** The step in progress began a new round, so it slides in sideways. */
+    roundSlides = computed(() => {
+        const set = this.groupSet();
+        // Keyed by set too, so each new set's line turns in as a new round's does
+        const setKey = set ? `-${this.setStartIndex()}` : '';
+        return [
+            {
+                key: `${this.workoutStore.activeRunStartedAt()}-${this.roundNumber()}${setKey}`,
+                round: this.roundNumber(),
+                set,
+                untilStopped: this.untilStopped(),
+                timeLimited: this.timeLimited(),
+                timeLeft: this.timeLeft(),
+                timeNearlyUp: this.timeNearlyUp(),
+                totalRounds: this.totalRounds(),
+                totalLeft: this.totalLeft(),
+                last: set ? set.set === set.of - 1 : this.repeats() === 1,
+                dots: set ? this.setDots(set) : this.totalRounds() > 1 ? this.roundDots() : [],
+                strip: this.stepStrip(),
+            },
+        ];
+    });
+    /** The step in progress began a new round, or a new set, so it slides in sideways. */
     newRound = computed(() => {
         const state = this.state();
-        return !!state && state.phase !== 'complete' && state.stepIndex === 0 && state.round > 0;
+        const workout = this.workout();
+        if (!state || !workout || state.phase === 'complete') {
+            return false;
+        }
+        if (state.stepIndex === 0) {
+            return state.round > 0;
+        }
+        // The first step of a set after the first, rather than the rest before it
+        const { places, sets } = runPlan(workout);
+        const i = state.stepIndex;
+        return (
+            places[i] !== null &&
+            sets[i].set > 0 &&
+            (places[i - 1] === null || sets[i - 1] !== sets[i])
+        );
     });
+
+    /** Where the set in progress begins in the round, which tells one set from the next. */
+    private readonly setStartIndex = computed(() => {
+        const state = this.state();
+        const workout = this.workout();
+        if (!state || !workout) {
+            return 0;
+        }
+        const { sets } = runPlan(workout);
+        return sets.indexOf(sets[state.stepIndex]);
+    });
+
+    /** One dot per set, as for rounds, when there are few enough to fit. */
+    private setDots(set: GroupSet): RoundDot[] {
+        if (set.of > MAX_ROUND_DOTS) {
+            return [];
+        }
+        return Array.from({ length: set.of }, (_, i) =>
+            i === set.set ? 'current' : i < set.set ? 'done' : 'left'
+        );
+    }
+
+    /** The set step `stepIndex` of the round is in, for an exercise of more than one. */
+    private setOf(workout: Workout, stepIndex: number): GroupSet | null {
+        const set = runPlan(workout).sets[stepIndex];
+        return set && set.of > 1 ? set : null;
+    }
 
     /**
      * The round's steps as a strip in their kinds' colours: done, the one in progress, and
@@ -492,6 +558,10 @@ export class WorkoutComponent {
         }
         if (this.showStepCount()) {
             parts.push(`step ${state.stepIndex + 1} of ${runPlan(workout).steps.length}`);
+        }
+        const set = this.groupSet();
+        if (set && state.step.kind !== 'rest') {
+            parts.push(set.set === set.of - 1 ? 'last set' : `set ${set.set + 1} of ${set.of}`);
         }
         // The round is given as each round starts
         if (state.stepIndex === 0) {

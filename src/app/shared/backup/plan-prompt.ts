@@ -38,12 +38,26 @@ export function planPrompt(): string {
         workouts: [
             {
                 title: 'Day A: Legs',
-                repeats: 3,
-                steps: [
-                    { kind: 'reps', reps: 8, name: 'Back squat', weight: 60 },
-                    { kind: 'rest', seconds: 90, name: '' },
-                    { kind: 'work', seconds: 45, name: 'Wall sit hold' },
-                    { kind: 'rest', seconds: 60, name: '' },
+                repeats: 1,
+                blocks: [
+                    {
+                        kind: 'group',
+                        rounds: 1,
+                        restSeconds: 0,
+                        steps: [{ kind: 'work', seconds: 60, name: 'Plank' }],
+                    },
+                    {
+                        kind: 'group',
+                        rounds: 3,
+                        restSeconds: 90,
+                        steps: [{ kind: 'reps', reps: 8, name: 'Back squat', weight: 60 }],
+                    },
+                    {
+                        kind: 'group',
+                        rounds: 2,
+                        restSeconds: 60,
+                        steps: [{ kind: 'work', seconds: 45, name: 'Wall sit hold' }],
+                    },
                 ],
             },
         ],
@@ -73,11 +87,16 @@ Leave out ids and dates ("id", "updatedAt"): the app adds them.
 
 A WORKOUT
 - "title": its name, e.g. "Day A: Legs"
-- "steps": what happens in one round, in order, up to ${MAX_STEPS} steps
-- "repeats": how many rounds, 1–${MAX_REPEATS}; or 0 for until stopped
-- "timeLimitSeconds" (optional): for as many rounds as fit in a time, 1–${MAX_TIME_LIMIT_SECONDS} seconds. Only with "repeats": 0.
-Each round runs every step, so a plan of 3 sets of 8 squats is one rep step with "repeats": 3, or three rep steps in a row when other exercises come in between. When exercises in a plan have different numbers of sets, make separate workouts, or write the steps out in full with "repeats": 1.
+- "blocks": its exercises, in order, each as a group (below), up to ${MAX_STEPS} steps in all
+- "repeats": how many times the whole workout runs, 1–${MAX_REPEATS}; or 0 for until stopped. Nearly always 1; more for a circuit done several times through.
+- "timeLimitSeconds" (optional): for as many rounds of the whole workout as fit in a time, 1–${MAX_TIME_LIMIT_SECONDS} seconds. Only with "repeats": 0.
 A workout needs at least one step that isn't rest.
+
+A GROUP is one exercise and its sets: { "kind": "group", "rounds": 3, "restSeconds": 90, "steps": [one step] }
+- "rounds": how many sets, 1–${MAX_REPEATS}
+- "restSeconds": the rest between sets, 0–${MAX_STEP_SECONDS} seconds; it never comes after the last set. 0 for none, or for one set.
+- "steps": the one step it is, as below
+So "3 × 8 squats, 90 seconds rest" is one group with "rounds": 3 and "restSeconds": 90. A rest between one exercise and the next is a group of one rest step, with "rounds": 1. Something done once, e.g. a warm-up, is a group with "rounds": 1.
 
 A STEP is one of:
 - Reps: { "kind": "reps", "reps": 1–${MAX_REPS}, "name": "Bench press", "weight": 60 } — the app waits until I press Done. "weight" is optional, in kilograms (more than 0, up to ${MAX_WEIGHT_KG}); convert pounds (1 lb = 0.45359237 kg). Leave it out for bodyweight.

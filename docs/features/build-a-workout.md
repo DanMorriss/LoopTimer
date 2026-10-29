@@ -10,6 +10,9 @@
 - **BLD-6** As a user I want to edit a saved workout, so I don't have to build it again to change it.
 - **BLD-7** As a user I want to add a weight to a rep step (e.g. 10 squats at 60 kg), so I know what to lift.
 - **BLD-8** As a user I want a workout with a time limit (e.g. 20 minutes) in which I do as many rounds as I can, so I can work to the clock rather than to a count.
+- **BLD-9** As a user I want to give an exercise a number of sets and a rest between them (e.g. 3 × 10 with 60 seconds rest), so a gym plan goes in as it's written.
+
+Still to come, in [sets-and-supersets](sets-and-supersets.md): exercises done each side (BLD-10), sets of their own reps and weight (BLD-11), supersets (BLD-12) and headings (BLD-13).
 
 ## Rules
 
@@ -18,7 +21,7 @@
 - A workout has a **title** (optional), a list of **steps** that make one round, and a number of **rounds** or a **time limit**.
 - Rounds: **1 to 30**, or **∞** (until stopped). A new workout starts at 1.
 - Or a time limit: as many rounds as fit in it (BLD-8; running it is RUN-8).
-- Steps run in order to make one round; then the round repeats.
+- Steps run in order to make one round, each for its **sets** (below); then the round repeats.
 - **Rest at the end of the last round is skipped**: every rest step after the last timed or rep step of the round is left out of the final round, since the workout is over. Rest at the start or middle of a round is kept.
 - A workout must have **some work**: at least one timed step with time, or one rep step with reps. Otherwise it can't be started, and once something has been put in a step (a name, a time, reps or a weight) the form says "Workout needs a timed step or some reps".
 
@@ -35,6 +38,15 @@
 - An **(i) button** beside the Steps heading shows the tip "Each round runs these in order. Steps left at 00:00 or 0 reps are skipped." on hover, focus or a tap, and hides it on Escape, when the pointer or focus leaves, or on a click elsewhere.
 - Steps left at **0:00 or 0 reps are left out** when the workout is saved.
 - Back-to-back steps of the same kind stay separate steps (each gets its own alarm and countdown).
+
+### Sets (BLD-9)
+
+- A timed or rep step has **Sets**, 1 to 30 on a wheel, under its other wheels. A new step has 1. A rest step has none: it's just a time.
+- With more than one set, **Rest between sets (mm:ss)** shows under it: a minutes and a seconds wheel under the one label (each named to screen readers), 00:00 to 99:59, at **01:00** the first time Sets goes above 1 (and as saved after that).
+- The rest comes **between sets, never after the last**: 3 sets is set, rest, set, rest, set, then straight on to the next step. Nothing is added between one step and the next; a rest there is a rest step of its own.
+- Collapsed, a step with sets says so as the history does, with its rest: "3 × 10 @ 60 kg · rest 01:00", "3 × 00:45 · rest 00:30", or "3 × 10" with no rest.
+- The tip by the Steps heading says "Each round runs these in order, each for its sets. Steps left at 00:00 or 0 reps are skipped."
+- Saved, each step is a group of its own, its sets the group's `rounds` (see [data](data.md)). A workout of steps of one set runs as before: each straight after the last.
 
 ### Adding, moving and deleting
 
@@ -58,7 +70,7 @@
 
 ### Time limit (BLD-8)
 
-- Under **Repeat**, a choice of **Rounds** or **Time limit**, as a row of two (radio buttons for keyboards and screen readers). Rounds to begin with, and for a workout saved with rounds.
+- Under **Repeat the whole workout** (called Repeat until sets came in), a choice of **Rounds** or **Time limit**, as a row of two (radio buttons for keyboards and screen readers). Rounds to begin with, and for a workout saved with rounds.
 - **Time limit** swaps the rounds wheel and the Until stopped switch for **Minutes** and **Seconds** wheels, 00:00 to 99:59, at **20:00** to begin with, and the hint "As many rounds as you can before time's up."
 - 00:00 won't start: "Time limit needs to be longer than 00:00".
 - Going back to Rounds keeps the time picked, and the other way round, until the workout's saved: it saves only the one picked.

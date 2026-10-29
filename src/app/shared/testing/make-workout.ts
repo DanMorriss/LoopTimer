@@ -1,6 +1,7 @@
 import {
     allSteps,
     asOneGroup,
+    Block,
     Step,
     UNTIL_STOPPED,
     Workout,
@@ -78,4 +79,9 @@ export function savedBeforeGroups<T extends Pick<Workout, 'blocks'>>(
 ): Omit<T, 'blocks'> & { steps: Step[] } {
     const { blocks: _blocks, ...rest } = workout;
     return { ...rest, steps: allSteps(workout) };
+}
+
+/** Steps as Create saves them: a group of each, with `sets` (1 to begin with) and its rest. */
+export function eachAGroup(steps: Step[], sets = 1, restSeconds = 0): Block[] {
+    return steps.map((step) => ({ kind: 'group', rounds: sets, restSeconds, steps: [step] }));
 }

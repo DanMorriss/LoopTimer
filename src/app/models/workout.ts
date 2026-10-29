@@ -148,6 +148,17 @@ export interface RunPlan {
     steps: Step[];
     /** Where each of `steps` comes from; null for a rest between a group's rounds. */
     places: (StepPlace | null)[];
+    /**
+     * For each of `steps`, which set of its group it's part of, from 0, and how many its
+     * group has: a rest between rounds is part of the round it leads to.
+     */
+    sets: GroupSet[];
+}
+
+/** Which round of its group a step of the run is in, e.g. set 1 (from 0) of 3. */
+export interface GroupSet {
+    set: number;
+    of: number;
 }
 
 // Workouts don't change once made (a change makes a new one), so each one's plan is made once
@@ -159,26 +170,34 @@ export function runPlan(workout: Pick<Workout, 'blocks'>): RunPlan {
     if (saved) {
         return saved;
     }
-    const plan: RunPlan = { steps: [], places: [] };
+    const plan: RunPlan = { steps: [], places: [], sets: [] };
     let first = 0;
     for (const block of workout.blocks) {
         if (block.kind !== 'group') {
             continue;
         }
         for (let set = 0; set < block.rounds; set++) {
+            const of = { set, of: block.rounds };
             if (set > 0 && block.restSeconds > 0) {
                 plan.steps.push({ kind: 'rest', seconds: block.restSeconds, name: '' });
                 plan.places.push(null);
+                plan.sets.push(of);
             }
             block.steps.forEach((step, i) => {
                 plan.steps.push(step);
                 plan.places.push({ step: first + i, set });
+                plan.sets.push(of);
             });
         }
         first += block.steps.length;
     }
     plans.set(workout, plan);
     return plan;
+}
+
+/** Whether any of a workout's groups runs more than once a round, e.g. an exercise's sets. */
+export function hasSets(workout: Pick<Workout, 'blocks'>): boolean {
+    return workout.blocks.some((block) => block.kind === 'group' && block.rounds > 1);
 }
 
 /** How many rep steps there are in one round. */
