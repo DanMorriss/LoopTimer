@@ -24,6 +24,7 @@
 - Adding, moving, deleting or changing the kind of a step is announced, e.g. "Moved squats to step 3", "Step 2 is now rest".
 - A step's kind pill is a button named with its kind and step, e.g. "Reps, change type of step 1", saying whether its menu is open; the menu marks the current kind as pressed.
 - The (i) button by setup's Steps heading is described by its tip (`role="tooltip"`), so screen readers read the tip without opening it.
+- A step whose sets vary (BLD-11) lists its rows under the Vary each set switch, which names the list. Each row is a button saying its set, e.g. "Set 2 · 10 × 45 kg", whether it's open, and the wheels it controls; its wheels are named by the step, the set and the wheel, e.g. "Step 1, Leg press, Set 2, Reps".
 - A workout's headings (BLD-13) are named to screen readers in Create as "Heading, Warmup", and aren't counted as steps. In the history and the workout summary they're headings (`h4`) within the entry, over the lines of their part.
 
 ### Keyboard and focus

@@ -13,6 +13,7 @@ import {
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import {
+    allSteps,
     GroupSet,
     hasSets,
     MAX_REPS,
@@ -27,11 +28,17 @@ import {
     Workout,
     workoutSeconds,
 } from '../models/workout';
-import { formatWeight, weightIn, weightOptions, weightToKg } from '../models/weight';
+import {
+    formatWeight,
+    WEIGHT_INCREASE,
+    weightIn,
+    weightOptions,
+    weightToKg,
+} from '../models/weight';
 import { placeAt } from './workout-state';
 import { Exercise } from '../models/exercise';
 import { isTimedSet } from '../models/history';
-import { suggestedWeight } from '../models/progress';
+import { canStepUpEachSet, steppedUp, suggestedWeight } from '../models/progress';
 import { ExerciseDetailsDialogComponent } from '../shared/components/exercise-details-dialog/exercise-details-dialog.component';
 import { WheelPickerComponent } from '../shared/components/wheel-picker/wheel-picker.component';
 import { WorkoutSummaryComponent } from './workout-summary/workout-summary.component';
@@ -148,10 +155,15 @@ export class WorkoutComponent {
     /**
      * The sets from the most recent workout with this exercise, in the same format as history
      * (PRG-1). Not this run's: it's in the history too once it's been ended or the page closed.
+     * Where the step's sets vary (BLD-11), just the same set last time, e.g. set 2's.
      */
     lastTime = computed(() => {
+        const saved = this.savedStep();
+        const lastSets = saved?.varies
+            ? this.lastSets().filter((set) => (set.set ?? 0) === saved.set)
+            : this.lastSets();
         const summary = describeSets(
-            this.lastSets(),
+            lastSets,
             this.settings.weightUnit(),
             (id) => this.exercises.byId(id)?.name
         )
@@ -165,7 +177,7 @@ export class WorkoutComponent {
      */
     nextWeight = computed(() => {
         const step = this.state()?.step;
-        if (step?.kind !== 'reps') {
+        if (step?.kind !== 'reps' || this.savedStep()?.varies) {
             return null;
         }
         const suggestion = suggestedWeight(this.lastSets(), step.reps, this.weightUnit());
@@ -173,6 +185,34 @@ export class WorkoutComponent {
             suggestion.next > suggestion.last &&
             this.weightValue() === suggestion.last
             ? suggestion.next
+            : null;
+    });
+    /**
+     * On set 1 of a step whose sets vary (BLD-11), how much more to try on each set (PRG-5),
+     * e.g. 2.5 (kg), where every set got its own reps last time and none has been changed
+     * since; otherwise null. Once, on set 1, as it moves the whole step up.
+     */
+    eachSetStepUp = computed(() => {
+        const saved = this.savedStep();
+        const unit = this.weightUnit();
+        return saved?.varies &&
+            saved.set === 0 &&
+            saved.step.kind === 'reps' &&
+            canStepUpEachSet(this.lastSets(), saved.step, unit)
+            ? WEIGHT_INCREASE[unit]
+            : null;
+    });
+    /**
+     * The saved step being run (the face's `state.step` being just this set of it), which set
+     * of it this is, and whether its sets vary. Null between steps' sets, e.g. on a rest.
+     */
+    private readonly savedStep = computed(() => {
+        const state = this.state();
+        const workout = this.running();
+        const place = state && workout ? placeAt(workout, state.stepIndex) : null;
+        const step = place && workout ? allSteps(workout)[place.step] : undefined;
+        return step && place
+            ? { step, set: place.set, varies: step.kind !== 'rest' && step.sets !== undefined }
             : null;
     });
     /** The rep sets of the rep step's exercise from the most recent workout with any. */
@@ -783,6 +823,12 @@ export class WorkoutComponent {
         this.run.changeReps({
             weight: value > 0 ? weightToKg(value, this.weightUnit()) : undefined,
         });
+    }
+
+    /** Try more on each set: one weight step up on every set with a weight, keeping the shape. */
+    protected stepUpEachSet() {
+        const unit = this.weightUnit();
+        this.run.changeEachSet((amount) => steppedUp(amount, unit));
     }
 
     /**

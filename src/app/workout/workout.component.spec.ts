@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
-import { allSteps, asOneGroup, UNTIL_STOPPED, Workout } from '../models/workout';
+import { allSteps, asOneGroup, RepStep, UNTIL_STOPPED, Workout } from '../models/workout';
 import { HistoryStore } from '../shared/state/history-store.service';
 import { SettingsStore } from '../shared/state/settings-store.service';
 import { WorkoutStore } from '../shared/state/workout-store.service';
@@ -2984,6 +2984,48 @@ describe('WorkoutComponent', () => {
                 fixture.destroy();
             });
 
+            it('steps up each set alike where the sets vary (BLD-11)', () => {
+                const saved = TestBed.inject(WorkoutStore).addWorkout({
+                    title: 'Pyramid',
+                    repeats: 1,
+                    blocks: [
+                        {
+                            kind: 'group',
+                            rounds: 2,
+                            restSeconds: 0,
+                            steps: [
+                                {
+                                    kind: 'reps',
+                                    reps: 8,
+                                    weight: 80,
+                                    ...bench,
+                                    sets: [
+                                        { reps: 8, weight: 80 },
+                                        { reps: 5, weight: 90 },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                });
+                start(saved);
+                for (let i = 0; i < 2; i++) {
+                    (
+                        fixture.nativeElement.querySelector('.workout-next--done') as HTMLElement
+                    ).click();
+                    fixture.detectChanges();
+                }
+
+                apply('Bench press: try 2.5 kg more on each set')!.click();
+                fixture.detectChanges();
+
+                expect((savedSteps(saved.id)[0] as RepStep).sets).toEqual([
+                    { reps: 8, weight: 82.5 },
+                    { reps: 5, weight: 92.5 },
+                ]);
+                fixture.destroy();
+            });
+
             it('has no Apply for a workout no longer in the library', () => {
                 const saved = finishPushDay();
                 TestBed.inject(WorkoutStore).deleteWorkout(saved.id);
@@ -3567,6 +3609,183 @@ describe('WorkoutComponent', () => {
             fixture.detectChanges();
 
             expect(face()).toContain('Right side');
+            fixture.destroy();
+        });
+    });
+
+    describe('vary each set (BLD-11)', () => {
+        const legPress = { name: 'Leg press', exerciseId: 'builtin:leg-press' };
+        const pyramid: RepStep = {
+            kind: 'reps',
+            reps: 12,
+            weight: 40,
+            ...legPress,
+            sets: [
+                { reps: 12, weight: 40 },
+                { reps: 10, weight: 45 },
+                { reps: 8, weight: 50 },
+            ],
+        };
+        /** Leg press, 3 sets with 0:05 between, then a 0:03 plank once. */
+        const legDay = (step: RepStep = pyramid): Workout => ({
+            ...makeWorkout({ repeats: 1 }),
+            blocks: [
+                { kind: 'group', rounds: 3, restSeconds: 5, steps: [step] },
+                { kind: 'group', rounds: 1, restSeconds: 0, steps: [work(3, 'Plank')] },
+            ],
+        });
+        const savedStep = () => allSteps(store.workouts()[0])[0] as RepStep;
+        const button = (name: string) =>
+            Array.from(
+                fixture.nativeElement.querySelectorAll('button') as NodeListOf<Element>
+            ).find((b) => b.textContent!.includes(name)) as HTMLButtonElement | undefined;
+        function pressDone() {
+            (fixture.nativeElement.querySelector('.workout-next--done') as HTMLElement).click();
+            fixture.detectChanges();
+        }
+        /** Done, then the rest between sets. */
+        function nextSet() {
+            pressDone();
+            advance(5000);
+        }
+        function lastTime(sets: [reps: number, weight: number][]) {
+            const startedAt = Date.now() - 60_000;
+            TestBed.inject(HistoryStore).record({
+                id: `${startedAt}-legs`,
+                workoutId: 'legs',
+                title: 'Legs',
+                startedAt,
+                endedAt: startedAt + 1000,
+                activeSeconds: 1,
+                roundsCompleted: 1,
+                totalRounds: 1,
+                outcome: 'finished',
+                sets: sets.map(([count, weight], set) => ({
+                    round: 0,
+                    step: 0,
+                    ...(set === 0 ? {} : { set }),
+                    reps: count,
+                    weight,
+                    ...legPress,
+                })),
+            });
+        }
+
+        beforeEach(() => localStorage.clear());
+        afterEach(() => localStorage.clear());
+
+        it("runs each set at its own reps and weight, and says the next set's", () => {
+            start(legDay());
+
+            expect([component.reps(), component.weight()]).toEqual([12, '40 kg']);
+            pressDone();
+            expect(text()).toContain('then Leg press · set 2 of 3 · 10 reps @ 45 kg');
+            advance(5000);
+            expect([component.reps(), component.weight()]).toEqual([10, '45 kg']);
+            nextSet();
+            expect([component.reps(), component.weight()]).toEqual([8, '50 kg']);
+            fixture.destroy();
+        });
+
+        it('changes just this set mid-workout, here and in the saved workout', () => {
+            start(store.addWorkout(legDay()));
+            nextSet();
+
+            component['setWeight'](47.5);
+            fixture.detectChanges();
+            expect(component.weight()).toBe('47.5 kg');
+            nextSet();
+
+            expect(component.weight()).toBe('50 kg');
+            expect(savedStep().sets!.map((set) => set.weight)).toEqual([40, 47.5, 50]);
+            expect(savedStep().weight).toBe(40);
+            fixture.destroy();
+        });
+
+        it('changes this set and the sets to come where they are alike, keeping each side', () => {
+            const alike: RepStep = {
+                kind: 'reps',
+                reps: 10,
+                weight: 40,
+                ...legPress,
+                eachSide: true,
+            };
+            start(store.addWorkout(legDay(alike)));
+            // Both sides of set 1, then the rest
+            pressDone();
+            nextSet();
+
+            component['setWeight'](45);
+            fixture.detectChanges();
+            pressDone();
+            pressDone();
+            advance(5000);
+
+            expect(component.weight()).toBe('45 kg');
+            expect(savedStep()).toEqual({ ...alike, weight: 45 });
+            fixture.destroy();
+        });
+
+        it("says last time's same set, as each set has its own", () => {
+            lastTime([
+                [12, 40],
+                [9, 45],
+                [8, 50],
+            ]);
+            start(legDay());
+
+            expect(text()).toContain('Last time: 12 reps @ 40 kg');
+            nextSet();
+            expect(text()).toContain('Last time: 9 reps @ 45 kg');
+            fixture.destroy();
+        });
+
+        it('suggests more on each set, on set 1, where every set got its reps last time', () => {
+            lastTime([
+                [12, 40],
+                [10, 45],
+                [8, 50],
+            ]);
+            start(store.addWorkout(legDay()));
+
+            const tryMore = button('more on each set');
+            expect(tryMore!.textContent!.trim()).toBe('arrow_upward Try 2.5 kg more on each set');
+            tryMore!.click();
+            fixture.detectChanges();
+
+            expect(component.weight()).toBe('42.5 kg');
+            expect(savedStep().sets!.map((set) => set.weight)).toEqual([42.5, 47.5, 52.5]);
+            expect(button('more on each set')).toBeUndefined();
+            fixture.destroy();
+        });
+
+        it('suggests it only on set 1, as it moves the whole step', () => {
+            lastTime([
+                [12, 40],
+                [10, 45],
+                [8, 50],
+            ]);
+            start(legDay());
+            nextSet();
+            expect(button('more on each set')).toBeUndefined();
+            fixture.destroy();
+        });
+
+        it('keeps a pyramid worked out mid-workout on Yes, use next time', () => {
+            const alike: RepStep = { kind: 'reps', reps: 12, weight: 40, ...legPress };
+            start(store.addWorkout(legDay(alike)));
+            const run = TestBed.inject(ActiveRunService);
+            nextSet();
+            run.changeReps({ reps: 10 });
+            run.changeReps({ weight: 45 });
+            nextSet();
+            run.changeReps({ reps: 8 });
+            run.changeReps({ weight: 50 });
+            pressDone();
+
+            run.useSetsNextTime();
+
+            expect(savedStep()).toEqual({ ...pyramid, exerciseId: legPress.exerciseId });
             fixture.destroy();
         });
     });

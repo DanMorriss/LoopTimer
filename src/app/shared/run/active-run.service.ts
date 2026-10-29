@@ -12,9 +12,14 @@ import { HistoryEntry, historyId, RepSet } from '../../models/history';
 import {
     allSteps,
     placedHeadings,
+    RepSetAmount,
     RepStep,
     RunningWorkout,
     runPlan,
+    stepForSet,
+    stepRounds,
+    withEachRepSet,
+    withRepSet,
     Workout,
     workoutSeconds,
 } from '../../models/workout';
@@ -318,30 +323,40 @@ export class ActiveRunService {
     }
 
     /**
-     * Changes the reps or weight of the rep step being waited on, e.g. going up a weight:
-     * for this set, the rest of this run, and the saved workout, so next time starts there.
-     * A weight of undefined is none.
+     * Changes the reps or weight of the rep step being waited on, e.g. going up a weight, in
+     * this run and the saved workout, so next time starts there: for this set and the rest of
+     * the run, or, on a step whose sets vary (BLD-11), for this set only. Both sides of a set
+     * go together. A weight of undefined is none.
      */
     changeReps(change: { reps: number } | { weight: number | undefined }) {
         const state = this.state();
         const step = state?.step;
         const place = state && placeAt(this.running()!, state.stepIndex);
-        if (state?.phase !== 'reps' || step?.kind !== 'reps' || !place) {
+        const saved = place && allSteps(this.running()!)[place.step];
+        if (state?.phase !== 'reps' || step?.kind !== 'reps' || saved?.kind !== 'reps' || !place) {
             return;
         }
         const reps = 'reps' in change ? change.reps : step.reps;
         const weight = 'weight' in change ? change.weight : step.weight;
-        // No weight is left out, rather than saved as undefined; the exercise stays linked
-        const changed: RepStep = {
-            kind: 'reps',
-            reps,
-            name: step.name,
-            ...(step.exerciseId === undefined ? {} : { exerciseId: step.exerciseId }),
-        };
+        // No weight is left out, rather than saved as undefined
         this.store.updateActiveStep(
             place.step,
-            weight === undefined ? changed : { ...changed, weight }
+            withRepSet(saved, place.set, { reps, ...(weight === undefined ? {} : { weight }) })
         );
+    }
+
+    /**
+     * The rep step being waited on with `change` made to each of its sets, e.g. last time's
+     * suggested step up on every set of a pyramid (PRG-5), in this run and the saved workout.
+     */
+    changeEachSet(change: (amount: RepSetAmount) => RepSetAmount) {
+        const state = this.state();
+        const place = state && placeAt(this.running()!, state.stepIndex);
+        const saved = place && allSteps(this.running()!)[place.step];
+        if (state?.phase !== 'reps' || saved?.kind !== 'reps' || !place) {
+            return;
+        }
+        this.store.updateActiveStep(place.step, withEachRepSet(saved, change));
     }
 
     /**
@@ -405,9 +420,11 @@ export class ActiveRunService {
     }
 
     /**
-     * Makes each rep step of the saved workout start next time from its last set in this run,
-     * e.g. after the summary's sets were corrected. A set cut short by a time limit doesn't
-     * count, as it wasn't all of the step.
+     * Makes each rep step of the saved workout start next time from its sets in this run, e.g.
+     * after the summary's sets were corrected: each set as it was last done (both sides as one,
+     * the second), and any not done as it was. Sets that came out alike are one reps and
+     * weight; sets that differ vary (BLD-11), so a pyramid worked out mid-workout is kept. A
+     * set cut short by a time limit doesn't count, as it wasn't all of the step.
      */
     useSetsNextTime() {
         const workout = this.running();
@@ -421,24 +438,29 @@ export class ActiveRunService {
                 ? placeAt(workout, state.stepIndex)
                 : null;
         const cutShort = (set: RepSet) => !!cutAt && isSetAt(set, state!.round, cutAt);
-        const lastSets = new Map(
-            this.store
-                .activeSets()
-                .filter((set) => !cutShort(set))
-                .map((set) => [set.step, set])
-        );
-        for (const [stepIndex, set] of lastSets) {
-            const step = allSteps(workout)[stepIndex];
-            if (step?.kind !== 'reps') {
-                continue;
+        const done = this.store.activeSets().filter((set) => !cutShort(set));
+        const lastSets = new Map(done.map((set) => [`${set.step}/${set.set ?? 0}`, set]));
+        const rounds = stepRounds(workout);
+        allSteps(workout).forEach((step, stepIndex) => {
+            if (step.kind !== 'reps' || !done.some((set) => set.step === stepIndex)) {
+                return;
             }
-            const { weight: _old, ...rest } = step;
+            const amounts = Array.from({ length: rounds[stepIndex] }, (_, set): RepSetAmount => {
+                const { reps, weight } =
+                    lastSets.get(`${stepIndex}/${set}`) ?? (stepForSet(step, set) as RepStep);
+                return { reps, ...(weight === undefined ? {} : { weight }) };
+            });
+            const [first] = amounts;
+            const alike = amounts.every(
+                (amount) => amount.reps === first.reps && amount.weight === first.weight
+            );
+            const { sets: _sets, weight: _weight, ...rest } = step;
             this.store.updateActiveStep(stepIndex, {
                 ...rest,
-                reps: set.reps,
-                ...(set.weight === undefined ? {} : { weight: set.weight }),
+                ...first,
+                ...(alike ? {} : { sets: amounts }),
             });
-        }
+        });
     }
 
     /**

@@ -37,8 +37,10 @@ import { readWorkout } from '../state/workout-store.service';
  *    turns the file down rather than running both sides as one.
  * 10: `headings` on history entries, the workout's headings when it ran. Nothing to convert;
  *    an older app turns the file down rather than syncing entries back without them.
+ * 11: sets that vary, `sets` on a step, each set's own reps and weight or time. Nothing to
+ *    convert; an older app turns the file down rather than running every set as set 1.
  */
-export const BACKUP_VERSION = 10;
+export const BACKUP_VERSION = 11;
 
 /** Far more than years of workouts take (about 1 KB each), so a bigger file isn't a backup. */
 export const MAX_BACKUP_BYTES = 50 * 1024 * 1024;

@@ -188,6 +188,18 @@ for (const theme of ['dark', 'light'] as const) {
                 await expectNoViolations();
             });
 
+            it("with a step's sets varying, one row open on its wheels", async () => {
+                await open('/setup');
+                click('[id$="-sets"] [data-value="3"]');
+                await settle();
+                click('[id$="-vary"] [role="switch"]');
+                await settle();
+                click('.wheel-row__toggle');
+                await settle();
+                expect(fixture.nativeElement.querySelector('[id$="-set-0-reps"]')).not.toBeNull();
+                await expectNoViolations();
+            });
+
             it('with the until-stopped switch on', async () => {
                 await open('/setup');
                 click('app-infinity-switch [role="switch"]');

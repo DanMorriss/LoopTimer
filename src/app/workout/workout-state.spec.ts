@@ -1,10 +1,13 @@
-import { RepSet, TimedSet } from '../models/history';
+import { isTimedSet, RepSet, TimedSet } from '../models/history';
 import {
     Block,
     placedHeadings,
+    RepStep,
     runPlan,
     Step,
     UNTIL_STOPPED,
+    withEachRepSet,
+    withRepSet,
     workoutSeconds,
 } from '../models/workout';
 import { makeWorkout, reps, rest, work } from '../shared/testing/make-workout';
@@ -640,5 +643,124 @@ describe('each side (BLD-10)', () => {
             'left',
             'right',
         ]);
+    });
+});
+
+describe('vary each set (BLD-11)', () => {
+    const plank: Step = {
+        kind: 'work',
+        seconds: 30,
+        name: 'Plank',
+        exerciseId: 'builtin:plank',
+        sets: [{ seconds: 30 }, { seconds: 45 }, { seconds: 60 }],
+    };
+    const legPress: Step = {
+        kind: 'reps',
+        reps: 12,
+        weight: 40,
+        name: 'Leg press',
+        eachSide: true,
+        sets: [{ reps: 12, weight: 40 }, { reps: 10, weight: 45 }, { reps: 8 }],
+    };
+    const running = {
+        ...makeWorkout({ repeats: 1 }),
+        blocks: [
+            { kind: 'group', rounds: 3, restSeconds: 30, steps: [plank] },
+            { kind: 'group', rounds: 3, restSeconds: 60, steps: [legPress] },
+        ] satisfies Block[],
+    };
+
+    it('runs each set with its own time, or reps and weight, and both sides alike', () => {
+        const { steps } = runPlan(running);
+        const { sets: _plankSets, ...plankSet } = plank;
+        const { sets: _legSets, weight: _weight, ...legSet } = legPress as RepStep;
+
+        expect(steps.slice(0, 5)).toEqual([
+            { ...plankSet, seconds: 30 },
+            rest(30),
+            { ...plankSet, seconds: 45 },
+            rest(30),
+            { ...plankSet, seconds: 60 },
+        ]);
+        expect(steps.slice(5)).toEqual([
+            { ...legSet, reps: 12, weight: 40 },
+            { ...legSet, reps: 12, weight: 40 },
+            rest(60),
+            { ...legSet, reps: 10, weight: 45 },
+            { ...legSet, reps: 10, weight: 45 },
+            rest(60),
+            // No weight on set 3: none, rather than set 1's
+            { ...legSet, reps: 8 },
+            { ...legSet, reps: 8 },
+        ]);
+    });
+
+    it('counts down each set for its own time, and logs it so', () => {
+        // 0:30 + 0:30 rest + 0:45 + 0:30 rest = 2:15 in, the third set has just begun
+        expect(workoutStateAt(running, 135_000)).toEqual(
+            expect.objectContaining({ phase: 'work', stepIndex: 4, remainingSeconds: 60 })
+        );
+
+        const atLegPress = workoutStateAt(running, 195_000);
+        expect(atLegPress.phase).toBe('reps');
+        expect(
+            setsDone(running, atLegPress, [])
+                .filter((set) => isTimedSet(set))
+                .map((set) => (set as TimedSet).seconds)
+        ).toEqual([30, 45, 60]);
+    });
+});
+
+describe('a step with one set changed (BLD-11)', () => {
+    const equal: RepStep = { kind: 'reps', reps: 10, weight: 40, name: 'Squat', eachSide: true };
+    const varied: RepStep = {
+        ...equal,
+        reps: 12,
+        sets: [
+            { reps: 12, weight: 40 },
+            { reps: 10, weight: 45 },
+            { reps: 8, weight: 50 },
+        ],
+    };
+
+    it('changes every set of a step whose sets are alike, keeping the rest of it', () => {
+        expect(withRepSet(equal, 1, { reps: 10, weight: 45 })).toEqual({ ...equal, weight: 45 });
+        expect(withRepSet(equal, 1, { reps: 8 })).toEqual({
+            kind: 'reps',
+            reps: 8,
+            name: 'Squat',
+            eachSide: true,
+        });
+    });
+
+    it('changes just the one set of a step whose sets vary, and the step itself for set 1', () => {
+        expect(withRepSet(varied, 1, { reps: 10, weight: 47.5 }).sets).toEqual([
+            { reps: 12, weight: 40 },
+            { reps: 10, weight: 47.5 },
+            { reps: 8, weight: 50 },
+        ]);
+        expect(withRepSet(varied, 1, { reps: 10, weight: 47.5 })).toEqual(
+            expect.objectContaining({ reps: 12, weight: 40 })
+        );
+        expect(withRepSet(varied, 0, { reps: 15 })).toEqual(
+            expect.objectContaining({
+                reps: 15,
+                sets: [{ reps: 15 }, varied.sets![1], varied.sets![2]],
+            })
+        );
+        expect(withRepSet(varied, 0, { reps: 15 }).weight).toBeUndefined();
+    });
+
+    it('changes each set alike, keeping their shape', () => {
+        const up = (amount: { reps: number; weight?: number }) => ({
+            ...amount,
+            weight: (amount.weight ?? 0) + 2.5,
+        });
+
+        expect(withEachRepSet(varied, up).sets!.map((set) => set.weight)).toEqual([
+            42.5, 47.5, 52.5,
+        ]);
+        expect(withEachRepSet(varied, up).weight).toBe(42.5);
+        expect(withEachRepSet(equal, up)).toEqual({ ...equal, weight: 42.5 });
     });
 });

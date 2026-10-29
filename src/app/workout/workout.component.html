@@ -226,6 +226,17 @@
                                                 <mat-icon aria-hidden="true">arrow_upward</mat-icon>
                                                 Try {{ next }} {{ weightUnit() }}
                                             </button>
+                                        } @else if (eachSetStepUp(); as more) {
+                                            <!-- The same on a pyramid, on set 1, for every set
+                                                 alike, so it keeps its shape (BLD-11) -->
+                                            <button
+                                                type="button"
+                                                class="workout-face__next-weight"
+                                                (click)="stepUpEachSet()"
+                                            >
+                                                <mat-icon aria-hidden="true">arrow_upward</mat-icon>
+                                                Try {{ more }} {{ weightUnit() }} more on each set
+                                            </button>
                                         }
                                     } @else if (slide.pop) {
                                         <!-- A fresh element each second, so it pops each time -->
