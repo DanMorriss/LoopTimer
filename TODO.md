@@ -19,6 +19,17 @@ Sync is built (SYN-3, SYN-4; PR #144): fetch, merge as an import does, then send
 - [ ] **Sign in with Google and Apple (SYN-7).**
 - [ ] **Move everyone to loopworkouts.com:** the app moved there on 2026-10-28 (Vercel, with www redirecting to it; DNS at GoDaddy), and loop-workouts.vercel.app still serves it, not redirected. Each address keeps its own data, so a redirect would strand what's saved on the old one. Now that sync is in, redirect vercel.app to loopworkouts.com (signing in on the new address brings the data back), and take it out of Supabase's Redirect URLs.
 
+### Sets and supersets
+
+Agreed with Dan on 2026-10-29, from a friend's gym plan (exercises of 3 × 10 with a rest between sets, one done each leg, under headings). The rules, the data's new shape and the order are in `docs/features/sets-and-supersets.md`. One PR each, in this order:
+
+- [ ] **The new shape, with nothing to see:** workouts' `steps` become `blocks` (data version 5, backup version 8), logged sets get `set` and `side`, and one function gives a workout's run order. Every workout is one group, so nothing changes yet.
+- [ ] **Sets and rest between sets (BLD-9).**
+- [ ] **Each side (BLD-10).**
+- [ ] **Headings (BLD-13)**, and the section line (RUN-10).
+- [ ] **Vary each set (BLD-11).**
+- [ ] **Supersets and giant sets (BLD-12).**
+
 ### Simple planning
 
 - [ ] **Weekly plan and Due today (PLN-1–3).**
