@@ -11,7 +11,7 @@ import {
     output,
     untracked,
 } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { form, FormField, maxLength } from '@angular/forms/signals';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
@@ -36,7 +36,7 @@ import { exercisePath, isBuiltIn } from '../../models/exercise';
  */
 @Component({
     selector: 'li[appHistoryEntry]',
-    imports: [DatePipe, FormField, MatIconModule, RouterLink],
+    imports: [DatePipe, FormField, MatIconModule, NgTemplateOutlet, RouterLink],
     templateUrl: './history-entry.component.html',
     styleUrl: './history-entry.component.scss',
     host: {
@@ -87,8 +87,13 @@ export class HistoryEntryComponent {
             return { ...line, path: exercise ? exercisePath(exercise) : null };
         })
     );
-    /** Its lines under the workout's headings as they were when it ran (BLD-13). */
-    protected readonly sections = computed(() => sectionsOf(this.sets(), this.entry().headings));
+    /**
+     * Its lines under the workout's headings, and with its supersets, as they were when it ran
+     * (BLD-12, BLD-13).
+     */
+    protected readonly sections = computed(() =>
+        sectionsOf(this.sets(), this.entry().headings, this.entry().supersets)
+    );
     protected readonly id = computed(() => this.entry().id);
 
     // The box starts from the saved note each time it opens

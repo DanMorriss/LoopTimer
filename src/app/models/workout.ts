@@ -190,6 +190,32 @@ export function placedHeadings(workout: Pick<Workout, 'blocks'>): PlacedHeading[
     return headings;
 }
 
+/**
+ * A superset or giant set of a workout (BLD-12): what it's called, the number of its first
+ * step, and how many steps it has, rests included.
+ */
+export interface PlacedSuperset {
+    kind: Exclude<GroupKind, 'exercise'>;
+    step: number;
+    steps: number;
+}
+
+/** A workout's supersets and giant sets, in order, each with the steps it covers. */
+export function placedSupersets(workout: Pick<Workout, 'blocks'>): PlacedSuperset[] {
+    const supersets: PlacedSuperset[] = [];
+    let step = 0;
+    for (const block of workout.blocks) {
+        if (block.kind === 'group') {
+            const kind = groupKind(block.steps);
+            if (kind !== 'exercise') {
+                supersets.push({ kind, step, steps: block.steps.length });
+            }
+            step += block.steps.length;
+        }
+    }
+    return supersets;
+}
+
 /** A step's countdown in seconds: 0 for a rep step, which has none. */
 export function stepSeconds(step: Step): number {
     return step.kind === 'reps' ? 0 : step.seconds;

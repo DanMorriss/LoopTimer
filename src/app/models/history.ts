@@ -1,6 +1,6 @@
 import { Synced } from './sync';
 import { MAX_WEIGHT_KG } from './weight';
-import { MAX_STEP_SECONDS, PlacedHeading, Side } from './workout';
+import { MAX_STEP_SECONDS, PlacedHeading, PlacedSuperset, Side } from './workout';
 
 /** One workout in the history: a workout run that finished, or was stopped part-way. */
 export interface HistoryEntry extends Synced {
@@ -39,6 +39,11 @@ export interface HistoryEntry extends Synced {
      * after it, so its sets can be grouped under them (BLD-13). Missing for none.
      */
     headings?: PlacedHeading[];
+    /**
+     * The workout's supersets and giant sets as they were when it ran, each with the steps
+     * it covers, so their sets can be grouped under them (BLD-12). Missing for none.
+     */
+    supersets?: PlacedSuperset[];
 }
 
 /** Long enough for a line about how it went, short enough to sit under the entry. */

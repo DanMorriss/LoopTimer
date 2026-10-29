@@ -39,8 +39,11 @@ import { readWorkout } from '../state/workout-store.service';
  *    an older app turns the file down rather than syncing entries back without them.
  * 11: sets that vary, `sets` on a step, each set's own reps and weight or time. Nothing to
  *    convert; an older app turns the file down rather than running every set as set 1.
+ * 12: `supersets` on history entries, the workout's supersets and giant sets when it ran.
+ *    Nothing to convert; an older app turns the file down rather than syncing entries back
+ *    without them.
  */
-export const BACKUP_VERSION = 11;
+export const BACKUP_VERSION = 12;
 
 /** Far more than years of workouts take (about 1 KB each), so a bigger file isn't a backup. */
 export const MAX_BACKUP_BYTES = 50 * 1024 * 1024;

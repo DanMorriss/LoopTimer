@@ -1,6 +1,6 @@
 import { computed, DestroyRef, inject, Service, signal } from '@angular/core';
 import { HistoryEntry, isLoggedSet, MAX_NOTE_LENGTH } from '../../models/history';
-import { MAX_TIME_LIMIT_SECONDS, PlacedHeading } from '../../models/workout';
+import { MAX_TIME_LIMIT_SECONDS, PlacedHeading, PlacedSuperset } from '../../models/workout';
 import { Deletion, mergeRecords } from '../../models/sync';
 import { DeletionStore } from './deletion-store.service';
 import { SyncClock } from './sync-clock.service';
@@ -254,7 +254,9 @@ export function readHistoryEntry(value: unknown): HistoryEntry | null {
     if (!isHistoryEntry(value)) {
         return null;
     }
-    const entry = withUsableHeadings(withUsableTimeLimit(withUsableSets(value)));
+    const entry = withUsableSupersets(
+        withUsableHeadings(withUsableTimeLimit(withUsableSets(value)))
+    );
     return isWholeNumber(entry.updatedAt) ? entry : { ...entry, updatedAt: entry.endedAt };
 }
 
@@ -291,6 +293,25 @@ function withUsableHeadings(entry: HistoryEntry): HistoryEntry {
         : [];
     return usable.length > 0
         ? { ...rest, headings: usable.map(({ text, step }) => ({ text: text.trim(), step })) }
+        : rest;
+}
+
+// A broken superset only groups lines, so it's dropped; with none left, so are the supersets
+function withUsableSupersets(entry: HistoryEntry): HistoryEntry {
+    const { supersets, ...rest } = entry;
+    const usable = Array.isArray(supersets)
+        ? supersets.filter(
+              (superset: unknown) =>
+                  typeof superset === 'object' &&
+                  superset !== null &&
+                  ((superset as PlacedSuperset).kind === 'superset' ||
+                      (superset as PlacedSuperset).kind === 'giant set') &&
+                  isWholeNumber((superset as PlacedSuperset).step) &&
+                  isWholeNumber((superset as PlacedSuperset).steps, 1)
+          )
+        : [];
+    return usable.length > 0
+        ? { ...rest, supersets: usable.map(({ kind, step, steps }) => ({ kind, step, steps })) }
         : rest;
 }
 

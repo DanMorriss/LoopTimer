@@ -45,6 +45,18 @@
     }
 }
 
+// A superset's name, with its lines under it, set in a little and joined by a line
+.summary__superset-name {
+    color: var(--text-muted);
+}
+
+.summary__superset-lines {
+    margin: 0 0 0 0.2rem;
+    padding-left: 0.6rem;
+    border-left: 2px solid var(--border-strong);
+    list-style: none;
+}
+
 .summary__group + .summary__group {
     margin-top: 1rem;
 }

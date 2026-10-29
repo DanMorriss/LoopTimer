@@ -12,6 +12,7 @@ import { HistoryEntry, historyId, RepSet } from '../../models/history';
 import {
     allSteps,
     placedHeadings,
+    placedSupersets,
     RepSetAmount,
     RepStep,
     RunningWorkout,
@@ -532,6 +533,7 @@ export class ActiveRunService {
         const activeSeconds = Math.floor((countdownMs + repMs) / 1000);
         const sets = this.sets();
         const headings = placedHeadings(workout);
+        const supersets = placedSupersets(workout);
         const timeLimit =
             limit === undefined
                 ? {}
@@ -553,6 +555,7 @@ export class ActiveRunService {
             ...timeLimit,
             ...(sets.length > 0 ? { sets } : {}),
             ...(headings.length > 0 ? { headings } : {}),
+            ...(supersets.length > 0 ? { supersets } : {}),
         });
     }
 }
