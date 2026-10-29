@@ -9,6 +9,9 @@ import {
     MAX_REPS,
     MAX_STEP_SECONDS,
     MAX_TIME_LIMIT_SECONDS,
+    MAX_SWITCH_SECONDS,
+    RunSides,
+    DEFAULT_RUN_SIDES,
     Step,
     UNTIL_STOPPED,
     Workout,
@@ -38,6 +41,7 @@ export class WorkoutStore {
     private _activeRepStepsDone = signal(0);
     private _activeRepMs = signal(0);
     private _activeSets = signal<RepSet[]>([]);
+    private _activeSides = signal<RunSides>(DEFAULT_RUN_SIDES);
 
     readonly workouts = computed(() => this._workouts());
     /** The library's order, to sync with other copies (see `mergeLibraryOrder()`). */
@@ -68,6 +72,11 @@ export class WorkoutStore {
      * worked out from the clock (see `ActiveRunService.sets`).
      */
     readonly activeSets = computed(() => this._activeSets());
+    /**
+     * How the current run does exercises each side, from the settings when it started: kept
+     * with the run, so changing them mid-workout can't move its clock.
+     */
+    readonly activeSides = computed(() => this._activeSides());
 
     constructor() {
         renameActiveRunKeys();
@@ -87,6 +96,7 @@ export class WorkoutStore {
             this._activeRepStepsDone.set(readCount(sessionStorage.getItem('activeRepStepsDone')));
             this._activeRepMs.set(readCount(sessionStorage.getItem('activeRepMs')));
             this._activeSets.set(readSets(sessionStorage.getItem('activeSets')));
+            this._activeSides.set(readSides(sessionStorage.getItem('activeSides')));
         }
     }
 
@@ -308,10 +318,15 @@ export class WorkoutStore {
         }
     }
 
-    /** Makes `workout` the active workout and starts it from the beginning. */
-    setActiveWorkout(workout: Workout) {
+    /**
+     * Makes `workout` the active workout and starts it from the beginning, doing exercises
+     * each side as `sides` says (the settings, as they are now).
+     */
+    setActiveWorkout(workout: Workout, sides: RunSides = DEFAULT_RUN_SIDES) {
         const startedAt = Date.now();
         this._activeWorkout.set(workout);
+        this._activeSides.set(sides);
+        sessionStorage.setItem('activeSides', JSON.stringify(sides));
         this._activeWorkoutStartedAt.set(startedAt);
         sessionStorage.setItem('activeWorkoutId', String(workout.id));
         sessionStorage.setItem('activeWorkoutStartedAt', String(startedAt));
@@ -441,6 +456,7 @@ export class WorkoutStore {
         sessionStorage.removeItem('activeWorkoutStartedAt');
         sessionStorage.removeItem('activeWorkoutPausedAt');
         sessionStorage.removeItem('activeRunStartedAt');
+        sessionStorage.removeItem('activeSides');
         this.clearRepSteps();
     }
 
@@ -515,9 +531,14 @@ function isStep(value: unknown): value is Step {
     );
 }
 
-/** Just the step's own fields, leaving out anything else that was saved with it. */
+/**
+ * Just the step's own fields, leaving out anything else that was saved with it. Each side is
+ * only `true`, and never on a rest step: anything else saved there is left out.
+ */
 function copyStep(step: Step): Step {
     const link = step.exerciseId === undefined ? {} : { exerciseId: step.exerciseId };
+    const eachSide =
+        step.kind !== 'rest' && step.eachSide === true ? { eachSide: true as const } : {};
     return step.kind === 'reps'
         ? {
               kind: step.kind,
@@ -525,8 +546,9 @@ function copyStep(step: Step): Step {
               name: step.name,
               ...(step.weight === undefined ? {} : { weight: step.weight }),
               ...link,
+              ...eachSide,
           }
-        : { kind: step.kind, seconds: step.seconds, name: step.name, ...link };
+        : { kind: step.kind, seconds: step.seconds, name: step.name, ...link, ...eachSide };
 }
 
 /** Whether two workouts are the same apart from their ids. */
@@ -678,4 +700,21 @@ function stepsFromWorkAndRest(saved: Record<string, unknown>): Step[] | null {
         steps.push({ kind: 'rest', seconds: rest, name: '' });
     }
     return steps;
+}
+
+/** The saved sides of the run in progress; anything missing or broken is the defaults. */
+function readSides(saved: string | null): RunSides {
+    try {
+        const parsed: unknown = JSON.parse(saved ?? 'null');
+        if (typeof parsed !== 'object' || parsed === null) {
+            return DEFAULT_RUN_SIDES;
+        }
+        const { first, switchSeconds } = parsed as Record<string, unknown>;
+        return (first === 'left' || first === 'right') &&
+            isWholeNumber(switchSeconds, 0, MAX_SWITCH_SECONDS)
+            ? { first, switchSeconds: switchSeconds as number }
+            : DEFAULT_RUN_SIDES;
+    } catch {
+        return DEFAULT_RUN_SIDES;
+    }
 }

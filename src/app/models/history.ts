@@ -1,6 +1,6 @@
 import { Synced } from './sync';
 import { MAX_WEIGHT_KG } from './weight';
-import { MAX_STEP_SECONDS } from './workout';
+import { MAX_STEP_SECONDS, Side } from './workout';
 
 /** One workout in the history: a workout run that finished, or was stopped part-way. */
 export interface HistoryEntry extends Synced {
@@ -54,6 +54,8 @@ export interface RepSet {
     step: number;
     /** Which round of its group (set of its exercise) it was, from 0. Missing means 0. */
     set?: number;
+    /** Which side, for a step done each side (BLD-10); missing for one that isn't. */
+    side?: Side;
     /** The step's name as it ran; empty when it has none. */
     name: string;
     reps: number;
@@ -71,6 +73,7 @@ export interface TimedSet {
     round: number;
     step: number;
     set?: number;
+    side?: Side;
     name: string;
     /** How long it ran: the step's whole length. */
     seconds: number;
@@ -105,6 +108,7 @@ export function isLoggedSet(value: unknown): value is LoggedSet {
         whole(set['round'], 0) &&
         whole(set['step'], 0) &&
         (set['set'] === undefined || whole(set['set'], 0)) &&
+        (set['side'] === undefined || set['side'] === 'left' || set['side'] === 'right') &&
         typeof set['name'] === 'string' &&
         measured &&
         (set['exerciseId'] === undefined || typeof set['exerciseId'] === 'string')

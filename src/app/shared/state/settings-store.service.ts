@@ -6,6 +6,7 @@ import {
     EQUIPMENT_CHOICES,
 } from '../../models/exercise';
 import { WEIGHT_UNITS, WeightUnit } from '../../models/weight';
+import { DEFAULT_RUN_SIDES, MAX_SWITCH_SECONDS, Side } from '../../models/workout';
 
 export type Theme = 'dark' | 'light' | 'system';
 const THEMES: readonly Theme[] = ['dark', 'light', 'system'];
@@ -27,6 +28,10 @@ export interface Settings {
     myEquipment: Equipment[];
     /** Show only the exercises you can do with `myEquipment` on the Exercises page. */
     onlyMyEquipment: boolean;
+    /** Which side an exercise done each side starts with (BLD-10). */
+    eachSideFirst: Side;
+    /** The countdown between a timed step's two sides, in seconds; 0 for none. */
+    switchSidesSeconds: number;
 }
 
 const DEFAULT_SETTINGS: Settings = {
@@ -38,6 +43,8 @@ const DEFAULT_SETTINGS: Settings = {
     bodyFigure: 'male',
     myEquipment: [],
     onlyMyEquipment: false,
+    eachSideFirst: DEFAULT_RUN_SIDES.first,
+    switchSidesSeconds: DEFAULT_RUN_SIDES.switchSeconds,
 };
 const STORAGE_KEY = 'settings';
 
@@ -54,6 +61,8 @@ export class SettingsStore {
     readonly bodyFigure = computed(() => this.settings().bodyFigure);
     readonly myEquipment = computed(() => this.settings().myEquipment);
     readonly onlyMyEquipment = computed(() => this.settings().onlyMyEquipment);
+    readonly eachSideFirst = computed(() => this.settings().eachSideFirst);
+    readonly switchSidesSeconds = computed(() => this.settings().switchSidesSeconds);
 
     update(changes: Partial<Settings>) {
         this.settings.update((settings) => ({ ...settings, ...changes }));
@@ -93,5 +102,15 @@ function loadSettings(): Settings {
               )
             : DEFAULT_SETTINGS.myEquipment,
         onlyMyEquipment: flag('onlyMyEquipment'),
+        eachSideFirst:
+            saved['eachSideFirst'] === 'left' || saved['eachSideFirst'] === 'right'
+                ? saved['eachSideFirst']
+                : DEFAULT_SETTINGS.eachSideFirst,
+        switchSidesSeconds:
+            Number.isInteger(saved['switchSidesSeconds']) &&
+            (saved['switchSidesSeconds'] as number) >= 0 &&
+            (saved['switchSidesSeconds'] as number) <= MAX_SWITCH_SECONDS
+                ? (saved['switchSidesSeconds'] as number)
+                : DEFAULT_SETTINGS.switchSidesSeconds,
     };
 }

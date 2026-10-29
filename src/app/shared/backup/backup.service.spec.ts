@@ -102,7 +102,7 @@ describe('BackupService', () => {
             expect(link.href).toBe('blob:backup');
             const file: BackupFile = JSON.parse(await blob!.text());
             expect(file.app).toBe('Loop Workouts');
-            expect(file.version).toBe(8);
+            expect(file.version).toBe(BACKUP_VERSION);
             expect(file.libraryOrder).toEqual(workouts().libraryOrder());
             expect(file.workouts).toEqual(workouts().workouts());
             expect(file.history).toEqual(history().entries());

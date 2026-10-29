@@ -4,6 +4,7 @@ import {
     repStepsPerRound,
     roundSeconds,
     runPlan,
+    Side,
     Step,
     StepPlace,
     stepSeconds,
@@ -181,20 +182,28 @@ export function stepsIntoRound(workout: Pick<Workout, 'blocks'>, state: WorkoutS
 
 /**
  * Where the step at `stepIndex` of the run's round comes from (see `runPlan()`): null for a
- * rest between a group's rounds, or past the end.
+ * rest between a group's rounds, Switch sides, or past the end.
  */
 export function placeAt(workout: Pick<Workout, 'blocks'>, stepIndex: number): StepPlace | null {
     return runPlan(workout).places[stepIndex] ?? null;
 }
 
-/** A set's `set` field: left out for a group's first round, as for every set before groups. */
-export function setField(set: number): { set?: number } {
-    return set === 0 ? {} : { set };
+/**
+ * A logged set's `set` and `side` fields for its place: `set` left out for a group's first
+ * round, as for every set before groups, and `side` for a step not done each side.
+ */
+export function placeFields({ set, side }: StepPlace): { set?: number; side?: Side } {
+    return { ...(set === 0 ? {} : { set }), ...(side === undefined ? {} : { side }) };
 }
 
 /** Whether a logged set is of this round and place in it. */
 export function isSetAt(set: LoggedSet, round: number, place: StepPlace): boolean {
-    return set.round === round && set.step === place.step && (set.set ?? 0) === place.set;
+    return (
+        set.round === round &&
+        set.step === place.step &&
+        (set.set ?? 0) === place.set &&
+        set.side === place.side
+    );
 }
 
 /**
@@ -219,7 +228,7 @@ export function setsDone(
                 timed.push({
                     round,
                     step: place.step,
-                    ...setField(place.set),
+                    ...placeFields(place),
                     name,
                     seconds,
                     exerciseId,
@@ -232,8 +241,8 @@ export function setsDone(
     }
     // In the order they ran: by round, then by where they come in it
     const order = new Map(
-        places.map((place, i) => [place && `${place.step}/${place.set}`, i] as const)
+        places.map((place, i) => [place && `${place.step}/${place.set}/${place.side}`, i] as const)
     );
-    const at = (set: LoggedSet) => order.get(`${set.step}/${set.set ?? 0}`) ?? set.step;
+    const at = (set: LoggedSet) => order.get(`${set.step}/${set.set ?? 0}/${set.side}`) ?? set.step;
     return [...repSets, ...timed].sort((a, b) => a.round - b.round || at(a) - at(b));
 }

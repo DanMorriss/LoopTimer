@@ -492,7 +492,7 @@ describe('WorkoutSetupComponent', () => {
                     Array.from(step.querySelectorAll('.picker-row .picker-field__label')).map(
                         (label) => label.textContent!.trim()
                     )
-                ).toEqual(['Reps', 'Weight (kg)', 'Sets']);
+                ).toEqual(['Reps', 'Weight (kg)', 'Sets', 'Each side']);
                 expect(el<HTMLInputElement>('input', step).placeholder).toBe('e.g. Push-ups');
                 expect(document.activeElement).toBe(el('input', step));
                 expect(fixture.nativeElement.textContent).toContain('Added a rep step, step 3');
@@ -957,6 +957,51 @@ describe('WorkoutSetupComponent', () => {
             expect(wheel(0, 'sets')).toBe('3');
             expect(wheel(0, 'rest-minutes')).toBe('0');
             expect(wheel(0, 'rest-seconds')).toBe('45');
+        });
+    });
+
+    describe('each side (BLD-10)', () => {
+        const eachSide = (step: number) =>
+            el<HTMLElement>('[id$="-each-side"] [role="switch"]', steps()[step]);
+
+        it('gives a timed or rep step an Each side switch, off, and none to a rest step', async () => {
+            await setup();
+            await create();
+
+            expect(eachSide(0).getAttribute('aria-checked')).toBe('false');
+            expect(eachSide(1)).toBeNull();
+        });
+
+        it('saves the step done each side, and says so when collapsed', async () => {
+            await setup();
+            await create({ empty: true });
+            chooseReps(0, '10');
+            eachSide(0).click();
+            fixture.detectChanges();
+            await press('Step 1, reps, 10 reps each side');
+
+            expect(el('.step__summary-time', steps()[0]).textContent!.trim()).toBe(
+                '10 reps each side'
+            );
+            await submit();
+            expect(unlinkedWorkout(store.workouts()[0])!.blocks).toEqual(
+                eachAGroup([{ ...reps(10), eachSide: true }])
+            );
+        });
+
+        it('leaves it off a step changed to rest', async () => {
+            await setup();
+            await create();
+            chooseTime(0, 'seconds', '30');
+            eachSide(0).click();
+            fixture.detectChanges();
+            await changeKind(0, 'Rest');
+            // Some work, so it saves
+            await addStep();
+            chooseReps(2, '10');
+
+            await submit();
+            expect(allSteps(unlinkedWorkout(store.workouts()[0])!)[0]).toEqual(rest(30));
         });
     });
 

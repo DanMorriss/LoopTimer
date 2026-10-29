@@ -1,3 +1,4 @@
+import { BACKUP_VERSION } from '../backup/backup-file';
 import { Provider, signal } from '@angular/core';
 import type { ServerRecord } from '../../sync/sync-records';
 import { SyncStarter, SyncStatus } from '../../sync/sync-starter.service';
@@ -16,7 +17,7 @@ export function fakeSyncServer(now = 1_800_000_000_000) {
         records,
         /** Writes a record as if another device had sent it. */
         write(record: Omit<ServerRecord, 'version'> & { version?: number }) {
-            server.push([{ version: 8, ...record }]);
+            server.push([{ version: BACKUP_VERSION, ...record }]);
         },
         push(changes: readonly ServerRecord[]) {
             for (const change of changes) {

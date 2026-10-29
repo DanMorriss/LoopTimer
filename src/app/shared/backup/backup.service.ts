@@ -88,6 +88,8 @@ export class BackupService {
                     bodyFigure: this.settings.bodyFigure(),
                     myEquipment: this.settings.myEquipment(),
                     onlyMyEquipment: this.settings.onlyMyEquipment(),
+                    eachSideFirst: this.settings.eachSideFirst(),
+                    switchSidesSeconds: this.settings.switchSidesSeconds(),
                 },
             },
             exportedAt

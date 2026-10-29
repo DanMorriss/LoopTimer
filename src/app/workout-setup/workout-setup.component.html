@@ -406,6 +406,31 @@
                                                     "
                                                 />
                                             </div>
+
+                                            <!-- One side at a time, e.g. 10 each leg: each set
+                                                 runs both sides (BLD-10) -->
+                                            <div class="picker-field">
+                                                <span
+                                                    class="picker-field__label"
+                                                    [id]="'step-' + key + '-each-side-label'"
+                                                >
+                                                    Each side
+                                                </span>
+                                                <app-toggle-switch
+                                                    [id]="'step-' + key + '-each-side'"
+                                                    [checked]="step().value().eachSide"
+                                                    (checkedChange)="
+                                                        step.eachSide().value.set($event)
+                                                    "
+                                                    [labelledBy]="
+                                                        'step-' +
+                                                        key +
+                                                        '-title step-' +
+                                                        key +
+                                                        '-each-side-label'
+                                                    "
+                                                />
+                                            </div>
                                         </div>
                                         @if (step().value().sets > 1) {
                                             <!-- One label over both wheels, which read as a time -->

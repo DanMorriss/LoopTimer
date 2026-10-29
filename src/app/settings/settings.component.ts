@@ -3,6 +3,11 @@ import { BackLinkComponent } from '../nav/back-link/back-link.component';
 import { SwipeBackDirective } from '../nav/swipe-back.directive';
 import { AlarmService } from '../shared/alarms/alarm.service';
 import { ToggleSwitchComponent } from '../shared/components/toggle-switch/toggle-switch.component';
+import {
+    WheelPickerComponent,
+    WheelPickerOption,
+} from '../shared/components/wheel-picker/wheel-picker.component';
+import { MAX_SWITCH_SECONDS, Side } from '../models/workout';
 import { injectPrefersReducedMotion } from '../shared/reduced-motion';
 import { KeepAwakeService } from '../shared/run/keep-awake.service';
 import { SettingsStore, Theme } from '../shared/state/settings-store.service';
@@ -23,7 +28,7 @@ const SWITCHING_CLASS = 'theme-switching';
  */
 @Component({
     selector: 'app-settings',
-    imports: [BackLinkComponent, SwipeBackDirective, ToggleSwitchComponent],
+    imports: [BackLinkComponent, SwipeBackDirective, ToggleSwitchComponent, WheelPickerComponent],
     templateUrl: './settings.component.html',
     styleUrl: './settings.component.scss',
 })
@@ -46,6 +51,23 @@ export class SettingsComponent {
     protected readonly chosenIndex = computed(() =>
         this.themes.findIndex((option) => option.value === this.settings.theme())
     );
+
+    protected readonly sides: { value: Side; label: string }[] = [
+        { value: 'left', label: 'Left' },
+        { value: 'right', label: 'Right' },
+    ];
+    protected readonly chosenSideIndex = computed(() =>
+        this.sides.findIndex((option) => option.value === this.settings.eachSideFirst())
+    );
+    /** Off, then 1 to MAX_SWITCH_SECONDS seconds. */
+    protected readonly switchOptions: WheelPickerOption[] = [
+        { value: 0, label: 'Off' },
+        ...Array.from({ length: MAX_SWITCH_SECONDS }, (_, i) => ({
+            value: i + 1,
+            label: `${i + 1} s`,
+            spokenLabel: `${i + 1} ${i === 0 ? 'second' : 'seconds'}`,
+        })),
+    ];
 
     protected readonly previews: AlarmPreview[] = [
         { kind: 'work', name: 'Timed', description: 'Two short high beeps' },

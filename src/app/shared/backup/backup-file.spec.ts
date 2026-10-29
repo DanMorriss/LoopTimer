@@ -13,6 +13,8 @@ const SETTINGS: Settings = {
     bodyFigure: 'male',
     myEquipment: ['barbell', 'rack'],
     onlyMyEquipment: true,
+    eachSideFirst: 'right',
+    switchSidesSeconds: 10,
 };
 
 const ENTRY: HistoryEntry = {

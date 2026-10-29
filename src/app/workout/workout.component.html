@@ -155,6 +155,10 @@
                                             }
                                         </div>
                                     }
+                                    <!-- Which side, for an exercise done one side at a time -->
+                                    @if (slide.side) {
+                                        <p class="workout-face__side">{{ slide.side }}</p>
+                                    }
                                     @if (slide.reps !== null) {
                                         <!-- No clock to compete with, so the count is the big
                                              thing. It and the weight are wheels: tap one to

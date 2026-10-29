@@ -76,3 +76,9 @@
         transition: none;
     }
 }
+
+// A narrow wheel beside its name, like the switches
+.settings__switch-sides {
+    flex: none;
+    width: 6.5rem;
+}

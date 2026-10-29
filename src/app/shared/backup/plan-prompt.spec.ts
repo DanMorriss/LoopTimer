@@ -32,6 +32,10 @@ describe('planPrompt', () => {
         expect(result.newWorkouts[0].blocks[1]).toEqual(
             expect.objectContaining({ kind: 'group', rounds: 3, restSeconds: 90 })
         );
+        // And one done each side
+        expect(result.newWorkouts[0].blocks[2]).toEqual(
+            expect.objectContaining({ steps: [expect.objectContaining({ eachSide: true })] })
+        );
         expect(result.exercises).toHaveLength(1);
         expect(result.skipped).toBe(0);
     });

@@ -20,12 +20,15 @@ import {
     repStepsPerRound,
     runPlan,
     runsUntilStopped,
+    Side,
+    sideName,
     Step,
     StepKind,
     Workout,
     workoutSeconds,
 } from '../models/workout';
 import { formatWeight, weightIn, weightOptions, weightToKg } from '../models/weight';
+import { placeAt } from './workout-state';
 import { Exercise } from '../models/exercise';
 import { isTimedSet } from '../models/history';
 import { suggestedWeight } from '../models/progress';
@@ -111,6 +114,8 @@ export class WorkoutComponent {
     private readonly injector = inject(Injector);
     private readonly run = inject(ActiveRunService);
     workout = this.run.workout;
+    /** The workout as it runs, with how it does exercises each side: what its plan is made of. */
+    private readonly running = this.run.running;
     isPaused = this.run.isPaused;
     /** The summary is open over the page, so its keys are left to it. */
     summaryOpen = this.run.summaryOpen;
@@ -243,7 +248,7 @@ export class WorkoutComponent {
      * take as long as they take.
      */
     totalLeft = computed(() => {
-        const workout = this.workout();
+        const workout = this.running();
         const elapsedMs = this.run.elapsedMs();
         if (
             !workout ||
@@ -266,7 +271,7 @@ export class WorkoutComponent {
      */
     groupSet = computed(() => {
         const state = this.state();
-        const workout = this.workout();
+        const workout = this.running();
         return state && workout && state.phase !== 'complete'
             ? this.setOf(workout, state.stepIndex)
             : null;
@@ -278,7 +283,7 @@ export class WorkoutComponent {
      * "step 1 of 2". Nor does a workout with sets, whose round line says which set it's on.
      */
     showStepCount = computed(() => {
-        const workout = this.workout();
+        const workout = this.running();
         return (
             !!workout &&
             !hasSets(workout) &&
@@ -292,6 +297,13 @@ export class WorkoutComponent {
     stepLabel = computed(() => {
         const step = this.state()?.step;
         return step?.name || (step && step.kind !== 'work' ? kindName(step) : '');
+    });
+    /** "Left side" or "Right side" for a step done each side (BLD-10), or ''. */
+    sideLabel = computed(() => {
+        const state = this.state();
+        const workout = this.running();
+        const side = state && workout ? placeAt(workout, state.stepIndex)?.side : undefined;
+        return side ? sideName(side) : '';
     });
     /** Your note on the step's exercise (EXR-10), e.g. "Pause at the bottom", or ''. */
     exerciseNote = computed(() => {
@@ -315,9 +327,13 @@ export class WorkoutComponent {
             return 'finish';
         }
         const step = next.step;
-        const workout = this.workout();
+        const workout = this.running();
         const set = step.kind !== 'rest' && workout ? this.setOf(workout, next.stepIndex) : null;
-        const name = `${step.name || kindName(step)}${set ? ` · set ${set.set + 1} of ${set.of}` : ''}`;
+        // A step's second side is the same exercise again, so it's only the side
+        const side = workout && this.secondSide(workout, next.stepIndex);
+        const name = side
+            ? sideName(side)
+            : `${step.name || kindName(step)}${set ? ` · set ${set.set + 1} of ${set.of}` : ''}`;
         if (step.kind === 'reps') {
             const weight = this.weightText(step);
             return `${name} · ${step.reps} reps${weight ? ` @ ${weight}` : ''}`;
@@ -359,6 +375,7 @@ export class WorkoutComponent {
                 complete: !step,
                 icon: step ? KIND_ICONS[step.kind] : '',
                 label: this.stepLabel(),
+                side: this.sideLabel(),
                 exercise: this.stepExercise(),
                 reps: this.isRepsActive() ? this.reps() : null,
                 weight: this.weight(),
@@ -398,7 +415,7 @@ export class WorkoutComponent {
     /** The step in progress began a new round, or a new set, so it slides in sideways. */
     newRound = computed(() => {
         const state = this.state();
-        const workout = this.workout();
+        const workout = this.running();
         if (!state || !workout || state.phase === 'complete') {
             return false;
         }
@@ -418,7 +435,7 @@ export class WorkoutComponent {
     /** Where the set in progress begins in the round, which tells one set from the next. */
     private readonly setStartIndex = computed(() => {
         const state = this.state();
-        const workout = this.workout();
+        const workout = this.running();
         if (!state || !workout) {
             return 0;
         }
@@ -436,7 +453,25 @@ export class WorkoutComponent {
         );
     }
 
+    /**
+     * The side of step `stepIndex` of the round, when it's a step's second side in its set:
+     * the side before it, maybe with Switch sides between, is the same step and set.
+     */
+    private secondSide(workout: Workout, stepIndex: number): Side | null {
+        const { places } = runPlan(workout);
+        const place = places[stepIndex];
+        let i = stepIndex - 1;
+        while (i >= 0 && places[i] === null) {
+            i--;
+        }
+        const before = places[i];
+        return place?.side && before?.step === place.step && before.set === place.set
+            ? place.side
+            : null;
+    }
+
     /** The set step `stepIndex` of the round is in, for an exercise of more than one. */
+
     private setOf(workout: Workout, stepIndex: number): GroupSet | null {
         const set = runPlan(workout).sets[stepIndex];
         return set && set.of > 1 ? set : null;
@@ -448,7 +483,7 @@ export class WorkoutComponent {
      */
     stepStrip = computed((): StripStep[] => {
         const state = this.state();
-        const workout = this.workout();
+        const workout = this.running();
         if (!workout || !state || state.phase === 'complete' || !this.showStepCount()) {
             return [];
         }
@@ -538,7 +573,7 @@ export class WorkoutComponent {
      */
     announcement = computed(() => {
         const state = this.state();
-        const workout = this.workout();
+        const workout = this.running();
         if (!state || !workout) {
             return '';
         }
@@ -549,6 +584,9 @@ export class WorkoutComponent {
             return 'Finished';
         }
         const parts = [state.step.name || kindName(state.step)];
+        if (this.sideLabel()) {
+            parts.push(this.sideLabel().toLowerCase());
+        }
         if (state.step.kind === 'reps') {
             const weight = this.weightText(state.step);
             parts.push(`${state.step.reps} reps${weight ? ` at ${weight}` : ''}`);

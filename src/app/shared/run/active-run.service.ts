@@ -9,12 +9,19 @@ import {
     untracked,
 } from '@angular/core';
 import { HistoryEntry, historyId, RepSet } from '../../models/history';
-import { allSteps, RepStep, runPlan, Workout, workoutSeconds } from '../../models/workout';
+import {
+    allSteps,
+    RepStep,
+    RunningWorkout,
+    runPlan,
+    Workout,
+    workoutSeconds,
+} from '../../models/workout';
 import { alarmEvents } from '../../workout/alarm-schedule';
 import {
     isSetAt,
     placeAt,
-    setField,
+    placeFields,
     setsDone,
     stepsIntoRound,
     workoutStateAt,
@@ -52,6 +59,14 @@ export class ActiveRunService {
     private readonly keepAwake = inject(KeepAwakeService);
 
     readonly workout = this.store.activeWorkout;
+    /**
+     * The workout as it runs, with how it does exercises each side (see `RunningWorkout`): what
+     * its clock, alarms and sets are worked out from.
+     */
+    readonly running = computed((): RunningWorkout | null => {
+        const workout = this.workout();
+        return workout && { ...workout, sides: this.store.activeSides() };
+    });
     readonly isPaused = this.store.isPaused;
 
     // Everything below is worked out from the clock rather than counted tick by tick,
@@ -69,7 +84,7 @@ export class ActiveRunService {
     });
 
     readonly state = computed(() => {
-        const workout = this.workout();
+        const workout = this.running();
         const elapsedMs = this.elapsedMs();
         return workout && elapsedMs !== null
             ? workoutStateAt(
@@ -83,7 +98,7 @@ export class ActiveRunService {
 
     /** What comes after the current step: the state at the moment it ends. */
     readonly nextState = computed(() => {
-        const workout = this.workout();
+        const workout = this.running();
         const state = this.state();
         const elapsedMs = this.elapsedMs();
         if (!workout || !state || elapsedMs === null || state.phase === 'complete') {
@@ -100,7 +115,7 @@ export class ActiveRunService {
 
     /** The sets done so far, rep and timed, in the order they were done. */
     readonly sets = computed(() => {
-        const workout = this.workout();
+        const workout = this.running();
         const state = this.state();
         return workout && state ? setsDone(workout, state, this.store.activeSets()) : [];
     });
@@ -125,7 +140,7 @@ export class ActiveRunService {
      * logLastSet(); null otherwise. Its reps are the step's, as a starting point.
      */
     readonly unloggedLastSet = computed(() => {
-        const workout = this.workout();
+        const workout = this.running();
         const state = this.state();
         if (workout?.timeLimitSeconds === undefined || state?.phase !== 'complete') {
             return null;
@@ -161,7 +176,7 @@ export class ActiveRunService {
 
     // Changes when the workout starts, pauses, resumes or needs its next batch, not every tick
     private readonly alarmEvents = computed(() => {
-        const workout = this.workout();
+        const workout = this.running();
         const startedAt = this.store.activeWorkoutStartedAt();
         const fromRound = (this.alarmBatch() * ALARM_WINDOW) / 2;
         const resumedAt = this.resumedAt();
@@ -258,7 +273,10 @@ export class ActiveRunService {
             this.sync();
             this.recordRun('stopped');
         }
-        this.store.setActiveWorkout(workout);
+        this.store.setActiveWorkout(workout, {
+            first: this.settings.eachSideFirst(),
+            switchSeconds: this.settings.switchSidesSeconds(),
+        });
         this.resumedAt.set(0);
         this.ending.set(false);
         this.sync();
@@ -281,7 +299,7 @@ export class ActiveRunService {
     finishReps() {
         this.sync();
         const state = this.state();
-        const place = state && placeAt(this.workout()!, state.stepIndex);
+        const place = state && placeAt(this.running()!, state.stepIndex);
         if (state?.phase !== 'reps' || state.step?.kind !== 'reps' || !place) {
             return;
         }
@@ -289,7 +307,7 @@ export class ActiveRunService {
         this.store.finishRepStep(state.phaseElapsedMs, {
             round: state.round,
             step: place.step,
-            ...setField(place.set),
+            ...placeFields(place),
             name,
             reps,
             ...(weight === undefined ? {} : { weight }),
@@ -306,7 +324,7 @@ export class ActiveRunService {
     changeReps(change: { reps: number } | { weight: number | undefined }) {
         const state = this.state();
         const step = state?.step;
-        const place = state && placeAt(this.workout()!, state.stepIndex);
+        const place = state && placeAt(this.running()!, state.stepIndex);
         if (state?.phase !== 'reps' || step?.kind !== 'reps' || !place) {
             return;
         }
@@ -376,7 +394,7 @@ export class ActiveRunService {
         this.store.addActiveSet({
             round: last.round,
             step: last.place.step,
-            ...setField(last.place.set),
+            ...placeFields(last.place),
             name,
             reps,
             ...(weight === undefined ? {} : { weight }),
@@ -391,7 +409,7 @@ export class ActiveRunService {
      * count, as it wasn't all of the step.
      */
     useSetsNextTime() {
-        const workout = this.workout();
+        const workout = this.running();
         const state = this.state();
         if (!workout) {
             return;
@@ -467,7 +485,7 @@ export class ActiveRunService {
      * has been done, so starting a workout by mistake and stopping it leaves no trace.
      */
     private recordRun(outcome: HistoryEntry['outcome']) {
-        const workout = this.workout();
+        const workout = this.running();
         const state = this.state();
         const id = this.runId();
         const startedAt = this.store.activeWorkoutStartedAt();
