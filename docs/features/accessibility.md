@@ -13,6 +13,7 @@
     - With several steps: the name and number, e.g. "Squats, step 1 of 3, round 2 of 5".
     - Rep steps add the count, and the weight if there is one: "Push-ups, 20 reps", "Squats, 10 reps at 60 kg".
     - A step with sets says which, e.g. "Leg press, 10 reps, set 2 of 3", or "last set" for its last.
+    - A step done each side says which after its name: "Step-up, left side, 10 reps".
     - "last round" in place of the count in the final round (but "round 1 of 1" for a one-round workout); "round 4" with no total when it runs until stopped.
     - "Paused" when paused; "Finished" at the end.
 - ∞ is read as "until stopped". The round dots, the step strip and each step's kind icon are hidden (the announcements say the same), and so is what's after a rest on the face, which "Next:" says.

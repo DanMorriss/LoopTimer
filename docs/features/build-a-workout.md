@@ -11,8 +11,9 @@
 - **BLD-7** As a user I want to add a weight to a rep step (e.g. 10 squats at 60 kg), so I know what to lift.
 - **BLD-8** As a user I want a workout with a time limit (e.g. 20 minutes) in which I do as many rounds as I can, so I can work to the clock rather than to a count.
 - **BLD-9** As a user I want to give an exercise a number of sets and a rest between them (e.g. 3 × 10 with 60 seconds rest), so a gym plan goes in as it's written.
+- **BLD-10** As a user I want an exercise done one side at a time (e.g. 10 reps each leg), so it runs the left, then the right, before the rest.
 
-Still to come, in [sets-and-supersets](sets-and-supersets.md): exercises done each side (BLD-10), sets of their own reps and weight (BLD-11), supersets (BLD-12) and headings (BLD-13).
+Still to come, in [sets-and-supersets](sets-and-supersets.md): sets of their own reps and weight (BLD-11), supersets (BLD-12) and headings (BLD-13).
 
 ## Rules
 
@@ -47,6 +48,12 @@ Still to come, in [sets-and-supersets](sets-and-supersets.md): exercises done ea
 - Collapsed, a step with sets says so as the history does, with its rest: "3 × 10 @ 60 kg · rest 01:00", "3 × 00:45 · rest 00:30", or "3 × 10" with no rest.
 - The tip by the Steps heading says "Each round runs these in order, each for its sets. Steps left at 00:00 or 0 reps are skipped."
 - Saved, each step is a group of its own, its sets the group's `rounds` (see [data](data.md)). A workout of steps of one set runs as before: each straight after the last.
+
+### Each side (BLD-10)
+
+- A timed or rep step has an **Each side** switch beside its Sets wheel, off to start with. A rest step has none, and a step changed to rest is saved without it.
+- On, each set runs **both sides**, the reps (or time) and weight being for each side: "10 reps each side" is 10 left and 10 right. Which side goes first, and the countdown between a timed step's two sides, are settings (see [settings](settings.md)); running it is in [run-a-workout](run-a-workout.md).
+- Collapsed, the step says so: "10 reps each side", "00:30 each side", or with sets, "2 × 10 each side · rest 00:45".
 
 ### Adding, moving and deleting
 

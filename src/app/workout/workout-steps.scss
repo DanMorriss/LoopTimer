@@ -130,6 +130,13 @@
     font-size: 1.25rem;
 }
 
+// Which side of an exercise done each side, under its name: as plain to see as the name
+.workout-face__side {
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
 // What's after the rest, under its countdown
 .workout-face__then {
     max-width: 15em;

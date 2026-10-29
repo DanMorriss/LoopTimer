@@ -3451,4 +3451,78 @@ describe('WorkoutComponent', () => {
             fixture.destroy();
         });
     });
+
+    describe('each side (BLD-10)', () => {
+        const stepUp = { ...reps(10, 'Step-up'), eachSide: true as const };
+        const sidePlank = { ...work(3, 'Side plank'), eachSide: true as const };
+        const sided = (): Workout => ({
+            ...makeWorkout({ repeats: 1 }),
+            blocks: [
+                { kind: 'group', rounds: 2, restSeconds: 5, steps: [stepUp] },
+                { kind: 'group', rounds: 1, restSeconds: 0, steps: [sidePlank] },
+            ],
+        });
+        const face = () =>
+            (fixture.nativeElement.querySelector('.workout-face') as HTMLElement)
+                .textContent!.replace(/\s+/g, ' ')
+                .trim();
+        const said = () =>
+            (fixture.nativeElement.querySelector('[aria-live]') as HTMLElement).textContent?.trim();
+        function pressDone() {
+            (fixture.nativeElement.querySelector('.workout-next--done') as HTMLElement).click();
+            fixture.detectChanges();
+        }
+
+        beforeEach(() => localStorage.clear());
+        afterEach(() => localStorage.clear());
+
+        it('shows which side, and the other side next, then the rest', () => {
+            start(sided());
+
+            expect(face()).toContain('Left side');
+            expect(said()).toContain('Step-up, left side, 10 reps');
+            expect(text()).toContain('Next: Right side · 10 reps');
+
+            pressDone();
+            expect(face()).toContain('Right side');
+            expect(text()).toContain('Next: Rest · 00:05');
+            fixture.destroy();
+        });
+
+        it('switches sides on a timed step, for as long as the settings said at the start', () => {
+            TestBed.inject(SettingsStore).update({ switchSidesSeconds: 2 });
+            const run = TestBed.inject(ActiveRunService);
+            run.start(sided());
+            fixture = TestBed.createComponent(WorkoutComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            // Changed mid-run, it waits for the next one
+            TestBed.inject(SettingsStore).update({ switchSidesSeconds: 20 });
+            // Two sets of step-ups, with a rest between them but not after
+            pressDone();
+            pressDone();
+            advance(5000);
+            pressDone();
+            pressDone();
+            expect(face()).toContain('Left side');
+
+            advance(3000);
+            expect(face()).toContain('Switch sides');
+            expect(face()).toContain('then Right side · 00:03');
+            advance(2000);
+            expect(face()).toContain('Side plank');
+            expect(face()).toContain('Right side');
+            fixture.destroy();
+        });
+
+        it('starts with the right side when the settings say so', () => {
+            TestBed.inject(SettingsStore).update({ eachSideFirst: 'right' });
+            TestBed.inject(ActiveRunService).start(sided());
+            fixture = TestBed.createComponent(WorkoutComponent);
+            fixture.detectChanges();
+
+            expect(face()).toContain('Right side');
+            fixture.destroy();
+        });
+    });
 });

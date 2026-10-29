@@ -46,6 +46,7 @@ import { ExerciseDetailsDialogComponent } from '../shared/components/exercise-de
 import { ExerciseStore } from '../shared/state/exercise-store.service';
 import { ExercisePickerComponent } from './exercise-picker/exercise-picker.component';
 import { InfinitySwitchComponent } from '../shared/components/infinity-switch/infinity-switch.component';
+import { ToggleSwitchComponent } from '../shared/components/toggle-switch/toggle-switch.component';
 import { UndoService } from '../shared/undo/undo.service';
 import { changeSmoothly } from '../shared/layout-change';
 import {
@@ -88,6 +89,8 @@ interface StepModel {
      */
     restMinutes: number;
     restSeconds: number;
+    /** Done one side at a time, each set running both sides (BLD-10). Not for a rest step. */
+    eachSide: boolean;
 }
 
 /** How a workout goes on: a number of rounds (or until stopped), or a time limit. */
@@ -144,6 +147,7 @@ const NAME_EXAMPLES: Record<StepKind, string> = {
         FormField,
         WheelPickerComponent,
         InfinitySwitchComponent,
+        ToggleSwitchComponent,
         ExercisePickerComponent,
         ExerciseEditorComponent,
         ExerciseDetailsDialogComponent,
@@ -322,22 +326,25 @@ export class WorkoutSetupComponent {
 
     /**
      * How much of a step there is, as its wheels show it: e.g. "02:15", "20 reps", or
-     * "10 reps @ 60 kg".
+     * "10 reps @ 60 kg", and "each side" for one done each side.
      */
     protected amountText(step: StepModel): string {
         const sets = step.kind !== 'rest' && step.sets > 1;
+        const eachSide = step.kind !== 'rest' && step.eachSide ? ' each side' : '';
         const weight = step.weight > 0 ? ` @ ${step.weight} ${this.weightUnit}` : '';
         const time = `${padded(step.minutes)}:${padded(step.seconds)}`;
         if (!sets) {
             if (step.kind === 'reps') {
-                return `${step.reps === 1 ? '1 rep' : `${step.reps} reps`}${weight}`;
+                return `${step.reps === 1 ? '1 rep' : `${step.reps} reps`}${weight}${eachSide}`;
             }
-            return time;
+            return `${time}${eachSide}`;
         }
         // As the history says sets, e.g. "3 × 10 @ 60 kg", with the rest between them
         const amount = step.kind === 'reps' ? `${step.reps}${weight}` : time;
         const rest = step.restMinutes * 60 + step.restSeconds;
-        return `${step.sets} × ${amount}${rest > 0 ? ` · rest ${padded(step.restMinutes)}:${padded(step.restSeconds)}` : ''}`;
+        const restText =
+            rest > 0 ? ` · rest ${padded(step.restMinutes)}:${padded(step.restSeconds)}` : '';
+        return `${step.sets} × ${amount}${eachSide}${restText}`;
     }
 
     /**
@@ -630,6 +637,7 @@ export class WorkoutSetupComponent {
         const seconds = step.kind === 'reps' ? 0 : step.seconds;
         return {
             sets: step.kind === 'rest' ? 1 : sets,
+            eachSide: step.kind !== 'rest' && step.eachSide === true,
             restMinutes: Math.floor(rest / 60),
             restSeconds: rest % 60,
             key: this.nextKey++,
@@ -727,8 +735,12 @@ function toBlocks(steps: readonly StepModel[], unit: WeightUnit): Block[] {
         });
 }
 
-/** A step to save: whole seconds, a trimmed name, a weight in kg and any exercise picked. */
+/**
+ * A step to save: whole seconds, a trimmed name, a weight in kg, any exercise picked, and
+ * each side if it's done each side.
+ */
 function toStep(step: StepModel, unit: WeightUnit): Step {
+    const eachSide = step.kind !== 'rest' && step.eachSide ? { eachSide: true as const } : {};
     return step.kind === 'reps'
         ? {
               kind: 'reps',
@@ -736,12 +748,14 @@ function toStep(step: StepModel, unit: WeightUnit): Step {
               name: step.name.trim(),
               ...(step.weight > 0 ? { weight: savedWeight(step, unit) } : {}),
               ...(step.exerciseId ? { exerciseId: step.exerciseId } : {}),
+              ...eachSide,
           }
         : {
               kind: step.kind,
               seconds: step.minutes * 60 + step.seconds,
               name: step.name.trim(),
               ...(step.kind === 'work' && step.exerciseId ? { exerciseId: step.exerciseId } : {}),
+              ...eachSide,
           };
 }
 

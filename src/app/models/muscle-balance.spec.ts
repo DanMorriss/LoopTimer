@@ -48,6 +48,18 @@ describe('setsByMuscle', () => {
     it("leaves out sets with no exercise, or one that's gone", () => {
         expect(setsByMuscle([entry(undefined, 'own:deleted')], byId).size).toBe(0);
     });
+
+    it('counts a left and a right side as one set between them', () => {
+        const sided = entry('builtin:back-squat', 'builtin:back-squat');
+        sided.sets = sided.sets!.map((set, i) => ({
+            ...set,
+            step: 0,
+            side: i === 0 ? 'left' : 'right',
+        }));
+
+        expect(setsByMuscle([sided], byId).get('quads')).toBe(1);
+        expect(setsByMuscle([sided], byId).get('hamstrings')).toBe(0.5);
+    });
 });
 
 describe('muscleStatus', () => {

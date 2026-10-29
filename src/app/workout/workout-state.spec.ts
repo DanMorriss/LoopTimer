@@ -515,3 +515,66 @@ describe('groups', () => {
         );
     });
 });
+
+describe('each side (BLD-10)', () => {
+    const stepUp = { ...reps(10, 'Step-up'), eachSide: true as const };
+    const sidePlank = {
+        ...work(30, 'Side plank'),
+        exerciseId: 'builtin:side-plank',
+        eachSide: true as const,
+    };
+    const blocks: Block[] = [
+        { kind: 'group', rounds: 2, restSeconds: 45, steps: [stepUp] },
+        { kind: 'group', rounds: 1, restSeconds: 0, steps: [sidePlank] },
+    ];
+    const workout = (sides?: { first: 'left' | 'right'; switchSeconds: number }) => ({
+        ...makeWorkout({ repeats: 1 }),
+        blocks,
+        ...(sides ? { sides } : {}),
+    });
+
+    it('runs both sides each set, left first, with Switch sides only for a timed step', () => {
+        const plan = runPlan(workout());
+
+        expect(plan.steps).toEqual([
+            stepUp,
+            stepUp,
+            rest(45),
+            stepUp,
+            stepUp,
+            sidePlank,
+            rest(5, 'Switch sides'),
+            sidePlank,
+        ]);
+        expect(
+            plan.places.map((place) => place && `${place.step}${place.set}${place.side}`)
+        ).toEqual(['00left', '00right', null, '01left', '01right', '10left', null, '10right']);
+    });
+
+    it('starts with the side, and switches for as long, as the run says', () => {
+        const plan = runPlan(workout({ first: 'right', switchSeconds: 0 }));
+
+        expect(plan.places.slice(5).map((place) => place?.side ?? null)).toEqual(['right', 'left']);
+        // Switch sides off: straight from one side to the other
+        expect(plan.steps.slice(5)).toEqual([sidePlank, sidePlank]);
+    });
+
+    it('waits on each side of a rep step, and logs each with its side', () => {
+        const running = workout();
+        const leftDone: RepSet = { round: 0, step: 0, side: 'left', name: 'Step-up', reps: 10 };
+        // The left side done: on to the right, with no rest between
+        expect(workoutStateAt(running, 0, 1)).toEqual(
+            expect.objectContaining({ phase: 'reps', stepIndex: 1 })
+        );
+        expect(placeAt(running, 1)).toEqual({ step: 0, set: 0, side: 'right' });
+
+        // All four sides done, then the plank: 0:45 + 0:30 + 0:05 + 0:30
+        const done = workoutStateAt(running, 110_000, 4);
+        expect(done.phase).toBe('complete');
+        const sets = setsDone(running, done, [leftDone]);
+        expect(sets.filter((set) => set.step === 1).map((set) => set.side)).toEqual([
+            'left',
+            'right',
+        ]);
+    });
+});

@@ -21,8 +21,8 @@ export interface MuscleBalance {
 
 /**
  * The sets each muscle has had in the entries (PRG-6): each set counts 1 for its exercise's
- * main muscles and ½ for supporting ones. Sets with no exercise, or of one that's gone, don't
- * count. Muscles with none are left out.
+ * main muscles and ½ for supporting ones, and a side of an exercise done each side half that.
+ * Sets with no exercise, or of one that's gone, don't count. Muscles with none are left out.
  */
 export function setsByMuscle(
     entries: readonly HistoryEntry[],
@@ -35,11 +35,13 @@ export function setsByMuscle(
             if (!exercise) {
                 continue;
             }
+            // A left and a right are one set between them
+            const share = set.side ? 0.5 : 1;
             for (const muscle of exercise.mainMuscles) {
-                counts.set(muscle, (counts.get(muscle) ?? 0) + 1);
+                counts.set(muscle, (counts.get(muscle) ?? 0) + share);
             }
             for (const muscle of exercise.supportingMuscles) {
-                counts.set(muscle, (counts.get(muscle) ?? 0) + 0.5);
+                counts.set(muscle, (counts.get(muscle) ?? 0) + share / 2);
             }
         }
     }

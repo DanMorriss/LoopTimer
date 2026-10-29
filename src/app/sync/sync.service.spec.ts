@@ -1,3 +1,4 @@
+import { BACKUP_VERSION } from '../shared/backup/backup-file';
 import { TestBed } from '@angular/core/testing';
 import { HistoryEntry } from '../models/history';
 import { WorkoutFields } from '../models/workout';
@@ -91,7 +92,7 @@ describe('SyncService', () => {
             updated_at: workout.updatedAt,
             deleted_at: null,
             data: workout,
-            version: 8,
+            version: BACKUP_VERSION,
         });
         expect(onServer('history', 'run-1')!.data).toMatchObject({ title: 'Intervals' });
         expect(onServer('exercise', own.id)!.data).toMatchObject({ name: 'Sled push' });

@@ -33,6 +33,54 @@
             </fieldset>
         </section>
 
+        <section class="settings__section" aria-labelledby="workouts-heading">
+            <h3 class="settings__heading" id="workouts-heading">Workouts</h3>
+
+            <!-- For exercises done one side at a time (BLD-10) -->
+            <fieldset class="segmented">
+                <legend class="setting__name">Each side: start with</legend>
+                <div
+                    class="segmented__options"
+                    [style.--count]="sides.length"
+                    [style.--chosen]="chosenSideIndex()"
+                >
+                    <span class="segmented__thumb" aria-hidden="true"></span>
+                    @for (option of sides; track option.value; let i = $index) {
+                        <label
+                            class="segmented__option"
+                            [class.segmented__option--chosen]="i === chosenSideIndex()"
+                        >
+                            <input
+                                type="radio"
+                                name="eachSideFirst"
+                                class="segmented__input"
+                                [value]="option.value"
+                                [checked]="settings.eachSideFirst() === option.value"
+                                (change)="settings.update({ eachSideFirst: option.value })"
+                            />
+                            <span class="segmented__label">{{ option.label }}</span>
+                        </label>
+                    }
+                </div>
+            </fieldset>
+
+            <div class="setting">
+                <div class="setting__text">
+                    <span class="setting__name" id="switch-sides-label">Switch sides</span>
+                    <span class="setting__hint" id="switch-sides-hint">
+                        Time between a timed exercise's two sides, e.g. a side plank
+                    </span>
+                </div>
+                <app-wheel-picker
+                    class="settings__switch-sides"
+                    [value]="settings.switchSidesSeconds()"
+                    (valueChange)="settings.update({ switchSidesSeconds: $event })"
+                    [options]="switchOptions"
+                    labelledBy="switch-sides-label switch-sides-hint"
+                />
+            </div>
+        </section>
+
         <section class="settings__section" aria-labelledby="alarms-heading">
             <h3 class="settings__heading" id="alarms-heading">Alarms</h3>
 

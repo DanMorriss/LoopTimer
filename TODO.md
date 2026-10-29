@@ -25,7 +25,7 @@ Agreed with Dan on 2026-10-29, from a friend's gym plan (exercises of 3 × 10 wi
 
 - [x] **The new shape, with nothing to see:** workouts' `steps` become `blocks` (data version 5, backup version 8), logged sets get `set`, and `runPlan()` gives a workout's run order. Every workout is one group, so nothing changes yet.
 - [x] **Sets and rest between sets (BLD-9).**
-- [ ] **Each side (BLD-10).**
+- [x] **Each side (BLD-10).**
 - [ ] **Headings (BLD-13)**, and the section line (RUN-10).
 - [ ] **Vary each set (BLD-11).**
 - [ ] **Supersets and giant sets (BLD-12).**

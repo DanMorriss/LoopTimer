@@ -15,6 +15,11 @@ export interface TimedStep {
      * `linkSteps()`). Missing for a rest or an unnamed step, which isn't tracked.
      */
     exerciseId?: string;
+    /**
+     * A work step done one side at a time, e.g. a side plank: each set runs both sides, its
+     * time for each (BLD-10). Missing for not; never on a rest step.
+     */
+    eachSide?: true;
 }
 
 /**
@@ -34,10 +39,43 @@ export interface RepStep {
     weight?: number;
     /** The exercise it is, as for a timed step. Missing for an unnamed step. */
     exerciseId?: string;
+    /** Done one side at a time, its reps and weight for each, e.g. 10 each leg (BLD-10). */
+    eachSide?: true;
 }
 
 /** One step of a round. */
 export type Step = TimedStep | RepStep;
+
+/** Which side of an exercise done each side (BLD-10). */
+export type Side = 'left' | 'right';
+
+/**
+ * How exercises done each side run, from the settings, as they were when the run started:
+ * which side goes first, and the countdown between a timed step's two sides (0 for none).
+ */
+export interface RunSides {
+    first: Side;
+    switchSeconds: number;
+}
+
+export const DEFAULT_RUN_SIDES: RunSides = { first: 'left', switchSeconds: 5 };
+
+/** The longest Switch sides can be, the most its wheel goes up to. */
+export const MAX_SWITCH_SECONDS = 30;
+
+/** What the countdown between a timed step's two sides is called on the face. */
+export const SWITCH_SIDES = 'Switch sides';
+
+/** "Left side" or "Right side", as the face says it. */
+export function sideName(side: Side): string {
+    return side === 'left' ? 'Left side' : 'Right side';
+}
+
+/**
+ * A workout as it runs: the settings for exercises done each side go with it, so its plan
+ * (see `runPlan()`) has them. Without them, the defaults.
+ */
+export type RunningWorkout = Workout & { sides?: RunSides };
 
 /**
  * Steps that run in order a number of times: an exercise and its sets, with one step, or a
@@ -138,6 +176,8 @@ export interface StepPlace {
     step: number;
     /** Which round of its group (set of its exercise) it is, from 0. */
     set: number;
+    /** Which side it is, for a step done each side; missing for one that isn't. */
+    side?: Side;
 }
 
 /**
@@ -146,7 +186,10 @@ export interface StepPlace {
  */
 export interface RunPlan {
     steps: Step[];
-    /** Where each of `steps` comes from; null for a rest between a group's rounds. */
+    /**
+     * Where each of `steps` comes from; null for a rest between a group's rounds, and for
+     * Switch sides between a timed step's two sides.
+     */
     places: (StepPlace | null)[];
     /**
      * For each of `steps`, which set of its group it's part of, from 0, and how many its
@@ -164,12 +207,18 @@ export interface GroupSet {
 // Workouts don't change once made (a change makes a new one), so each one's plan is made once
 const plans = new WeakMap<Pick<Workout, 'blocks'>, RunPlan>();
 
-/** A workout's round as it runs (see `RunPlan`). */
-export function runPlan(workout: Pick<Workout, 'blocks'>): RunPlan {
+/**
+ * A workout's round as it runs (see `RunPlan`). A step done each side runs both sides in
+ * each set, with Switch sides between a timed one's, as `sides` has them (the run's, or the
+ * defaults).
+ */
+export function runPlan(workout: Pick<RunningWorkout, 'blocks' | 'sides'>): RunPlan {
     const saved = plans.get(workout);
     if (saved) {
         return saved;
     }
+    const { first: firstSide, switchSeconds } = workout.sides ?? DEFAULT_RUN_SIDES;
+    const sides: Side[] = firstSide === 'left' ? ['left', 'right'] : ['right', 'left'];
     const plan: RunPlan = { steps: [], places: [], sets: [] };
     let first = 0;
     for (const block of workout.blocks) {
@@ -184,9 +233,27 @@ export function runPlan(workout: Pick<Workout, 'blocks'>): RunPlan {
                 plan.sets.push(of);
             }
             block.steps.forEach((step, i) => {
-                plan.steps.push(step);
-                plan.places.push({ step: first + i, set });
-                plan.sets.push(of);
+                if (!step.eachSide || step.kind === 'rest') {
+                    plan.steps.push(step);
+                    plan.places.push({ step: first + i, set });
+                    plan.sets.push(of);
+                    return;
+                }
+                sides.forEach((side, s) => {
+                    // A rep step's second side waits for Done, so only a timed one needs this
+                    if (s > 0 && step.kind === 'work' && switchSeconds > 0) {
+                        plan.steps.push({
+                            kind: 'rest',
+                            seconds: switchSeconds,
+                            name: SWITCH_SIDES,
+                        });
+                        plan.places.push(null);
+                        plan.sets.push(of);
+                    }
+                    plan.steps.push(step);
+                    plan.places.push({ step: first + i, set, side });
+                    plan.sets.push(of);
+                });
             });
         }
         first += block.steps.length;

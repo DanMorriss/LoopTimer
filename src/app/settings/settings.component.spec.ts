@@ -229,4 +229,44 @@ describe('SettingsComponent', () => {
             );
         });
     });
+
+    describe('each side (BLD-10)', () => {
+        const sides = () =>
+            Array.from(
+                fixture.nativeElement.querySelectorAll(
+                    'input[name="eachSideFirst"]'
+                ) as NodeListOf<HTMLInputElement>
+            );
+        const switchWheel = () =>
+            fixture.nativeElement.querySelector(
+                '.settings__switch-sides [role="spinbutton"]'
+            ) as HTMLElement;
+
+        it('starts with the left side, and picks the right', () => {
+            create();
+
+            expect(sides().map((r) => r.closest('label')!.textContent!.trim())).toEqual([
+                'Left',
+                'Right',
+            ]);
+            expect(sides().find((r) => r.checked)?.value).toBe('left');
+            sides()[1].click();
+            fixture.detectChanges();
+            expect(TestBed.inject(SettingsStore).eachSideFirst()).toBe('right');
+        });
+
+        it('switches sides for 5 seconds to begin with, or for as long as is picked, or not', () => {
+            create();
+
+            expect(switchWheel().getAttribute('aria-valuetext')).toBe('5 seconds');
+            (
+                fixture.nativeElement.querySelector(
+                    '.settings__switch-sides [data-value="0"]'
+                ) as HTMLElement
+            ).click();
+            fixture.detectChanges();
+            expect(TestBed.inject(SettingsStore).switchSidesSeconds()).toBe(0);
+            expect(switchWheel().getAttribute('aria-valuetext')).toBe('Off');
+        });
+    });
 });

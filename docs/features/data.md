@@ -45,6 +45,7 @@ A JSON list of workouts:
 - `seconds`: 1–5999 (99:59). `reps`: 1–100. `name`: may be empty.
 - `weight` (rep steps only, optional): in **kg whatever unit is shown**, to the gram, more than 0 and up to 300. Missing for none. A weight picked in lb is converted (1 lb = 0.45359237 kg), so 45 lb saves as 20.412 kg.
 - `exerciseId` (work and rep steps, optional): the exercise the step is, e.g. `builtin:back-squat`, or one of your own. Set by picking an exercise in setup (EXR-2). When a workout is saved, a step keeps its exercise while that exercise is still there; any other named work step is linked by its name, as the conversion to version 3 does (below). Typing over a step's name in setup drops its link, so a renamed step follows its name. Missing for a rest or an unnamed step.
+- `eachSide` (work and rep steps, optional): `true` for a step done one side at a time (BLD-10), its reps or time for each side. Missing for not; anything else saved there, or on a rest step, is dropped when loading.
 - A workout with no work (no timed step with time, and no rep step) isn't valid.
 - **Before groups** (data version 4, backup version 7): a list of `steps` in place of `blocks`. It's read as one group of them, run once a round, so it runs exactly as before; the conversion to version 5 saves it that way.
 - **Older format:** workouts saved before steps existed (when they were timers of one work and one rest time) have `timerMinutes`, `timerSeconds`, `restMinutes`, `restSeconds` in place of `steps`. They're read as a timed step plus a rest step (left out if 0), and saved in the new format the next time anything changes.
@@ -92,7 +93,7 @@ In IndexedDB on the web: the `history` store of the `loop-workouts` database, on
 - `updatedAt`: when it was last logged or its note changed.
 - `totalRounds` is 0 for a workout that runs until stopped or to a time limit. `outcome` is `finished` or `stopped`; a time limit that ran out is `finished`.
 - `timeLimitSeconds` (optional): the workout's time limit, when it had one. `stepsIntoRound` (optional): when the time limit ran out, how many steps of the round it ran out in were done, rests left out, so "7 rounds + 3" is `roundsCompleted` 7 and `stepsIntoRound` 3. Both are dropped when broken, and `stepsIntoRound` is missing for a run stopped before its time limit. `note` is missing when there isn't one (up to 120 characters).
-- `sets` (missing when there were none), in order: one per Done on a rep step, and one per timed work step of an exercise that ran to its end. `round` (of the whole workout) and `step` (of the workout's steps, each counted once; see `blocks`) count from 0. `set` (optional) is which round of its group it was in, from 0, and is missing for 0, as in every entry from before groups. A rep set has `reps`, at least 1, and `weight` in kg (missing for none); a timed set has `seconds` (1–5999, the step's length) and no `reps` or `weight`. Entries from before timed sets were logged have rep sets only. `exerciseId` is the exercise it was, from its step (missing for an unnamed step). A broken set is dropped when loading, keeping the rest of the entry.
+- `sets` (missing when there were none), in order: one per Done on a rep step, and one per timed work step of an exercise that ran to its end. `round` (of the whole workout) and `step` (of the workout's steps, each counted once; see `blocks`) count from 0. `set` (optional) is which round of its group it was in, from 0, and is missing for 0, as in every entry from before groups. `side` (optional) is `left` or `right`, for a step done each side, each side being a set of its own. A rep set has `reps`, at least 1, and `weight` in kg (missing for none); a timed set has `seconds` (1–5999, the step's length) and no `reps` or `weight`. Entries from before timed sets were logged have rep sets only. `exerciseId` is the exercise it was, from its step (missing for an unnamed step). A broken set is dropped when loading, keeping the rest of the entry.
 
 **`history-pending` (`localStorage`):** each change to the history is kept here too until IndexedDB confirms it, as a JSON list of entries, since a write started as the page closes (logging a run left mid-way) may never finish. On the next load anything still here is saved to IndexedDB, the most recent change to each entry winning, and a deletion made after an entry's last change (in `deleted`) wins over it. If IndexedDB can't be used at all, the history stays here.
 
@@ -181,11 +182,13 @@ The run in progress in a tab moves too (`activeTimerId`, `activeTimerStartedAt` 
     "weightUnit": "kg",
     "bodyFigure": "male",
     "myEquipment": ["barbell", "rack"],
-    "onlyMyEquipment": false
+    "onlyMyEquipment": false,
+    "eachSideFirst": "left",
+    "switchSidesSeconds": 5
 }
 ```
 
-`theme` is `dark`, `light` or `system`. `weightUnit` is `kg` or `lb`. `bodyFigure` is `male` or `female`. `myEquipment` is the equipment you have, picked on the Exercises page, in the order it's offered there (unknown pieces are dropped); `onlyMyEquipment` is its Only what I have switch.
+`theme` is `dark`, `light` or `system`. `weightUnit` is `kg` or `lb`. `bodyFigure` is `male` or `female`. `myEquipment` is the equipment you have, picked on the Exercises page, in the order it's offered there (unknown pieces are dropped); `onlyMyEquipment` is its Only what I have switch. `eachSideFirst` is `left` (the default) or `right`, and `switchSidesSeconds` 0 (Off) to 30, 5 by default (BLD-10); anything else is the default.
 
 ### `sb-cpgacyzlfyskifzhkotu-auth-token`: who's signed in
 
@@ -205,15 +208,16 @@ In ms, added to the device's clock to date changes (see [backup and sync](backup
 
 ## Saved for the run in progress (`sessionStorage` on the web, per tab)
 
-| Key                      | What                                                                                                                               |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `activeWorkoutId`        | The workout being run.                                                                                                             |
-| `activeRunStartedAt`     | When the run really began. Never moves; it dates the run and makes its history id.                                                 |
-| `activeWorkoutStartedAt` | When the run began on the countdown's clock: moved on by every pause and every rep step, so elapsed time is simply now minus this. |
-| `activeWorkoutPausedAt`  | When it was paused, if it is.                                                                                                      |
-| `activeRepStepsDone`     | How many rep steps have been done, counting across rounds.                                                                         |
-| `activeRepMs`            | Time spent on rep steps so far, which counts as time spent in the history.                                                         |
-| `activeSets`             | The rep sets done so far. The timed ones are worked out from the clock.                                                            |
+| Key                      | What                                                                                                                                                                                      |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `activeWorkoutId`        | The workout being run.                                                                                                                                                                    |
+| `activeRunStartedAt`     | When the run really began. Never moves; it dates the run and makes its history id.                                                                                                        |
+| `activeWorkoutStartedAt` | When the run began on the countdown's clock: moved on by every pause and every rep step, so elapsed time is simply now minus this.                                                        |
+| `activeWorkoutPausedAt`  | When it was paused, if it is.                                                                                                                                                             |
+| `activeRepStepsDone`     | How many rep steps have been done, counting across rounds.                                                                                                                                |
+| `activeRepMs`            | Time spent on rep steps so far, which counts as time spent in the history.                                                                                                                |
+| `activeSets`             | The rep sets done so far. The timed ones are worked out from the clock.                                                                                                                   |
+| `activeSides`            | How exercises done each side run, as the settings were when the run started, e.g. `{ "first": "left", "switchSeconds": 5 }`, so a refresh runs the same. Broken or missing, the defaults. |
 
 From these, everything on the workout page is worked out (see [run-a-workout](run-a-workout.md)).
 
@@ -224,7 +228,7 @@ From these, everything on the workout page is worked out (see [run-a-workout](ru
 ```json
 {
     "app": "Loop Workouts",
-    "version": 8,
+    "version": 9,
     "exportedAt": 1761055200000,
     "workouts": [],
     "history": [],
@@ -241,7 +245,9 @@ From these, everything on the workout page is worked out (see [run-a-workout](ru
         "weightUnit": "kg",
         "bodyFigure": "male",
         "myEquipment": [],
-        "onlyMyEquipment": false
+        "onlyMyEquipment": false,
+        "eachSideFirst": "left",
+        "switchSidesSeconds": 5
     }
 }
 ```
@@ -250,6 +256,7 @@ From these, everything on the workout page is worked out (see [run-a-workout](ru
 - `version` goes up whenever the file's shape changes. A file from an older version is converted when imported; one from a newer version is turned down.
 - **Version 1** files (from before random ids) have number workout ids, no `updatedAt` and no `deleted`. They're converted as saved data is: their workouts get new random ids, so they're matched on what they are (title, steps and rounds) rather than by id.
 - **Version 3 and older** files call workouts timers: a `timers` list in place of `workouts`, `timerId` in the history and the kind `timer` in `deleted`. They're renamed as they're read.
+- **Version 8 and older** files have no steps done each side, nor sides on sets: nothing to convert.
 - **Version 7 and older** files have workouts with `steps` in place of `blocks`, read as one group as saved data is.
 - **Version 6 and older** files have no `libraryOrder`, so the library's order here stays as it is.
 - **Version 5 and older** files have no time limits, so nothing needs converting.

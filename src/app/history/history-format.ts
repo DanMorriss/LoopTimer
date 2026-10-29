@@ -78,34 +78,69 @@ export function describeSets(
         const last = stepSets.at(-1)!;
         const name = (last.exerciseId && currentName(last.exerciseId)) || last.name;
         const link = last.exerciseId === undefined ? {} : { exerciseId: last.exerciseId };
-        const repSets = stepSets.filter((set): set is RepSet => !isTimedSet(set));
-        if (repSets.length < stepSets.length) {
-            return {
-                name: name || 'Work',
-                ...link,
-                ...describeTimes(stepSets.filter((set) => isTimedSet(set))),
-            };
-        }
-        const weights = repSets.map((set) => (set.weight ? weightIn(set.weight, unit) : 0));
-        const reps = repSets.map((set) => set.reps);
-        const sameWeight = weights.every((w) => w === weights[0]);
-        const sameReps = reps.every((r) => r === reps[0]);
+        const timed = stepSets.some((set) => isTimedSet(set));
         return {
-            name: name || 'Reps',
+            name: name || (timed ? 'Work' : 'Reps'),
             ...link,
-            text: sameWeight
-                ? `${repsText(reps, sameReps)}${weights[0] ? ` @ ${weights[0]} ${unit}` : ''}`
-                : `${stepSets.map((_, i) => setText(reps[i], weights[i])).join(', ')} ${unit}`,
-            spoken: sameWeight
-                ? `${spokenReps(reps, sameReps)}${weights[0] ? ` at ${weights[0]} ${unit}` : ''}`
-                : repSets
-                      .map(
-                          (_, i) =>
-                              `${reps[i]} reps${weights[i] ? ` at ${weights[i]} ${unit}` : ''}`
-                      )
-                      .join(', '),
+            ...describeSides(stepSets, unit),
         };
     });
+}
+
+/**
+ * A step's sets, with its sides (BLD-10): "2 × 10 each side" when they match, or
+ * "left 10, 8 · right 10, 10" when they don't. A step not done each side is as it always was.
+ */
+function describeSides(
+    sets: readonly LoggedSet[],
+    unit: WeightUnit
+): Pick<SetsSummary, 'text' | 'spoken'> {
+    if (!sets.some((set) => set.side)) {
+        return describeAmounts(sets, unit);
+    }
+    const [left, right] = (['left', 'right'] as const).map((side) => {
+        const sideSets = sets.filter((set) => set.side === side);
+        return sideSets.length > 0 ? describeAmounts(sideSets, unit) : null;
+    });
+    if (left && right && left.text === right.text) {
+        return { text: `${left.text} each side`, spoken: `${left.spoken} each side` };
+    }
+    const parts: { side: string; amounts: Pick<SetsSummary, 'text' | 'spoken'> }[] = [];
+    if (left) {
+        parts.push({ side: 'left', amounts: left });
+    }
+    if (right) {
+        parts.push({ side: 'right', amounts: right });
+    }
+    return {
+        text: parts.map(({ side, amounts }) => `${side} ${amounts.text}`).join(' · '),
+        spoken: parts.map(({ side, amounts }) => `${side}, ${amounts.spoken}`).join('; '),
+    };
+}
+
+/** Sets of one step (or one side of it) summed up, as described for `describeSets()`. */
+function describeAmounts(
+    sets: readonly LoggedSet[],
+    unit: WeightUnit
+): Pick<SetsSummary, 'text' | 'spoken'> {
+    const repSets = sets.filter((set): set is RepSet => !isTimedSet(set));
+    if (repSets.length < sets.length) {
+        return describeTimes(sets.filter((set) => isTimedSet(set)));
+    }
+    const weights = repSets.map((set) => (set.weight ? weightIn(set.weight, unit) : 0));
+    const reps = repSets.map((set) => set.reps);
+    const sameWeight = weights.every((w) => w === weights[0]);
+    const sameReps = reps.every((r) => r === reps[0]);
+    return {
+        text: sameWeight
+            ? `${repsText(reps, sameReps)}${weights[0] ? ` @ ${weights[0]} ${unit}` : ''}`
+            : `${repSets.map((_, i) => setText(reps[i], weights[i])).join(', ')} ${unit}`,
+        spoken: sameWeight
+            ? `${spokenReps(reps, sameReps)}${weights[0] ? ` at ${weights[0]} ${unit}` : ''}`
+            : repSets
+                  .map((_, i) => `${reps[i]} reps${weights[i] ? ` at ${weights[i]} ${unit}` : ''}`)
+                  .join(', '),
+    };
 }
 
 // A timed step's sets: e.g. "3 × 0:45", "0:45, 0:30", or "0:45" for one

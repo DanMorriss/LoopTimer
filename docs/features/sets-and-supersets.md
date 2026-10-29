@@ -1,6 +1,6 @@
 # Sets and supersets
 
-Planned, agreed with Dan on 2026-10-29. Being built: the new shape and sets with a rest between them (steps 1 and 2 below) are in. As each part is built, its rules move into [build-a-workout](build-a-workout.md), [run-a-workout](run-a-workout.md), [history](history.md) and [data](data.md), and this file shrinks to what's still to come.
+Planned, agreed with Dan on 2026-10-29. Being built: the new shape, sets with a rest between them, and each side (steps 1 to 3 below) are in. As each part is built, its rules move into [build-a-workout](build-a-workout.md), [run-a-workout](run-a-workout.md), [history](history.md) and [data](data.md), and this file shrinks to what's still to come.
 
 Today a workout is one list of steps that loops as a whole. A gym plan is written differently: each exercise has its own sets, with a rest between them, e.g.
 
@@ -117,7 +117,7 @@ This adds what that needs: sets and rest on an exercise, exercises done one side
 
 - Each side is **logged as its own set**, with which side it was, so a weaker side shows up in its reps.
 - The history's lines, and the summary's:
-    - "Low step down: 2 × 10 each side", or "Low step down: left 10, 8 · right 10, 10" if the sides differ.
+    - "Low step down: 2 × 10 each side", or "Low step down: left 10, 8 · right 2 × 10" if the sides differ.
     - Varied sets read as they do now when sets differ: "Single leg press: 12 @ 40, 10 @ 45, 8 @ 50 kg", or "Plank: 0:30, 0:45, 1:00".
 - **Headings in the history:** an entry's lines are grouped under the workout's headings as they were when it ran, in order, e.g. "Warmup", then "Exercise bike: 5:00"; "Knee rehabilitation", then its three lines. Lines before the first heading come first, with none over them. A heading with no sets under it (e.g. a section stopped before) isn't shown. Renaming or deleting a heading later doesn't change past entries. The workout summary's sets are grouped the same way. Screen readers hear them as headings within the entry.
 - **"Use these settings next time?"** (RUN-7): Yes puts each set's reps and weight back on the step as done. Sets that all came out the same stay one Reps and Weight; sets that differ turn on Vary each set, so a pyramid worked out mid-workout is kept.
@@ -242,7 +242,7 @@ Each a PR of its own, in this order, each updating the AI prompt and the feature
 
 1. ✅ **The new shape, with nothing to see:** `blocks` (groups and headings), the 4 → 5 conversion, backup version 8, `set` on logged sets, and one place that turns a workout into its run order (`runPlan()`). Every workout is one group, so the app works exactly as it did. Until step 2, Create edits a workout as one list of steps, so saving a workout with groups or headings from Create (only possible from a file written by hand) makes it one group again.
 2. ✅ **Sets and rest between sets (BLD-9)**, in Create and the run, with the round line, the history, the summary, Last time and Next time. Its rules are now in [build-a-workout](build-a-workout.md) and [run-a-workout](run-a-workout.md). Create saves each step as a group of its own; until supersets (step 6) and headings (step 4), a workout from a file with a group of several steps, or headings, is saved without them when edited there.
-3. **Each side (BLD-10)**, with its two settings.
+3. ✅ **Each side (BLD-10)**, with its two settings, and backup version 9. Its rules are now in [build-a-workout](build-a-workout.md), [run-a-workout](run-a-workout.md), [history](history.md) and [settings](settings.md).
 4. **Headings (BLD-13)**, the section line, and headings in the history and summary.
 5. **Vary each set (BLD-11)**, and the mid-workout, "Use next time" and suggested next weight rules for it.
 6. **Supersets and giant sets (BLD-12).**

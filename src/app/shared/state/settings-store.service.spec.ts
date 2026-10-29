@@ -25,6 +25,8 @@ describe('SettingsStore', () => {
             bodyFigure: 'male',
             myEquipment: [],
             onlyMyEquipment: false,
+            eachSideFirst: 'left',
+            switchSidesSeconds: 5,
         });
 
         TestBed.resetTestingModule();
@@ -96,4 +98,20 @@ describe('SettingsStore', () => {
             expect(store.vibration()).toBe(true);
         });
     }
+
+    it('starts each side on the left with 5 seconds to switch, keeping only what it can use', () => {
+        const store = createStore();
+        expect(store.eachSideFirst()).toBe('left');
+        expect(store.switchSidesSeconds()).toBe(5);
+
+        TestBed.resetTestingModule();
+        localStorage.setItem('settings', '{"eachSideFirst": "middle", "switchSidesSeconds": 31}');
+        expect(createStore().eachSideFirst()).toBe('left');
+        expect(createStore().switchSidesSeconds()).toBe(5);
+
+        TestBed.resetTestingModule();
+        localStorage.setItem('settings', '{"eachSideFirst": "right", "switchSidesSeconds": 0}');
+        expect(createStore().eachSideFirst()).toBe('right');
+        expect(createStore().switchSidesSeconds()).toBe(0);
+    });
 });

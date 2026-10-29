@@ -633,5 +633,44 @@ describe('HistoryComponent', () => {
                 'Squats'
             );
         });
+
+        describe('done each side (BLD-10)', () => {
+            const side = (s: LoggedSet, which: 'left' | 'right'): LoggedSet => ({
+                ...s,
+                side: which,
+            });
+
+            it('says "each side" when both sides went alike, counting a pair as one set', () => {
+                const sets = [0, 1].flatMap((round) => [
+                    side(set(round, 10), 'left'),
+                    side(set(round, 10), 'right'),
+                ]);
+
+                expect(describeSets(sets, 'kg')).toEqual([
+                    {
+                        name: 'Squats',
+                        text: '2 × 10 each side',
+                        spoken: '2 sets of 10 reps each side',
+                    },
+                ]);
+            });
+
+            it("says each side's sets, left first, when they differ", () => {
+                const sets = [
+                    side(set(0, 10), 'right'),
+                    side(set(0, 10), 'left'),
+                    side(set(1, 10), 'right'),
+                    side(set(1, 8), 'left'),
+                ];
+
+                expect(describeSets(sets, 'kg')[0].text).toBe('left 10, 8 · right 2 × 10');
+            });
+
+            it('says the one side done, for a workout ended between them', () => {
+                expect(describeSets([side(set(0, 10, 20), 'left')], 'kg')[0].text).toBe(
+                    'left 10 reps @ 20 kg'
+                );
+            });
+        });
     });
 });

@@ -1,3 +1,4 @@
+import { BACKUP_VERSION } from '../shared/backup/backup-file';
 import { makeWorkout } from '../shared/testing/make-workout';
 import {
     changedSince,
@@ -41,7 +42,7 @@ describe('recordsHere', () => {
                 updated_at: 5,
                 deleted_at: null,
                 data: workout,
-                version: 8,
+                version: BACKUP_VERSION,
             },
             {
                 kind: 'exercise-note',
@@ -49,7 +50,7 @@ describe('recordsHere', () => {
                 updated_at: 6,
                 deleted_at: null,
                 data: { id: 'builtin:plank', text: 'Squeeze', updatedAt: 6 },
-                version: 8,
+                version: BACKUP_VERSION,
             },
             {
                 kind: 'library-order',
@@ -57,7 +58,7 @@ describe('recordsHere', () => {
                 updated_at: 7,
                 deleted_at: null,
                 data: { id: 'library', ids: ['w1'], updatedAt: 7 },
-                version: 8,
+                version: BACKUP_VERSION,
             },
             {
                 kind: 'history',
@@ -65,7 +66,7 @@ describe('recordsHere', () => {
                 updated_at: 8,
                 deleted_at: 8,
                 data: null,
-                version: 8,
+                version: BACKUP_VERSION,
             },
         ]);
     });
@@ -82,7 +83,7 @@ describe('changedSince', () => {
         updated_at: updatedAt,
         deleted_at: deletedAt,
         data: null,
-        version: 8,
+        version: BACKUP_VERSION,
     });
 
     it("gives the records whose change hasn't been sent or fetched", () => {
@@ -103,7 +104,7 @@ describe('readPulled', () => {
         updated_at: 5,
         deleted_at: null,
         data: makeWorkout({ id: 'w1', updatedAt: 5 }),
-        version: 8,
+        version: BACKUP_VERSION,
         ...fields,
     });
 
@@ -147,7 +148,10 @@ describe('readPulled', () => {
     });
 
     it('leaves what a newer version of the app wrote, saying where it is', () => {
-        const page = readPulled([row({ seq: 1 }), row({ seq: 2, id: 'w2', version: 9 })]);
+        const page = readPulled([
+            row({ seq: 1 }),
+            row({ seq: 2, id: 'w2', version: BACKUP_VERSION + 1 }),
+        ]);
 
         expect(page.read.map(keyOf)).toEqual(['workout:w1']);
         expect(page.tooNewAt).toBe(2);

@@ -32,8 +32,11 @@ import { readWorkout } from '../state/workout-store.service';
  * 8: groups, `blocks` in place of a workout's `steps`, each a group of steps with its rounds
  *    and rest between them, or a heading; and `set` on logged sets, which round of its
  *    group a set was in. A workout from before is read as one group of its steps.
+ * 9: exercises done each side: `eachSide` on steps, `side` on logged sets, and the side to
+ *    start with and Switch sides' length in `settings`. Nothing to convert; an older app
+ *    turns the file down rather than running both sides as one.
  */
-export const BACKUP_VERSION = 8;
+export const BACKUP_VERSION = 9;
 
 /** Far more than years of workouts take (about 1 KB each), so a bigger file isn't a backup. */
 export const MAX_BACKUP_BYTES = 50 * 1024 * 1024;

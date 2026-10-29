@@ -150,6 +150,28 @@ describe('WorkoutStore', () => {
             expect(createStore().workouts()).toEqual([valid]);
         });
 
+        it('keeps each side on a timed or rep step, and nowhere else (BLD-10)', () => {
+            const steps = [
+                { ...reps(10, 'Step-up'), eachSide: true },
+                { ...work(30, 'Side plank'), eachSide: true },
+                { ...rest(10), eachSide: true },
+                { ...reps(5), eachSide: 'yes' },
+            ];
+            localStorage.setItem(
+                'workouts',
+                JSON.stringify([
+                    { ...savedBeforeGroups(makeWorkout({ steps: [] })), id: 'workout-1', steps },
+                ])
+            );
+
+            expect(allSteps(createStore().workouts()[0])).toEqual([
+                { ...reps(10, 'Step-up'), eachSide: true },
+                { ...work(30, 'Side plank'), eachSide: true },
+                rest(10),
+                reps(5),
+            ]);
+        });
+
         it('drops a broken heading, keeping the workout', () => {
             const group = { kind: 'group', rounds: 1, restSeconds: 0, steps: [reps(5)] };
             const headings = ['', '  ', 42, 'x'.repeat(41), '  Warmup  '].map((text) => ({
