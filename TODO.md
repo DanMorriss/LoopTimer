@@ -28,7 +28,7 @@ Agreed with Dan on 2026-10-29, from a friend's gym plan (exercises of 3 × 10 wi
 - [x] **Each side (BLD-10).**
 - [x] **Headings (BLD-13)**, and the section line (RUN-10).
 - [x] **Vary each set (BLD-11).**
-- [ ] **Supersets and giant sets (BLD-12).**
+- [x] **Supersets and giant sets (BLD-12).**
 
 ### Simple planning
 
@@ -52,6 +52,9 @@ Agreed with Dan on 2026-10-29, from a friend's gym plan (exercises of 3 × 10 wi
     - **Our own icons instead of Material's (about 15 kB):** `mat-icon` (Material's icon module) is in the tab bar, run bar and undo bar, which are on every page. Swap it for a small icon component or inline SVG, and Material leaves the start-up code.
 - [ ] **The body map can't shade abductors:** react-native-body-highlighter has no abductor shapes on either figure (still none upstream on 2026-10-25, though its slug is mapped in `tools/build-body-shapes.mjs`), so exercises that work them (side plank, hip abduction) list them without shading. Fix by drawing the shapes ourselves, or swap to a diagram that has them.
 - [ ] **The summary's Change reps or weight has no headings:** its read-only lines are grouped under the workout's headings (BLD-13), but the view for changing them lists each step's sets without them. Group it the same way, or leave it as a plain list of what can be changed.
+- [ ] **The history doesn't name supersets:** Create and the run screen call a superset (or giant set) by name (BLD-12), but a history entry and the summary list its exercises' lines as they would any others', as an entry doesn't record which steps were in one. It could, as it does headings (a `supersets` field on the entry, and a backup version), with the lines grouped under "Superset".
+- [ ] **A superset moves with its buttons, not by dragging:** in Create, its own row has no drag handle, as the CDK drags one row and a superset is its row and its steps; its up and down buttons move it whole. Its steps drag within it, and other steps drag round it. Dragging it whole needs its steps inside its row (nested drop lists), or a preview of the lot.
+- [ ] **Try supersets in Create on an iPhone:** added on 2026-10-29 and only tried in Chromium. Check that a superset's steps sit in from it clearly with the line joining them, that Join with next, Take out and its + Step fit beside each other on a small phone, and that dragging a step past a collapsed superset lands after it.
 - [ ] **Try the section line on an iPhone:** added on 2026-10-29 (RUN-10) above the round line, and only tested in Chromium. Check that it fits with the round line and dots on a small phone, and that a long heading is cut short rather than pushing the ring down.
 - [ ] **Yes, use next time undoes Apply:** on the summary, applying a Next time step-up (PRG-10) and then answering Yes to "Use these settings next time?" puts the steps back to this run's last sets, as Yes always does. Yes could leave applied steps alone, or the two could become one choice.
 - [ ] **The muscle bars' aim is the same for every muscle:** 10 to 20 sets a week (PRG-8), the usual advice for building muscle, so small muscles hardly anyone trains on their own (neck, shins, abductors) always show as under, and so does most of the body for someone training for fitness rather than size. Decide whether small muscles get a lower aim, or the aim becomes a setting (an open question in `docs/features/progress.md`).

@@ -1,0 +1,39 @@
+// Supersets (BLD-12): the superset's own row heads its steps, which sit in from it on a line
+// down from it, so the lot reads as one thing. Its steps hide when it's collapsed.
+.step--superset {
+    --step-color: var(--accent);
+}
+
+.step--in-superset {
+    position: relative;
+    margin-left: 1.25rem;
+
+    // The line joining it to the step or superset row above, across the gap between them
+    &::before {
+        position: absolute;
+        top: calc(-0.75rem - 1px);
+        bottom: 0.75rem;
+        left: calc(-0.75rem - 2px);
+        border-left: 2px solid var(--accent);
+        content: '';
+    }
+}
+
+.step--hidden {
+    display: none;
+}
+
+// Where the others have their drag handle: a superset moves with its buttons, with its steps
+.step__handle--none {
+    background: transparent;
+    color: var(--accent);
+    cursor: default;
+}
+
+// + Step, Join with next and Take out
+.step__group-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}

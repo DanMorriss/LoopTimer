@@ -583,6 +583,37 @@ describe('groups', () => {
     });
 });
 
+describe('supersets (BLD-12)', () => {
+    const bench = reps(10, 'Bench');
+    const row = reps(10, 'Row');
+    const superset = (...steps: Step[]) => ({
+        ...makeWorkout({ repeats: 1 }),
+        blocks: [{ kind: 'group', rounds: 3, restSeconds: 60, steps }] as Block[],
+    });
+
+    it('runs its steps in turn each round, then the rest, never after the last round', () => {
+        expect(runPlan(superset(bench, row)).steps).toEqual([
+            bench,
+            row,
+            rest(60),
+            bench,
+            row,
+            rest(60),
+            bench,
+            row,
+        ]);
+    });
+
+    it('is named by how many exercises it has, rest steps aside', () => {
+        const groupOf = (...steps: Step[]) => runPlan(superset(...steps)).sets[0].group;
+
+        expect(groupOf(bench)).toBe('exercise');
+        expect(groupOf(bench, rest(15))).toBe('exercise');
+        expect(groupOf(bench, rest(15), row)).toBe('superset');
+        expect(groupOf(bench, row, reps(8, 'Press'))).toBe('giant set');
+    });
+});
+
 describe('each side (BLD-10)', () => {
     const stepUp = { ...reps(10, 'Step-up'), eachSide: true as const };
     const sidePlank = {

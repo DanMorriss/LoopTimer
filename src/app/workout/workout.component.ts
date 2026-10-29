@@ -69,6 +69,12 @@ function kindName(step: Step): string {
     return { work: 'Timed', rest: 'Rest', reps: 'Reps' }[step.kind];
 }
 
+/** Which set it is, e.g. "set 2 of 3", or a superset's round, "superset round 2 of 3". */
+function setText(set: GroupSet): string {
+    const count = `${set.set + 1} of ${set.of}`;
+    return set.group === 'exercise' ? `set ${count}` : `${set.group} round ${count}`;
+}
+
 /** Each kind of step's icon by its name, so the kinds aren't told apart by colour alone. */
 const KIND_ICONS: Record<StepKind, string> = {
     work: 'timer',
@@ -115,6 +121,7 @@ const MAX_ROUND_DOTS = 15;
     },
 })
 export class WorkoutComponent {
+    protected readonly setText = setText;
     workoutStore = inject(WorkoutStore);
     private readonly router = inject(Router);
     private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
@@ -402,12 +409,16 @@ export class WorkoutComponent {
         }
         const step = next.step;
         const workout = this.running();
-        const set = step.kind !== 'rest' && workout ? this.setOf(workout, next.stepIndex) : null;
+        // Which set, as one starts: a superset's other steps are in the round already said
+        const set =
+            step.kind !== 'rest' && workout && this.startsSet(workout, next.stepIndex)
+                ? this.setOf(workout, next.stepIndex)
+                : null;
         // A step's second side is the same exercise again, so it's only the side
         const side = workout && this.secondSide(workout, next.stepIndex);
         const name = side
             ? sideName(side)
-            : `${step.name || kindName(step)}${set ? ` · set ${set.set + 1} of ${set.of}` : ''}`;
+            : `${step.name || kindName(step)}${set ? ` · ${setText(set)}` : ''}`;
         if (step.kind === 'reps') {
             const weight = this.weightText(step);
             return `${name} · ${step.reps} reps${weight ? ` @ ${weight}` : ''}`;
@@ -544,6 +555,15 @@ export class WorkoutComponent {
             : null;
     }
 
+    /** Whether step `stepIndex` of the round is the first of its set (or a superset's round). */
+    private startsSet(workout: Workout, stepIndex: number): boolean {
+        const { places, sets } = runPlan(workout);
+        return (
+            places.findIndex((place, i) => place !== null && sets[i] === sets[stepIndex]) ===
+            stepIndex
+        );
+    }
+
     /** The set step `stepIndex` of the round is in, for an exercise of more than one. */
 
     private setOf(workout: Workout, stepIndex: number): GroupSet | null {
@@ -554,15 +574,23 @@ export class WorkoutComponent {
     /**
      * The round's steps as a strip in their kinds' colours: done, the one in progress, and
      * those to go. Only where there's more than one work or rep step, and not once finished.
+     * In a workout with sets, a superset's round (BLD-12), with the rest before it.
      */
     stepStrip = computed((): StripStep[] => {
         const state = this.state();
         const workout = this.running();
-        if (!workout || !state || state.phase === 'complete' || !this.showStepCount()) {
+        if (!workout || !state || state.phase === 'complete') {
             return [];
         }
-        return runPlan(workout).steps.map((step, i) => ({
-            kind: step.kind,
+        const plan = runPlan(workout);
+        const set = plan.sets[state.stepIndex];
+        const shown = this.showStepCount()
+            ? plan.steps.map((_, i) => i)
+            : set && set.group !== 'exercise'
+              ? plan.sets.flatMap((other, i) => (other === set ? [i] : []))
+              : [];
+        return shown.map((i) => ({
+            kind: plan.steps[i].kind,
             state: i === state.stepIndex ? 'current' : i < state.stepIndex ? 'done' : 'left',
         }));
     });
@@ -682,7 +710,8 @@ export class WorkoutComponent {
         }
         const set = this.groupSet();
         if (set && state.step.kind !== 'rest') {
-            parts.push(set.set === set.of - 1 ? 'last set' : `set ${set.set + 1} of ${set.of}`);
+            const last = set.group === 'exercise' ? 'last set' : `${set.group}, last round`;
+            parts.push(set.set === set.of - 1 ? last : setText(set));
         }
         // The round is given as each round starts
         if (state.stepIndex === 0) {

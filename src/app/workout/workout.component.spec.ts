@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
-import { allSteps, asOneGroup, RepStep, UNTIL_STOPPED, Workout } from '../models/workout';
+import { allSteps, asOneGroup, RepStep, Step, UNTIL_STOPPED, Workout } from '../models/workout';
 import { HistoryStore } from '../shared/state/history-store.service';
 import { SettingsStore } from '../shared/state/settings-store.service';
 import { WorkoutStore } from '../shared/state/workout-store.service';
@@ -3535,6 +3535,86 @@ describe('WorkoutComponent', () => {
                 [0, 2, 8],
                 [1, 0, false],
             ]);
+            fixture.destroy();
+        });
+    });
+
+    describe('supersets (BLD-12)', () => {
+        /** Bench then row, 3 rounds with 0:05 between, then a 0:03 plank once. */
+        const upperBody = (more: Step[] = []): Workout => ({
+            ...makeWorkout({ repeats: 1 }),
+            blocks: [
+                {
+                    kind: 'group',
+                    rounds: 3,
+                    restSeconds: 5,
+                    steps: [reps(10, 'Bench'), reps(10, 'Row'), ...more],
+                },
+                { kind: 'group', rounds: 1, restSeconds: 0, steps: [work(3, 'Plank')] },
+            ],
+        });
+        const status = () =>
+            (fixture.nativeElement.querySelector('.workout-status') as HTMLElement)
+                .textContent!.replace(/\s+/g, ' ')
+                .trim();
+        const said = () =>
+            (fixture.nativeElement.querySelector('[aria-live]') as HTMLElement).textContent?.trim();
+        const strip = () =>
+            Array.from(
+                fixture.nativeElement.querySelectorAll('.step-strip__step') as NodeListOf<Element>
+            ).map((step) => step.className.match(/step-strip__step--(done|current|left)\b/)![1]);
+        function pressDone() {
+            (fixture.nativeElement.querySelector('.workout-next--done') as HTMLElement).click();
+            fixture.detectChanges();
+        }
+
+        beforeEach(() => localStorage.clear());
+        afterEach(() => localStorage.clear());
+
+        it('runs its steps in turn each round, with the rest between rounds', () => {
+            start(upperBody());
+
+            expect(text()).toContain('Bench');
+            expect(status()).toBe('superset round 1 of 3');
+            expect(text()).toContain('Next: Row · 10 reps');
+            pressDone();
+            expect(text()).toContain('Row');
+            expect(status()).toBe('superset round 1 of 3');
+            pressDone();
+
+            expect(component.isRestActive()).toBe(true);
+            expect(status()).toBe('superset round 2 of 3');
+            expect(text()).toContain('then Bench · superset round 2 of 3 · 10 reps');
+            advance(5000);
+            expect(said()).toBe('Bench, 10 reps, superset round 2 of 3');
+            pressDone();
+            pressDone();
+            advance(5000);
+
+            expect(status()).toBe('Last one!');
+            expect(said()).toBe('Bench, 10 reps, superset, last round');
+            pressDone();
+            pressDone();
+            // Straight on, with no rest after the last round
+            expect(component.isWorkActive()).toBe(true);
+            fixture.destroy();
+        });
+
+        it('is a giant set with three exercises, rests aside', () => {
+            start(upperBody([rest(2), reps(8, 'Press')]));
+
+            expect(status()).toBe('giant set round 1 of 3');
+            fixture.destroy();
+        });
+
+        it("shows a strip of the round's steps, with the rest before it", () => {
+            start(upperBody());
+
+            expect(strip()).toEqual(['current', 'left']);
+            pressDone();
+            expect(strip()).toEqual(['done', 'current']);
+            pressDone();
+            expect(strip()).toEqual(['current', 'left', 'left']);
             fixture.destroy();
         });
     });

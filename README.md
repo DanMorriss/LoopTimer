@@ -106,11 +106,10 @@ supabase/schema.sql  The server side: the records table, and the sync and delete
 
 ## Roadmap
 
-Loop Workouts is becoming a workout helper that shows you how you're improving: see [docs/direction.md](docs/direction.md). Done so far: exercises with a body map, last time and personal bests in the workout, progress pages, sync, a suggested next weight, and a workout summary with the muscles worked, what to step up next time and the workout to do next. Still to come:
+Loop Workouts is becoming a workout helper that shows you how you're improving: see [docs/direction.md](docs/direction.md). Done so far: exercises with a body map, last time and personal bests in the workout, progress pages, sync, a suggested next weight, a workout summary with the muscles worked, what to step up next time and the workout to do next, and gym plans as they're written: sets with a rest between them, exercises done each side, sets with their own reps and weight, supersets and giant sets, and headings. Still to come:
 
 1. **Sign in with Google or Apple**, as well as by email.
-2. **Sets and supersets:** sets with a rest between them, exercises done each side, sets with their own reps and weight, supersets and giant sets, and headings.
-3. **Simple planning:** a weekly plan, and what's due today.
+2. **Simple planning:** a weekly plan, and what's due today.
 
 Also planned: proper alarm sounds, choosing the sound for each step, and alarms on a locked phone.
 
