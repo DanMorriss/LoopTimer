@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HistoryEntry } from '../../models/history';
 import { makeWorkout } from '../testing/make-workout';
 import { savedHistory } from '../testing/history-database';
-import { DeviceDataService } from './device-data.service';
+import { DEVICE_CHANNEL, DeviceDataService } from './device-data.service';
 import { HistoryStore } from './history-store.service';
 import { WorkoutStore } from './workout-store.service';
 
@@ -61,5 +61,32 @@ describe('DeviceDataService', () => {
 
         expect(workouts.activeWorkout()).toBeNull();
         expect(sessionStorage.length).toBe(0);
+    });
+
+    it('tells the other open tabs, once storage is cleared', async () => {
+        const otherTab = new BroadcastChannel(DEVICE_CHANNEL);
+        const heard = new Promise<number>((resolve) =>
+            otherTab.addEventListener('message', () => resolve(localStorage.length), {
+                once: true,
+            })
+        );
+
+        await TestBed.inject(DeviceDataService).clear();
+
+        expect(await heard).toBe(0);
+        otherTab.close();
+    });
+
+    it('drops its workout and starts again when another tab clears the device', async () => {
+        const workouts = TestBed.inject(WorkoutStore);
+        TestBed.inject(DeviceDataService);
+        workouts.setActiveWorkout(makeWorkout());
+        const otherTab = new BroadcastChannel(DEVICE_CHANNEL);
+
+        otherTab.postMessage('cleared');
+        await vi.waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
+
+        expect(workouts.activeWorkout()).toBeNull();
+        otherTab.close();
     });
 });

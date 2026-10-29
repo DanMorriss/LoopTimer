@@ -6,6 +6,7 @@ import { routes } from './app/app.routes';
 import { reloadOnStaleCode } from './app/nav/stale-code';
 import { AlarmService } from './app/shared/alarms/alarm.service';
 import { ActiveRunService } from './app/shared/run/active-run.service';
+import { DeviceDataService } from './app/shared/state/device-data.service';
 import { ThemeService } from './app/shared/theme/theme.service';
 import { SyncStarter } from './app/sync/sync-starter.service';
 
@@ -21,6 +22,8 @@ bootstrapApplication(AppComponent, {
             inject(ThemeService);
             // Pick up a workout already going (after a refresh), whichever page this is
             inject(ActiveRunService);
+            // Start again empty if another tab clears this device
+            inject(DeviceDataService);
             // Sync, if this device is signed in (loading its code only then)
             inject(SyncStarter).startIfSignedIn();
         }),
