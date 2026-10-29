@@ -1,6 +1,6 @@
 # Sets and supersets
 
-Planned, agreed with Dan on 2026-10-29. Being built: the new shape, sets with a rest between them, each side, headings with the section line, and sets that vary (steps 1 to 5 below) are in. As each part is built, its rules move into [build-a-workout](build-a-workout.md), [run-a-workout](run-a-workout.md), [history](history.md), [progress](progress.md) and [data](data.md), and this file shrinks to what's still to come.
+Agreed with Dan on 2026-10-29, and built (all six steps below). As each part is built, its rules move into [build-a-workout](build-a-workout.md), [run-a-workout](run-a-workout.md), [history](history.md), [progress](progress.md) and [data](data.md), and this file shrinks to what's still to come.
 
 Today a workout is one list of steps that loops as a whole. A gym plan is written differently: each exercise has its own sets, with a rest between them, e.g.
 
@@ -245,7 +245,7 @@ Each a PR of its own, in this order, each updating the AI prompt and the feature
 3. ✅ **Each side (BLD-10)**, with its two settings, and backup version 9. Its rules are now in [build-a-workout](build-a-workout.md), [run-a-workout](run-a-workout.md), [history](history.md) and [settings](settings.md).
 4. ✅ **Headings (BLD-13)**, the section line (RUN-10), headings in the history and summary, and backup version 10. Its rules are now in [build-a-workout](build-a-workout.md), [run-a-workout](run-a-workout.md), [history](history.md) and [data](data.md).
 5. ✅ **Vary each set (BLD-11)**, and the mid-workout, "Use next time" and suggested next weight rules for it, and backup version 11. Its rules are now in [build-a-workout](build-a-workout.md), [run-a-workout](run-a-workout.md), [progress](progress.md) and [data](data.md).
-6. **Supersets and giant sets (BLD-12).**
+6. ✅ **Supersets and giant sets (BLD-12)**, in Create and the run, with no new data (a group of several steps was already its shape), so no new backup version. Its rules are now in [build-a-workout](build-a-workout.md) and [run-a-workout](run-a-workout.md). Two things differ from the plan above: a superset's own row moves with its up and down buttons rather than by dragging, and the history doesn't name supersets yet (both in TODO.md's Known issues).
 
 After step 2, the plan at the top can be built with sets (each leg as 20 reps for now); after step 4, as written.
 

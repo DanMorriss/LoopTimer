@@ -13,6 +13,7 @@ import { BehaviorSubject } from 'rxjs';
 import {
     allSteps,
     asOneGroup,
+    Block,
     MAX_HEADINGS,
     MAX_STEPS,
     Step,
@@ -1335,6 +1336,275 @@ describe('WorkoutSetupComponent', () => {
                 kind: 'heading',
                 text: 'Legs',
             });
+        });
+    });
+
+    describe('supersets (BLD-12)', () => {
+        function choose(step: number, wheel: string, value: string) {
+            el(`[id$="-${wheel}"] [data-value="${value}"]`, steps()[step]).click();
+            fixture.detectChanges();
+        }
+        const wheel = (step: number, name: string) =>
+            el(`[id$="-${name}"] [role="spinbutton"]`, steps()[step])?.getAttribute(
+                'aria-valuenow'
+            ) ?? null;
+        const badge = (step: number) =>
+            el('.step__heading-badge [aria-hidden]', steps()[step]).textContent!.trim();
+        const blocks = () => unlinkedWorkout(store.workouts()[0])!.blocks;
+        const group = (rounds: number, restSeconds: number, ...groupSteps: Step[]): Block => ({
+            kind: 'group',
+            rounds,
+            restSeconds,
+            steps: groupSteps,
+        });
+
+        /** Bench (3 × 10, rest 01:00) then Row (10 reps), each open. */
+        async function benchAndRow() {
+            await create({ empty: true });
+            typeName(0, 'Bench');
+            chooseReps(0, '10');
+            choose(0, 'sets', '3');
+            await addStep();
+            typeName(1, 'Row');
+            chooseReps(1, '10');
+            await press('Step 1, Bench, 3 × 10 · rest 01:00');
+        }
+
+        it("joins an exercise with the next, with its sets as the superset's rounds", async () => {
+            await setup();
+            await benchAndRow();
+
+            await press('Join Step 1, Bench with the next step');
+
+            expect(steps()[0].classList).toContain('step--superset');
+            expect(badge(0)).toBe('Superset');
+            expect(wheel(0, 'sets')).toBe('3');
+            expect(wheel(0, 'rest-minutes')).toBe('1');
+            expect(steps()[0].textContent).toContain('Rest between rounds');
+            // Its steps have no Sets of their own
+            expect(wheel(1, 'sets')).toBeNull();
+            expect(wheel(2, 'sets')).toBeNull();
+            expect(document.activeElement).toBe(toggle(0));
+
+            await submit();
+            expect(blocks()).toEqual([group(3, 60, reps(10, 'Bench'), reps(10, 'Row'))]);
+        });
+
+        it('is a giant set with a third exercise, and a superset again when it goes', async () => {
+            await setup();
+            await benchAndRow();
+            await addStep();
+            typeName(2, 'Press');
+            chooseReps(2, '8');
+            await press('Step 1, Bench, 3 × 10 · rest 01:00');
+            await press('Join Step 1, Bench with the next step');
+
+            await press('Join Superset, steps 1 to 2 with the next step');
+            expect(badge(0)).toBe('Giant set');
+            // A rest step doesn't make it any bigger
+            await press('Add a step to the giant set');
+            await changeKind(4, 'Rest');
+            expect(badge(0)).toBe('Giant set');
+
+            await press('Step 3, Press, in the giant set, 8 reps');
+            await press('Take Step 3, Press out');
+            expect(badge(0)).toBe('Superset');
+            // Just after it, with its rounds as its sets
+            expect(steps()[4].classList).not.toContain('step--in-superset');
+            expect(el('.step__number', steps()[4]).textContent).toContain('Step 4, Press');
+            expect(wheel(4, 'sets')).toBe('3');
+            expect(el('[aria-live]').textContent).toContain(
+                'Took Press out of the giant set, now step 4'
+            );
+        });
+
+        it('becomes two exercises again when one of its two steps is taken out', async () => {
+            await setup();
+            await benchAndRow();
+            await press('Join Step 1, Bench with the next step');
+            choose(0, 'rest-seconds', '30');
+
+            await press('Take Step 1, Bench out');
+
+            expect(steps()).toHaveLength(2);
+            expect(fixture.nativeElement.querySelector('.step--superset')).toBeNull();
+            await submit();
+            expect(blocks()).toEqual([
+                ...eachAGroup([reps(10, 'Row')], 3, 90),
+                ...eachAGroup([reps(10, 'Bench')], 3, 90),
+            ]);
+        });
+
+        it('adds a rep step at its end with its + Step, with its rounds', async () => {
+            await setup();
+            await benchAndRow();
+            await press('Join Step 1, Bench with the next step');
+            await addStep();
+            typeName(3, 'Plank');
+            chooseReps(3, '5');
+            await press('Superset, steps 1 to 2, 3 rounds · rest 01:00');
+
+            await press('Add a step to the superset');
+
+            expect(steps()[3].classList).toContain('step--in-superset');
+            expect(document.activeElement).toBe(el('input', steps()[3]));
+            chooseReps(3, '12');
+            await submit();
+            expect(blocks()).toEqual([
+                group(3, 60, reps(10, 'Bench'), reps(10, 'Row'), reps(12)),
+                ...eachAGroup([reps(5, 'Plank')]),
+            ]);
+        });
+
+        it('changes every step\'s sets with its Rounds, and says "Vary each round"', async () => {
+            await setup();
+            await benchAndRow();
+            await press('Join Step 1, Bench with the next step');
+
+            expect(steps()[1].textContent).toContain('Vary each round');
+            el<HTMLElement>('[id$="-vary"] [role="switch"]', steps()[1]).click();
+            fixture.detectChanges();
+            await fixture.whenStable();
+            expect(steps()[1].querySelectorAll('.wheel-row')).toHaveLength(3);
+            expect(steps()[1].querySelector('.wheel-row')!.textContent).toContain(
+                'Round 1 · 10 reps'
+            );
+
+            choose(0, 'sets', '4');
+            await fixture.whenStable();
+            expect(steps()[1].querySelectorAll('.wheel-row')).toHaveLength(4);
+        });
+
+        it('shows collapsed as one line of its steps, its rounds and rest', async () => {
+            await setup();
+            const saved = store.addWorkout({
+                ...savedWorkout,
+                blocks: [
+                    group(3, 60, reps(10, 'Bench'), rest(15), reps(10, 'Row')),
+                    ...eachAGroup([work(60, 'Plank')]),
+                ],
+            });
+            queryParamMap.next(convertToParamMap({ editId: saved.id }));
+            await create();
+
+            expect(badge(0)).toBe('Superset');
+            expect(el('.step__summary-name', steps()[0]).textContent!.trim()).toBe(
+                'Bench, Rest, Row'
+            );
+            expect(el('.step__summary-time', steps()[0]).textContent!.trim()).toBe(
+                '3 rounds · rest 01:00'
+            );
+            // Its steps are hidden with it
+            expect(steps().map((step) => step.classList.contains('step--hidden'))).toEqual([
+                false,
+                true,
+                true,
+                true,
+                false,
+            ]);
+
+            await submit();
+            expect(blocks()[0]).toEqual(group(3, 60, reps(10, 'Bench'), rest(15), reps(10, 'Row')));
+        });
+
+        it('opens a group of several steps that runs once as its steps', async () => {
+            await setup({ editId: 'workout-1' });
+            store.addWorkout(savedWorkout);
+            await create();
+
+            expect(fixture.nativeElement.querySelector('.step--superset')).toBeNull();
+            expect(steps()).toHaveLength(2);
+        });
+
+        it('moves with its steps, and its steps move within it', async () => {
+            await setup();
+            await benchAndRow();
+            await press('Join Step 1, Bench with the next step');
+            await addStep();
+            typeName(3, 'Plank');
+            await press('Collapse all');
+            await press('Expand all');
+
+            // Its first step can't go up out of it, nor its last down
+            expect(button('Move Step 1, Bench up').disabled).toBe(true);
+            expect(button('Move Step 2, Row down').disabled).toBe(true);
+            await press('Move Step 1, Bench down');
+            expect(el('.step__number', steps()[1]).textContent).toContain('Step 1, Row');
+
+            // A step goes past the whole superset
+            await press('Move Step 3, Plank up');
+            expect(el('.step__number', steps()[0]).textContent).toContain('Step 1, Plank');
+            expect(steps()[1].classList).toContain('step--superset');
+
+            await press('Move Superset, steps 2 to 3 up');
+            expect(steps()[0].classList).toContain('step--superset');
+            expect(el('[aria-live]').textContent).toContain('Moved superset to before step 3');
+            await submit();
+            // Plank, left at 0 reps, is left out
+            expect(blocks()).toEqual([group(3, 60, reps(10, 'Row'), reps(10, 'Bench'))]);
+        });
+
+        it('keeps a dragged step out of a superset, and one of its own in it', async () => {
+            await setup();
+            await benchAndRow();
+            await press('Join Step 1, Bench with the next step');
+            await addStep();
+            const list = fixture.debugElement
+                .query(By.directive(CdkDropList))
+                .injector.get(CdkDropList);
+            const canDrop = (from: number, to: number) =>
+                list.sortPredicate(to, list.getSortedItems()[from], list);
+
+            await press('Collapse all');
+            // Collapsed, straight after its row is after it on screen, where it goes
+            expect(canDrop(3, 1)).toBe(true);
+            await press('Expand all');
+
+            // Plank, at the end, can go before the superset, but not into it
+            expect(canDrop(3, 0)).toBe(true);
+            expect(canDrop(3, 1)).toBe(false);
+            expect(canDrop(3, 2)).toBe(false);
+            // Bench can swap with Row, but not leave
+            expect(canDrop(1, 2)).toBe(true);
+            expect(canDrop(1, 3)).toBe(false);
+
+            // Dropped on a collapsed superset's row, from above, it goes after its steps
+            await press('Move Step 3, reps up');
+            await press('Collapse all');
+            list.dropped.emit({ previousIndex: 0, currentIndex: 1 } as CdkDragDrop<unknown>);
+            fixture.detectChanges();
+            expect(steps()[0].classList).toContain('step--superset');
+            expect(el('.step__summary-name', steps()[3]).textContent!.trim()).toBe('');
+            expect(el('[aria-live]').textContent).toContain('Moved reps to step 3');
+        });
+
+        it('deletes with its steps, and comes back with Undo', async () => {
+            await setup();
+            await benchAndRow();
+            await press('Join Step 1, Bench with the next step');
+
+            await press('Delete Superset, steps 1 to 2');
+            expect(steps()).toHaveLength(0);
+            const undo = TestBed.inject(UndoService);
+            expect(undo.offer()?.message).toBe('Deleted Superset, steps 1 to 2');
+
+            undo.undo();
+            fixture.detectChanges();
+            expect(steps()).toHaveLength(3);
+            expect(steps()[0].classList).toContain('step--superset');
+        });
+
+        it('becomes an exercise when a step of two is deleted', async () => {
+            await setup();
+            await benchAndRow();
+            await press('Join Step 1, Bench with the next step');
+
+            await press('Delete Step 2, Row');
+
+            expect(steps()).toHaveLength(1);
+            expect(steps()[0].classList).not.toContain('step--in-superset');
+            await submit();
+            expect(blocks()).toEqual(eachAGroup([reps(10, 'Bench')], 3, 60));
         });
     });
 

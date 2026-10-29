@@ -86,6 +86,15 @@ export function planPrompt(): string {
                         restSeconds: 60,
                         steps: [{ kind: 'work', seconds: 45, name: 'Wall sit hold' }],
                     },
+                    {
+                        kind: 'group',
+                        rounds: 3,
+                        restSeconds: 60,
+                        steps: [
+                            { kind: 'reps', reps: 12, name: 'Leg extension', weight: 30 },
+                            { kind: 'reps', reps: 12, name: 'Seated leg curl', weight: 30 },
+                        ],
+                    },
                 ],
             },
         ],
@@ -125,6 +134,7 @@ A GROUP is one exercise and its sets: { "kind": "group", "rounds": 3, "restSecon
 - "restSeconds": the rest between sets, 0–${MAX_STEP_SECONDS} seconds; it never comes after the last set. 0 for none, or for one set.
 - "steps": the one step it is, as below
 So "3 × 8 squats, 90 seconds rest" is one group with "rounds": 3 and "restSeconds": 90. A rest between one exercise and the next is a group of one rest step, with "rounds": 1. Something done once, e.g. a warm-up, is a group with "rounds": 1.
+A SUPERSET (or giant set, or exercises paired as "A1/A2") is one group with two or more steps, done one after another each round, then the rest: "3 rounds of 12 leg extensions and 12 leg curls, 60 seconds rest" is one group with "rounds": 3, "restSeconds": 60 and both steps. A rest inside a round (e.g. 15 seconds between the two) is a rest step between them. Each step counts towards the ${MAX_STEPS}. Only for exercises the plan pairs up and does more than once; otherwise give each exercise a group of its own.
 
 A HEADING is a label over the part of the workout after it, e.g. "Warmup" or "Upper body": { "kind": "heading", "text": "Warmup" }. Use the plan's own section titles, up to ${MAX_HEADINGS} of them, each up to ${MAX_HEADING_LENGTH} characters. Leave them out if the plan has none; they don't count as steps.
 
@@ -132,7 +142,7 @@ A STEP is one of:
 - Reps: { "kind": "reps", "reps": 1–${MAX_REPS}, "name": "Bench press", "weight": 60 } — the app waits until I press Done. "weight" is optional, in kilograms (more than 0, up to ${MAX_WEIGHT_KG}); convert pounds (1 lb = 0.45359237 kg). Leave it out for bodyweight.
 - Timed: { "kind": "work", "seconds": 1–${MAX_STEP_SECONDS}, "name": "Plank" } — a countdown, e.g. a hold or an interval.
 - Rest: { "kind": "rest", "seconds": 1–${MAX_STEP_SECONDS}, "name": "" }
-For sets that differ (e.g. a pyramid "12, 10, 8 at 40, 45, 50 kg", or warm-up sets), add "sets" to the step: one { "reps": 12, "weight": 40 } (reps steps) or { "seconds": 30 } (timed steps) for each of its group's rounds, in order, exactly as many as "rounds", and with the step's own "reps" and "weight" (or "seconds") set to the first set's. Leave it out when every set is the same, and for a group of one round.
+For sets that differ (e.g. a pyramid "12, 10, 8 at 40, 45, 50 kg", or warm-up sets), add "sets" to the step: one { "reps": 12, "weight": 40 } (reps steps) or { "seconds": 30 } (timed steps) for each of its group's rounds (a superset's rounds, for a step in one), in order, exactly as many as "rounds", and with the step's own "reps" and "weight" (or "seconds") set to the first set's. Leave it out when every set is the same, and for a group of one round.
 For an exercise done one side at a time (e.g. "10 each leg", "30 seconds each side"), add "eachSide": true to its reps or timed step, with the reps or time for one side: the app runs both sides in each set. Leave it out otherwise, and never put it on a rest.
 Names are up to ${MAX_EXERCISE_NAME_LENGTH} characters. Write durations as whole seconds: 1:30 is 90.
 

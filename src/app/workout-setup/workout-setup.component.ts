@@ -36,7 +36,9 @@ import {
     RepStep,
     Step,
     stepForSet,
+    StepGroup,
     StepKind,
+    supersetName,
     TimedStep,
     stepKindName,
     Workout,
@@ -62,13 +64,17 @@ import { ActiveRunService } from '../shared/run/active-run.service';
 import { SettingsStore } from '../shared/state/settings-store.service';
 import { WorkoutStore } from '../shared/state/workout-store.service';
 
-/** What a row in Create is: a kind of step, or a heading (BLD-13). */
-type ItemKind = StepKind | 'heading';
+/**
+ * What a row in Create is: a kind of step, a heading (BLD-13), or a superset's own row, with
+ * its rounds and rest, which its steps follow (BLD-12).
+ */
+type ItemKind = StepKind | 'heading' | 'superset';
 
 /**
  * One step as the form holds it: minutes and seconds for a timed step's two wheels, or
  * reps and weight for a rep step's. A step keeps them all, and only uses those for its kind.
- * A heading is a row of its own kind, with its text as its name and nothing else used.
+ * A heading is a row of its own kind, with its text as its name and nothing else used; so is
+ * a superset, with its rounds as its `sets` and its rest between rounds as its rest.
  */
 interface StepModel {
     /** Stays with the step as it moves, for tracking and element ids. */
@@ -107,6 +113,11 @@ interface StepModel {
     vary: boolean;
     /** A row for each set while `vary` is on, as many as `sets`; empty while it's off. */
     setRows: SetRowModel[];
+    /**
+     * The key of the superset it's in, whose row it follows with the superset's other steps,
+     * or 0 for none. Its `sets` are the superset's rounds, kept the same as they change.
+     */
+    group: number;
 }
 
 /** One set's own amount, as a step holds its own: reps and weight, or minutes and seconds. */
@@ -160,7 +171,7 @@ const NAME_EXAMPLES: Record<StepKind, string> = {
 @Component({
     selector: 'app-workout-setup',
     templateUrl: './workout-setup.component.html',
-    styleUrl: './workout-setup.component.scss',
+    styleUrls: ['./workout-setup.component.scss', './workout-setup-supersets.scss'],
     host: {
         '(document:click)': 'closePopups($event)',
     },
@@ -260,15 +271,11 @@ export class WorkoutSetupComponent {
         }
     );
 
-    /** Steps, which count towards MAX_STEPS; headings don't. */
-    protected readonly stepCount = computed(
-        () => this.model().steps.filter((step) => step.kind !== 'heading').length
-    );
+    /** Steps, which count towards MAX_STEPS; headings and supersets' own rows don't. */
+    protected readonly stepCount = computed(() => this.model().steps.filter(isStep).length);
     protected readonly headingCount = computed(
         () => this.model().steps.filter((step) => step.kind === 'heading').length
     );
-    /** Steps and headings, the rows of the list. */
-    protected readonly itemCount = computed(() => this.model().steps.length);
     protected readonly anyExpanded = computed(() => {
         const expanded = this.expandedKeys();
         return this.model().steps.some((step) => expanded.has(step.key));
@@ -322,7 +329,7 @@ export class WorkoutSetupComponent {
     // Not until something's been put in a step: a new workout opens with an empty one
     protected readonly noTimeError = computed(() =>
         this.model()
-            .steps.filter((step) => step.kind !== 'heading')
+            .steps.filter(isStep)
             .every((step) => !step.name.trim() && !hasAmount(step))
             ? undefined
             : this.workoutForm()
@@ -385,36 +392,86 @@ export class WorkoutSetupComponent {
         return this.stepNumbers()[index];
     }
 
-    /** Each row's step number, a heading having the number of the step before it. */
+    /**
+     * Each row's step number, a heading or a superset's own row having the number of the step
+     * before it.
+     */
     private readonly stepNumbers = computed(() => {
         let count = 0;
-        return this.model().steps.map((step) => (step.kind === 'heading' ? count : ++count));
+        return this.model().steps.map((step) => (isStep(step) ? ++count : count));
     });
+
+    /** The steps of the superset whose own row is at `index`, in order. */
+    private supersetSteps(index: number): StepModel[] {
+        const key = this.model().steps[index].key;
+        return this.model().steps.filter((step) => step.group === key);
+    }
+
+    /** "Superset" or "Giant set", by how many exercises the one at `index` has (BLD-12). */
+    protected supersetName(index: number): string {
+        return supersetName(this.supersetSteps(index).filter(isStep));
+    }
 
     /**
      * How a step is named to screen readers, e.g. "Step 2, rest" or "Step 1, Squats"; a
-     * heading is "Heading, Warmup".
+     * heading is "Heading, Warmup", and a superset "Superset, steps 2 to 3".
      */
     protected stepTitle(index: number): string {
         const step = this.model().steps[index];
         if (step.kind === 'heading') {
             return step.name.trim() ? `Heading, ${step.name.trim()}` : 'Heading';
         }
+        if (step.kind === 'superset') {
+            const first = this.stepNumber(index) + 1;
+            const last = first + this.supersetSteps(index).length - 1;
+            return `${this.supersetName(index)}, steps ${first} to ${last}`;
+        }
         return `Step ${this.stepNumber(index)}, ${step.name.trim() || stepKindName(step.kind).toLowerCase()}`;
+    }
+
+    /** What a row's open button says: its title and amount, and the superset it's in. */
+    protected toggleLabel(index: number): string {
+        const step = this.model().steps[index];
+        const time = this.amountText(step);
+        const head = this.model().steps.findIndex((row) => row.key === step.group);
+        const inSuperset = head === -1 ? '' : `, in the ${this.supersetName(head).toLowerCase()}`;
+        return `${this.stepTitle(index)}${inSuperset}${time ? `, ${time}` : ''}`;
+    }
+
+    /** What a collapsed row shows as its name: a superset's is its steps', e.g. "Bench, Row". */
+    protected summaryName(index: number): string {
+        const step = this.model().steps[index];
+        if (step.kind !== 'superset') {
+            return step.name.trim();
+        }
+        return this.supersetSteps(index)
+            .map((member) => member.name.trim() || stepKindName(member.kind as StepKind))
+            .join(', ');
     }
 
     /**
      * How much of a step there is, as its wheels show it: e.g. "02:15", "20 reps", or
-     * "10 reps @ 60 kg", and "each side" for one done each side.
+     * "10 reps @ 60 kg", and "each side" for one done each side. A superset's is its rounds and
+     * rest, e.g. "3 rounds · rest 01:00"; a step in one has its own amount, its rounds being
+     * the superset's.
      */
     protected amountText(step: StepModel): string {
         if (step.kind === 'heading') {
             return '';
         }
-        const sets = step.kind !== 'rest' && step.sets > 1;
+        const rest = step.restMinutes * 60 + step.restSeconds;
+        const restText =
+            rest > 0 ? ` · rest ${padded(step.restMinutes)}:${padded(step.restSeconds)}` : '';
+        if (step.kind === 'superset') {
+            return step.sets === 1 ? '1 round' : `${step.sets} rounds${restText}`;
+        }
+        const sets = step.kind !== 'rest' && step.sets > 1 && !step.group;
         const eachSide = step.kind !== 'rest' && step.eachSide ? ' each side' : '';
         const weight = step.weight > 0 ? ` @ ${step.weight} ${this.weightUnit}` : '';
         const time = `${padded(step.minutes)}:${padded(step.seconds)}`;
+        if (!sets && varies(step)) {
+            return `${this.variedText(step)}${eachSide}`;
+        }
         if (!sets) {
             if (step.kind === 'reps') {
                 return `${step.reps === 1 ? '1 rep' : `${step.reps} reps`}${weight}${eachSide}`;
@@ -426,9 +483,6 @@ export class WorkoutSetupComponent {
         const amount = varies(step)
             ? this.variedText(step)
             : `${step.sets} × ${step.kind === 'reps' ? `${step.reps}${weight}` : time}`;
-        const rest = step.restMinutes * 60 + step.restSeconds;
-        const restText =
-            rest > 0 ? ` · rest ${padded(step.restMinutes)}:${padded(step.restSeconds)}` : '';
         return `${amount}${eachSide}${restText}`;
     }
 
@@ -448,46 +502,160 @@ export class WorkoutSetupComponent {
         return `${rows.map((row) => row.reps).join(', ')}${weight}`;
     }
 
-    /** A set's row, e.g. "Set 2 · 10 × 45 kg", "Set 2 · 10 reps" or "Set 2 · 00:45". */
+    /**
+     * A set's row, e.g. "Set 2 · 10 × 45 kg", "Set 2 · 10 reps" or "Set 2 · 00:45"; in a
+     * superset, a round's, e.g. "Round 2 · 10 reps".
+     */
     protected setRowText(step: StepModel, set: number): string {
         const row = step.setRows[set];
+        const name = `${step.group ? 'Round' : 'Set'} ${set + 1}`;
         if (step.kind !== 'reps') {
-            return `Set ${set + 1} · ${rowTime(row)}`;
+            return `${name} · ${rowTime(row)}`;
         }
         if (row.weight > 0) {
-            return `Set ${set + 1} · ${row.reps} × ${row.weight} ${this.weightUnit}`;
+            return `${name} · ${row.reps} × ${row.weight} ${this.weightUnit}`;
         }
-        return `Set ${set + 1} · ${row.reps === 1 ? '1 rep' : `${row.reps} reps`}`;
+        return `${name} · ${row.reps === 1 ? '1 rep' : `${row.reps} reps`}`;
     }
 
     /**
-     * The Sets wheel. With Vary each set on, a set added copies the last one's row, and one
-     * taken away goes from the end; down to 1 set, there's nothing to vary, so it goes off.
+     * The Sets wheel, or a superset's Rounds wheel, which are the sets of each of its steps.
+     * With Vary each set on, a set added copies the last one's row, and one taken away goes
+     * from the end; down to 1 set, there's nothing to vary, so it goes off.
      */
     protected setSets(index: number, sets: number) {
         const changed = this.model().steps[index];
         if (changed.sets === sets) {
             return;
         }
-        if (!changed.vary) {
-            this.updateStep(changed.key, (step) => ({ ...step, sets }));
-            return;
-        }
-        if (sets < 2) {
-            this.updateStep(changed.key, (step) => ({ ...varyOff(step), sets }));
-            return;
-        }
-        this.smoothChange(() =>
-            this.updateStep(changed.key, (step) => ({
-                ...step,
-                sets,
-                setRows: Array.from(
-                    { length: sets },
-                    // A copy of its fields, not a spread: the form tracks a row by the object
-                    (_, i) => step.setRows[i] ?? rowOf(step.setRows.at(-1)!)
-                ),
-            }))
+        const keys = [changed.key, ...this.supersetSteps(index).map((step) => step.key)];
+        const change = () =>
+            this.updateSteps((steps) =>
+                steps.map((step) => (keys.includes(step.key) ? withSets(step, sets) : step))
+            );
+        const rowsChange = this.model().steps.some(
+            (step) => keys.includes(step.key) && step.vary && sets > 1
         );
+        if (rowsChange) {
+            this.smoothChange(change);
+        } else {
+            change();
+        }
+    }
+
+    /**
+     * Whether Join with next can join this exercise, or superset, with the exercise straight
+     * after it (BLD-12).
+     */
+    protected canJoin(index: number): boolean {
+        const rows = this.model().steps;
+        const row = rows[index];
+        const next = rows[partEnd(rows, index)];
+        return (
+            row.group === 0 &&
+            (row.kind === 'superset' || isExercise(row)) &&
+            next !== undefined &&
+            next.group === 0 &&
+            isExercise(next)
+        );
+    }
+
+    /**
+     * Join with next: an exercise and the next become a superset, with the first's sets as its
+     * rounds and its rest between sets as the rest between them; on a superset, the next
+     * exercise joins it, making it a giant set.
+     */
+    protected joinWithNext(index: number) {
+        if (!this.canJoin(index)) {
+            return;
+        }
+        const rows = this.model().steps;
+        const row = rows[index];
+        const end = partEnd(rows, index);
+        const next = rows[end];
+        const head: StepModel =
+            row.kind === 'superset'
+                ? row
+                : {
+                      ...this.newStep(),
+                      kind: 'superset',
+                      sets: row.sets,
+                      restMinutes: row.restMinutes,
+                      restSeconds: row.restSeconds,
+                  };
+        const joined = { ...withSets(next, head.sets), group: head.key };
+        const before = rows.slice(0, index);
+        const after = rows.slice(end + 1);
+        this.smoothChange(() => {
+            this.updateSteps(() =>
+                row.kind === 'superset'
+                    ? [...before, ...rows.slice(index, end), joined, ...after]
+                    : [...before, head, { ...row, group: head.key }, joined, ...after]
+            );
+            this.expandedKeys.update((keys) => new Set([...keys, head.key]));
+        });
+        const at = this.model().steps.indexOf(head);
+        this.stepAnnouncement.set(
+            `${this.stepTitle(at)}, ${this.amountText(head)}: ${this.summaryName(at)}`
+        );
+        this.focusAfterRender(`step-${head.key}-toggle`);
+    }
+
+    /**
+     * Take out: a superset's step becomes an exercise of its own just after it, with its rounds
+     * as its sets and its rest between them. A superset left with one step becomes that one's
+     * exercise the same way.
+     */
+    protected takeOut(index: number) {
+        const rows = this.model().steps;
+        const step = rows[index];
+        const head = rows.findIndex((row) => row.key === step.group);
+        if (head === -1) {
+            return;
+        }
+        const name = step.name.trim() || stepKindName(step.kind as StepKind).toLowerCase();
+        const supersetName = this.supersetName(head).toLowerCase();
+        const end = partEnd(rows, head);
+        const out = ownExercise(step, rows[head]);
+        this.smoothChange(() =>
+            this.updateSteps(() =>
+                lonelyStepsOut(
+                    [
+                        ...rows.slice(0, index),
+                        ...rows.slice(index + 1, end),
+                        out,
+                        ...rows.slice(end),
+                    ],
+                    step.group
+                )
+            )
+        );
+        this.stepAnnouncement.set(
+            `Took ${name} out of the ${supersetName}, now step ${this.stepNumber(this.model().steps.findIndex((row) => row.key === step.key))}`
+        );
+        this.focusAfterRender(`step-${step.key}-toggle`);
+    }
+
+    /** + Step in a superset: a rep step at its end, with its rounds. */
+    protected addToSuperset(index: number) {
+        if (this.stepCount() >= MAX_STEPS) {
+            return;
+        }
+        const rows = this.model().steps;
+        const head = rows[index];
+        const end = partEnd(rows, index);
+        const step: StepModel = { ...this.newStep(), group: head.key, sets: head.sets };
+        this.updateSteps(() => [...rows.slice(0, end), step, ...rows.slice(end)]);
+        this.expandedKeys.set(new Set([head.key, step.key]));
+        this.stepAnnouncement.set(
+            `Added a rep step to the ${this.supersetName(index).toLowerCase()}, step ${this.stepNumber(end)}`
+        );
+        this.focusAfterRender(`step-${step.key}-name`);
+    }
+
+    /** Whether a row's in a superset that's collapsed, which shows as one line. */
+    protected isHidden(step: StepModel): boolean {
+        return step.group !== 0 && !this.isExpanded(step.group);
     }
 
     /**
@@ -530,7 +698,7 @@ export class WorkoutSetupComponent {
      * a name no exercise has yet.
      */
     protected exerciseFor(step: StepModel): Exercise | undefined {
-        if (step.kind === 'rest' || step.kind === 'heading') {
+        if (!isExercise(step)) {
             return undefined;
         }
         return (
@@ -592,8 +760,7 @@ export class WorkoutSetupComponent {
                 const isIt =
                     step.key === opened.stepKey ||
                     step.exerciseId === saved.id ||
-                    (step.kind !== 'rest' &&
-                        step.kind !== 'heading' &&
+                    (isExercise(step) &&
                         !step.exerciseId &&
                         findByName(step.name, [opened.exercise]) !== undefined);
                 return isIt ? { ...step, name: saved.name, exerciseId: saved.id } : step;
@@ -691,7 +858,9 @@ export class WorkoutSetupComponent {
         this.updateSteps((steps) =>
             steps.map((step) => (step.key === changed.key ? { ...step, kind } : step))
         );
-        this.stepAnnouncement.set(`Step ${index + 1} is now ${stepKindName(kind).toLowerCase()}`);
+        this.stepAnnouncement.set(
+            `Step ${this.stepNumber(index)} is now ${stepKindName(kind).toLowerCase()}`
+        );
     }
 
     /** A click anywhere outside the open kind menu or the tooltip closes it. */
@@ -705,18 +874,29 @@ export class WorkoutSetupComponent {
         }
     }
 
-    /** The up and down buttons, for keyboard and screen reader users (and anyone else). */
+    /** Whether a row's up or down button can move it: see `moved()`. */
+    protected canMove(index: number, by: -1 | 1): boolean {
+        return moved(this.model().steps, index, by) !== null;
+    }
+
+    /**
+     * The up and down buttons, for keyboard and screen reader users (and anyone else). A
+     * superset moves with its steps, past the row or superset beside it, and its steps move
+     * within it.
+     */
     protected moveStep(index: number, by: -1 | 1) {
-        const target = index + by;
-        const moved = this.moveStepTo(index, target);
-        if (!moved) {
+        const rows = moved(this.model().steps, index, by);
+        if (!rows) {
             return;
         }
+        const key = this.model().steps[index].key;
+        this.placeRows(rows, key);
         // Focus follows the step to its new place: the same button, or the other move
         // button if that one has just been disabled (at the top or bottom)
-        const atEnd = by === -1 ? target === 0 : target === this.itemCount() - 1;
-        const button = by === -1 ? (atEnd ? 'down' : 'up') : atEnd ? 'up' : 'down';
-        this.focusAfterRender(`step-${moved.key}-${button}`);
+        const to = rows.findIndex((row) => row.key === key);
+        const stuck = moved(rows, to, by) === null;
+        const button = by === -1 ? (stuck ? 'down' : 'up') : stuck ? 'up' : 'down';
+        this.focusAfterRender(`step-${key}-${button}`);
     }
 
     /**
@@ -733,43 +913,68 @@ export class WorkoutSetupComponent {
         }
     }
 
+    /**
+     * Where a dragged row can go: anywhere that keeps each superset's steps together under its
+     * row, so a step in one stays in it, and others go round it. Straight after a collapsed
+     * superset's row is let through too, as that's after the superset on screen (`dropStep`).
+     */
+    protected readonly canDropAt = (index: number, drag: CdkDrag<number>): boolean => {
+        const rows = [...this.model().steps];
+        const from = rows.findIndex((row) => row.key === drag.data);
+        moveItemInArray(rows, from, index);
+        const before = rows[index - 1];
+        return (
+            wellFormed(rows) ||
+            (rows[index].group === 0 && before?.kind === 'superset' && !this.isExpanded(before.key))
+        );
+    };
+
     /** A step dragged by its handle and dropped in a new place. */
     protected dropStep(event: CdkDragDrop<unknown>) {
-        this.moveStepTo(event.previousIndex, event.currentIndex);
+        if (event.previousIndex === event.currentIndex) {
+            return;
+        }
+        const rows = [...this.model().steps];
+        const key = rows[event.previousIndex].key;
+        moveItemInArray(rows, event.previousIndex, event.currentIndex);
+        if (!wellFormed(rows)) {
+            // Dropped just after a collapsed superset's row: it goes after its steps
+            const [row] = rows.splice(event.currentIndex, 1);
+            rows.splice(partEnd(rows, event.currentIndex - 1), 0, row);
+        }
+        this.placeRows(rows, key);
     }
 
-    /** Moves a step to a new position and says so. Returns the step, or null if it can't move. */
-    private moveStepTo(from: number, to: number): StepModel | null {
-        const steps = [...this.model().steps];
-        if (from === to || to < 0 || to >= steps.length) {
-            return null;
-        }
-        moveItemInArray(steps, from, to);
-        this.updateSteps(() => steps);
-        const moved = steps[to];
-        if (moved.kind === 'heading') {
-            // Said by what's after it now, as a heading isn't numbered
-            const after = steps.slice(to + 1).findIndex((step) => step.kind !== 'heading');
-            const place =
-                after === -1 ? 'the end' : `before step ${this.stepNumber(to + 1 + after)}`;
-            this.stepAnnouncement.set(`Moved ${this.stepTitle(to).toLowerCase()} to ${place}`);
-            return moved;
+    /** Puts the rows in their new order, and says where the one that moved is now. */
+    private placeRows(rows: StepModel[], key: number) {
+        this.updateSteps(() => rows);
+        const to = rows.findIndex((row) => row.key === key);
+        const moved = rows[to];
+        if (moved.kind === 'heading' || moved.kind === 'superset') {
+            // Said by what's after it now, as neither is numbered
+            const end = partEnd(rows, to);
+            const after = rows.slice(end).findIndex(isStep);
+            const place = after === -1 ? 'the end' : `before step ${this.stepNumber(end + after)}`;
+            const title = moved.kind === 'heading' ? this.stepTitle(to) : this.supersetName(to);
+            this.stepAnnouncement.set(`Moved ${title.toLowerCase()} to ${place}`);
+            return;
         }
         this.stepAnnouncement.set(
             `Moved ${moved.name.trim() || stepKindName(moved.kind).toLowerCase()} to step ${this.stepNumber(to)}`
         );
-        return moved;
     }
 
     /**
      * The X button: deletes the step straight away. One with anything in it can be put back:
-     * the Undo bar offers it (UndoService), rather than a question first.
+     * the Undo bar offers it (UndoService), rather than a question first. A superset goes
+     * with its steps.
      */
     protected deleteStep(index: number) {
-        const step = this.model().steps[index];
+        const before = this.model().steps;
+        const step = before[index];
         const isSet = hasAmount(step);
         const title = this.stepTitle(index);
-        if (!step.name.trim() && !isSet) {
+        if (!step.name.trim() && !isSet && step.kind !== 'superset') {
             this.removeStep(index);
             this.focusAfterDelete(index);
             return;
@@ -779,9 +984,15 @@ export class WorkoutSetupComponent {
         this.undo.offerUndo({
             message: `Deleted ${title}${time}`,
             undo: () => {
-                this.updateSteps((all) => [...all.slice(0, index), step, ...all.slice(index)]);
+                // A superset, or a step of one (which may have taken the superset with it), comes
+                // back as the list was
+                this.updateSteps((all) =>
+                    step.kind === 'superset' || step.group
+                        ? before
+                        : [...all.slice(0, index), step, ...all.slice(index)]
+                );
                 this.stepAnnouncement.set(
-                    step.kind === 'heading'
+                    step.kind === 'heading' || step.kind === 'superset'
                         ? `${this.stepTitle(index)} is back`
                         : `Step ${this.stepNumber(index)} is back`
                 );
@@ -798,8 +1009,15 @@ export class WorkoutSetupComponent {
         const said =
             deleted.kind === 'heading'
                 ? 'Deleted a heading'
-                : `Deleted step ${this.stepNumber(index)}`;
-        this.updateSteps((all) => all.filter((step) => step.key !== deleted.key));
+                : deleted.kind === 'superset'
+                  ? `Deleted a ${this.supersetName(index).toLowerCase()}`
+                  : `Deleted step ${this.stepNumber(index)}`;
+        this.updateSteps((all) =>
+            lonelyStepsOut(
+                all.filter((step) => step.key !== deleted.key && step.group !== deleted.key),
+                deleted.group
+            )
+        );
         this.stepAnnouncement.set(said);
     }
 
@@ -834,22 +1052,34 @@ export class WorkoutSetupComponent {
 
     /**
      * A saved workout's steps and headings as the form holds them, each step with its group's
-     * sets and rest. A group of one step is an exercise and its sets; one of several (only from
-     * a file, until supersets can be made here) has its rounds given to each of them.
+     * sets and rest. A group of one step is an exercise and its sets; one of several is a
+     * superset, a row of its own with its rounds and rest, and then its steps. One of several
+     * that runs once is each of its steps in turn, as workouts from before groups are, so it
+     * opens as them.
      */
     private stepModels(workout: Workout): StepModel[] {
-        return workout.blocks.flatMap((block) =>
-            block.kind === 'group'
-                ? block.steps.map((step) => ({
-                      ...this.stepModel(
-                          step,
-                          block.rounds,
-                          block.rounds > 1 ? block.restSeconds : 60
-                      ),
-                      ...this.setRowModels(step),
-                  }))
-                : [{ ...this.newStep(), kind: 'heading' as const, name: block.text }]
-        );
+        return workout.blocks.flatMap((block): StepModel[] => {
+            if (block.kind === 'heading') {
+                return [{ ...this.newStep(), kind: 'heading', name: block.text }];
+            }
+            const rest = block.rounds > 1 ? block.restSeconds : 60;
+            const steps = block.steps.map((step) => ({
+                ...this.stepModel(step, block.rounds, rest),
+                ...this.setRowModels(step),
+            }));
+            if (steps.length === 1 || block.rounds === 1) {
+                return steps;
+            }
+            const head: StepModel = {
+                ...this.stepModel({ kind: 'reps', reps: 0, name: '' }, block.rounds, rest),
+                kind: 'superset',
+            };
+            // Even a rest step has the rounds, in case it's changed to another kind
+            return [
+                head,
+                ...steps.map((step) => ({ ...step, sets: block.rounds, group: head.key })),
+            ];
+        });
     }
 
     private stepModel(step: Step, sets = 1, rest = 60): StepModel {
@@ -871,6 +1101,7 @@ export class WorkoutSetupComponent {
             exerciseId: step.exerciseId ?? '',
             vary: false,
             setRows: [],
+            group: 0,
         };
     }
 
@@ -936,9 +1167,131 @@ export class WorkoutSetupComponent {
     }
 }
 
-/** Whether a step has a time, reps or a weight, as its kind uses. A heading has none. */
+/** A row that's a step, rather than a heading or a superset's own row. */
+function isStep(row: StepModel): row is StepModel & { kind: StepKind } {
+    return row.kind !== 'heading' && row.kind !== 'superset';
+}
+
+/** A row that's an exercise: a rep or timed step, which can be linked to one and joined. */
+function isExercise(row: StepModel): boolean {
+    return row.kind === 'reps' || row.kind === 'work';
+}
+
+/** Just after the end of the row at `index`: after its steps, for a superset's row. */
+function partEnd(rows: readonly StepModel[], index: number): number {
+    const row = rows[index];
+    let end = index + 1;
+    while (row?.kind === 'superset' && rows[end]?.group === row.key) {
+        end++;
+    }
+    return end;
+}
+
+/**
+ * The rows with the one at `index` moved up or down one place, or null if it can't go: a
+ * superset goes with its steps, past the row or the whole superset beside it, and a step in a
+ * superset moves within it.
+ */
+function moved(rows: readonly StepModel[], index: number, by: -1 | 1): StepModel[] | null {
+    const row = rows[index];
+    if (row.group) {
+        const target = index + by;
+        if (rows[target]?.group !== row.group) {
+            return null;
+        }
+        const next = [...rows];
+        moveItemInArray(next, index, target);
+        return next;
+    }
+    const end = partEnd(rows, index);
+    if (by === 1) {
+        if (end >= rows.length) {
+            return null;
+        }
+        const nextEnd = partEnd(rows, end);
+        return [
+            ...rows.slice(0, index),
+            ...rows.slice(end, nextEnd),
+            ...rows.slice(index, end),
+            ...rows.slice(nextEnd),
+        ];
+    }
+    if (index === 0) {
+        return null;
+    }
+    // The row before, or the superset whose last step it is
+    const above = rows[index - 1].group;
+    const start = above ? rows.findIndex((other) => other.key === above) : index - 1;
+    return [
+        ...rows.slice(0, start),
+        ...rows.slice(index, end),
+        ...rows.slice(start, index),
+        ...rows.slice(end),
+    ];
+}
+
+/** Whether each superset's steps follow its row, together. */
+function wellFormed(rows: readonly StepModel[]): boolean {
+    return rows.every((row, i) => {
+        const before = rows[i - 1];
+        return !row.group || before?.key === row.group || before?.group === row.group;
+    });
+}
+
+/** A superset's step taken out of it: an exercise of its own, with its rounds and rest. */
+function ownExercise(step: StepModel, superset: StepModel): StepModel {
+    return {
+        ...step,
+        group: 0,
+        sets: superset.sets,
+        restMinutes: superset.restMinutes,
+        restSeconds: superset.restSeconds,
+    };
+}
+
+/**
+ * The rows with superset `key` gone if it's been left with one step (which becomes an
+ * exercise of its own, in its place) or none. As they are if it hasn't, or for no superset.
+ */
+function lonelyStepsOut(rows: StepModel[], key: number): StepModel[] {
+    const superset = rows.find((row) => row.key === key);
+    if (!key || !superset || rows.filter((row) => row.group === key).length > 1) {
+        return rows;
+    }
+    return rows.flatMap((row) =>
+        row.key === key ? [] : row.group === key ? [ownExercise(row, superset)] : [row]
+    );
+}
+
+/**
+ * A step with a number of sets, e.g. its superset's rounds. With Vary each set on, a set
+ * added copies the last one's row, and one taken away goes from the end; down to 1 set,
+ * there's nothing to vary, so it goes off.
+ */
+function withSets(step: StepModel, sets: number): StepModel {
+    if (step.sets === sets) {
+        return step;
+    }
+    if (!step.vary) {
+        return { ...step, sets };
+    }
+    if (sets < 2) {
+        return { ...varyOff(step), sets };
+    }
+    return {
+        ...step,
+        sets,
+        setRows: Array.from(
+            { length: sets },
+            // A copy of its fields, not a spread: the form tracks a row by the object
+            (_, i) => step.setRows[i] ?? rowOf(step.setRows.at(-1)!)
+        ),
+    };
+}
+
+/** Whether a step has a time, reps or a weight, as its kind uses. Other rows have none. */
 function hasAmount(step: StepModel): boolean {
-    if (step.kind === 'heading') {
+    if (!isStep(step)) {
         return false;
     }
     // Where its sets vary, its rows have them, and its own are left as they were
@@ -980,32 +1333,53 @@ function timeLimitSeconds(setup: WorkoutSetupModel): number {
 }
 
 /**
- * The workout to save, a group for each step with its sets and the rest between them, and its
- * headings, trimmed, in their places. Steps left at 0:00 or 0 reps are left out, and so are
- * headings left empty. A run of steps of one set runs as a circuit's round always has, each
- * straight after the last.
+ * The workout to save, a group for each step with its sets and the rest between them, one for
+ * each superset with its rounds and rest, and its headings, trimmed, in their places. Steps left
+ * at 0:00 or 0 reps are left out, and so are headings left empty and supersets left with no
+ * steps. A run of steps of one set runs as a circuit's round always has, each straight after
+ * the last.
  */
-function toBlocks(steps: readonly StepModel[], unit: WeightUnit): Block[] {
-    return steps.flatMap((model): Block[] => {
+function toBlocks(rows: readonly StepModel[], unit: WeightUnit): Block[] {
+    const blocks: Block[] = [];
+    // The superset whose steps are being added to it, if the rows are in one
+    let superset: StepGroup | null = null;
+    for (const model of rows) {
         if (model.kind === 'heading') {
             const text = model.name.trim();
-            return text ? [{ kind: 'heading', text }] : [];
+            if (text) {
+                blocks.push({ kind: 'heading', text });
+            }
+            continue;
+        }
+        if (model.kind === 'superset') {
+            superset = { kind: 'group', ...setsAndRest(model), steps: [] };
+            blocks.push(superset);
+            continue;
         }
         const step = toStep({ ...model, kind: model.kind }, unit);
         if (step.kind === 'reps' ? step.reps === 0 : step.seconds === 0) {
-            return [];
+            continue;
+        }
+        if (model.group && superset) {
+            superset.steps.push(step);
+            continue;
         }
         // A set row left at 0 reps or 00:00 is stopped by the form's check before saving
-        const sets = step.kind === 'rest' ? 1 : model.sets;
-        return [
-            {
-                kind: 'group',
-                rounds: sets,
-                restSeconds: sets > 1 ? model.restMinutes * 60 + model.restSeconds : 0,
-                steps: [step],
-            },
-        ];
-    });
+        blocks.push({
+            kind: 'group',
+            ...setsAndRest(step.kind === 'rest' ? { ...model, sets: 1 } : model),
+            steps: [step],
+        });
+    }
+    return blocks.filter((block) => block.kind === 'heading' || block.steps.length > 0);
+}
+
+/** A group's rounds, and the rest between them: none for one round. */
+function setsAndRest(model: StepModel): Pick<StepGroup, 'rounds' | 'restSeconds'> {
+    return {
+        rounds: model.sets,
+        restSeconds: model.sets > 1 ? model.restMinutes * 60 + model.restSeconds : 0,
+    };
 }
 
 /**

@@ -16,12 +16,17 @@ import { StepKind, stepKindName } from '../../models/workout';
     },
 })
 export class StepDragPreviewComponent {
-    readonly kind = input.required<StepKind | 'heading'>();
+    /** A superset's own row is never dragged (it moves with its steps), but has a name. */
+    readonly kind = input.required<StepKind | 'heading' | 'superset'>();
     readonly name = input('');
     /** e.g. "00:30", or "10 reps". */
     readonly time = input('');
 
-    protected kindName(kind: StepKind | 'heading'): string {
-        return kind === 'heading' ? 'Heading' : stepKindName(kind);
+    protected kindName(kind: StepKind | 'heading' | 'superset'): string {
+        return kind === 'heading'
+            ? 'Heading'
+            : kind === 'superset'
+              ? 'Superset'
+              : stepKindName(kind);
     }
 }

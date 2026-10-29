@@ -26,7 +26,7 @@ Status: ✅ done, ◐ partly, — not started. The iOS column fills in as a port
 | BLD-9  | Give an exercise sets, with a rest between them                          | ✅  | —   | [build-a-workout](build-a-workout.md)         |
 | BLD-10 | Do an exercise one side at a time                                        | ✅  | —   | [build-a-workout](build-a-workout.md)         |
 | BLD-11 | Give each set its own reps and weight                                    | ✅  | —   | [build-a-workout](build-a-workout.md)         |
-| BLD-12 | Superset or giant set: exercises in a row, then rest, for rounds         | —   | —   | [sets-and-supersets](sets-and-supersets.md)   |
+| BLD-12 | Superset or giant set: exercises in a row, then rest, for rounds         | ✅  | —   | [build-a-workout](build-a-workout.md)         |
 | BLD-13 | Add headings to a workout                                                | ✅  | —   | [build-a-workout](build-a-workout.md)         |
 | RUN-1  | See where I am in the workout at a glance                                | ✅  | —   | [run-a-workout](run-a-workout.md)             |
 | RUN-2  | See what's next                                                          | ✅  | —   | [run-a-workout](run-a-workout.md)             |

@@ -315,6 +315,24 @@ export interface RunPlan {
 export interface GroupSet {
     set: number;
     of: number;
+    /** What its group is, so its rounds are called sets or rounds. */
+    group: GroupKind;
+}
+
+/**
+ * What a group is, by how many exercises it has (rest steps don't count): an exercise and its
+ * sets, a superset of 2, or a giant set of 3 or more (BLD-12).
+ */
+export type GroupKind = 'exercise' | 'superset' | 'giant set';
+
+export function groupKind(steps: readonly Pick<Step, 'kind'>[]): GroupKind {
+    const exercises = steps.filter((step) => step.kind !== 'rest').length;
+    return exercises >= 3 ? 'giant set' : exercises === 2 ? 'superset' : 'exercise';
+}
+
+/** "Superset" or "Giant set", as a group of several steps is called wherever it shows. */
+export function supersetName(steps: readonly Pick<Step, 'kind'>[]): string {
+    return groupKind(steps) === 'giant set' ? 'Giant set' : 'Superset';
 }
 
 /** Where a step of the run is in the workout, for the section line, e.g. "Upper body · 5 of 7". */
@@ -359,6 +377,7 @@ export function runPlan(workout: Pick<RunningWorkout, 'blocks' | 'sides'>): RunP
         }
         const exercise = Math.max(1, plan.exercises);
         let starting = isExercise;
+        const group = groupKind(block.steps);
         const push = (step: Step, place: StepPlace | null, of: GroupSet) => {
             const starts = starting && place !== null && step.kind !== 'rest';
             if (starts) {
@@ -370,7 +389,7 @@ export function runPlan(workout: Pick<RunningWorkout, 'blocks' | 'sides'>): RunP
             plan.sections.push({ heading, exercise, starts });
         };
         for (let set = 0; set < block.rounds; set++) {
-            const of = { set, of: block.rounds };
+            const of = { set, of: block.rounds, group };
             if (set > 0 && block.restSeconds > 0) {
                 push({ kind: 'rest', seconds: block.restSeconds, name: '' }, null, of);
             }

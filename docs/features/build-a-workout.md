@@ -13,9 +13,8 @@
 - **BLD-9** As a user I want to give an exercise a number of sets and a rest between them (e.g. 3 × 10 with 60 seconds rest), so a gym plan goes in as it's written.
 - **BLD-10** As a user I want an exercise done one side at a time (e.g. 10 reps each leg), so it runs the left, then the right, before the rest.
 - **BLD-11** As a user I want each set of an exercise to have its own reps and weight (e.g. 12 @ 40 kg, 10 @ 45 kg, 8 @ 50 kg), for a pyramid or warm-up sets.
+- **BLD-12** As a user I want a superset (or, of three or more, a giant set): exercises done one after another, then a rest, for a number of rounds.
 - **BLD-13** As a user I want to add headings to a workout (e.g. "Warmup", "Upper body"), so a long workout is easy to follow.
-
-Still to come, in [sets-and-supersets](sets-and-supersets.md): supersets (BLD-12).
 
 ## Rules
 
@@ -49,7 +48,7 @@ Still to come, in [sets-and-supersets](sets-and-supersets.md): supersets (BLD-12
 - The rest comes **between sets, never after the last**: 3 sets is set, rest, set, rest, set, then straight on to the next step. Nothing is added between one step and the next; a rest there is a rest step of its own.
 - Collapsed, a step with sets says so as the history does, with its rest: "3 × 10 @ 60 kg · rest 01:00", "3 × 00:45 · rest 00:30", or "3 × 10" with no rest.
 - The tip by the Steps heading says "Each round runs these in order, each for its sets. Steps left at 00:00 or 0 reps are skipped."
-- Saved, each step is a group of its own, its sets the group's `rounds` (see [data](data.md)). A workout of steps of one set runs as before: each straight after the last.
+- Saved, each step is a group of its own, its sets the group's `rounds` (see [data](data.md)), and a superset is a group of its steps (below). A workout of steps of one set runs as before: each straight after the last.
 
 ### Each side (BLD-10)
 
@@ -68,6 +67,19 @@ Still to come, in [sets-and-supersets](sets-and-supersets.md): supersets (BLD-12
 - Collapsed, the step lists its sets: "12, 10, 8 @ 40–50 kg · rest 01:00" (one weight if they share it, none if none has one), or "00:30, 00:45, 01:00 · rest 00:30".
 - Saved, set 1's reps and weight (or time) are the step's own, and each set's go in its `sets` (see [data](data.md)). Running it, a change mid-workout is for that set only (RUN-6, in [run-a-workout](run-a-workout.md)).
 
+### Supersets (BLD-12)
+
+- **What it's called goes by how many exercises are in it:** a **superset** with 2, a **giant set** with 3 or more (rest steps don't count). It's one thing either way, and the name changes by itself as exercises are joined or taken out, in Create and on the run screen.
+- **Join with next**, at the bottom of an open timed or rep step, joins it and the exercise straight after it (a timed or rep step not in a superset) into a superset, with the first one's Sets as its **Rounds** and its Rest between sets as its **Rest between rounds**. The second's sets become the rounds too (with Vary each set on, as Sets does to its rows). On a superset, Join with next adds the exercise after it, making it a giant set. Focus goes to the superset, and screen readers hear what it is, e.g. "Superset, steps 1 to 2, 3 rounds · rest 01:00: Bench, Row".
+- A superset has a **row of its own** heading its steps: "SUPERSET" (or "GIANT SET") where a step has its kind pill, a **Rounds** wheel (1 to 30) and, with more than one round, **Rest between rounds** (as Rest between sets). Its steps sit in from it, joined to it by a line, each as a step is, with Each side and **Vary each round** (rows "Round 1 · 10 reps"…), but no Sets of their own: Rounds sets each of their sets. A rest step can go in it too (e.g. bench, rest 0:15, row).
+- Its **+ Step** adds a rep step at its end, opened with the cursor in its name box; the 20 steps include a superset's steps, and its own row doesn't count.
+- **Take out**, on one of its steps, makes it an exercise of its own again, just after the superset, with its rounds as its sets and its rest between them. A superset left with one step becomes that exercise the same way, and so does one left with one step by a delete.
+- **Collapsed**, a superset is one line of its steps' names and its rounds and rest, e.g. "Bench, Row" and "3 rounds · rest 01:00", and its steps are hidden with it, so a collapsed workout reads as its plan.
+- **Moving:** a superset moves up and down with its buttons, with its steps, past the step or whole superset beside it. It has no drag handle (it's its row and its steps). Its steps move up and down within it, by their buttons or dragged, and can't leave it but by Take out. Other steps move past it whole, and dragged, can't go into it; one dropped just under a collapsed superset's row goes after its steps, which is where it shows.
+- **Deleting** a superset deletes its steps with it, with Undo ("Deleted Superset, steps 2 to 3"), which brings the lot back.
+- Saved, a superset is a group of its steps, with its rounds and rest (see [data](data.md)). Steps left at 00:00 or 0 reps are left out as any are, and a superset left with none goes with them. A group of several steps of **one round** opens in Create as its steps on their own, as it runs the same: workouts from before groups are one group of all their steps, run once a round.
+- Running it is in [run-a-workout](run-a-workout.md): "superset round 2 of 3", and a strip of the round's steps.
+
 ### Headings (BLD-13)
 
 - **+ Heading**, beside + Step, adds a heading at the end, opened (closing the others) with the cursor in its box: **Heading**, "e.g. Warmup", up to 40 characters, trimmed when saved. One left empty is left out when the workout's saved.
@@ -82,6 +94,7 @@ Still to come, in [sets-and-supersets](sets-and-supersets.md): supersets (BLD-12
 - **Add step** (shown as "+ Step") adds a **rep step** at the end, opens it (closing the others) and puts the cursor in its name box.
 - **Changing kind:** a step's kind pill (e.g. "REPS") opens a menu of Reps, Timed and Rest, with the current one ticked. Picking one changes the step, open or collapsed, and focus goes back to the pill. The step keeps its name, exercise and numbers, so changing back finds them; only those its kind uses are saved. Escape, a click elsewhere or tabbing away closes the menu.
 - A step can be moved up or down one place with buttons, or dragged by its handle. The first step can't move up; the last can't move down. A dragged step shows as a compact card held where the handle was grabbed, so it doesn't jump under the pointer, and **lifted** off the list as a held library card is: a little bigger, with a deeper shadow (it grows into that as it's picked up, but not with reduced motion).
+- A superset and its steps move as above (BLD-12).
 - **Deleting** a step happens at once. For one with a name, time or reps, the **Undo bar** says "Deleted Step 2, Squats, 00:45" with **Undo**, which puts it back where it was (see [home-and-navigation](home-and-navigation.md#undo)); an empty one (no name, no time or reps) has nothing to undo.
 
 ### Collapsing
@@ -137,6 +150,11 @@ Still to come, in [sets-and-supersets](sets-and-supersets.md): supersets (BLD-12
 - Given a step named "Squats" at 0:45, when I delete it, then it goes at once and "Deleted Step 1, Squats, 00:45" offers Undo; when I press Undo, then it's back in its place.
 - Given steps A, B, C, when I move C up, then the order is A, C, B, and C keeps its name and time.
 - Given the Until stopped switch is turned on after picking 5 rounds, when it's turned off, then rounds go back to 5.
+- Given bench press (3 sets, 1:00 rest) and seated cable row, when I pick Join with next on bench press, then they're a superset of 3 rounds with 1:00 rest between rounds, saved as one group of both.
+- Given that superset, when I join shoulder press to it, then it's called a giant set; when I take shoulder press out again, then it's a superset, and shoulder press is the step after it, with 3 sets.
+- Given a superset of two steps, when I take one out, then both are exercises of their own, each with the superset's rounds as its sets and its rest.
+- Given a collapsed superset of bench and row, then it shows "Bench, Row" and "3 rounds · rest 01:00", and its steps are hidden.
+- Given a step after a superset, when I move it up, then it goes before the whole superset; given the superset's first step, then it can't move up.
 - Given I edit a saved workout, then it opens with its steps collapsed, and saving updates it rather than adding another.
 - Given Time limit is picked, then the wheels show 20:00; when I pick 12:30 and start, then the workout is saved with a time limit of 750 seconds and rounds until stopped.
 - Given Time limit at 00:00, then it won't start, and says the time limit needs to be longer than 00:00.
@@ -148,5 +166,5 @@ Still to come, in [sets-and-supersets](sets-and-supersets.md): supersets (BLD-12
 
 ## Platform notes
 
-- **Web:** the form is `WorkoutSetupComponent` (`src/app/workout-setup/`), at `/setup`, or `/setup?editId=<id>` to edit. The wheels are `WheelPickerComponent`. Opening and closing steps slide with `captureLayout()` (`src/app/shared/layout-change.ts`), moving only transforms rather than animating heights. Rounds or Time limit is the shared segmented control (`src/styles/_segmented.scss`, also settings' theme). Rules for what counts as a valid workout are in `src/app/models/workout.ts`.
-- **iOS:** the kind pill maps onto a `Menu` (or a `Picker` with `.menu` style) labelled with the kind; the Steps tip onto a `.popover` or `.help()` on an `info.circle` button. The wheels map directly onto `Picker` with `.wheel` style. Drag to reorder maps onto `List` with `onMove`; swipe to delete is the iOS habit, but keep the "ask first if it has something in it" rule.
+- **Web:** the form is `WorkoutSetupComponent` (`src/app/workout-setup/`), at `/setup`, or `/setup?editId=<id>` to edit. The wheels are `WheelPickerComponent`. Opening and closing steps slide with `captureLayout()` (`src/app/shared/layout-change.ts`), moving only transforms rather than animating heights. Rounds or Time limit is the shared segmented control (`src/styles/_segmented.scss`, also settings' theme). Rules for what counts as a valid workout are in `src/app/models/workout.ts`. The form keeps one flat list of rows: a superset is a row of its own (kind `superset`, its rounds as its `sets`) followed by its steps, each with the superset's key as its `group`; `moved()`, `wellFormed()` and `lonelyStepsOut()` keep them together.
+- **iOS:** the kind pill maps onto a `Menu` (or a `Picker` with `.menu` style) labelled with the kind; the Steps tip onto a `.popover` or `.help()` on an `info.circle` button. The wheels map directly onto `Picker` with `.wheel` style. Drag to reorder maps onto `List` with `onMove`, and a superset onto a `Section` of it, with its Rounds and Rest in the section's header; swipe to delete is the iOS habit, but keep the "ask first if it has something in it" rule.
