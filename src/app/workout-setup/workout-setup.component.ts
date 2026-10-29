@@ -27,6 +27,8 @@ import { StepKindMenuComponent } from './step-kind-menu/step-kind-menu.component
 import {
     hasWork,
     MAX_REPEATS,
+    allSteps,
+    asOneGroup,
     MAX_REPS,
     MAX_STEPS,
     Step,
@@ -278,7 +280,7 @@ export class WorkoutSetupComponent {
             const limit = workoutToEdit.timeLimitSeconds;
             this.model.set({
                 title: workoutToEdit.title,
-                steps: workoutToEdit.steps.map((step) => this.stepModel(step)),
+                steps: allSteps(workoutToEdit).map((step) => this.stepModel(step)),
                 // A time limit is saved with UNTIL_STOPPED, which Rounds shouldn't start on
                 repeats: limit === undefined ? workoutToEdit.repeats : 1,
                 repeatMode: limit === undefined ? 'rounds' : 'time',
@@ -637,11 +639,15 @@ export class WorkoutSetupComponent {
             setup.repeatMode === 'time'
                 ? {
                       title,
-                      steps: toSteps(steps, this.weightUnit),
+                      blocks: asOneGroup(toSteps(steps, this.weightUnit)),
                       repeats: UNTIL_STOPPED,
                       timeLimitSeconds: timeLimitSeconds(setup),
                   }
-                : { title, steps: toSteps(steps, this.weightUnit), repeats: setup.repeats };
+                : {
+                      title,
+                      blocks: asOneGroup(toSteps(steps, this.weightUnit)),
+                      repeats: setup.repeats,
+                  };
 
         const editingId = this.editingWorkoutId();
         const savedWorkout = editingId

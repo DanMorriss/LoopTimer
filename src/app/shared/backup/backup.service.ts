@@ -1,7 +1,7 @@
 import { DOCUMENT, inject, Service } from '@angular/core';
 import { linkSets, linkSteps, sameExercisesHere } from '../../models/exercise-links';
 import { HistoryEntry } from '../../models/history';
-import { Workout } from '../../models/workout';
+import { allSteps, withSteps, Workout } from '../../models/workout';
 import { DeletionStore } from '../state/deletion-store.service';
 import { ExerciseStore } from '../state/exercise-store.service';
 import { HistoryStore } from '../state/history-store.service';
@@ -189,7 +189,10 @@ export class BackupService {
     private linked(workout: Workout, idHere: (id: string) => string): Workout {
         return {
             ...workout,
-            steps: linkSteps(workout.steps.map(withIdHere(idHere)), this.exercises.finder),
+            blocks: withSteps(
+                workout.blocks,
+                linkSteps(allSteps(workout).map(withIdHere(idHere)), this.exercises.finder)
+            ),
         };
     }
 

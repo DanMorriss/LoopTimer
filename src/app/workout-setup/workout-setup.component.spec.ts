@@ -10,7 +10,14 @@ import {
     provideRouter,
 } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
-import { MAX_STEPS, Workout, WorkoutFields, UNTIL_STOPPED } from '../models/workout';
+import {
+    allSteps,
+    asOneGroup,
+    MAX_STEPS,
+    UNTIL_STOPPED,
+    Workout,
+    WorkoutFields,
+} from '../models/workout';
 import { SettingsStore } from '../shared/state/settings-store.service';
 import { WorkoutStore } from '../shared/state/workout-store.service';
 import { ExerciseStore } from '../shared/state/exercise-store.service';
@@ -23,7 +30,7 @@ const blankStep = { kind: 'Reps', name: '', time: '0 reps' };
 
 const savedWorkout: WorkoutFields = {
     title: 'Saved workout',
-    steps: [work(135, 'Squats'), rest(45)],
+    blocks: asOneGroup([work(135, 'Squats'), rest(45)]),
     repeats: 4,
 };
 
@@ -329,7 +336,7 @@ describe('WorkoutSetupComponent', () => {
                 id: expect.any(String),
                 updatedAt: expect.any(Number),
                 title: 'Sprints',
-                steps: [work(90, 'Hill sprint'), rest(20)],
+                blocks: asOneGroup([work(90, 'Hill sprint'), rest(20)]),
                 repeats: 6,
             };
             expect(store.workouts().map(unlinkedWorkout)).toEqual([expected]);
@@ -342,7 +349,7 @@ describe('WorkoutSetupComponent', () => {
 
             await submit();
 
-            expect(unlinked(store.workouts()[0].steps)).toEqual([work(30)]);
+            expect(unlinked(allSteps(store.workouts()[0]))).toEqual([work(30)]);
         });
 
         it('resets the form after saving', async () => {
@@ -431,7 +438,7 @@ describe('WorkoutSetupComponent', () => {
 
                 await submit();
 
-                expect(unlinked(store.workouts()[0].steps)).toEqual([reps(10)]);
+                expect(unlinked(allSteps(store.workouts()[0]))).toEqual([reps(10)]);
             });
 
             it('closes on Escape, back on the pill', async () => {
@@ -492,7 +499,7 @@ describe('WorkoutSetupComponent', () => {
 
                 await submit();
 
-                expect(unlinked(store.workouts()[0].steps)).toEqual([
+                expect(unlinked(allSteps(store.workouts()[0]))).toEqual([
                     work(30),
                     reps(20, 'Push-ups'),
                 ]);
@@ -504,7 +511,7 @@ describe('WorkoutSetupComponent', () => {
 
                 await submit();
 
-                expect(unlinked(store.workouts()[0].steps)).toEqual([work(30)]);
+                expect(unlinked(allSteps(store.workouts()[0]))).toEqual([work(30)]);
             });
 
             it('counts reps as work, so a workout of only reps can start', async () => {
@@ -515,7 +522,7 @@ describe('WorkoutSetupComponent', () => {
 
                 expect(submitButton().disabled).toBe(false);
                 await submit();
-                expect(unlinked(store.workouts()[0].steps)).toEqual([reps(10)]);
+                expect(unlinked(allSteps(store.workouts()[0]))).toEqual([reps(10)]);
             });
 
             describe('weight', () => {
@@ -546,7 +553,7 @@ describe('WorkoutSetupComponent', () => {
 
                     await submit();
 
-                    expect(unlinked(store.workouts()[0].steps)).toEqual([
+                    expect(unlinked(allSteps(store.workouts()[0]))).toEqual([
                         { kind: 'reps', reps: 10, name: 'Squats', weight: 22.5 },
                         reps(20),
                     ]);
@@ -600,7 +607,7 @@ describe('WorkoutSetupComponent', () => {
 
             await submit();
 
-            expect(unlinked(store.workouts()[0].steps)).toEqual([
+            expect(unlinked(allSteps(store.workouts()[0]))).toEqual([
                 work(30, 'Squats'),
                 rest(15),
                 work(45, 'Plank'),
@@ -869,7 +876,7 @@ describe('WorkoutSetupComponent', () => {
             chooseTime(0, 'seconds', '30');
             await submit();
 
-            expect(store.workouts()[0].steps[0]).toEqual({
+            expect(allSteps(store.workouts()[0])[0]).toEqual({
                 kind: 'work',
                 seconds: 30,
                 name: 'Front squat',
@@ -914,7 +921,7 @@ describe('WorkoutSetupComponent', () => {
             const mine = exercises.addOwn('Sled push', 'timed');
             store.addWorkout({
                 title: 'Sleds',
-                steps: [work(30, 'Sled push'), rest(30)],
+                blocks: asOneGroup([work(30, 'Sled push'), rest(30)]),
                 repeats: 2,
             });
             await create();
@@ -928,7 +935,7 @@ describe('WorkoutSetupComponent', () => {
 
             expect(exercises.byId(mine.id)?.name).toBe('Sled drag');
             expect(shown().steps[0].name).toBe('Sled drag');
-            expect(store.workouts()[0].steps[0]).toEqual({
+            expect(allSteps(store.workouts()[0])[0]).toEqual({
                 ...work(30, 'Sled drag'),
                 exerciseId: mine.id,
             });
@@ -1156,7 +1163,7 @@ describe('WorkoutSetupComponent', () => {
             // 45 lb, saved in kg
             const pressed: WorkoutFields = {
                 ...savedWorkout,
-                steps: [{ kind: 'reps', reps: 10, name: 'Bench', weight: 20.412 }],
+                blocks: asOneGroup([{ kind: 'reps', reps: 10, name: 'Bench', weight: 20.412 }]),
             };
 
             async function editInPounds() {
@@ -1180,7 +1187,7 @@ describe('WorkoutSetupComponent', () => {
 
                 await submit();
 
-                expect(unlinked(store.workouts()[0].steps)).toEqual(pressed.steps);
+                expect(unlinked(allSteps(store.workouts()[0]))).toEqual(allSteps(pressed));
             });
 
             it('saves a weight picked in lb in kg', async () => {
@@ -1198,7 +1205,7 @@ describe('WorkoutSetupComponent', () => {
 
                 await submit();
 
-                expect(unlinked(store.workouts()[0].steps)).toEqual([
+                expect(unlinked(allSteps(store.workouts()[0]))).toEqual([
                     { kind: 'reps', reps: 10, name: 'Bench', weight: 61.235 },
                 ]);
             });
@@ -1206,7 +1213,10 @@ describe('WorkoutSetupComponent', () => {
 
         it('shows a rep step collapsed as its name and count', async () => {
             await setup({ editId: 'workout-1' });
-            store.addWorkout({ ...savedWorkout, steps: [work(30), reps(1, 'Pull-up'), reps(20)] });
+            store.addWorkout({
+                ...savedWorkout,
+                blocks: asOneGroup([work(30), reps(1, 'Pull-up'), reps(20)]),
+            });
             await create();
 
             expect(shown().steps).toEqual([
@@ -1239,7 +1249,7 @@ describe('WorkoutSetupComponent', () => {
                 id: 'workout-1',
                 updatedAt: expect.any(Number),
                 title: 'Renamed',
-                steps: savedWorkout.steps,
+                blocks: savedWorkout.blocks,
                 repeats: 2,
             });
             expect(store.activeWorkout()?.id).toBe('workout-1');

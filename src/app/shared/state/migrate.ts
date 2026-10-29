@@ -3,11 +3,11 @@ import { Exercise, MeasuredBy, OwnExercise } from '../../models/exercise';
 import { ExerciseFinder, findByName, linkSets, linkSteps } from '../../models/exercise-links';
 import { isLoggedSet } from '../../models/history';
 import { Deletion, newId } from '../../models/sync';
-import { Step } from '../../models/workout';
+import { asOneGroup, Step } from '../../models/workout';
 
 /** Which shape the saved data is in. Missing means 1, from before this was saved. */
 const VERSION_KEY = 'data-version';
-export const DATA_VERSION = 4;
+export const DATA_VERSION = 5;
 
 /** Each old workout id and the new one it was given, so a run in progress can still find it. */
 export const LEGACY_WORKOUT_IDS_KEY = 'legacy-workout-ids';
@@ -31,6 +31,9 @@ export function migrateSavedData(now = Date.now()) {
     }
     if (version < 3) {
         toVersion3(now);
+    }
+    if (version < 5) {
+        toVersion5();
     }
     localStorage.setItem(VERSION_KEY, String(DATA_VERSION));
 }
@@ -277,4 +280,25 @@ function readList(key: string): unknown[] | null {
     } catch {
         return null;
     }
+}
+
+/**
+ * Version 5: groups (see docs/features/sets-and-supersets.md). Each workout's `steps` become
+ * one group of them, run once a round, so it runs exactly as before. The history needs no
+ * change: a set's step is its place in the workout's steps, which is the same as it was.
+ */
+function toVersion5() {
+    const workouts = readList('workouts');
+    if (workouts) {
+        localStorage.setItem('workouts', JSON.stringify(workouts.map(withBlocks)));
+    }
+}
+
+/** A workout saved before groups, with its steps as one; anything else is left as it is. */
+function withBlocks(value: unknown): unknown {
+    if (typeof value !== 'object' || value === null || !('steps' in value)) {
+        return value;
+    }
+    const { steps, ...workout } = value as Record<string, unknown>;
+    return Array.isArray(steps) ? { ...workout, blocks: asOneGroup(steps as Step[]) } : value;
 }

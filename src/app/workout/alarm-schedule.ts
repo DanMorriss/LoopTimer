@@ -1,6 +1,7 @@
 import {
     endlessRounds,
     roundSeconds,
+    runPlan,
     stepSeconds,
     Workout,
     workoutSeconds,
@@ -65,7 +66,7 @@ export function alarmEvents(
 
     for (let round = fromRound; round < endRound; round++) {
         let at = startedAt + round * roundMs;
-        for (const [stepIndex, step] of workout.steps.entries()) {
+        for (const [stepIndex, step] of runPlan(workout).steps.entries()) {
             if (round === waitingOn?.round && stepIndex === waitingOn.stepIndex) {
                 // Rep steps take no time on the clock, so without a time limit one can start
                 // right at the end of the countdown, and still needs its alarm

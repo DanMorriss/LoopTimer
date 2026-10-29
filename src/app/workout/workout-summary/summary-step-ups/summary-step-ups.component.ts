@@ -3,6 +3,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { describeSets } from '../../../history/history-format';
 import { progressionSuggestions, ProgressionSuggestion } from '../../../models/progress';
 import { weightToKg } from '../../../models/weight';
+import { allSteps } from '../../../models/workout';
 import { ActiveRunService } from '../../../shared/run/active-run.service';
 import { ExerciseStore } from '../../../shared/state/exercise-store.service';
 import { SettingsStore } from '../../../shared/state/settings-store.service';
@@ -82,9 +83,11 @@ export class SummaryStepUpsComponent {
         const applied = this.applied();
         return [
             ...applied.values(),
-            ...progressionSuggestions(sets, this.run.workout()?.steps ?? [], unit).filter(
-                ({ step }) => !applied.has(step)
-            ),
+            ...progressionSuggestions(
+                sets,
+                allSteps(this.run.workout() ?? { blocks: [] }),
+                unit
+            ).filter(({ step }) => !applied.has(step)),
         ]
             .sort((a, b) => a.step - b.step)
             .map((suggestion) => {
@@ -115,7 +118,7 @@ export class SummaryStepUpsComponent {
      * wheel would. Focus moves to its Applied.
      */
     protected apply(text: string, step: number) {
-        const steps = this.run.workout()?.steps ?? [];
+        const steps = allSteps(this.run.workout() ?? { blocks: [] });
         const next = new Map(this.applied());
         for (const { suggestion } of this.items().filter((item) => item.text === text)) {
             const current = steps[suggestion.step];

@@ -1,7 +1,7 @@
 import { HistoryEntry } from '../../models/history';
 import { Deletion, LibraryOrder } from '../../models/sync';
 import { Settings } from '../state/settings-store.service';
-import { makeWorkout } from '../testing/make-workout';
+import { makeWorkout, rest, savedBeforeGroups, work } from '../testing/make-workout';
 import { BACKUP_VERSION, backupFileName, makeBackup, readBackup } from './backup-file';
 
 const SETTINGS: Settings = {
@@ -190,7 +190,7 @@ describe('backup file', () => {
             fileWith({
                 version: 3,
                 workouts: undefined,
-                timers: [workout],
+                timers: [savedBeforeGroups(workout)],
                 history: [{ ...withoutWorkoutId(ENTRY), timerId: ENTRY.workoutId }],
                 deleted: [{ kind: 'timer', id: 'gone', deletedAt: 1 }],
             })
@@ -205,6 +205,17 @@ describe('backup file', () => {
                 skipped: 0,
             })
         );
+    });
+
+    it("reads a file from before version 8, a workout's steps becoming one group", () => {
+        const workout = makeWorkout({ steps: [work(30, 'Squats'), rest(10)] });
+
+        const result = readBackup(fileWith({ version: 7, workouts: [savedBeforeGroups(workout)] }));
+
+        expect(result).toEqual(expect.objectContaining({ ok: true, workouts: [workout] }));
+        expect(workout.blocks).toEqual([
+            { kind: 'group', rounds: 1, restSeconds: 0, steps: [work(30, 'Squats'), rest(10)] },
+        ]);
     });
 
     describe('written by hand', () => {

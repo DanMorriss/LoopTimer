@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { HistoryEntry } from '../../models/history';
 import { Deletion } from '../../models/sync';
-import { Workout } from '../../models/workout';
+import { allSteps, Workout } from '../../models/workout';
 import { ExerciseStore } from '../state/exercise-store.service';
 import { HistoryStore } from '../state/history-store.service';
 import { savedHistory } from '../testing/history-database';
@@ -75,10 +75,10 @@ describe('BackupService', () => {
     describe('export', () => {
         it('downloads everything as a dated JSON file, deletions included', async () => {
             start();
-            workouts().addWorkout({ title: 'Legs', steps: makeWorkout().steps, repeats: 3 });
+            workouts().addWorkout({ title: 'Legs', blocks: makeWorkout().blocks, repeats: 3 });
             const gone = workouts().addWorkout({
                 title: 'Gone',
-                steps: makeWorkout().steps,
+                blocks: makeWorkout().blocks,
                 repeats: 1,
             });
             workouts().deleteWorkout(gone.id);
@@ -102,7 +102,7 @@ describe('BackupService', () => {
             expect(link.href).toBe('blob:backup');
             const file: BackupFile = JSON.parse(await blob!.text());
             expect(file.app).toBe('Loop Workouts');
-            expect(file.version).toBe(7);
+            expect(file.version).toBe(8);
             expect(file.libraryOrder).toEqual(workouts().libraryOrder());
             expect(file.workouts).toEqual(workouts().workouts());
             expect(file.history).toEqual(history().entries());
@@ -253,7 +253,7 @@ describe('BackupService', () => {
 
         it('changes nothing when the file is no good', async () => {
             start();
-            workouts().addWorkout({ title: 'Legs', steps: makeWorkout().steps, repeats: 3 });
+            workouts().addWorkout({ title: 'Legs', blocks: makeWorkout().blocks, repeats: 3 });
 
             expect(await backup.import(new Blob(['{"app":"Other"}']))).toEqual({
                 ok: false,
@@ -294,7 +294,7 @@ describe('BackupService', () => {
             start();
             const here = workouts().addWorkout({
                 title: 'Legs',
-                steps: makeWorkout().steps,
+                blocks: makeWorkout().blocks,
                 repeats: 3,
             });
 
@@ -314,7 +314,7 @@ describe('BackupService', () => {
 
         it('keeps a workout changed since the backup, and adds the backup one alongside', async () => {
             start();
-            workouts().addWorkout({ title: 'Legs', steps: makeWorkout().steps, repeats: 5 });
+            workouts().addWorkout({ title: 'Legs', blocks: makeWorkout().blocks, repeats: 5 });
 
             await backup.import(v1Backup([v1Workout(1, 'Legs', 3)], []));
 
@@ -428,7 +428,7 @@ describe('BackupService', () => {
             expect(imported).toEqual(result({ workoutsAdded: 1, exercisesAdded: 1 }));
             expect(exercises.byId('sled')?.name).toBe('Sled push');
             expect(exercises.noteFor('sled')).toBe('Low and fast');
-            expect(workouts().workouts()[0].steps[0].exerciseId).toBe('sled');
+            expect(allSteps(workouts().workouts()[0])[0].exerciseId).toBe('sled');
         });
 
         it('takes an exercise of your own made on both devices to be the one here', async () => {
@@ -458,7 +458,7 @@ describe('BackupService', () => {
             expect(exercises.own()).toEqual([here]);
             expect(exercises.noteFor(here.id)).toBe('Low and fast');
             expect(exercises.isHidden(here.id)).toBe(true);
-            expect(workouts().workouts()[0].steps[0].exerciseId).toBe(here.id);
+            expect(allSteps(workouts().workouts()[0])[0].exerciseId).toBe(here.id);
             expect(history().entries()[0].sets![0].exerciseId).toBe(here.id);
         });
 
@@ -484,7 +484,7 @@ describe('BackupService', () => {
             );
 
             const crawl = TestBed.inject(ExerciseStore).finder.find('Bear crawl');
-            expect(workouts().workouts()[0].steps[0].exerciseId).toBe('builtin:back-squat');
+            expect(allSteps(workouts().workouts()[0])[0].exerciseId).toBe('builtin:back-squat');
             expect(history().entries()[0].sets![0].exerciseId).toBe(crawl!.id);
         });
 
@@ -519,11 +519,10 @@ describe('BackupService', () => {
                 expect.objectContaining({ name: 'Sled push', mainMuscles: ['quads'] }),
             ]);
             expect(workouts().workouts()).toHaveLength(1);
-            expect(
-                workouts()
-                    .workouts()[0]
-                    .steps.map((s) => s.exerciseId)
-            ).toEqual(['builtin:back-squat', sled.id]);
+            expect(allSteps(workouts().workouts()[0]).map((s) => s.exerciseId)).toEqual([
+                'builtin:back-squat',
+                sled.id,
+            ]);
         });
 
         it('links a step anew when its exercise is neither here nor in the file', async () => {
@@ -542,7 +541,7 @@ describe('BackupService', () => {
                 })
             );
 
-            expect(workouts().workouts()[0].steps[0].exerciseId).toBe('builtin:push-up');
+            expect(allSteps(workouts().workouts()[0])[0].exerciseId).toBe('builtin:push-up');
         });
     });
 });

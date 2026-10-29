@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
-import { Workout, UNTIL_STOPPED } from '../models/workout';
+import { allSteps, asOneGroup, UNTIL_STOPPED, Workout } from '../models/workout';
 import { HistoryStore } from '../shared/state/history-store.service';
 import { SettingsStore } from '../shared/state/settings-store.service';
 import { WorkoutStore } from '../shared/state/workout-store.service';
@@ -2317,7 +2317,7 @@ describe('WorkoutComponent', () => {
                 expect(value('reps')).toBe('15');
                 expect(value('weight')).toBe('22.5');
                 expect(wheel('weight').classList).not.toContain('workout-face__weight--none');
-                expect(store.workouts()[0].steps[1]).toEqual({
+                expect(allSteps(store.workouts()[0])[1]).toEqual({
                     kind: 'reps',
                     reps: 15,
                     name: 'Push-ups',
@@ -2343,7 +2343,11 @@ describe('WorkoutComponent', () => {
 
                 choose('weight', '0');
 
-                expect(store.workouts()[0].steps[0]).toEqual({ kind: 'reps', reps: 5, name: '' });
+                expect(allSteps(store.workouts()[0])[0]).toEqual({
+                    kind: 'reps',
+                    reps: 5,
+                    name: '',
+                });
                 expect(wheel('weight').classList).toContain('workout-face__weight--none');
                 fixture.destroy();
             });
@@ -2357,7 +2361,9 @@ describe('WorkoutComponent', () => {
 
                 expect(value('weight')).toBe('135');
                 expect(text()).toContain('lb');
-                expect((store.workouts()[0].steps[1] as { weight?: number }).weight).toBe(61.235);
+                expect((allSteps(store.workouts()[0])[1] as { weight?: number }).weight).toBe(
+                    61.235
+                );
                 fixture.destroy();
             });
 
@@ -2891,11 +2897,11 @@ describe('WorkoutComponent', () => {
                 const saved = TestBed.inject(WorkoutStore).addWorkout({
                     title: 'Push day',
                     repeats: 1,
-                    steps: [
+                    blocks: asOneGroup([
                         work(2),
                         { kind: 'reps', reps: 5, weight: 80, ...bench },
                         { kind: 'reps', reps: 12, ...pushUps },
-                    ],
+                    ]),
                 });
                 start(saved);
                 advance(2000);
@@ -2911,7 +2917,7 @@ describe('WorkoutComponent', () => {
             const apply = (line: string) =>
                 summary()!.querySelector<HTMLButtonElement>(`button[aria-label="Apply: ${line}"]`);
             const savedSteps = (id: string) =>
-                TestBed.inject(WorkoutStore).findWorkoutById(id)!.steps;
+                allSteps(TestBed.inject(WorkoutStore).findWorkoutById(id)!);
 
             it('puts the heavier weight or the extra rep on the saved workout', async () => {
                 const saved = finishPushDay();
@@ -2973,9 +2979,9 @@ describe('WorkoutComponent', () => {
             TestBed.inject(WorkoutStore).addWorkout({
                 title: 'Legs',
                 repeats: 3,
-                steps: [
+                blocks: asOneGroup([
                     { kind: 'reps', reps: 5, name: 'Back squat', exerciseId: 'builtin:back-squat' },
-                ],
+                ]),
             });
             benchOnce(80, []);
 
@@ -3278,7 +3284,7 @@ describe('WorkoutComponent', () => {
                 ]);
                 expect(summaryText()).toContain('Use these settings next time?');
                 // Not until asked
-                expect(store.workouts()[0].steps[1]).toEqual(
+                expect(allSteps(store.workouts()[0])[1]).toEqual(
                     expect.objectContaining({ reps: 20, weight: 40 })
                 );
 
@@ -3294,7 +3300,7 @@ describe('WorkoutComponent', () => {
 
                 pressInSummary('Yes, use next time');
 
-                expect(store.workouts()[0].steps[1]).toEqual(
+                expect(allSteps(store.workouts()[0])[1]).toEqual(
                     expect.objectContaining({ kind: 'reps', reps: 18, weight: 40 })
                 );
                 expect(summaryText()).toContain('Saved: next time starts from these.');
@@ -3308,7 +3314,7 @@ describe('WorkoutComponent', () => {
 
                 pressInSummary('No, just this time');
 
-                expect(store.workouts()[0].steps[1]).toEqual(
+                expect(allSteps(store.workouts()[0])[1]).toEqual(
                     expect.objectContaining({ reps: 20, weight: 40 })
                 );
                 expect(summaryText()).not.toContain('Use these settings next time?');

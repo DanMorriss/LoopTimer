@@ -16,7 +16,7 @@ export function fakeSyncServer(now = 1_800_000_000_000) {
         records,
         /** Writes a record as if another device had sent it. */
         write(record: Omit<ServerRecord, 'version'> & { version?: number }) {
-            server.push([{ version: 7, ...record }]);
+            server.push([{ version: 8, ...record }]);
         },
         push(changes: readonly ServerRecord[]) {
             for (const change of changes) {

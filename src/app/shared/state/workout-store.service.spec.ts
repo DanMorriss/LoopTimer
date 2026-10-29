@@ -1,10 +1,11 @@
 import { TestBed } from '@angular/core/testing';
-import { Workout, WorkoutFields } from '../../models/workout';
+import { allSteps, asOneGroup, Block, Workout, WorkoutFields } from '../../models/workout';
 import { LoggedSet } from '../../models/history';
 import {
     makeWorkout as baseWorkout,
     reps,
     rest,
+    savedBeforeGroups,
     SimpleWorkout,
     work,
 } from '../testing/make-workout';
@@ -69,20 +70,45 @@ describe('WorkoutStore', () => {
                 { ...makeWorkout(), id: '', updatedAt: 1 },
                 { ...makeWorkout(), id: 'workout-3', updatedAt: 1, title: 42 },
                 { ...makeWorkout(), id: 'workout-4', updatedAt: 1, repeats: -1 },
-                { ...makeWorkout(), id: 'workout-5', updatedAt: 1, steps: 'work' },
-                { ...makeWorkout(), id: 'workout-6', updatedAt: 1, steps: [] },
-                { ...makeWorkout(), id: 'workout-7', updatedAt: 1, steps: [rest(10)] },
-                { ...makeWorkout(), id: 'workout-8', updatedAt: 1, steps: [work(0)] },
-                { ...makeWorkout(), id: 'workout-9', updatedAt: 1, steps: [work(30.5)] },
-                { ...makeWorkout(), id: 'workout-10', updatedAt: 1, steps: [work(100 * 60)] },
                 {
-                    ...makeWorkout(),
+                    ...savedBeforeGroups(makeWorkout()),
+                    id: 'workout-5',
+                    updatedAt: 1,
+                    steps: 'work',
+                },
+                { ...savedBeforeGroups(makeWorkout()), id: 'workout-6', updatedAt: 1, steps: [] },
+                {
+                    ...savedBeforeGroups(makeWorkout()),
+                    id: 'workout-7',
+                    updatedAt: 1,
+                    steps: [rest(10)],
+                },
+                {
+                    ...savedBeforeGroups(makeWorkout()),
+                    id: 'workout-8',
+                    updatedAt: 1,
+                    steps: [work(0)],
+                },
+                {
+                    ...savedBeforeGroups(makeWorkout()),
+                    id: 'workout-9',
+                    updatedAt: 1,
+                    steps: [work(30.5)],
+                },
+                {
+                    ...savedBeforeGroups(makeWorkout()),
+                    id: 'workout-10',
+                    updatedAt: 1,
+                    steps: [work(100 * 60)],
+                },
+                {
+                    ...savedBeforeGroups(makeWorkout()),
                     id: 'workout-11',
                     updatedAt: 1,
                     steps: [{ kind: 'jump', seconds: 30, name: '' }],
                 },
                 {
-                    ...makeWorkout(),
+                    ...savedBeforeGroups(makeWorkout()),
                     id: 'workout-12',
                     updatedAt: 1,
                     steps: [{ kind: 'work', seconds: 30 }],
@@ -91,6 +117,61 @@ describe('WorkoutStore', () => {
             localStorage.setItem('workouts', JSON.stringify([valid, ...broken]));
 
             expect(createStore().workouts()).toEqual([valid]);
+        });
+
+        it('loads groups and headings, and drops workouts with a broken group', () => {
+            const blocks: Block[] = [
+                { kind: 'heading', text: 'Knee rehabilitation' },
+                { kind: 'group', rounds: 3, restSeconds: 60, steps: [reps(10, 'Leg press')] },
+                { kind: 'group', rounds: 2, restSeconds: 0, steps: [work(30), reps(8)] },
+            ];
+            const valid: Workout = { ...makeWorkout(), id: 'workout-1', updatedAt: 1, blocks };
+            const group = (fields: Record<string, unknown>) => ({
+                ...makeWorkout(),
+                updatedAt: 1,
+                blocks: [{ kind: 'group', rounds: 1, restSeconds: 0, steps: [reps(5)], ...fields }],
+            });
+            const broken = [
+                { ...group({ rounds: 0 }), id: 'workout-2' },
+                { ...group({ rounds: 31 }), id: 'workout-3' },
+                { ...group({ rounds: 1.5 }), id: 'workout-4' },
+                { ...group({ restSeconds: -1 }), id: 'workout-5' },
+                { ...group({ restSeconds: 100 * 60 }), id: 'workout-6' },
+                { ...group({ steps: [] }), id: 'workout-7' },
+                { ...group({ steps: [reps(0)] }), id: 'workout-8' },
+                { ...group({ kind: 'loop' }), id: 'workout-9' },
+                { ...makeWorkout(), id: 'workout-10', updatedAt: 1, blocks: 'group' },
+                { ...makeWorkout(), id: 'workout-11', updatedAt: 1, blocks: [null] },
+                // Only a heading, so no work
+                { ...makeWorkout(), id: 'workout-12', updatedAt: 1, blocks: [blocks[0]] },
+            ];
+            localStorage.setItem('workouts', JSON.stringify([valid, ...broken]));
+
+            expect(createStore().workouts()).toEqual([valid]);
+        });
+
+        it('drops a broken heading, keeping the workout', () => {
+            const group = { kind: 'group', rounds: 1, restSeconds: 0, steps: [reps(5)] };
+            const headings = ['', '  ', 42, 'x'.repeat(41), '  Warmup  '].map((text) => ({
+                kind: 'heading',
+                text,
+            }));
+            localStorage.setItem(
+                'workouts',
+                JSON.stringify([
+                    {
+                        ...makeWorkout(),
+                        id: 'workout-1',
+                        updatedAt: 1,
+                        blocks: [...headings, group],
+                    },
+                ])
+            );
+
+            expect(createStore().workouts()[0].blocks).toEqual([
+                { kind: 'heading', text: 'Warmup' },
+                group,
+            ]);
         });
 
         it('loads rep steps, and drops workouts with broken ones', () => {
@@ -105,16 +186,26 @@ describe('WorkoutStore', () => {
                 updatedAt: 1,
             };
             const broken = [
-                { ...makeWorkout(), id: 'workout-3', updatedAt: 1, steps: [reps(0)] },
-                { ...makeWorkout(), id: 'workout-4', updatedAt: 1, steps: [reps(101)] },
                 {
-                    ...makeWorkout(),
+                    ...savedBeforeGroups(makeWorkout()),
+                    id: 'workout-3',
+                    updatedAt: 1,
+                    steps: [reps(0)],
+                },
+                {
+                    ...savedBeforeGroups(makeWorkout()),
+                    id: 'workout-4',
+                    updatedAt: 1,
+                    steps: [reps(101)],
+                },
+                {
+                    ...savedBeforeGroups(makeWorkout()),
                     id: 'workout-5',
                     updatedAt: 1,
                     steps: [{ kind: 'reps', seconds: 30, name: '' }],
                 },
                 {
-                    ...makeWorkout(),
+                    ...savedBeforeGroups(makeWorkout()),
                     id: 'workout-6',
                     updatedAt: 1,
                     steps: [{ kind: 'reps', reps: 2.5, name: '' }],
@@ -134,7 +225,7 @@ describe('WorkoutStore', () => {
                 updatedAt: 1,
             };
             const broken = [0, -5, 300.5, '60'].map((weight, i) => ({
-                ...makeWorkout(),
+                ...savedBeforeGroups(makeWorkout()),
                 id: i + 2,
                 steps: [{ kind: 'reps', reps: 10, name: '', weight }],
             }));
@@ -180,14 +271,14 @@ describe('WorkoutStore', () => {
                         id: 'workout-1',
                         updatedAt: 1,
                         title: 'Old',
-                        steps: [work(65), rest(20)],
+                        blocks: asOneGroup([work(65), rest(20)]),
                         repeats: 4,
                     },
                 ]);
             });
 
             it('have no rest step when there was no rest', () => {
-                expect(load([old({ restSeconds: 0 })])[0].steps).toEqual([work(65)]);
+                expect(allSteps(load([old({ restSeconds: 0 })])[0])).toEqual([work(65)]);
             });
 
             it('are saved in the new format the next time anything changes', () => {
@@ -199,7 +290,7 @@ describe('WorkoutStore', () => {
                     id: 'workout-1',
                     updatedAt: 1,
                     title: 'Old',
-                    steps: [work(65), rest(20)],
+                    blocks: asOneGroup([work(65), rest(20)]),
                     repeats: 4,
                 });
             });
@@ -387,13 +478,13 @@ describe('WorkoutStore', () => {
 
             const mine = TestBed.inject(ExerciseStore).own();
             expect(mine.map((e) => [e.name, e.measuredBy])).toEqual([['Wall sit hold', 'timed']]);
-            expect(workout.steps.map((s) => s.exerciseId)).toEqual([
+            expect(allSteps(workout).map((s) => s.exerciseId)).toEqual([
                 'builtin:back-squat',
                 undefined,
                 mine[0].id,
                 undefined,
             ]);
-            expect(savedWorkouts()[0].steps[0].exerciseId).toBe('builtin:back-squat');
+            expect(allSteps(savedWorkouts()[0])[0].exerciseId).toBe('builtin:back-squat');
         });
 
         it('links again when a workout is edited, so a renamed step follows its name', () => {
@@ -405,7 +496,7 @@ describe('WorkoutStore', () => {
                 makeWorkout({ steps: [reps(10, 'Push-ups')] })
             );
 
-            expect(updated!.steps[0].exerciseId).toBe('builtin:push-up');
+            expect(allSteps(updated!)[0].exerciseId).toBe('builtin:push-up');
         });
 
         it('keeps the exercise picked for a step, whatever its name', () => {
@@ -415,7 +506,7 @@ describe('WorkoutStore', () => {
                 })
             );
 
-            expect(workout.steps[0].exerciseId).toBe('builtin:front-squat');
+            expect(allSteps(workout)[0].exerciseId).toBe('builtin:front-squat');
         });
 
         it('gives the steps of a renamed exercise its new name, in every workout and the one running', () => {
@@ -431,11 +522,11 @@ describe('WorkoutStore', () => {
             store.renameExerciseSteps(mine.id, 'Sled drag');
 
             const [renamed, untouched] = store.workouts();
-            expect(renamed.steps.map((s) => s.name)).toEqual(['Sled drag', '', 'Squats']);
+            expect(allSteps(renamed).map((s) => s.name)).toEqual(['Sled drag', '', 'Squats']);
             expect(renamed.updatedAt).toBe(first.updatedAt + 5);
             expect(untouched).toEqual(other);
-            expect(store.activeWorkout()?.steps[0].name).toBe('Sled drag');
-            expect(savedWorkouts()[0].steps[0].name).toBe('Sled drag');
+            expect(allSteps(store.activeWorkout()!)[0].name).toBe('Sled drag');
+            expect(allSteps(savedWorkouts()[0])[0].name).toBe('Sled drag');
         });
 
         it("keeps a saved step's link when loading", () => {
@@ -446,7 +537,7 @@ describe('WorkoutStore', () => {
             };
             localStorage.setItem('workouts', JSON.stringify([saved]));
 
-            expect(createStore().workouts()[0].steps[0].exerciseId).toBe('builtin:back-squat');
+            expect(allSteps(createStore().workouts()[0])[0].exerciseId).toBe('builtin:back-squat');
         });
     });
 
@@ -1013,9 +1104,9 @@ describe('WorkoutStore', () => {
 
             store.updateActiveStep(1, heavier);
 
-            expect(store.activeWorkout()!.steps).toEqual([work(10), heavier]);
-            expect(store.workouts()[0].steps).toEqual([work(10), heavier]);
-            expect(JSON.parse(localStorage.getItem('workouts')!)[0].steps[1]).toEqual(heavier);
+            expect(allSteps(store.activeWorkout()!)).toEqual([work(10), heavier]);
+            expect(allSteps(store.workouts()[0])).toEqual([work(10), heavier]);
+            expect(allSteps(JSON.parse(localStorage.getItem('workouts')!)[0])[1]).toEqual(heavier);
         });
 
         it('changes only the running workout once the saved one has gone', () => {
@@ -1024,7 +1115,7 @@ describe('WorkoutStore', () => {
 
             store.updateActiveStep(1, reps(12));
 
-            expect(store.activeWorkout()!.steps[1]).toEqual(reps(12));
+            expect(allSteps(store.activeWorkout()!)[1]).toEqual(reps(12));
             expect(store.workouts()).toEqual([]);
         });
     });

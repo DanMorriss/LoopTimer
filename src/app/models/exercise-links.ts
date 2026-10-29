@@ -1,6 +1,6 @@
 import { Exercise, exerciseKey, MeasuredBy, OwnExercise } from './exercise';
 import { HistoryEntry, isTimedSet, LoggedSet } from './history';
-import { Step, Workout } from './workout';
+import { allSteps, Step, Workout } from './workout';
 
 /** Finds an exercise by name, or makes one of your own, for linking steps and sets to. */
 export interface ExerciseFinder {
@@ -156,7 +156,7 @@ export function exerciseUsage(
     history: readonly HistoryEntry[],
     active: Workout | null = null
 ): ExerciseUsage {
-    const usesIt = (workout: Workout) => workout.steps.some((s) => s.exerciseId === exerciseId);
+    const usesIt = (workout: Workout) => allSteps(workout).some((s) => s.exerciseId === exerciseId);
     const saved = workouts.filter(usesIt);
     const running = active && usesIt(active) && !saved.some((w) => w.id === active.id);
     return {

@@ -16,6 +16,7 @@ import {
     MAX_REPS,
     RepStep,
     repStepsPerRound,
+    runPlan,
     runsUntilStopped,
     Step,
     StepKind,
@@ -261,9 +262,12 @@ export class WorkoutComponent {
      * with more than one work or rep step: a plain work-and-rest workout doesn't need
      * "step 1 of 2".
      */
-    showStepCount = computed(
-        () => (this.workout()?.steps.filter((step) => step.kind !== 'rest').length ?? 0) > 1
-    );
+    showStepCount = computed(() => {
+        const workout = this.workout();
+        return (
+            !!workout && runPlan(workout).steps.filter((step) => step.kind !== 'rest').length > 1
+        );
+    });
     /**
      * The step's name, or "Rest" or "Reps" for an unnamed one. Unnamed work shows just the
      * time.
@@ -382,7 +386,7 @@ export class WorkoutComponent {
         if (!workout || !state || state.phase === 'complete' || !this.showStepCount()) {
             return [];
         }
-        return workout.steps.map((step, i) => ({
+        return runPlan(workout).steps.map((step, i) => ({
             kind: step.kind,
             state: i === state.stepIndex ? 'current' : i < state.stepIndex ? 'done' : 'left',
         }));
@@ -487,7 +491,7 @@ export class WorkoutComponent {
             parts.push(`your note: ${this.exerciseNote()}`);
         }
         if (this.showStepCount()) {
-            parts.push(`step ${state.stepIndex + 1} of ${workout.steps.length}`);
+            parts.push(`step ${state.stepIndex + 1} of ${runPlan(workout).steps.length}`);
         }
         // The round is given as each round starts
         if (state.stepIndex === 0) {

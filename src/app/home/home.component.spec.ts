@@ -4,6 +4,7 @@ import { HistoryEntry, LoggedSet } from '../models/history';
 import { HistoryStore } from '../shared/state/history-store.service';
 import { WorkoutStore } from '../shared/state/workout-store.service';
 import { HomeComponent } from './home.component';
+import { asOneGroup } from '../models/workout';
 
 const NOW = new Date(2026, 9, 18, 12, 0).getTime();
 const HOUR = 60 * 60 * 1000;
@@ -69,9 +70,9 @@ describe('HomeComponent', () => {
         workouts.addWorkout({
             title: 'Push',
             repeats: 3,
-            steps: [
+            blocks: asOneGroup([
                 { kind: 'reps', reps: 5, name: 'Bench press', exerciseId: 'builtin:bench-press' },
-            ],
+            ]),
         });
         TestBed.inject(HistoryStore).record(entry);
         create();

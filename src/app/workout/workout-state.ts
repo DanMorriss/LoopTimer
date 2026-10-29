@@ -3,7 +3,9 @@ import {
     endlessRounds,
     repStepsPerRound,
     roundSeconds,
+    runPlan,
     Step,
+    StepPlace,
     stepSeconds,
     Workout,
     workoutSeconds,
@@ -72,6 +74,7 @@ export function workoutStateAt(
         }
     }
 
+    const { steps } = runPlan(workout);
     const elapsed = Math.floor(elapsedMsClamped / 1000);
     const roundLength = roundSeconds(workout);
 
@@ -80,7 +83,7 @@ export function workoutStateAt(
     if (repStep && elapsedMsClamped >= repStep.atMs) {
         return {
             phase: 'reps',
-            step: workout.steps[repStep.stepIndex],
+            step: steps[repStep.stepIndex],
             stepIndex: repStep.stepIndex,
             remainingSeconds: 0,
             phaseSeconds: 0,
@@ -102,11 +105,11 @@ export function workoutStateAt(
     // Find the step that this second of the round falls in
     let stepStart = 0;
     let stepIndex = 0;
-    while (intoRound >= stepStart + stepSeconds(workout.steps[stepIndex])) {
-        stepStart += stepSeconds(workout.steps[stepIndex]);
+    while (intoRound >= stepStart + stepSeconds(steps[stepIndex])) {
+        stepStart += stepSeconds(steps[stepIndex]);
         stepIndex++;
     }
-    const step = workout.steps[stepIndex];
+    const step = steps[stepIndex];
     const length = stepSeconds(step);
     const stepStartMs = (round * roundLength + stepStart) * 1000;
 
@@ -154,7 +157,7 @@ export function nextRepStep(
     // Which rep step of the round it is, then which step of the round that is
     let repsToSkip = repStepsDone % perRound;
     let atSeconds = round * roundSeconds(workout);
-    for (const [stepIndex, step] of workout.steps.entries()) {
+    for (const [stepIndex, step] of runPlan(workout).steps.entries()) {
         if (step.kind === 'reps') {
             if (repsToSkip === 0) {
                 return { round, stepIndex, atMs: atSeconds * 1000 };
@@ -170,8 +173,28 @@ export function nextRepStep(
  * How many steps of the round time ran out in were done, rests left out: the 3 of
  * "7 rounds + 3". The step it was on isn't done.
  */
-export function stepsIntoRound(workout: Pick<Workout, 'steps'>, state: WorkoutState): number {
-    return workout.steps.slice(0, state.stepIndex).filter((step) => step.kind !== 'rest').length;
+export function stepsIntoRound(workout: Pick<Workout, 'blocks'>, state: WorkoutState): number {
+    return runPlan(workout)
+        .steps.slice(0, state.stepIndex)
+        .filter((step) => step.kind !== 'rest').length;
+}
+
+/**
+ * Where the step at `stepIndex` of the run's round comes from (see `runPlan()`): null for a
+ * rest between a group's rounds, or past the end.
+ */
+export function placeAt(workout: Pick<Workout, 'blocks'>, stepIndex: number): StepPlace | null {
+    return runPlan(workout).places[stepIndex] ?? null;
+}
+
+/** A set's `set` field: left out for a group's first round, as for every set before groups. */
+export function setField(set: number): { set?: number } {
+    return set === 0 ? {} : { set };
+}
+
+/** Whether a logged set is of this round and place in it. */
+export function isSetAt(set: LoggedSet, round: number, place: StepPlace): boolean {
+    return set.round === round && set.step === place.step && (set.set ?? 0) === place.set;
 }
 
 /**
@@ -183,20 +206,34 @@ export function setsDone(
     state: WorkoutState,
     repSets: readonly RepSet[]
 ): LoggedSet[] {
+    const { steps, places } = runPlan(workout);
     const timed: TimedSet[] = [];
     // Once complete, `round` is the rounds there were and `stepIndex` 0, so all of them count;
     // when time ran out, the steps before the one it was on count, and that one doesn't
     for (let round = 0; round <= state.round; round++) {
-        const stepsDone = round < state.round ? workout.steps.length : state.stepIndex;
-        workout.steps.slice(0, stepsDone).forEach((step, stepIndex) => {
-            if (step.kind === 'work' && step.exerciseId !== undefined) {
+        const stepsDone = round < state.round ? steps.length : state.stepIndex;
+        steps.slice(0, stepsDone).forEach((step, stepIndex) => {
+            const place = places[stepIndex];
+            if (step.kind === 'work' && step.exerciseId !== undefined && place) {
                 const { name, seconds, exerciseId } = step;
-                timed.push({ round, step: stepIndex, name, seconds, exerciseId });
+                timed.push({
+                    round,
+                    step: place.step,
+                    ...setField(place.set),
+                    name,
+                    seconds,
+                    exerciseId,
+                });
             }
         });
     }
     if (timed.length === 0) {
         return [...repSets];
     }
-    return [...repSets, ...timed].sort((a, b) => a.round - b.round || a.step - b.step);
+    // In the order they ran: by round, then by where they come in it
+    const order = new Map(
+        places.map((place, i) => [place && `${place.step}/${place.set}`, i] as const)
+    );
+    const at = (set: LoggedSet) => order.get(`${set.step}/${set.set ?? 0}`) ?? set.step;
+    return [...repSets, ...timed].sort((a, b) => a.round - b.round || at(a) - at(b));
 }

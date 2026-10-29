@@ -41,7 +41,7 @@ describe('DeviceDataService', () => {
         const workouts = TestBed.inject(WorkoutStore);
         const history = TestBed.inject(HistoryStore);
         await history.ready;
-        workouts.addWorkout({ title: 'Legs', steps: makeWorkout().steps, repeats: 3 });
+        workouts.addWorkout({ title: 'Legs', blocks: makeWorkout().blocks, repeats: 3 });
         history.record(ENTRY);
         localStorage.setItem('settings', JSON.stringify({ theme: 'light' }));
         expect(await savedHistory()).toHaveLength(1);
