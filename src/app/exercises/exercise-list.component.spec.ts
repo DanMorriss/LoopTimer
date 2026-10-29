@@ -147,12 +147,15 @@ describe('ExerciseListComponent', () => {
         expect(quadsShape.getAttribute('aria-pressed')).toBe('false');
     });
 
-    it('does not let the map pick abductors (no shape yet)', async () => {
+    it('picks abductors from the body map', async () => {
         await create();
 
-        expect(el().querySelector('g[aria-label="Abductors"]')).toBeNull();
+        const abductors = el().querySelector('g[aria-label="Abductors"]') as SVGGElement;
+        abductors.dispatchEvent(new MouseEvent('click'));
+        await render();
 
-        expect(button('Abductors').getAttribute('aria-pressed')).toBe('false');
+        expect(button('Abductors').getAttribute('aria-pressed')).toBe('true');
+        expect(abductors.getAttribute('aria-pressed')).toBe('true');
     });
 
     it('can de-select from the body-map selected-muscle list', async () => {

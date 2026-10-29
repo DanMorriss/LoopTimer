@@ -74,6 +74,33 @@ function readParts(text) {
     });
 }
 
+/**
+ * Upstream has no abductor shapes, but its glutes on the back are two shapes a side: the
+ * gluteus maximus, and above and outside it the gluteus medius, the hip's main abductor.
+ * So the medius is shaded as the abductors. Its paths are the ones that start above y 700,
+ * on both figures.
+ */
+function splitAbductors(shapes) {
+    const index = shapes.findIndex((shape) => shape.muscle === 'glutes');
+    if (index === -1) {
+        return shapes;
+    }
+    const startY = (path) => Number(path.match(/^[Mm]\s*[\d.-]+[\s,]+([\d.-]+)/)[1]);
+    const glutes = shapes[index].paths.filter((path) => startY(path) >= 700);
+    const abductors = shapes[index].paths.filter((path) => startY(path) < 700);
+    if (glutes.length !== 2 || abductors.length !== 2) {
+        throw new Error(
+            `Expected 2 glute and 2 abductor paths, found ${glutes.length} and ${abductors.length}`
+        );
+    }
+    return shapes.toSpliced(
+        index,
+        1,
+        { muscle: 'glutes', paths: glutes },
+        { muscle: 'abductors', paths: abductors }
+    );
+}
+
 /** The outline of each side, front then back, as the wrapper draws them. */
 function readOutlines(text) {
     const outlines = [...text.matchAll(/\sd="([^"]+)"/g)].map((m) => m[1]).filter(isPath);
@@ -91,7 +118,7 @@ for (const [figure, { wrapper, front, back }] of Object.entries(FIGURES)) {
         figures[figure][side] = {
             viewBox,
             outline: outlines[side],
-            shapes: readParts(await get(file)),
+            shapes: splitAbductors(readParts(await get(file))),
         };
     }
 }
