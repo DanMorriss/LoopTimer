@@ -24,7 +24,7 @@ This adds what that needs: sets and rest on an exercise, exercises done one side
 - **BLD-9** As a user I want to give an exercise a number of sets and a rest between them (e.g. 3 × 10 with 60 seconds rest), so a gym plan goes in as it's written.
 - **BLD-10** As a user I want an exercise done one side at a time (e.g. 10 reps each leg), so it runs the left, then the right, before the rest.
 - **BLD-11** As a user I want each set of an exercise to have its own reps and weight (e.g. 12 @ 40 kg, 10 @ 45 kg, 8 @ 50 kg), for a pyramid or warm-up sets.
-- **BLD-12** As a user I want a superset: two or more exercises done one after another, then a rest, for a number of rounds.
+- **BLD-12** As a user I want a superset (or, of three or more, a giant set): exercises done one after another, then a rest, for a number of rounds.
 - **BLD-13** As a user I want to add headings to a workout (e.g. "Warmup", "Upper body"), so a long workout is easy to follow.
 - **RUN-10** As a user I want the workout to show which set, side or round I'm on, and the section I'm in, so I know where I am in a long gym workout.
 
@@ -69,10 +69,11 @@ This adds what that needs: sets and rest on an exercise, exercises done one side
 
 ### Supersets (BLD-12)
 
-- Made by **Superset with next** on an exercise, which joins it and the next exercise into a superset with the first one's Sets as its rounds, and its Rest between sets as the Rest between rounds. Doing it again on the superset adds the next exercise to it.
-- A superset shows as one card: a heading line "Superset", a **Rounds** wheel (1 to 30), **Rest between rounds** (as Rest between sets), and its steps inside it, each as a step is now, with Each side and Vary each round, but no Sets of its own.
+- **What it's called goes by how many exercises are in it:** a **superset** with 2, a **giant set** with 3 or more (rest steps don't count). It's one thing either way, and the name changes by itself as exercises are joined or taken out, wherever it shows (Create, the run screen, the history). There's no "circuit": going round the whole workout is Repeat the whole workout, as now.
+- Made by **Join with next** on an exercise, which joins it and the next exercise into a superset with the first one's Sets as its rounds, and its Rest between sets as the Rest between rounds. Doing it again on the superset adds the next exercise to it, making it a giant set.
+- A superset shows as one card: a heading line "Superset" (or "Giant set"), a **Rounds** wheel (1 to 30), **Rest between rounds** (as Rest between sets), and its steps inside it, each as a step is now, with Each side and Vary each round, but no Sets of its own.
 - **+ Step** inside it adds a rep step at its end. Its steps move up and down within it.
-- **Take out of superset** on one of its steps makes it an exercise of its own again, just after the superset, with the superset's rounds as its sets. A superset left with one step becomes that exercise, the same way.
+- **Take out** on one of its steps makes it an exercise of its own again, just after the superset, with the superset's rounds as its sets. A superset left with one step becomes that exercise, the same way.
 - Rest between rounds comes after each round but the last, as for sets.
 
 ### Headings (BLD-13)
@@ -122,6 +123,12 @@ This adds what that needs: sets and rest on an exercise, exercises done one side
 - **"Use these settings next time?"** (RUN-7): Yes puts each set's reps and weight back on the step as done. Sets that all came out the same stay one Reps and Weight; sets that differ turn on Vary each set, so a pyramid worked out mid-workout is kept.
 - **Last time** (PRG-1) on a rep step: for a step with Vary each set on, the same set last time, e.g. "Last time: 10 @ 45 kg" on set 2; otherwise as now.
 - **Next time** (PRG-10): when every set (both sides) got its reps. For varied sets, the step up is the same for every set, so the shape stays, e.g. "Single leg press: try 2.5 kg more on each set", and Apply adds it to every set.
+- **Suggested next weight** (PRG-5) mid-workout, on a step with Vary each set on:
+    - Each set of last time is judged against **its own reps**, not just the heaviest: where every set (both sides) got its reps, the whole step moves up one step, 2.5 kg or 5 lb, as now. Where any set fell short, nothing's suggested.
+    - It shows **once, on set 1**, under Last time: "↑ Try 2.5 kg more on each set". Pressing it adds that to set 1, every set still to come and the saved workout, so the pyramid keeps its shape.
+    - As now, it goes once a weight on the step has been changed, by the button, a wheel or in setup, and shows nothing for sets with no weight.
+    - There's no suggestion per set: moving some sets up and not others would change the shape the user built. It agrees with Next time on the summary, which steps up every set alike.
+    - On a step whose sets are the same, it's as now.
 - Bests, charts, the body map and the muscle bars go by exercise, as now (with a left and right counting as one set).
 
 ### Limits
@@ -150,8 +157,10 @@ This adds what that needs: sets and rest on an exercise, exercises done one side
 - Given sets of 12 @ 40, 10 @ 45 and 8 @ 50 kg, when I change set 2 to 47.5 kg mid-workout, then only set 2 changes, here and in the saved workout.
 - Given 3 equal sets of 10 @ 40 kg, when I change set 2 to 45 kg mid-workout, then sets 2 and 3 run at 45 kg and the saved workout has 45 kg.
 - Given sets done at 12 @ 40, 10 @ 45 and 8 @ 50 kg on a step of equal sets, when I answer "Yes, use next time", then the step has Vary each set on with those three sets.
-- Given bench press and seated cable row, when I pick Superset with next on bench press (3 sets, 1:00 rest), then they're a superset of 3 rounds with 1:00 rest between rounds; it runs bench, row, rest, bench, row, rest, bench, row.
+- Given bench press and seated cable row, when I pick Join with next on bench press (3 sets, 1:00 rest), then they're a superset of 3 rounds with 1:00 rest between rounds; it runs bench, row, rest, bench, row, rest, bench, row.
+- Given that superset, when I join shoulder press to it, then it's called a giant set; when I take shoulder press out again, then it's a superset.
 - Given a superset of two steps, when I take one out, then both are exercises of their own, each with the superset's rounds as its sets.
+- Given last time's sets of 12 @ 40, 10 @ 45 and 8 @ 50 kg all got their reps, then set 1 shows "↑ Try 2.5 kg more on each set"; pressing it makes them 42.5, 47.5 and 52.5 kg, here and in the saved workout. Given set 3 got 7, then nothing's suggested.
 - Given headings "Warmup" and "Knee rehabilitation", then while on single leg press the section line says "Knee rehabilitation · 2 of 7".
 - Given a heading left empty, when I save, then it's left out.
 - Given a workout saved before this, then it runs, logs and shows in the history exactly as it did.
@@ -235,15 +244,10 @@ Each a PR of its own, in this order, each updating the AI prompt and the feature
 2. **Sets and rest between sets (BLD-9)**, in Create and the run, with the round line, the history, the summary, Last time and Next time.
 3. **Each side (BLD-10)**, with its two settings.
 4. **Headings (BLD-13)**, the section line, and headings in the history and summary.
-5. **Vary each set (BLD-11)**, and the mid-workout and "Use next time" rules for it.
-6. **Supersets (BLD-12).**
+5. **Vary each set (BLD-11)**, and the mid-workout, "Use next time" and suggested next weight rules for it.
+6. **Supersets and giant sets (BLD-12).**
 
 After step 2, the plan at the top can be built with sets (each leg as 20 reps for now); after step 4, as written.
-
-## Open questions
-
-- PRG-5's suggested next weight with Vary each set on: suggest for set 1 and move the rest by the same, or one per set?
-- "Superset" for three or more exercises: the gym word for that is often a giant set or circuit. "Superset" is kept for all of them, for one word to learn.
 
 ## Platform notes
 

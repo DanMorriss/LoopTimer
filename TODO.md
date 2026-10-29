@@ -28,7 +28,7 @@ Agreed with Dan on 2026-10-29, from a friend's gym plan (exercises of 3 × 10 wi
 - [ ] **Each side (BLD-10).**
 - [ ] **Headings (BLD-13)**, and the section line (RUN-10).
 - [ ] **Vary each set (BLD-11).**
-- [ ] **Supersets (BLD-12).**
+- [ ] **Supersets and giant sets (BLD-12).**
 
 ### Simple planning
 
