@@ -8,6 +8,7 @@ import { blankOwnExercise, ExerciseStore } from '../../state/exercise-store.serv
 import { WorkoutStore } from '../../state/workout-store.service';
 import { BODY_FIGURES } from '../body-map/body-shapes';
 import { ExerciseEditorComponent } from './exercise-editor.component';
+import { allSteps, asOneGroup } from '../../../models/workout';
 
 const quadsPath = () =>
     BODY_FIGURES.male.front.shapes.find((shape) => shape.muscle === 'quads')!.paths[0];
@@ -127,7 +128,11 @@ describe('ExerciseEditorComponent', () => {
         it('saves its new name and details, and renames the steps that are it', async () => {
             const mine = exercises.addOwn('Sled push', 'reps');
             const workouts = TestBed.inject(WorkoutStore);
-            workouts.addWorkout({ title: '', steps: [reps(10, 'Sled push')], repeats: 1 });
+            workouts.addWorkout({
+                title: '',
+                blocks: asOneGroup([reps(10, 'Sled push')]),
+                repeats: 1,
+            });
             await open(mine);
 
             await fill('#exercise-editor-name', 'Sled drag');
@@ -152,7 +157,7 @@ describe('ExerciseEditorComponent', () => {
                 })
             );
             expect(host.saved).toEqual([saved]);
-            expect(workouts.workouts()[0].steps[0].name).toBe('Sled drag');
+            expect(allSteps(workouts.workouts()[0])[0].name).toBe('Sled drag');
         });
 
         it('marks the muscles picked, main or supporting but not both, and shades them', async () => {

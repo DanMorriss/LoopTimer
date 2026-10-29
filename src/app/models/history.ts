@@ -48,10 +48,12 @@ export type LoggedSet = RepSet | TimedSet;
 
 /** One set of a rep step, logged when Done is pressed. */
 export interface RepSet {
-    /** Which round it was in, from 0. */
+    /** Which round of the whole workout it was in, from 0. */
     round: number;
-    /** Which step of the round it was, from 0. */
+    /** Which step of the workout it was, from 0, counting each once (see `allSteps()`). */
     step: number;
+    /** Which round of its group (set of its exercise) it was, from 0. Missing means 0. */
+    set?: number;
     /** The step's name as it ran; empty when it has none. */
     name: string;
     reps: number;
@@ -68,6 +70,7 @@ export interface RepSet {
 export interface TimedSet {
     round: number;
     step: number;
+    set?: number;
     name: string;
     /** How long it ran: the step's whole length. */
     seconds: number;
@@ -101,6 +104,7 @@ export function isLoggedSet(value: unknown): value is LoggedSet {
     return (
         whole(set['round'], 0) &&
         whole(set['step'], 0) &&
+        (set['set'] === undefined || whole(set['set'], 0)) &&
         typeof set['name'] === 'string' &&
         measured &&
         (set['exerciseId'] === undefined || typeof set['exerciseId'] === 'string')

@@ -1,6 +1,6 @@
 import { Exercise, MUSCLE_LABELS, MuscleGroup } from './exercise';
 import { HistoryEntry } from './history';
-import { Workout } from './workout';
+import { allSteps, Workout } from './workout';
 import { ALL_MUSCLES } from './workout-muscles';
 
 /**
@@ -119,7 +119,7 @@ function muscleWeights(
     byId: (id: string) => Exercise | undefined
 ): Map<MuscleGroup, number> {
     const weights = new Map<MuscleGroup, number>();
-    for (const step of workout.steps) {
+    for (const step of allSteps(workout)) {
         const exercise =
             step.kind === 'rest' || !step.exerciseId ? undefined : byId(step.exerciseId);
         for (const muscle of exercise?.supportingMuscles ?? []) {

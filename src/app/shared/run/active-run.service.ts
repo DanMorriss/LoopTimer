@@ -9,9 +9,16 @@ import {
     untracked,
 } from '@angular/core';
 import { HistoryEntry, historyId, RepSet } from '../../models/history';
-import { RepStep, Workout, workoutSeconds } from '../../models/workout';
+import { allSteps, RepStep, runPlan, Workout, workoutSeconds } from '../../models/workout';
 import { alarmEvents } from '../../workout/alarm-schedule';
-import { setsDone, stepsIntoRound, workoutStateAt } from '../../workout/workout-state';
+import {
+    isSetAt,
+    placeAt,
+    setField,
+    setsDone,
+    stepsIntoRound,
+    workoutStateAt,
+} from '../../workout/workout-state';
 import { AlarmService } from '../alarms/alarm.service';
 import { HistoryStore } from '../state/history-store.service';
 import { SettingsStore } from '../state/settings-store.service';
@@ -123,13 +130,13 @@ export class ActiveRunService {
         if (workout?.timeLimitSeconds === undefined || state?.phase !== 'complete') {
             return null;
         }
-        const step = workout.steps[state.stepIndex];
-        const logged = this.store
-            .activeSets()
-            .some((set) => set.round === state.round && set.step === state.stepIndex);
-        return step?.kind === 'reps' && !logged
-            ? { step, round: state.round, stepIndex: state.stepIndex }
-            : null;
+        const step = runPlan(workout).steps[state.stepIndex];
+        const place = placeAt(workout, state.stepIndex);
+        if (step?.kind !== 'reps' || !place) {
+            return null;
+        }
+        const logged = this.store.activeSets().some((set) => isSetAt(set, state.round, place));
+        return logged ? null : { step, round: state.round, place };
     });
     /** End workout was pressed: the summary is open over the run, which waits, paused. */
     readonly ending = signal(false);
@@ -274,13 +281,15 @@ export class ActiveRunService {
     finishReps() {
         this.sync();
         const state = this.state();
-        if (state?.phase !== 'reps' || state.step?.kind !== 'reps') {
+        const place = state && placeAt(this.workout()!, state.stepIndex);
+        if (state?.phase !== 'reps' || state.step?.kind !== 'reps' || !place) {
             return;
         }
         const { name, reps, weight, exerciseId } = state.step;
         this.store.finishRepStep(state.phaseElapsedMs, {
             round: state.round,
-            step: state.stepIndex,
+            step: place.step,
+            ...setField(place.set),
             name,
             reps,
             ...(weight === undefined ? {} : { weight }),
@@ -297,7 +306,8 @@ export class ActiveRunService {
     changeReps(change: { reps: number } | { weight: number | undefined }) {
         const state = this.state();
         const step = state?.step;
-        if (state?.phase !== 'reps' || step?.kind !== 'reps') {
+        const place = state && placeAt(this.workout()!, state.stepIndex);
+        if (state?.phase !== 'reps' || step?.kind !== 'reps' || !place) {
             return;
         }
         const reps = 'reps' in change ? change.reps : step.reps;
@@ -310,7 +320,7 @@ export class ActiveRunService {
             ...(step.exerciseId === undefined ? {} : { exerciseId: step.exerciseId }),
         };
         this.store.updateActiveStep(
-            state.stepIndex,
+            place.step,
             weight === undefined ? changed : { ...changed, weight }
         );
     }
@@ -365,7 +375,8 @@ export class ActiveRunService {
         const { name, weight, exerciseId } = last.step;
         this.store.addActiveSet({
             round: last.round,
-            step: last.stepIndex,
+            step: last.place.step,
+            ...setField(last.place.set),
             name,
             reps,
             ...(weight === undefined ? {} : { weight }),
@@ -385,11 +396,12 @@ export class ActiveRunService {
         if (!workout) {
             return;
         }
-        const cutShort = (set: RepSet) =>
-            workout.timeLimitSeconds !== undefined &&
-            state?.phase === 'complete' &&
-            set.round === state.round &&
-            set.step === state.stepIndex;
+        // The step time ran out on, which isn't done
+        const cutAt =
+            workout.timeLimitSeconds !== undefined && state?.phase === 'complete'
+                ? placeAt(workout, state.stepIndex)
+                : null;
+        const cutShort = (set: RepSet) => !!cutAt && isSetAt(set, state!.round, cutAt);
         const lastSets = new Map(
             this.store
                 .activeSets()
@@ -397,7 +409,7 @@ export class ActiveRunService {
                 .map((set) => [set.step, set])
         );
         for (const [stepIndex, set] of lastSets) {
-            const step = workout.steps[stepIndex];
+            const step = allSteps(workout)[stepIndex];
             if (step?.kind !== 'reps') {
                 continue;
             }

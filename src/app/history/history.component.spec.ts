@@ -10,6 +10,7 @@ import { describeRounds, describeSets, formatDuration } from './history-format';
 import { SettingsStore } from '../shared/state/settings-store.service';
 import { ExerciseStore } from '../shared/state/exercise-store.service';
 import { HistoryComponent } from './history.component';
+import { asOneGroup } from '../models/workout';
 
 // Midday on Sunday 18 October 2026, so "today" and "yesterday" can't flip mid-test
 const NOW = new Date(2026, 9, 18, 12, 0).getTime();
@@ -246,16 +247,16 @@ describe('HistoryComponent', () => {
         workouts.addWorkout({
             title: 'Legs',
             repeats: 3,
-            steps: [
+            blocks: asOneGroup([
                 { kind: 'reps', reps: 5, name: 'Back squat', exerciseId: 'builtin:back-squat' },
-            ],
+            ]),
         });
         const push = workouts.addWorkout({
             title: 'Push',
             repeats: 3,
-            steps: [
+            blocks: asOneGroup([
                 { kind: 'reps', reps: 5, name: 'Bench press', exerciseId: 'builtin:bench-press' },
-            ],
+            ]),
         });
         const squat: LoggedSet = {
             round: 0,

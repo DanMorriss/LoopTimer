@@ -1,7 +1,7 @@
 import { RepSet, TimedSet } from '../models/history';
-import { Step, UNTIL_STOPPED } from '../models/workout';
+import { Block, runPlan, Step, UNTIL_STOPPED, workoutSeconds } from '../models/workout';
 import { makeWorkout, reps, rest, work } from '../shared/testing/make-workout';
-import { nextRepStep, setsDone, stepsIntoRound, workoutStateAt } from './workout-state';
+import { nextRepStep, placeAt, setsDone, stepsIntoRound, workoutStateAt } from './workout-state';
 
 describe('workoutStateAt', () => {
     const workout = makeWorkout(); // 30s work, 10s rest, 3 rounds = 30 + 10 + 30 + 10 + 30 = 110s
@@ -414,5 +414,104 @@ describe('a time limit', () => {
         const workout = makeWorkout({ steps: [plank, rest(10)], timeLimitSeconds: 100 });
         const sets = setsDone(workout, workoutStateAt(workout, 100_000), []);
         expect(sets.map((set) => set.round)).toEqual([0, 1]);
+    });
+});
+
+describe('groups', () => {
+    const plank = { kind: 'work' as const, seconds: 30, name: 'Plank', exerciseId: 'p' };
+    const legPress = { kind: 'reps' as const, reps: 10, name: 'Leg press', exerciseId: 'l' };
+    // 5:00 bike, then leg press 3 × 10 with 1:00 between sets, then plank 2 × 0:30 with 0:20
+    const blocks: Block[] = [
+        { kind: 'heading', text: 'Warmup' },
+        { kind: 'group', rounds: 1, restSeconds: 0, steps: [work(300, 'Bike')] },
+        { kind: 'heading', text: 'Legs' },
+        { kind: 'group', rounds: 3, restSeconds: 60, steps: [legPress] },
+        { kind: 'group', rounds: 2, restSeconds: 20, steps: [plank] },
+    ];
+    const workout = { ...makeWorkout({ repeats: 1 }), blocks };
+
+    it("runs each group's rounds with its rest between them, never after the last", () => {
+        expect(runPlan(workout).steps).toEqual([
+            work(300, 'Bike'),
+            legPress,
+            rest(60),
+            legPress,
+            rest(60),
+            legPress,
+            plank,
+            rest(20),
+            plank,
+        ]);
+    });
+
+    it('knows where each step comes from: its step of the workout, and which set', () => {
+        expect(runPlan(workout).places).toEqual([
+            { step: 0, set: 0 },
+            { step: 1, set: 0 },
+            null,
+            { step: 1, set: 1 },
+            null,
+            { step: 1, set: 2 },
+            { step: 2, set: 0 },
+            null,
+            { step: 2, set: 1 },
+        ]);
+        expect(placeAt(workout, 3)).toEqual({ step: 1, set: 1 });
+        expect(placeAt(workout, 9)).toBeNull();
+    });
+
+    it('waits on each set of reps, and counts the rests between them down', () => {
+        // The bike's 5:00 is done, so it waits on the first set
+        expect(workoutStateAt(workout, 300_000)).toEqual(
+            expect.objectContaining({ phase: 'reps', step: legPress, stepIndex: 1 })
+        );
+        // One set done: its rest
+        expect(workoutStateAt(workout, 300_000, 1)).toEqual(
+            expect.objectContaining({ phase: 'rest', stepIndex: 2, remainingSeconds: 60 })
+        );
+        expect(workoutStateAt(workout, 360_000, 1)).toEqual(
+            expect.objectContaining({ phase: 'reps', stepIndex: 3 })
+        );
+    });
+
+    it('finishes on the last set, with no rest after it', () => {
+        // 5:00 + 2 × 1:00 + 0:30 + 0:20 + 0:30
+        expect(workoutSeconds(workout)).toBe(300 + 120 + 80);
+        expect(workoutStateAt(workout, 499_999, 3).phase).toBe('work');
+        expect(workoutStateAt(workout, 500_000, 3).phase).toBe('complete');
+    });
+
+    it('logs which set each was, and by its step of the workout', () => {
+        const legSets: RepSet[] = [0, 1, 2].map((set) => ({
+            round: 0,
+            step: 1,
+            ...(set === 0 ? {} : { set }),
+            name: 'Leg press',
+            reps: 10,
+            exerciseId: 'l',
+        }));
+        const timed = (set: number): TimedSet => ({
+            round: 0,
+            step: 2,
+            ...(set === 0 ? {} : { set }),
+            name: 'Plank',
+            seconds: 30,
+            exerciseId: 'p',
+        });
+        const done = workoutStateAt(workout, 500_000, 3);
+        // Out of order, as the summary may leave them, they come back in the order they ran
+        expect(setsDone(workout, done, [legSets[2], legSets[0], legSets[1]])).toEqual([
+            ...legSets,
+            timed(0),
+            timed(1),
+        ]);
+    });
+
+    it('repeats the whole workout, groups and all, each round', () => {
+        const twice = { ...workout, repeats: 2 };
+        // Round 2 starts on the bike once round 1's three sets are done
+        expect(workoutStateAt(twice, 500_000, 3)).toEqual(
+            expect.objectContaining({ phase: 'work', step: work(300, 'Bike'), round: 1 })
+        );
     });
 });

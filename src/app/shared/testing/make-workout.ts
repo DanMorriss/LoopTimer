@@ -1,4 +1,11 @@
-import { Step, UNTIL_STOPPED, Workout } from '../../models/workout';
+import {
+    allSteps,
+    asOneGroup,
+    Step,
+    UNTIL_STOPPED,
+    Workout,
+    withSteps,
+} from '../../models/workout';
 
 /** A workout described the simple way: one work time and one rest time. */
 export interface SimpleWorkout {
@@ -44,7 +51,7 @@ export function makeWorkout(overrides: Partial<SimpleWorkout> = {}): Workout {
     return {
         id: simple.id,
         title: simple.title,
-        steps,
+        blocks: asOneGroup(steps),
         updatedAt: simple.updatedAt,
         ...(simple.timeLimitSeconds === undefined
             ? { repeats: simple.repeats }
@@ -63,4 +70,12 @@ export const unlinked = (steps: readonly Step[]): Step[] =>
 
 /** A workout without its steps' exercise links. */
 export const unlinkedWorkout = (workout: Workout | null): Workout | null =>
-    workout && { ...workout, steps: unlinked(workout.steps) };
+    workout && { ...workout, blocks: withSteps(workout.blocks, unlinked(allSteps(workout))) };
+
+/** A workout as saved before groups (data version 4): its steps in a list of their own. */
+export function savedBeforeGroups<T extends Pick<Workout, 'blocks'>>(
+    workout: T
+): Omit<T, 'blocks'> & { steps: Step[] } {
+    const { blocks: _blocks, ...rest } = workout;
+    return { ...rest, steps: allSteps(workout) };
+}

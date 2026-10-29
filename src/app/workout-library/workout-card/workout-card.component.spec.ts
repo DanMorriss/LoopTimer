@@ -1,6 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Workout, UNTIL_STOPPED } from '../../models/workout';
+import { asOneGroup, UNTIL_STOPPED, Workout } from '../../models/workout';
 import { makeWorkout, reps, rest, work } from '../../shared/testing/make-workout';
 import { WorkoutCardComponent } from './workout-card.component';
 import { fakeReducedMotion } from '../../shared/testing/fake-reduced-motion';
@@ -86,14 +86,14 @@ describe('WorkoutCardComponent', () => {
     });
 
     it('sums up an unnamed round of several steps by their count and total time', () => {
-        set({ workout: { ...sprints, steps: [work(30), work(45), rest(20)] } });
+        set({ workout: { ...sprints, blocks: asOneGroup([work(30), work(45), rest(20)]) } });
 
         expect(el('.workout-card__summary').textContent).toContain('3 steps · 01:35 x 4');
         expect(spoken()).toBe('3 steps, 01:35 a round, repeated 4 times');
     });
 
     it('adds "+ reps" to the time of an unnamed round with rep steps', () => {
-        set({ workout: { ...sprints, steps: [work(30), reps(20), rest(20)] } });
+        set({ workout: { ...sprints, blocks: asOneGroup([work(30), reps(20), rest(20)]) } });
 
         expect(el('.workout-card__summary').textContent).toContain('3 steps · 00:50 + reps x 4');
         expect(spoken()).toBe('3 steps, 00:50 a round plus reps, repeated 4 times');
@@ -103,12 +103,12 @@ describe('WorkoutCardComponent', () => {
         set({
             workout: {
                 ...sprints,
-                steps: [
+                blocks: asOneGroup([
                     work(30, 'Squats'),
                     reps(20, 'Bench press'),
                     work(25, 'Deadlifts'),
                     rest(20),
-                ],
+                ]),
             },
         });
 
@@ -119,14 +119,14 @@ describe('WorkoutCardComponent', () => {
     });
 
     it('says "reps" alone for a round with no timed steps', () => {
-        set({ workout: { ...sprints, steps: [reps(10)] } });
+        set({ workout: { ...sprints, blocks: asOneGroup([reps(10)]) } });
 
         expect(el('.workout-card__summary').textContent).toContain('1 step · reps x 4');
         expect(spoken()).toBe('1 step, all reps, repeated 4 times');
     });
 
     it('shows a workout with no rest as rest 00:00, as before', () => {
-        set({ workout: { ...sprints, steps: [work(65)] } });
+        set({ workout: { ...sprints, blocks: asOneGroup([work(65)]) } });
 
         expect(el('.workout-card__summary').textContent).toContain('01:05 - 00:00 x 4');
     });

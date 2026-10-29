@@ -40,9 +40,33 @@ export interface RepStep {
 export type Step = TimedStep | RepStep;
 
 /**
- * A saved workout: `steps` run in order to make one round, and the round repeats `repeats`
- * times (or until stopped). Rest steps at the end of the last round are skipped, since
- * the workout is over by then.
+ * Steps that run in order a number of times: an exercise and its sets, with one step, or a
+ * superset's rounds, with two or more (see docs/features/sets-and-supersets.md).
+ */
+export interface StepGroup {
+    kind: 'group';
+    /** How many times its steps run, 1 to MAX_REPEATS: an exercise's sets, a superset's rounds. */
+    rounds: number;
+    /** Rest between its rounds, never after the last, in whole seconds; 0 for none. */
+    restSeconds: number;
+    /** At least one. */
+    steps: Step[];
+}
+
+/** A label in a workout, e.g. "Warmup". It doesn't loop and takes no time. */
+export interface Heading {
+    kind: 'heading';
+    /** Trimmed, 1 to MAX_HEADING_LENGTH characters. */
+    text: string;
+}
+
+/** One part of a workout, in order. */
+export type Block = StepGroup | Heading;
+
+/**
+ * A saved workout: its `blocks` run in order to make one round, and the round repeats
+ * `repeats` times (or until stopped). Rest steps at the end of the last round are skipped,
+ * since the workout is over by then.
  *
  * With a time limit, rounds repeat as many times as fit in it (`repeats` is UNTIL_STOPPED,
  * so an app from before time limits runs it until stopped), and it's over when time's up,
@@ -50,7 +74,7 @@ export type Step = TimedStep | RepStep;
  */
 export interface Workout extends Synced {
     title: string;
-    steps: Step[];
+    blocks: Block[];
     repeats: number;
     /** The time limit, in whole seconds, rep steps and rests included. Missing for none. */
     timeLimitSeconds?: number;
@@ -77,14 +101,89 @@ export const MAX_REPEATS = 30;
 /** Enough for a long circuit, while keeping the setup page manageable. */
 export const MAX_STEPS = 20;
 
+/** The longest a heading can be, as for a step's name. */
+export const MAX_HEADING_LENGTH = 40;
+
 /** A step's countdown in seconds: 0 for a rep step, which has none. */
 export function stepSeconds(step: Step): number {
     return step.kind === 'reps' ? 0 : step.seconds;
 }
 
+/** Steps as a workout's blocks: one group, run once a round, as workouts were before groups. */
+export function asOneGroup(steps: Step[]): Block[] {
+    return [{ kind: 'group', rounds: 1, restSeconds: 0, steps }];
+}
+
+/**
+ * Every step of a workout, each once however many rounds its group has, in order. A step's
+ * place in this list is its number in the history (`LoggedSet.step`).
+ */
+export function allSteps(workout: Pick<Workout, 'blocks'>): Step[] {
+    return workout.blocks.flatMap((block) => (block.kind === 'group' ? block.steps : []));
+}
+
+/**
+ * The blocks with their steps replaced, in order, by `steps` (one for each of `allSteps()`),
+ * e.g. linked to exercises or with one changed.
+ */
+export function withSteps(blocks: readonly Block[], steps: readonly Step[]): Block[] {
+    let next = 0;
+    return blocks.map((block) =>
+        block.kind === 'group' ? { ...block, steps: block.steps.map(() => steps[next++]) } : block
+    );
+}
+
+/** Where a step of the run comes from: its number in `allSteps()`, and its group's round. */
+export interface StepPlace {
+    step: number;
+    /** Which round of its group (set of its exercise) it is, from 0. */
+    set: number;
+}
+
+/**
+ * One round of a workout as it runs: each group's steps, round after round, with its rest
+ * between them. What the clock, the alarms and the sets are worked out from.
+ */
+export interface RunPlan {
+    steps: Step[];
+    /** Where each of `steps` comes from; null for a rest between a group's rounds. */
+    places: (StepPlace | null)[];
+}
+
+// Workouts don't change once made (a change makes a new one), so each one's plan is made once
+const plans = new WeakMap<Pick<Workout, 'blocks'>, RunPlan>();
+
+/** A workout's round as it runs (see `RunPlan`). */
+export function runPlan(workout: Pick<Workout, 'blocks'>): RunPlan {
+    const saved = plans.get(workout);
+    if (saved) {
+        return saved;
+    }
+    const plan: RunPlan = { steps: [], places: [] };
+    let first = 0;
+    for (const block of workout.blocks) {
+        if (block.kind !== 'group') {
+            continue;
+        }
+        for (let set = 0; set < block.rounds; set++) {
+            if (set > 0 && block.restSeconds > 0) {
+                plan.steps.push({ kind: 'rest', seconds: block.restSeconds, name: '' });
+                plan.places.push(null);
+            }
+            block.steps.forEach((step, i) => {
+                plan.steps.push(step);
+                plan.places.push({ step: first + i, set });
+            });
+        }
+        first += block.steps.length;
+    }
+    plans.set(workout, plan);
+    return plan;
+}
+
 /** How many rep steps there are in one round. */
-export function repStepsPerRound(workout: Pick<Workout, 'steps'>): number {
-    return workout.steps.filter((step) => step.kind === 'reps').length;
+export function repStepsPerRound(workout: Pick<Workout, 'blocks'>): number {
+    return runPlan(workout).steps.filter((step) => step.kind === 'reps').length;
 }
 
 /** Rounds go on until it's stopped by hand: no number of rounds, and no time limit. */
@@ -101,15 +200,16 @@ export function endlessRounds(workout: Pick<Workout, 'repeats'>): boolean {
 }
 
 /** Seconds of countdown in one full round (rep steps take as long as they take, so add nothing). */
-export function roundSeconds(workout: Pick<Workout, 'steps'>): number {
-    return workout.steps.reduce((total, step) => total + stepSeconds(step), 0);
+export function roundSeconds(workout: Pick<Workout, 'blocks'>): number {
+    return runPlan(workout).steps.reduce((total, step) => total + stepSeconds(step), 0);
 }
 
 /** Seconds of rest at the end of a round, which the last round skips. */
-export function trailingRestSeconds(workout: Pick<Workout, 'steps'>): number {
+export function trailingRestSeconds(workout: Pick<Workout, 'blocks'>): number {
+    const { steps } = runPlan(workout);
     let total = 0;
-    for (let i = workout.steps.length - 1; i >= 0; i--) {
-        const step = workout.steps[i];
+    for (let i = steps.length - 1; i >= 0; i--) {
+        const step = steps[i];
         if (step.kind !== 'rest') {
             break;
         }

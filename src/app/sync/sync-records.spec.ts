@@ -41,7 +41,7 @@ describe('recordsHere', () => {
                 updated_at: 5,
                 deleted_at: null,
                 data: workout,
-                version: 7,
+                version: 8,
             },
             {
                 kind: 'exercise-note',
@@ -49,7 +49,7 @@ describe('recordsHere', () => {
                 updated_at: 6,
                 deleted_at: null,
                 data: { id: 'builtin:plank', text: 'Squeeze', updatedAt: 6 },
-                version: 7,
+                version: 8,
             },
             {
                 kind: 'library-order',
@@ -57,7 +57,7 @@ describe('recordsHere', () => {
                 updated_at: 7,
                 deleted_at: null,
                 data: { id: 'library', ids: ['w1'], updatedAt: 7 },
-                version: 7,
+                version: 8,
             },
             {
                 kind: 'history',
@@ -65,7 +65,7 @@ describe('recordsHere', () => {
                 updated_at: 8,
                 deleted_at: 8,
                 data: null,
-                version: 7,
+                version: 8,
             },
         ]);
     });
@@ -82,7 +82,7 @@ describe('changedSince', () => {
         updated_at: updatedAt,
         deleted_at: deletedAt,
         data: null,
-        version: 7,
+        version: 8,
     });
 
     it("gives the records whose change hasn't been sent or fetched", () => {
@@ -103,7 +103,7 @@ describe('readPulled', () => {
         updated_at: 5,
         deleted_at: null,
         data: makeWorkout({ id: 'w1', updatedAt: 5 }),
-        version: 7,
+        version: 8,
         ...fields,
     });
 
@@ -147,7 +147,7 @@ describe('readPulled', () => {
     });
 
     it('leaves what a newer version of the app wrote, saying where it is', () => {
-        const page = readPulled([row({ seq: 1 }), row({ seq: 2, id: 'w2', version: 8 })]);
+        const page = readPulled([row({ seq: 1 }), row({ seq: 2, id: 'w2', version: 9 })]);
 
         expect(page.read.map(keyOf)).toEqual(['workout:w1']);
         expect(page.tooNewAt).toBe(2);

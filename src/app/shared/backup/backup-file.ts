@@ -29,8 +29,11 @@ import { readWorkout } from '../state/workout-store.service';
  *    `stepsIntoRound`). Nothing to convert; an older app turns the file down rather than
  *    running a time limit until stopped.
  * 7: `libraryOrder`, the library's order and when a workout was last moved in it.
+ * 8: groups, `blocks` in place of a workout's `steps`, each a group of steps with its rounds
+ *    and rest between them, or a heading; and `set` on logged sets, which round of its
+ *    group a set was in. A workout from before is read as one group of its steps.
  */
-export const BACKUP_VERSION = 7;
+export const BACKUP_VERSION = 8;
 
 /** Far more than years of workouts take (about 1 KB each), so a bigger file isn't a backup. */
 export const MAX_BACKUP_BYTES = 50 * 1024 * 1024;

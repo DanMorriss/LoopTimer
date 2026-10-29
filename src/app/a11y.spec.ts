@@ -14,6 +14,7 @@ import { makeWorkout, reps, rest, work } from './shared/testing/make-workout';
 import { ExerciseStore } from './shared/state/exercise-store.service';
 import { HistoryStore } from './shared/state/history-store.service';
 import { WorkoutStore } from './shared/state/workout-store.service';
+import { asOneGroup } from './models/workout';
 
 /**
  * Runs axe (WCAG 2.1 A/AA plus best practices) over every page and state of the app,
@@ -273,14 +274,14 @@ for (const theme of ['dark', 'light'] as const) {
                 store.addWorkout({
                     title: 'Push',
                     repeats: 3,
-                    steps: [
+                    blocks: asOneGroup([
                         {
                             kind: 'reps',
                             reps: 5,
                             name: 'Bench press',
                             exerciseId: 'builtin:bench-press',
                         },
-                    ],
+                    ]),
                 });
                 const now = Date.now();
                 TestBed.inject(HistoryStore).record({

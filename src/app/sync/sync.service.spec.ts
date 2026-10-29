@@ -91,7 +91,7 @@ describe('SyncService', () => {
             updated_at: workout.updatedAt,
             deleted_at: null,
             data: workout,
-            version: 7,
+            version: 8,
         });
         expect(onServer('history', 'run-1')!.data).toMatchObject({ title: 'Intervals' });
         expect(onServer('exercise', own.id)!.data).toMatchObject({ name: 'Sled push' });

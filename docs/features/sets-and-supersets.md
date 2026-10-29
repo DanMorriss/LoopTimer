@@ -1,6 +1,6 @@
 # Sets and supersets
 
-Planned, agreed with Dan on 2026-10-29. Not built yet: as each part is built, its rules move into [build-a-workout](build-a-workout.md), [run-a-workout](run-a-workout.md), [history](history.md) and [data](data.md), and this file shrinks to what's still to come.
+Planned, agreed with Dan on 2026-10-29. Being built: the new shape (step 1 below) is in, so groups and headings are saved and run, but Create and the run screen don't show them yet. As each part is built, its rules move into [build-a-workout](build-a-workout.md), [run-a-workout](run-a-workout.md), [history](history.md) and [data](data.md), and this file shrinks to what's still to come.
 
 Today a workout is one list of steps that loops as a whole. A gym plan is written differently: each exercise has its own sets, with a rest between them, e.g.
 
@@ -169,7 +169,7 @@ This adds what that needs: sets and rest on an exercise, exercises done one side
 
 ## Data
 
-The new shape, as `data-version` 5 and backup file version 8:
+The new shape, when it's all built. Groups and headings came in with `data-version` 5 and backup file version 8 (step 1 below, and in [data](data.md)); each later step that adds a field (`eachSide`, `sets`, `side`, a history entry's `headings`) raises the backup version again, so an older copy of the app turns a workout with it down, or leaves it on the server, rather than saving it back without it:
 
 ```json
 {
@@ -240,7 +240,7 @@ The new shape, as `data-version` 5 and backup file version 8:
 
 Each a PR of its own, in this order, each updating the AI prompt and the feature docs for what it adds:
 
-1. **The new shape, with nothing to see:** `blocks`, the 4 → 5 conversion, backup version 8, the new fields on logged sets, and one place that turns a workout into its run order. Every workout is one group, so the app works exactly as it did.
+1. ✅ **The new shape, with nothing to see:** `blocks` (groups and headings), the 4 → 5 conversion, backup version 8, `set` on logged sets, and one place that turns a workout into its run order (`runPlan()`). Every workout is one group, so the app works exactly as it did. Until step 2, Create edits a workout as one list of steps, so saving a workout with groups or headings from Create (only possible from a file written by hand) makes it one group again.
 2. **Sets and rest between sets (BLD-9)**, in Create and the run, with the round line, the history, the summary, Last time and Next time.
 3. **Each side (BLD-10)**, with its two settings.
 4. **Headings (BLD-13)**, the section line, and headings in the history and summary.

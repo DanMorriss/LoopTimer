@@ -12,7 +12,13 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatIconModule } from '@angular/material/icon';
-import { repStepsPerRound, roundSeconds, runsUntilStopped, Workout } from '../../models/workout';
+import {
+    allSteps,
+    repStepsPerRound,
+    roundSeconds,
+    runsUntilStopped,
+    Workout,
+} from '../../models/workout';
 import { formatTime } from '../../shared/format-time';
 import { project, rubberband, VelocityTracker } from '../../shared/gesture';
 import { injectPrefersReducedMotion } from '../../shared/reduced-motion';
@@ -66,7 +72,7 @@ export class WorkoutCardComponent {
      * "2 steps · reps" with no timed steps at all.
      */
     protected readonly summary = computed(() => {
-        const steps = this.workout().steps;
+        const steps = allSteps(this.workout());
         const namedExercises: string[] = [];
         for (const step of steps) {
             if (step.kind === 'rest') continue;

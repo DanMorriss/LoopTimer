@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { makeWorkout } from '../testing/make-workout';
+import { makeWorkout, reps, rest, savedBeforeGroups, work } from '../testing/make-workout';
 import { HistoryStore } from './history-store.service';
 import { DATA_VERSION, migrateSavedData } from './migrate';
 import { WorkoutStore } from './workout-store.service';
@@ -144,15 +144,17 @@ describe('migrating saved data to version 3: exercises', () => {
         localStorage.setItem(
             'timers',
             JSON.stringify([
-                makeWorkout({
-                    id: 'legs',
-                    steps: [
-                        { kind: 'reps', reps: 10, name: 'Squats', weight: 60 },
-                        { kind: 'rest', seconds: 60, name: 'Breathe' },
-                        { kind: 'work', seconds: 30, name: 'Wall sit hold' },
-                        { kind: 'reps', reps: 5, name: '' },
-                    ],
-                }),
+                savedBeforeGroups(
+                    makeWorkout({
+                        id: 'legs',
+                        steps: [
+                            { kind: 'reps', reps: 10, name: 'Squats', weight: 60 },
+                            { kind: 'rest', seconds: 60, name: 'Breathe' },
+                            { kind: 'work', seconds: 30, name: 'Wall sit hold' },
+                            { kind: 'reps', reps: 5, name: '' },
+                        ],
+                    })
+                ),
             ])
         );
         localStorage.setItem(
@@ -181,7 +183,7 @@ describe('migrating saved data to version 3: exercises', () => {
         const wallSit = own.find((e: { name: string }) => e.name === 'Wall sit hold');
         expect(wallSit).toEqual(expect.objectContaining({ measuredBy: 'timed', updatedAt: 7000 }));
         expect(
-            saved('workouts')[0].steps.map((s: { exerciseId?: string }) => s.exerciseId)
+            saved('workouts')[0].blocks[0].steps.map((s: { exerciseId?: string }) => s.exerciseId)
         ).toEqual(['builtin:back-squat', undefined, wallSit.id, undefined]);
         expect(localStorage.getItem('data-version')).toBe(String(DATA_VERSION));
     });
@@ -206,16 +208,18 @@ describe('migrating saved data to version 3: exercises', () => {
             id: _id,
             updatedAt: _at,
             ...workout
-        } = makeWorkout({
-            steps: [{ kind: 'reps', reps: 20, name: 'Push-ups' }],
-        });
+        } = savedBeforeGroups(
+            makeWorkout({
+                steps: [{ kind: 'reps', reps: 20, name: 'Push-ups' }],
+            })
+        );
         localStorage.setItem('timers', JSON.stringify([{ ...workout, id: 1 }]));
 
         migrateSavedData(7000);
 
         const [saved1] = saved('workouts');
         expect(saved1.id).toMatch(/^[0-9a-f-]{36}$/);
-        expect(saved1.steps[0].exerciseId).toBe('builtin:push-up');
+        expect(saved1.blocks[0].steps[0].exerciseId).toBe('builtin:push-up');
     });
 
     it('leaves a workout with a broken step for the store to drop', () => {
@@ -223,7 +227,12 @@ describe('migrating saved data to version 3: exercises', () => {
 
         migrateSavedData(7000);
 
-        expect(saved('workouts')).toEqual([{ id: 'x', steps: [{ kind: 'reps' }] }]);
+        expect(saved('workouts')).toEqual([
+            {
+                id: 'x',
+                blocks: [{ kind: 'group', rounds: 1, restSeconds: 0, steps: [{ kind: 'reps' }] }],
+            },
+        ]);
     });
 });
 
@@ -240,7 +249,7 @@ describe('migrating saved data to version 4: workouts, not timers', () => {
 
     it('moves the timers to workouts, and points the history and deletions at them', () => {
         const legs = makeWorkout({ id: 'legs', title: 'Legs' });
-        localStorage.setItem('timers', JSON.stringify([legs]));
+        localStorage.setItem('timers', JSON.stringify([savedBeforeGroups(legs)]));
         localStorage.setItem('legacy-timer-ids', JSON.stringify({ 1: 'legs' }));
         localStorage.setItem(
             'history',
@@ -267,7 +276,7 @@ describe('migrating saved data to version 4: workouts, not timers', () => {
             { kind: 'workout', id: 'arms', deletedAt: 5 },
             { kind: 'history', id: 'run', deletedAt: 6 },
         ]);
-        expect(localStorage.getItem('data-version')).toBe('4');
+        expect(localStorage.getItem('data-version')).toBe(String(DATA_VERSION));
     });
 
     it("carries on a tab's workout in progress, saved under the timer's names", () => {
@@ -283,5 +292,54 @@ describe('migrating saved data to version 4: workouts, not timers', () => {
         expect(store.activeWorkout()?.title).toBe('Legs');
         expect(sessionStorage.getItem('activeWorkoutId')).toBe('legs');
         expect(sessionStorage.getItem('activeTimerId')).toBeNull();
+    });
+});
+
+describe('migrating saved data to version 5: groups', () => {
+    beforeEach(() => {
+        localStorage.clear();
+        localStorage.setItem('data-version', '4');
+    });
+    afterEach(() => localStorage.clear());
+
+    it("makes each workout's steps one group, run once a round, and leaves the history", () => {
+        const circuit = makeWorkout({
+            id: 'circuit',
+            repeats: 5,
+            steps: [work(45, 'Squats'), rest(15), reps(20, 'Push-ups')],
+        });
+        const sets = [{ round: 2, step: 2, name: 'Push-ups', reps: 20 }];
+        localStorage.setItem('workouts', JSON.stringify([savedBeforeGroups(circuit)]));
+        localStorage.setItem('history', JSON.stringify([{ ...v1Entry(1_000_000, 1), sets }]));
+
+        migrateSavedData(7000);
+
+        expect(saved('workouts')).toEqual([
+            {
+                id: 'circuit',
+                title: 'Intervals',
+                updatedAt: 1,
+                repeats: 5,
+                blocks: [
+                    {
+                        kind: 'group',
+                        rounds: 1,
+                        restSeconds: 0,
+                        steps: [work(45, 'Squats'), rest(15), reps(20, 'Push-ups')],
+                    },
+                ],
+            },
+        ]);
+        expect(saved('history')[0].sets).toEqual(sets);
+        expect(localStorage.getItem('data-version')).toBe('5');
+    });
+
+    it('leaves a workout already in groups as it is', () => {
+        const circuit = makeWorkout({ id: 'circuit' });
+        localStorage.setItem('workouts', JSON.stringify([circuit]));
+
+        migrateSavedData(7000);
+
+        expect(saved('workouts')).toEqual([circuit]);
     });
 });

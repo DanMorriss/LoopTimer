@@ -1,6 +1,6 @@
 import { Exercise, MUSCLE_LABELS, MuscleGroup } from './exercise';
 import { LoggedSet } from './history';
-import { Workout } from './workout';
+import { allSteps, Workout } from './workout';
 
 /** Every muscle group, in the order the app lists them. */
 export const ALL_MUSCLES = Object.keys(MUSCLE_LABELS) as MuscleGroup[];
@@ -24,7 +24,7 @@ export function musclesWorked(
 ): MusclesWorked {
     return musclesOf(
         workouts.flatMap((workout) =>
-            workout.steps.map((step) =>
+            allSteps(workout).map((step) =>
                 step.kind === 'rest' || !step.exerciseId ? undefined : byId(step.exerciseId)
             )
         )

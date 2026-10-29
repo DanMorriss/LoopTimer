@@ -1,6 +1,11 @@
 import { computed, inject, Service, signal } from '@angular/core';
 import {
+    allSteps,
+    asOneGroup,
+    Block,
     hasWork,
+    MAX_HEADING_LENGTH,
+    MAX_REPEATS,
     MAX_REPS,
     MAX_STEP_SECONDS,
     MAX_TIME_LIMIT_SECONDS,
@@ -8,6 +13,7 @@ import {
     UNTIL_STOPPED,
     Workout,
     WorkoutFields,
+    withSteps,
 } from '../../models/workout';
 import { MAX_WEIGHT_KG } from '../../models/weight';
 import { isLoggedSet, isTimedSet, RepSet } from '../../models/history';
@@ -136,7 +142,7 @@ export class WorkoutStore {
     addWorkout(workout: WorkoutFields): Workout {
         const newWorkout: Workout = {
             ...workout,
-            steps: linkSteps(workout.steps, this.exercises.finder),
+            blocks: this.linked(workout.blocks),
             id: newId(),
             updatedAt: this.clock.now(),
         };
@@ -263,7 +269,7 @@ export class WorkoutStore {
 
         const updatedWorkout: Workout = {
             ...workoutUpdate,
-            steps: linkSteps(workoutUpdate.steps, this.exercises.finder),
+            blocks: this.linked(workoutUpdate.blocks),
             id: workoutId,
             updatedAt: this.clock.now(existingWorkout.updatedAt),
         };
@@ -281,15 +287,15 @@ export class WorkoutStore {
      */
     renameExerciseSteps(exerciseId: string, name: string) {
         const renamed = (workout: Workout): Workout => {
-            if (
-                !workout.steps.some((step) => step.exerciseId === exerciseId && step.name !== name)
-            ) {
+            const steps = allSteps(workout);
+            if (!steps.some((step) => step.exerciseId === exerciseId && step.name !== name)) {
                 return workout;
             }
-            const steps = workout.steps.map((step) =>
-                step.exerciseId === exerciseId ? { ...step, name } : step
+            const blocks = withSteps(
+                workout.blocks,
+                steps.map((step) => (step.exerciseId === exerciseId ? { ...step, name } : step))
             );
-            return { ...workout, steps, updatedAt: this.clock.now(workout.updatedAt) };
+            return { ...workout, blocks, updatedAt: this.clock.now(workout.updatedAt) };
         };
         const workouts = this._workouts().map(renamed);
         if (workouts.some((workout, i) => workout !== this._workouts()[i])) {
@@ -372,16 +378,21 @@ export class WorkoutStore {
 
     /**
      * Replaces one step of the running workout, e.g. its reps or weight changed mid-workout,
-     * and of the saved workout too, so it starts from there next time.
+     * and of the saved workout too, so it starts from there next time. `stepIndex` is its
+     * place in `allSteps()`.
      */
     updateActiveStep(stepIndex: number, step: Step) {
         const workout = this._activeWorkout();
-        if (!workout || !workout.steps[stepIndex]) {
+        const steps = workout ? allSteps(workout) : [];
+        if (!workout || !steps[stepIndex]) {
             return;
         }
         const updated: Workout = {
             ...workout,
-            steps: workout.steps.map((existing, i) => (i === stepIndex ? step : existing)),
+            blocks: withSteps(
+                workout.blocks,
+                steps.map((existing, i) => (i === stepIndex ? step : existing))
+            ),
             updatedAt: this.clock.now(workout.updatedAt),
         };
         this._activeWorkout.set(updated);
@@ -431,6 +442,14 @@ export class WorkoutStore {
         sessionStorage.removeItem('activeWorkoutPausedAt');
         sessionStorage.removeItem('activeRunStartedAt');
         this.clearRepSteps();
+    }
+
+    /** Blocks with their named steps linked to exercises (see `linkSteps()`). */
+    private linked(blocks: readonly Block[]): Block[] {
+        return withSteps(
+            blocks,
+            linkSteps(allSteps({ blocks: [...blocks] }), this.exercises.finder)
+        );
     }
 
     private saveWorkouts() {
@@ -513,19 +532,75 @@ function copyStep(step: Step): Step {
 /** Whether two workouts are the same apart from their ids. */
 function sameWorkout(a: Workout, b: Workout): boolean {
     // By what the steps are, not the exercises they happen to be linked to
-    const steps = (workout: Workout) =>
-        JSON.stringify(workout.steps.map((step) => ({ ...copyStep(step), exerciseId: undefined })));
+    const blocks = (workout: Workout) =>
+        JSON.stringify(
+            workout.blocks.map((block) =>
+                block.kind === 'group'
+                    ? {
+                          ...block,
+                          steps: block.steps.map((step) => ({
+                              ...copyStep(step),
+                              exerciseId: undefined,
+                          })),
+                      }
+                    : block
+            )
+        );
     return (
         a.title === b.title &&
         a.repeats === b.repeats &&
         a.timeLimitSeconds === b.timeLimitSeconds &&
-        steps(a) === steps(b)
+        blocks(a) === blocks(b)
     );
 }
 
 /**
- * Reads one saved workout, from this device or a backup, or returns null if it isn't usable.
- * Workouts saved before steps existed (a single work and rest time) become a work step and,
+ * A workout's saved blocks, or null if they aren't usable. A broken group makes the workout
+ * unusable, as a broken step always has; a broken heading is only a label, so it's dropped.
+ */
+function readBlocks(saved: unknown): Block[] | null {
+    if (!Array.isArray(saved)) {
+        return null;
+    }
+    const blocks: Block[] = [];
+    for (const value of saved) {
+        if (typeof value !== 'object' || value === null) {
+            return null;
+        }
+        const block = value as Record<string, unknown>;
+        if (block['kind'] === 'heading') {
+            const text = typeof block['text'] === 'string' ? block['text'].trim() : '';
+            if (text && text.length <= MAX_HEADING_LENGTH) {
+                blocks.push({ kind: 'heading', text });
+            }
+            continue;
+        }
+        const steps = block['steps'];
+        if (
+            block['kind'] !== 'group' ||
+            !isWholeNumber(block['rounds'], 1, MAX_REPEATS) ||
+            !isWholeNumber(block['restSeconds'], 0, MAX_STEP_SECONDS) ||
+            !Array.isArray(steps) ||
+            steps.length === 0 ||
+            !steps.every((step) => isStep(step))
+        ) {
+            return null;
+        }
+        blocks.push({
+            kind: 'group',
+            rounds: block['rounds'] as number,
+            restSeconds: block['restSeconds'] as number,
+            steps: steps.map(copyStep),
+        });
+    }
+    return blocks;
+}
+
+/**
+ * Reads one saved workout, from this device, a backup or another device, or returns null if it
+ * isn't usable. Workouts saved before groups (data version 5) have a list of `steps`, which
+ * become one group run once a round, and run exactly as before. Workouts saved before steps
+ * existed (a single work and rest time) become a work step and,
  * if there was any rest, a rest step, which runs exactly as before.
  */
 export function readWorkout(value: unknown): Workout | null {
@@ -542,8 +617,12 @@ export function readWorkout(value: unknown): Workout | null {
     ) {
         return null;
     }
-    const steps = Array.isArray(saved['steps']) ? saved['steps'] : stepsFromWorkAndRest(saved);
-    if (!steps?.every((step) => isStep(step)) || !hasWork(steps)) {
+    const oldSteps = Array.isArray(saved['steps']) ? saved['steps'] : stepsFromWorkAndRest(saved);
+    const blocks =
+        saved['blocks'] !== undefined
+            ? readBlocks(saved['blocks'])
+            : oldSteps && readBlocks(asOneGroup(oldSteps));
+    if (!blocks || !hasWork(allSteps({ blocks }))) {
         return null;
     }
     // A time limit runs as many rounds as fit, so it only goes with UNTIL_STOPPED
@@ -557,7 +636,7 @@ export function readWorkout(value: unknown): Workout | null {
     return {
         id: saved['id'],
         title: saved['title'],
-        steps: steps.map(copyStep),
+        blocks,
         repeats: saved['repeats'] as number,
         ...timeLimit,
         // Missing only if saved oddly: older than any real change, so any other copy wins
