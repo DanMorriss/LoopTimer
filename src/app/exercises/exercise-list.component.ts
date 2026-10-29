@@ -158,14 +158,6 @@ export class ExerciseListComponent {
         this.setMuscles([]);
     }
 
-    protected pickFromMap(muscle: MuscleGroup) {
-        // The current body map has no abductors shape, so map picks can't include it yet.
-        if (muscle === 'abductors') {
-            return;
-        }
-        this.pickMuscle(muscle);
-    }
-
     private setMuscles(next: MuscleGroup[]) {
         this.selectedMuscles.set(next);
         void this.router.navigate([], {

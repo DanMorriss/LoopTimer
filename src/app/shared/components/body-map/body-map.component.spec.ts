@@ -91,11 +91,14 @@ describe('BodyMapComponent', () => {
         expect(shaded('main') + shaded('supporting')).toBe(0);
     });
 
-    // The figure has no shape for them, but the list still names them
-    it('still lists a muscle the figure has no shape for', () => {
-        create(['obliques'], ['abductors']);
+    // Upstream has no abductors, so its upper glute, the gluteus medius, stands in for them
+    it('shades the abductors on the back, apart from the glutes', () => {
+        create(['abductors']);
 
-        expect(labels('supporting')).toEqual(['Abductors']);
+        const back = el().querySelectorAll('svg')[1];
+        expect(shaded('main')).toBe(2);
+        expect(back.querySelectorAll('.body-map__shape--main').length).toBe(2);
+        expect(labels('main')).toEqual(['Abductors']);
     });
 
     it('draws the figure chosen in settings', () => {
@@ -108,7 +111,7 @@ describe('BodyMapComponent', () => {
         expect(shaded('main')).toBe(pathsFor(['chest'], 'female'));
     });
 
-    it('has a shape for every muscle group but abductors, on both figures', () => {
+    it('has a shape for every muscle group, on both figures', () => {
         const muscles = new Set(
             (['male', 'female'] as const).flatMap((figure) =>
                 (['front', 'back'] as const).flatMap((side) =>
@@ -119,6 +122,7 @@ describe('BodyMapComponent', () => {
 
         expect([...muscles].filter((m) => m !== null).sort()).toEqual(
             [
+                'abductors',
                 'abs',
                 'adductors',
                 'biceps',
