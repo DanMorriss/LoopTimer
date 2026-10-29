@@ -46,6 +46,7 @@ A JSON list of workouts:
 - `weight` (rep steps only, optional): in **kg whatever unit is shown**, to the gram, more than 0 and up to 300. Missing for none. A weight picked in lb is converted (1 lb = 0.45359237 kg), so 45 lb saves as 20.412 kg.
 - `exerciseId` (work and rep steps, optional): the exercise the step is, e.g. `builtin:back-squat`, or one of your own. Set by picking an exercise in setup (EXR-2). When a workout is saved, a step keeps its exercise while that exercise is still there; any other named work step is linked by its name, as the conversion to version 3 does (below). Typing over a step's name in setup drops its link, so a renamed step follows its name. Missing for a rest or an unnamed step.
 - `eachSide` (work and rep steps, optional): `true` for a step done one side at a time (BLD-10), its reps or time for each side. Missing for not; anything else saved there, or on a rest step, is dropped when loading.
+- `sets` (work and rep steps in a group of more than one round, optional): Vary each set (BLD-11), one `{ "reps": 12, "weight": 40 }` (rep steps; `weight` in kg, missing for none) or `{ "seconds": 30 }` (work steps) per round of its group, in order. The step's own `reps` and `weight`, or `seconds`, are set 1's, so it reads as a whole step. Missing for every set alike. One whose length isn't the group's `rounds`, or with a broken set, or on a rest step, is dropped when loading, leaving every set the step's own.
 - A workout with no work (no timed step with time, and no rep step) isn't valid.
 - **Before groups** (data version 4, backup version 7): a list of `steps` in place of `blocks`. It's read as one group of them, run once a round, so it runs exactly as before; the conversion to version 5 saves it that way.
 - **Older format:** workouts saved before steps existed (when they were timers of one work and one rest time) have `timerMinutes`, `timerSeconds`, `restMinutes`, `restSeconds` in place of `steps`. They're read as a timed step plus a rest step (left out if 0), and saved in the new format the next time anything changes.
@@ -230,7 +231,7 @@ From these, everything on the workout page is worked out (see [run-a-workout](ru
 ```json
 {
     "app": "Loop Workouts",
-    "version": 10,
+    "version": 11,
     "exportedAt": 1761055200000,
     "workouts": [],
     "history": [],
@@ -258,6 +259,7 @@ From these, everything on the workout page is worked out (see [run-a-workout](ru
 - `version` goes up whenever the file's shape changes. A file from an older version is converted when imported; one from a newer version is turned down.
 - **Version 1** files (from before random ids) have number workout ids, no `updatedAt` and no `deleted`. They're converted as saved data is: their workouts get new random ids, so they're matched on what they are (title, steps and rounds) rather than by id.
 - **Version 3 and older** files call workouts timers: a `timers` list in place of `workouts`, `timerId` in the history and the kind `timer` in `deleted`. They're renamed as they're read.
+- **Version 10 and older** files have no steps whose sets vary: nothing to convert.
 - **Version 9 and older** files have no `headings` on history entries: nothing to convert.
 - **Version 8 and older** files have no steps done each side, nor sides on sets: nothing to convert.
 - **Version 7 and older** files have workouts with `steps` in place of `blocks`, read as one group as saved data is.

@@ -1,6 +1,6 @@
 import { HistoryEntry, isTimedSet, LoggedSet, RepSet, TimedSet } from './history';
-import { MAX_WEIGHT, WEIGHT_INCREASE, WeightUnit, weightIn } from './weight';
-import { MAX_REPS, Step } from './workout';
+import { MAX_WEIGHT, WEIGHT_INCREASE, WeightUnit, weightIn, weightToKg } from './weight';
+import { MAX_REPS, RepSetAmount, RepStep, Step } from './workout';
 
 /** How far a workout got in its time limit: full rounds, then steps done of the next. */
 export interface RoundsScore {
@@ -222,15 +222,72 @@ export function suggestedWeight(
     };
 }
 
+/**
+ * Whether a rep step whose sets vary (BLD-11) can go up one weight step on each set (PRG-5),
+ * from `lastSets`, its exercise's sets last time: each set of the step judged against its
+ * own reps, by the same set last time (both sides). Every set with a weight has to have been
+ * done at it last time and got its reps, and so has every other set done; so it's false where
+ * any set fell short, none has a weight, or a weight's been changed since. There's no step up
+ * of some sets and not others, which would change the shape the user built.
+ */
+export function canStepUpEachSet(
+    lastSets: readonly LoggedSet[],
+    step: RepStep,
+    unit: WeightUnit
+): boolean {
+    const sets = step.sets;
+    if (!sets || !sets.some((set) => set.weight !== undefined && !atMostWeight(set, unit))) {
+        return false;
+    }
+    const repSets = lastSets.filter((set): set is RepSet => !isTimedSet(set));
+    return sets.every((target, i) => {
+        const last = repSets.filter((set) => (set.set ?? 0) === i);
+        if (target.weight === undefined) {
+            return last.every((set) => set.reps >= target.reps);
+        }
+        const weight = weightIn(target.weight, unit);
+        return (
+            last.length > 0 &&
+            last.every(
+                (set) =>
+                    set.weight !== undefined &&
+                    weightIn(set.weight, unit) === weight &&
+                    set.reps >= target.reps
+            )
+        );
+    });
+}
+
+/**
+ * A set one weight step up (WEIGHT_INCREASE) as `unit` shows it, up to the most there is;
+ * one with no weight stays as it is.
+ */
+export function steppedUp(amount: RepSetAmount, unit: WeightUnit): RepSetAmount {
+    if (amount.weight === undefined) {
+        return amount;
+    }
+    const next = Math.min(MAX_WEIGHT[unit], weightIn(amount.weight, unit) + WEIGHT_INCREASE[unit]);
+    return { ...amount, weight: weightToKg(next, unit) };
+}
+
+function atMostWeight(amount: RepSetAmount, unit: WeightUnit): boolean {
+    return amount.weight !== undefined && weightIn(amount.weight, unit) >= MAX_WEIGHT[unit];
+}
+
 /** A step up to try next time, from how a rep step went this time (on the workout summary). */
 export interface ProgressionSuggestion {
     /** Which step of the round it's for, from 0. */
     step: number;
     /** A heavier weight, or (with no weight) one more rep. */
     kind: 'weight' | 'reps';
-    /** The weight (in the unit shown) or reps it's from, and the one to try. */
+    /**
+     * The weight (in the unit shown) or reps it's from, and the one to try. For a step whose
+     * sets vary, set 1's, and every set goes up by as much.
+     */
     from: number;
     to: number;
+    /** A step whose sets vary (BLD-11): the step up is for each set, so the shape stays. */
+    eachSet?: true;
 }
 
 /**
@@ -255,6 +312,13 @@ export function progressionSuggestions(
         if (step?.kind !== 'reps') {
             continue;
         }
+        if (step.sets) {
+            const suggestion = eachSetSuggestion(index, step.sets, stepSets, unit);
+            if (suggestion) {
+                suggestions.push(suggestion);
+            }
+            continue;
+        }
         const weight = suggestedWeight(stepSets, step.reps, unit);
         if (weight) {
             if (weight.next > weight.last) {
@@ -270,4 +334,39 @@ export function progressionSuggestions(
         }
     }
     return suggestions.sort((a, b) => a.step - b.step);
+}
+
+/**
+ * Next time's step up for a step whose sets vary (BLD-11), where every set (both sides) got
+ * its own reps: a weight step on each set with a weight, or, with none, a rep on each. Null
+ * where any fell short, or it's at the top.
+ */
+function eachSetSuggestion(
+    index: number,
+    sets: readonly RepSetAmount[],
+    stepSets: readonly RepSet[],
+    unit: WeightUnit
+): ProgressionSuggestion | null {
+    const gotReps = stepSets.every((set) => set.reps >= (sets[set.set ?? 0] ?? sets[0]).reps);
+    if (!gotReps) {
+        return null;
+    }
+    const [first] = sets;
+    if (sets.some((set) => set.weight !== undefined)) {
+        if (sets.every((set) => set.weight === undefined || atMostWeight(set, unit))) {
+            return null;
+        }
+        // Said by how much each set goes up, so set 1's numbers are only a way to say it
+        const from = first.weight === undefined ? 0 : weightIn(first.weight, unit);
+        return {
+            step: index,
+            kind: 'weight',
+            from,
+            to: from + WEIGHT_INCREASE[unit],
+            eachSet: true,
+        };
+    }
+    return sets.every((set) => set.reps < MAX_REPS)
+        ? { step: index, kind: 'reps', from: first.reps, to: first.reps + 1, eachSet: true }
+        : null;
 }

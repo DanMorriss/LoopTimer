@@ -13,7 +13,11 @@ import {
     MAX_SWITCH_SECONDS,
     RunSides,
     DEFAULT_RUN_SIDES,
+    RepSetAmount,
+    RepStep,
     Step,
+    TimedSetAmount,
+    TimedStep,
     UNTIL_STOPPED,
     Workout,
     WorkoutFields,
@@ -519,24 +523,62 @@ function isStep(value: unknown): value is Step {
         return false;
     }
     if (step['kind'] === 'reps') {
-        const weight = step['weight'];
-        return (
-            isWholeNumber(step['reps'], 1, MAX_REPS) &&
-            (weight === undefined ||
-                (typeof weight === 'number' && weight > 0 && weight <= MAX_WEIGHT_KG))
-        );
+        return isRepAmount(step);
     }
+    return (step['kind'] === 'work' || step['kind'] === 'rest') && isTimedAmount(step);
+}
+
+/** Reps, and any weight, as a rep step or one of its sets has them. */
+function isRepAmount(value: Record<string, unknown>): boolean {
+    const weight = value['weight'];
     return (
-        (step['kind'] === 'work' || step['kind'] === 'rest') &&
-        isWholeNumber(step['seconds'], 1, MAX_STEP_SECONDS)
+        isWholeNumber(value['reps'], 1, MAX_REPS) &&
+        (weight === undefined ||
+            (typeof weight === 'number' && weight > 0 && weight <= MAX_WEIGHT_KG))
     );
+}
+
+/** A time, as a timed step or one of its sets has it. */
+function isTimedAmount(value: Record<string, unknown>): boolean {
+    return isWholeNumber(value['seconds'], 1, MAX_STEP_SECONDS);
+}
+
+/**
+ * A step's own reps and weight or time for each set (BLD-11), copied, or undefined if it has
+ * none, or they aren't usable: one for each of its group's `rounds`, more than one, each
+ * valid. Unusable ones are dropped, leaving every set the step's own.
+ */
+function copySets(step: Step, rounds: number): Pick<Step, 'sets'> {
+    const sets: unknown = step.kind === 'rest' ? undefined : step.sets;
+    if (
+        !Array.isArray(sets) ||
+        rounds < 2 ||
+        sets.length !== rounds ||
+        !sets.every(
+            (set) =>
+                typeof set === 'object' &&
+                set !== null &&
+                (step.kind === 'reps' ? isRepAmount(set) : isTimedAmount(set))
+        )
+    ) {
+        return {};
+    }
+    return step.kind === 'reps'
+        ? {
+              sets: (sets as RepSetAmount[]).map(({ reps, weight }) => ({
+                  reps,
+                  ...(weight === undefined ? {} : { weight }),
+              })),
+          }
+        : { sets: (sets as TimedSetAmount[]).map(({ seconds }) => ({ seconds })) };
 }
 
 /**
  * Just the step's own fields, leaving out anything else that was saved with it. Each side is
- * only `true`, and never on a rest step: anything else saved there is left out.
+ * only `true`, and never on a rest step: anything else saved there is left out. Its sets are
+ * kept where they're usable in a group of `rounds` (see `copySets()`).
  */
-function copyStep(step: Step): Step {
+function copyStep(step: Step, rounds: number): Step {
     const link = step.exerciseId === undefined ? {} : { exerciseId: step.exerciseId };
     const eachSide =
         step.kind !== 'rest' && step.eachSide === true ? { eachSide: true as const } : {};
@@ -548,8 +590,16 @@ function copyStep(step: Step): Step {
               ...(step.weight === undefined ? {} : { weight: step.weight }),
               ...link,
               ...eachSide,
+              ...(copySets(step, rounds) as Pick<RepStep, 'sets'>),
           }
-        : { kind: step.kind, seconds: step.seconds, name: step.name, ...link, ...eachSide };
+        : {
+              kind: step.kind,
+              seconds: step.seconds,
+              name: step.name,
+              ...link,
+              ...eachSide,
+              ...(copySets(step, rounds) as Pick<TimedStep, 'sets'>),
+          };
 }
 
 /** Whether two workouts are the same apart from their ids. */
@@ -562,7 +612,7 @@ function sameWorkout(a: Workout, b: Workout): boolean {
                     ? {
                           ...block,
                           steps: block.steps.map((step) => ({
-                              ...copyStep(step),
+                              ...copyStep(step, block.rounds),
                               exerciseId: undefined,
                           })),
                       }
@@ -615,7 +665,7 @@ function readBlocks(saved: unknown): Block[] | null {
             kind: 'group',
             rounds: block['rounds'] as number,
             restSeconds: block['restSeconds'] as number,
-            steps: steps.map(copyStep),
+            steps: steps.map((step: Step) => copyStep(step, block['rounds'] as number)),
         });
     }
     return blocks;

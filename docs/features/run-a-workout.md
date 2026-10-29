@@ -77,6 +77,8 @@
 
 - While a rep step is waiting, the **reps and weight on the face are wheels**: closed, each is just its number in the face's text, with a short faint line under it (no box) that says it can be changed, with its unit beside it ("reps", "kg"). Tapping one opens it there, over the ring, as wheels open anywhere else: **Reps** 1–100, and **Weight** none, then halves, in the unit chosen in Account → Profile. No weight shows as "+", to add one. Screen readers hear them as spin buttons named "reps" and "Weight, kg".
 - A change applies at once, to **this set, the rest of this workout's rounds, and the saved workout**, so next time starts from there. If the workout has been deleted from the library meanwhile, only this workout changes.
+- On a step whose sets vary (BLD-11), it applies to **this set only**, in this workout and the saved one: set 2 changed to 47.5 kg leaves sets 1 and 3 as they were. Each set's face shows its own reps and weight, and Next during a rest says the next set's, e.g. "then Leg press · set 2 of 3 · 10 reps @ 45 kg".
+- On a step done each side, a change is for both sides of the set.
 - A wheel closes by itself as it does anywhere else (on a pick, or two fifths of a second after it stops turning).
 - Space on a focused wheel is left to the wheel, rather than pressing Done.
 
@@ -99,7 +101,7 @@
     - The **suggested next workout**, as on the history page, without its Start button (PRG-9; see [progress](progress.md)).
     - Buttons: **Done** (the main one: on to the history, with this workout highlighted), and **Back to workout** for a workout ended early or one that runs until stopped. Escape does the same as Back to workout, where there is one.
 - **Change reps or weight** (shown when there are rep sets) turns each rep set into a Reps and a Weight wheel, so a set logged wrongly can be corrected (e.g. the last set was 8, not 10). Timed sets ran as set, so they can't be changed. A change goes into this workout's history entry at once, and then asks "**Use these settings next time?**":
-    - **Yes, use next time**: each rep step of the saved workout starts next time from its last set in this workout. It says "Saved: next time starts from these."
+    - **Yes, use next time**: each rep step of the saved workout starts next time from its sets in this workout, each set as it was last done (both sides as one) and any not done as it was. Sets that came out the same stay one Reps and Weight; sets that differ turn on Vary each set (BLD-11), so a pyramid worked out mid-workout is kept. It says "Saved: next time starts from these."
     - **No, just this time**: only the history changes.
 - A workout ended before its first step was done has nothing logged: the summary says "Nothing to log", with no note box. Done still goes to the history.
 - The workout is logged in the history once, when it finishes, wherever the user is in the app (see [history](history.md)). It's dated when it actually finished, even if the app only noticed later.
@@ -129,6 +131,8 @@
 - Given the workout finishes, then the summary opens with no Back to workout, and a note typed there is saved to it in the history.
 - Given the summary, when I press Done, then the workout is over and the history opens with it highlighted.
 - Given a workout ended early, on a phone, when I drag the summary down past halfway (or flick it down), then it goes back to the workout, paused; when I let go above halfway, then it springs back up.
+- Given leg press of 12 @ 40, 10 @ 45 and 8 @ 50 kg, when I change set 2 to 47.5 kg mid-workout, then only set 2 changes, here and in the saved workout; given 3 equal sets of 10 @ 40 kg, when I change set 2 to 45 kg, then sets 2 and 3 run at 45 kg and the saved workout has 45 kg.
+- Given sets done at 12 @ 40, 10 @ 45 and 8 @ 50 kg on a step of equal sets, when I answer "Yes, use next time", then the step has Vary each set on with those three sets.
 - Given 20 push-ups at 40 kg in round 1 and the workout ended in round 2, when I change the set to 18 reps on the summary, then the history has 18; on "Yes, use next time" the saved workout starts from 18 at 40 kg, and on "No, just this time" it stays at 20.
 - Given a summary longer than the screen (Next time, Muscles worked and the next workout), then the sheet fits the screen, its content scrolls, and Done is always in reach under it.
 - Given a workout ended early, when I press Back to workout, then it is paused where it was ended, with focus on Resume.

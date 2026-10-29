@@ -1,6 +1,7 @@
 import { HistoryEntry, LoggedSet } from './history';
-import { Step } from './workout';
+import { RepStep, Step, withEachRepSet, withRepSet } from './workout';
 import {
+    canStepUpEachSet,
     compareScores,
     estimatedOneRepMax,
     exerciseBests,
@@ -10,6 +11,7 @@ import {
     progressMeasure,
     sessionsByExercise,
     sessionValue,
+    steppedUp,
     suggestedWeight,
 } from './progress';
 
@@ -244,5 +246,90 @@ describe('next time on the workout summary', () => {
         expect(progressionSuggestions([squat(10, 60), squat(10)], steps, 'lb')).toEqual([
             { step: 0, kind: 'weight', from: 132.5, to: 137.5 },
         ]);
+    });
+});
+
+describe('a step whose sets vary (BLD-11)', () => {
+    const pyramid: RepStep = {
+        kind: 'reps',
+        reps: 12,
+        weight: 40,
+        name: 'Leg press',
+        exerciseId: 'leg-press',
+        sets: [
+            { reps: 12, weight: 40 },
+            { reps: 10, weight: 45 },
+            { reps: 8, weight: 50 },
+        ],
+    };
+    const pressed = (set: number, reps: number, weight?: number, side?: 'left' | 'right') =>
+        ({
+            round: 0,
+            step: 0,
+            ...(set === 0 ? {} : { set }),
+            ...(side ? { side } : {}),
+            name: 'Leg press',
+            reps,
+            ...(weight === undefined ? {} : { weight }),
+            exerciseId: 'leg-press',
+        }) satisfies LoggedSet;
+    const asPlanned = [pressed(0, 12, 40), pressed(1, 10, 45), pressed(2, 8, 50)];
+
+    describe('mid-workout (PRG-5)', () => {
+        it('steps up every set where each got its own reps last time', () => {
+            expect(canStepUpEachSet(asPlanned, pyramid, 'kg')).toBe(true);
+        });
+
+        it("doesn't where any set fell short, both sides counting", () => {
+            expect(
+                canStepUpEachSet([...asPlanned.slice(0, 2), pressed(2, 7, 50)], pyramid, 'kg')
+            ).toBe(false);
+            const sides = [
+                ...asPlanned.slice(0, 2),
+                pressed(2, 8, 50, 'left'),
+                pressed(2, 6, 50, 'right'),
+            ];
+            expect(canStepUpEachSet(sides, pyramid, 'kg')).toBe(false);
+        });
+
+        it("doesn't once a weight's been changed since, or a set wasn't done", () => {
+            const changed = withRepSet(pyramid, 1, { reps: 10, weight: 47.5 });
+            expect(canStepUpEachSet(asPlanned, changed, 'kg')).toBe(false);
+            expect(canStepUpEachSet(asPlanned.slice(0, 2), pyramid, 'kg')).toBe(false);
+        });
+
+        it("doesn't for sets with no weight, or a step whose sets are alike", () => {
+            const bodyweight = withEachRepSet(pyramid, ({ reps }) => ({ reps }));
+            expect(canStepUpEachSet(asPlanned, bodyweight, 'kg')).toBe(false);
+            const { sets: _sets, ...alike } = pyramid;
+            expect(canStepUpEachSet(asPlanned, alike, 'kg')).toBe(false);
+        });
+
+        it('goes up one step on each set with a weight, as shown', () => {
+            expect(steppedUp({ reps: 10, weight: 45 }, 'kg')).toEqual({ reps: 10, weight: 47.5 });
+            expect(steppedUp({ reps: 10 }, 'kg')).toEqual({ reps: 10 });
+            expect(steppedUp({ reps: 10, weight: 300 }, 'kg')).toEqual({ reps: 10, weight: 300 });
+        });
+    });
+
+    describe('next time on the summary (PRG-10)', () => {
+        it('steps up each set alike where every set got its own reps', () => {
+            expect(progressionSuggestions(asPlanned, [pyramid], 'kg')).toEqual([
+                { step: 0, kind: 'weight', from: 40, to: 42.5, eachSet: true },
+            ]);
+        });
+
+        it('suggests nothing where a set fell short', () => {
+            const short = [...asPlanned.slice(0, 2), pressed(2, 7, 50)];
+            expect(progressionSuggestions(short, [pyramid], 'kg')).toEqual([]);
+        });
+
+        it('adds a rep to each set with no weight', () => {
+            const bodyweight = withEachRepSet(pyramid, ({ reps }) => ({ reps }));
+            const done = [pressed(0, 12), pressed(1, 10), pressed(2, 8)];
+            expect(progressionSuggestions(done, [bodyweight], 'kg')).toEqual([
+                { step: 0, kind: 'reps', from: 12, to: 13, eachSet: true },
+            ]);
+        });
     });
 });

@@ -33,8 +33,11 @@ import {
     MAX_HEADINGS,
     MAX_REPS,
     MAX_STEPS,
+    RepStep,
     Step,
+    stepForSet,
     StepKind,
+    TimedStep,
     stepKindName,
     Workout,
     WorkoutFields,
@@ -97,6 +100,24 @@ interface StepModel {
     restSeconds: number;
     /** Done one side at a time, each set running both sides (BLD-10). Not for a rest step. */
     eachSide: boolean;
+    /**
+     * Vary each set (BLD-11): each set has its own row of reps and weight, or time, in
+     * `setRows`, set 1's being the step's. Only with more than one set, and not for rest.
+     */
+    vary: boolean;
+    /** A row for each set while `vary` is on, as many as `sets`; empty while it's off. */
+    setRows: SetRowModel[];
+}
+
+/** One set's own amount, as a step holds its own: reps and weight, or minutes and seconds. */
+interface SetRowModel {
+    reps: number;
+    /** In the unit chosen in settings, to the nearest half; 0 for none. */
+    weight: number;
+    /** As a step's `savedWeight`: the weight as saved, in kg, or null for a new row. */
+    savedWeight: number | null;
+    minutes: number;
+    seconds: number;
 }
 
 /** How a workout goes on: a number of rounds (or until stopped), or a time limit. */
@@ -211,6 +232,17 @@ export class WorkoutSetupComponent {
                     ? undefined
                     : { kind: 'noTime', message: 'Workout needs a timed step or some reps' }
             );
+            // ...that each set of a step whose sets vary has some, if the step's to be kept
+            validate(setup, ({ value }) =>
+                value().steps.some(
+                    (step) =>
+                        varies(step) &&
+                        step.setRows.some((row) => !rowHasAmount(step, row)) &&
+                        step.setRows.some((row) => rowHasAmount(step, row))
+                )
+                    ? { kind: 'noSetAmount', message: 'Each set needs some reps or time' }
+                    : undefined
+            );
             // ...and that a time limit has some time in it
             validate(setup, ({ value }) =>
                 value().repeatMode === 'time' && timeLimitSeconds(value()) === 0
@@ -256,6 +288,9 @@ export class WorkoutSetupComponent {
     /** Whether the tooltip by the Steps heading is showing. */
     protected readonly infoOpen = signal(false);
 
+    /** The set row open on its wheels (BLD-11), as `key-set`, if one is: one at a time. */
+    protected readonly openSetRow = signal<string | null>(null);
+
     /** The key of the step whose kind menu is open, if one is. */
     protected readonly kindMenuFor = signal<number | null>(null);
 
@@ -270,6 +305,12 @@ export class WorkoutSetupComponent {
     );
     protected readonly exerciseInEditor = signal<{ exercise: Exercise; stepKey: number } | null>(
         null
+    );
+
+    protected readonly noSetAmountError = computed(() =>
+        this.workoutForm()
+            .errors()
+            .find((error) => error.kind === 'noSetAmount')
     );
 
     protected readonly noTimeLimitError = computed(() =>
@@ -380,12 +421,107 @@ export class WorkoutSetupComponent {
             }
             return `${time}${eachSide}`;
         }
-        // As the history says sets, e.g. "3 × 10 @ 60 kg", with the rest between them
-        const amount = step.kind === 'reps' ? `${step.reps}${weight}` : time;
+        // As the history says sets, e.g. "3 × 10 @ 60 kg", or each set's where they vary, e.g.
+        // "12, 10, 8 @ 40–50 kg", with the rest between them
+        const amount = varies(step)
+            ? this.variedText(step)
+            : `${step.sets} × ${step.kind === 'reps' ? `${step.reps}${weight}` : time}`;
         const rest = step.restMinutes * 60 + step.restSeconds;
         const restText =
             rest > 0 ? ` · rest ${padded(step.restMinutes)}:${padded(step.restSeconds)}` : '';
-        return `${step.sets} × ${amount}${eachSide}${restText}`;
+        return `${amount}${eachSide}${restText}`;
+    }
+
+    /** Sets that vary, e.g. "12, 10, 8 @ 40–50 kg", or "00:30, 00:45, 01:00". */
+    private variedText(step: StepModel): string {
+        const rows = step.setRows;
+        if (step.kind !== 'reps') {
+            return rows.map(rowTime).join(', ');
+        }
+        const weights = rows.map((row) => row.weight).filter((weight) => weight > 0);
+        const low = Math.min(...weights);
+        const high = Math.max(...weights);
+        const weight =
+            weights.length === 0
+                ? ''
+                : ` @ ${low === high ? low : `${low}–${high}`} ${this.weightUnit}`;
+        return `${rows.map((row) => row.reps).join(', ')}${weight}`;
+    }
+
+    /** A set's row, e.g. "Set 2 · 10 × 45 kg", "Set 2 · 10 reps" or "Set 2 · 00:45". */
+    protected setRowText(step: StepModel, set: number): string {
+        const row = step.setRows[set];
+        if (step.kind !== 'reps') {
+            return `Set ${set + 1} · ${rowTime(row)}`;
+        }
+        if (row.weight > 0) {
+            return `Set ${set + 1} · ${row.reps} × ${row.weight} ${this.weightUnit}`;
+        }
+        return `Set ${set + 1} · ${row.reps === 1 ? '1 rep' : `${row.reps} reps`}`;
+    }
+
+    /**
+     * The Sets wheel. With Vary each set on, a set added copies the last one's row, and one
+     * taken away goes from the end; down to 1 set, there's nothing to vary, so it goes off.
+     */
+    protected setSets(index: number, sets: number) {
+        const changed = this.model().steps[index];
+        if (changed.sets === sets) {
+            return;
+        }
+        if (!changed.vary) {
+            this.updateStep(changed.key, (step) => ({ ...step, sets }));
+            return;
+        }
+        if (sets < 2) {
+            this.updateStep(changed.key, (step) => ({ ...varyOff(step), sets }));
+            return;
+        }
+        this.smoothChange(() =>
+            this.updateStep(changed.key, (step) => ({
+                ...step,
+                sets,
+                setRows: Array.from(
+                    { length: sets },
+                    // A copy of its fields, not a spread: the form tracks a row by the object
+                    (_, i) => step.setRows[i] ?? rowOf(step.setRows.at(-1)!)
+                ),
+            }))
+        );
+    }
+
+    /**
+     * The Vary each set switch: on, every set starts as the step is, a row each; off, every
+     * set goes back to set 1's.
+     */
+    protected setVary(index: number, on: boolean) {
+        const changed = this.model().steps[index];
+        this.openSetRow.set(null);
+        this.smoothChange(() =>
+            this.updateStep(changed.key, (step) =>
+                on
+                    ? {
+                          ...step,
+                          vary: true,
+                          setRows: Array.from({ length: step.sets }, () => rowOf(step)),
+                      }
+                    : varyOff(step)
+            )
+        );
+    }
+
+    protected isSetRowOpen(key: number, set: number): boolean {
+        return this.openSetRow() === `${key}-${set}`;
+    }
+
+    /** Opens a set's row on its wheels, closing any other; or closes it. Rows slide to fit. */
+    protected toggleSetRow(key: number, set: number) {
+        const id = `${key}-${set}`;
+        this.smoothChange(() => this.openSetRow.update((open) => (open === id ? null : id)));
+    }
+
+    private updateStep(key: number, change: (step: StepModel) => StepModel) {
+        this.updateSteps((steps) => steps.map((step) => (step.key === key ? change(step) : step)));
     }
 
     /**
@@ -501,7 +637,12 @@ export class WorkoutSetupComponent {
      * would lay the page out again every frame).
      */
     private smoothChange(change: () => void) {
-        changeSmoothly(this.host.nativeElement, 'form > *, .step', this.injector, change);
+        changeSmoothly(
+            this.host.nativeElement,
+            'form > *, .step, .wheel-row',
+            this.injector,
+            change
+        );
     }
 
     /** Adds a rep step, the most common kind; its kind pill changes it. */
@@ -699,9 +840,14 @@ export class WorkoutSetupComponent {
     private stepModels(workout: Workout): StepModel[] {
         return workout.blocks.flatMap((block) =>
             block.kind === 'group'
-                ? block.steps.map((step) =>
-                      this.stepModel(step, block.rounds, block.rounds > 1 ? block.restSeconds : 60)
-                  )
+                ? block.steps.map((step) => ({
+                      ...this.stepModel(
+                          step,
+                          block.rounds,
+                          block.rounds > 1 ? block.restSeconds : 60
+                      ),
+                      ...this.setRowModels(step),
+                  }))
                 : [{ ...this.newStep(), kind: 'heading' as const, name: block.text }]
         );
     }
@@ -723,6 +869,19 @@ export class WorkoutSetupComponent {
                 step.kind === 'reps' && step.weight ? weightIn(step.weight, this.weightUnit) : 0,
             savedWeight: (step.kind === 'reps' && step.weight) || null,
             exerciseId: step.exerciseId ?? '',
+            vary: false,
+            setRows: [],
+        };
+    }
+
+    /** A step's sets as rows, where they vary (BLD-11). */
+    private setRowModels(step: Step): Pick<StepModel, 'vary' | 'setRows'> {
+        if (step.kind === 'rest' || !step.sets) {
+            return { vary: false, setRows: [] };
+        }
+        return {
+            vary: true,
+            setRows: step.sets.map((_, set) => rowOf(this.stepModel(stepForSet(step, set)))),
         };
     }
 
@@ -782,9 +941,38 @@ function hasAmount(step: StepModel): boolean {
     if (step.kind === 'heading') {
         return false;
     }
-    return step.kind === 'reps'
-        ? step.reps > 0 || step.weight > 0
-        : step.minutes > 0 || step.seconds > 0;
+    // Where its sets vary, its rows have them, and its own are left as they were
+    return (varies(step) ? step.setRows : [step]).some((row) =>
+        step.kind === 'reps' ? row.reps > 0 || row.weight > 0 : row.minutes > 0 || row.seconds > 0
+    );
+}
+
+/** Whether a step's sets each have their own row (BLD-11): only with more than one set. */
+function varies(step: StepModel): boolean {
+    return step.vary && step.sets > 1 && (step.kind === 'reps' || step.kind === 'work');
+}
+
+/**
+ * A row for a set as the step (or another row) has it. Its fields only: a spread would copy
+ * the hidden key the form tracks an array's rows by, and two rows can't share one.
+ */
+function rowOf({ reps, weight, savedWeight, minutes, seconds }: SetRowModel): SetRowModel {
+    return { reps, weight, savedWeight, minutes, seconds };
+}
+
+/** Vary each set off: every set back to set 1's, which is the step's own again. */
+function varyOff(step: StepModel): StepModel {
+    const [first] = step.setRows;
+    return { ...step, ...(first ? rowOf(first) : {}), vary: false, setRows: [] };
+}
+
+/** Whether a set's row has reps, or a time, as its step's kind uses. */
+function rowHasAmount(step: StepModel, row: SetRowModel): boolean {
+    return step.kind === 'reps' ? row.reps > 0 : row.minutes > 0 || row.seconds > 0;
+}
+
+function rowTime(row: SetRowModel): string {
+    return `${padded(row.minutes)}:${padded(row.seconds)}`;
 }
 
 function timeLimitSeconds(setup: WorkoutSetupModel): number {
@@ -807,6 +995,7 @@ function toBlocks(steps: readonly StepModel[], unit: WeightUnit): Block[] {
         if (step.kind === 'reps' ? step.reps === 0 : step.seconds === 0) {
             return [];
         }
+        // A set row left at 0 reps or 00:00 is stopped by the form's check before saving
         const sets = step.kind === 'rest' ? 1 : model.sets;
         return [
             {
@@ -823,7 +1012,22 @@ function toBlocks(steps: readonly StepModel[], unit: WeightUnit): Block[] {
  * A step to save: whole seconds, a trimmed name, a weight in kg, any exercise picked, and
  * each side if it's done each side.
  */
-function toStep(step: StepModel & { kind: StepKind }, unit: WeightUnit): Step {
+function toStep(model: StepModel & { kind: StepKind }, unit: WeightUnit): Step {
+    if (varies(model)) {
+        // Set 1's is the step's own, so it reads as a whole step
+        const rows = model.setRows.map((row) => toStep({ ...model, ...row, vary: false }, unit));
+        const first = rows[0];
+        return first.kind === 'reps'
+            ? {
+                  ...first,
+                  sets: rows.map((row) => {
+                      const { reps, weight } = row as RepStep;
+                      return { reps, ...(weight === undefined ? {} : { weight }) };
+                  }),
+              }
+            : { ...first, sets: rows.map((row) => ({ seconds: (row as TimedStep).seconds })) };
+    }
+    const step = model;
     const eachSide = step.kind !== 'rest' && step.eachSide ? { eachSide: true as const } : {};
     return step.kind === 'reps'
         ? {

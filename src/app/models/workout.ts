@@ -20,6 +20,22 @@ export interface TimedStep {
      * time for each (BLD-10). Missing for not; never on a rest step.
      */
     eachSide?: true;
+    /**
+     * Vary each set (BLD-11), on a work step: each set's own time, one for each of its group's
+     * rounds, `seconds` being set 1's. Missing for every set alike; never on a rest step.
+     */
+    sets?: TimedSetAmount[];
+}
+
+/** One set's time on a timed step whose sets vary (BLD-11). */
+export interface TimedSetAmount {
+    seconds: number;
+}
+
+/** One set's reps and weight (in kg, missing for none) on a rep step whose sets vary (BLD-11). */
+export interface RepSetAmount {
+    reps: number;
+    weight?: number;
 }
 
 /**
@@ -41,6 +57,12 @@ export interface RepStep {
     exerciseId?: string;
     /** Done one side at a time, its reps and weight for each, e.g. 10 each leg (BLD-10). */
     eachSide?: true;
+    /**
+     * Vary each set (BLD-11): each set's own reps and weight, one for each of its group's
+     * rounds, e.g. 12 @ 40, 10 @ 45, 8 @ 50 kg. `reps` and `weight` are set 1's, so the step
+     * reads as a whole one. Missing for every set alike.
+     */
+    sets?: RepSetAmount[];
 }
 
 /** One step of a round. */
@@ -173,6 +195,60 @@ export function stepSeconds(step: Step): number {
     return step.kind === 'reps' ? 0 : step.seconds;
 }
 
+/**
+ * A step as it runs in one set of its group, from 0: with that set's own reps and weight, or
+ * time, where its sets vary, and without the list of them. As it is where they don't.
+ */
+export function stepForSet(step: Step, set: number): Step {
+    if (step.kind === 'rest' || step.sets === undefined) {
+        return step;
+    }
+    if (step.kind === 'reps') {
+        const { sets, weight: _weight, ...rest } = step;
+        const amount = sets[set] ?? sets[0];
+        return {
+            ...rest,
+            reps: amount.reps,
+            ...(amount.weight === undefined ? {} : { weight: amount.weight }),
+        };
+    }
+    const { sets, ...rest } = step;
+    return { ...rest, seconds: (sets[set] ?? sets[0]).seconds };
+}
+
+/**
+ * A rep step with one set's reps and weight changed: just that set's where its sets vary
+ * (and the step's own too, for set 1, which they are), or else the step's, which every set
+ * has. Its other fields stay as they are.
+ */
+export function withRepSet(step: RepStep, set: number, amount: RepSetAmount): RepStep {
+    const { weight: _weight, ...rest } = step;
+    const own = (to: RepStep): RepStep => ({
+        ...to,
+        reps: amount.reps,
+        ...(amount.weight === undefined ? {} : { weight: amount.weight }),
+    });
+    if (step.sets === undefined) {
+        return own(rest);
+    }
+    const sets = step.sets.map((existing, i) => (i === set ? amount : existing));
+    return set === 0 ? { ...own(rest), sets } : { ...step, sets };
+}
+
+/**
+ * A rep step with every set changed by `change`: each of its own where its sets vary, or the
+ * step's one, which every set has. E.g. a step up of the same weight on each set.
+ */
+export function withEachRepSet(
+    step: RepStep,
+    change: (amount: RepSetAmount) => RepSetAmount
+): RepStep {
+    const amounts = step.sets ?? [
+        { reps: step.reps, ...(step.weight === undefined ? {} : { weight: step.weight }) },
+    ];
+    return amounts.reduce<RepStep>((to, amount, set) => withRepSet(to, set, change(amount)), step);
+}
+
 /** Steps as a workout's blocks: one group, run once a round, as workouts were before groups. */
 export function asOneGroup(steps: Step[]): Block[] {
     return [{ kind: 'group', rounds: 1, restSeconds: 0, steps }];
@@ -184,6 +260,13 @@ export function asOneGroup(steps: Step[]): Block[] {
  */
 export function allSteps(workout: Pick<Workout, 'blocks'>): Step[] {
     return workout.blocks.flatMap((block) => (block.kind === 'group' ? block.steps : []));
+}
+
+/** How many rounds each step's group has (an exercise's sets), in the order of `allSteps()`. */
+export function stepRounds(workout: Pick<Workout, 'blocks'>): number[] {
+    return workout.blocks.flatMap((block) =>
+        block.kind === 'group' ? block.steps.map(() => block.rounds) : []
+    );
 }
 
 /**
@@ -292,8 +375,9 @@ export function runPlan(workout: Pick<RunningWorkout, 'blocks' | 'sides'>): RunP
                 push({ kind: 'rest', seconds: block.restSeconds, name: '' }, null, of);
             }
             block.steps.forEach((step, i) => {
+                const forSet = stepForSet(step, set);
                 if (!step.eachSide || step.kind === 'rest') {
-                    push(step, { step: first + i, set }, of);
+                    push(forSet, { step: first + i, set }, of);
                     return;
                 }
                 sides.forEach((side, s) => {
@@ -305,7 +389,7 @@ export function runPlan(workout: Pick<RunningWorkout, 'blocks' | 'sides'>): RunP
                             of
                         );
                     }
-                    push(step, { step: first + i, set, side }, of);
+                    push(forSet, { step: first + i, set, side }, of);
                 });
             });
         }

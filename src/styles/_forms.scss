@@ -34,3 +34,61 @@
     outline-offset: 2px;
     border-color: var(--accent);
 }
+
+// Rows that each open onto their wheels, one at a time, e.g. the sets of a step in setup whose
+// sets vary (BLD-11)
+.wheel-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.wheel-row {
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    background: var(--control);
+}
+
+.wheel-row__toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    width: 100%;
+    min-height: 44px;
+    padding: 0.5rem 0.9rem;
+    border: 0;
+    border-radius: inherit;
+    background: none;
+    color: var(--text);
+    font: inherit;
+    font-variant-numeric: tabular-nums;
+    text-align: left;
+    cursor: pointer;
+}
+
+.wheel-row__toggle:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.wheel-row__chevron {
+    flex-shrink: 0;
+    color: var(--text-muted);
+    transition: transform 0.2s ease;
+
+    [aria-expanded='true'] > & {
+        transform: rotate(180deg);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        transition: none;
+    }
+}
+
+.wheel-row__wheels {
+    padding: 0 0.9rem 0.75rem;
+}

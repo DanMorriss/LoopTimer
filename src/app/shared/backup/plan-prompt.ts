@@ -58,6 +58,24 @@ export function planPrompt(): string {
                     },
                     {
                         kind: 'group',
+                        rounds: 3,
+                        restSeconds: 60,
+                        steps: [
+                            {
+                                kind: 'reps',
+                                reps: 12,
+                                name: 'Leg press',
+                                weight: 40,
+                                sets: [
+                                    { reps: 12, weight: 40 },
+                                    { reps: 10, weight: 45 },
+                                    { reps: 8, weight: 50 },
+                                ],
+                            },
+                        ],
+                    },
+                    {
+                        kind: 'group',
                         rounds: 2,
                         restSeconds: 45,
                         steps: [{ kind: 'reps', reps: 10, name: 'Step-up', eachSide: true }],
@@ -114,6 +132,7 @@ A STEP is one of:
 - Reps: { "kind": "reps", "reps": 1–${MAX_REPS}, "name": "Bench press", "weight": 60 } — the app waits until I press Done. "weight" is optional, in kilograms (more than 0, up to ${MAX_WEIGHT_KG}); convert pounds (1 lb = 0.45359237 kg). Leave it out for bodyweight.
 - Timed: { "kind": "work", "seconds": 1–${MAX_STEP_SECONDS}, "name": "Plank" } — a countdown, e.g. a hold or an interval.
 - Rest: { "kind": "rest", "seconds": 1–${MAX_STEP_SECONDS}, "name": "" }
+For sets that differ (e.g. a pyramid "12, 10, 8 at 40, 45, 50 kg", or warm-up sets), add "sets" to the step: one { "reps": 12, "weight": 40 } (reps steps) or { "seconds": 30 } (timed steps) for each of its group's rounds, in order, exactly as many as "rounds", and with the step's own "reps" and "weight" (or "seconds") set to the first set's. Leave it out when every set is the same, and for a group of one round.
 For an exercise done one side at a time (e.g. "10 each leg", "30 seconds each side"), add "eachSide": true to its reps or timed step, with the reps or time for one side: the app runs both sides in each set. Leave it out otherwise, and never put it on a rest.
 Names are up to ${MAX_EXERCISE_NAME_LENGTH} characters. Write durations as whole seconds: 1:30 is 90.
 

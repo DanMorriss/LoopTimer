@@ -1,9 +1,9 @@
 import { afterNextRender, Component, computed, inject, Injector, signal } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { describeSets } from '../../../history/history-format';
-import { progressionSuggestions, ProgressionSuggestion } from '../../../models/progress';
+import { progressionSuggestions, ProgressionSuggestion, steppedUp } from '../../../models/progress';
 import { weightToKg } from '../../../models/weight';
-import { allSteps } from '../../../models/workout';
+import { allSteps, withEachRepSet } from '../../../models/workout';
 import { ActiveRunService } from '../../../shared/run/active-run.service';
 import { ExerciseStore } from '../../../shared/state/exercise-store.service';
 import { SettingsStore } from '../../../shared/state/settings-store.service';
@@ -98,10 +98,13 @@ export class SummaryStepUpsComponent {
                     unit,
                     this.exerciseName
                 );
-                const text =
-                    kind === 'weight'
-                        ? `${line.name}: try ${to} ${unit}, up from ${from} ${unit}`
-                        : `${line.name}: try ${to} reps, up from ${from}`;
+                const text = suggestion.eachSet
+                    ? kind === 'weight'
+                        ? `${line.name}: try ${to - from} ${unit} more on each set`
+                        : `${line.name}: try 1 more rep on each set`
+                    : kind === 'weight'
+                      ? `${line.name}: try ${to} ${unit}, up from ${from} ${unit}`
+                      : `${line.name}: try ${to} reps, up from ${from}`;
                 return { step, text, suggestion, applied: applied.has(step) };
             });
     });
@@ -125,11 +128,18 @@ export class SummaryStepUpsComponent {
             if (current?.kind !== 'reps') {
                 continue;
             }
+            // On each set of a step whose sets vary, so it keeps its shape (BLD-11)
             this.store.updateActiveStep(
                 suggestion.step,
-                suggestion.kind === 'weight'
-                    ? { ...current, weight: weightToKg(suggestion.to, this.weightUnit()) }
-                    : { ...current, reps: suggestion.to }
+                suggestion.eachSet
+                    ? withEachRepSet(current, (amount) =>
+                          suggestion.kind === 'weight'
+                              ? steppedUp(amount, this.weightUnit())
+                              : { ...amount, reps: amount.reps + 1 }
+                      )
+                    : suggestion.kind === 'weight'
+                      ? { ...current, weight: weightToKg(suggestion.to, this.weightUnit()) }
+                      : { ...current, reps: suggestion.to }
             );
             next.set(suggestion.step, suggestion);
         }

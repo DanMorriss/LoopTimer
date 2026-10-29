@@ -75,6 +75,11 @@
                     @let kind = step().value().kind;
                     @let time = amountText(step().value());
                     @let expanded = isExpanded(key);
+                    <!-- Each set its own reps and weight, or time, in a row of its own (BLD-11) -->
+                    @let rowsShown =
+                        (kind === 'reps' || kind === 'work') &&
+                        step().value().vary &&
+                        step().value().sets > 1;
                     <li
                         class="step"
                         [class.step--rest]="kind === 'rest'"
@@ -316,7 +321,9 @@
                                         }
                                     }
 
-                                    @if (kind === 'reps') {
+                                    @if (rowsShown) {
+                                        <!-- Each set's own, in the rows under Vary each set -->
+                                    } @else if (kind === 'reps') {
                                         <div class="picker-row">
                                             <div class="picker-field">
                                                 <span
@@ -420,7 +427,8 @@
                                                 </span>
                                                 <app-wheel-picker
                                                     [id]="'step-' + key + '-sets'"
-                                                    [formField]="step.sets"
+                                                    [value]="step().value().sets"
+                                                    (valueChange)="setSets(i, $event)"
                                                     [options]="setOptions"
                                                     [labelledBy]="
                                                         'step-' +
@@ -527,6 +535,216 @@
                                                     </div>
                                                 </div>
                                             </div>
+
+                                            <!-- Each set its own reps and weight, or time, e.g.
+                                                 a pyramid or warm-up sets (BLD-11) -->
+                                            <div class="picker-row">
+                                                <div class="picker-field">
+                                                    <span
+                                                        class="picker-field__label"
+                                                        [id]="'step-' + key + '-vary-label'"
+                                                    >
+                                                        Vary each set
+                                                    </span>
+                                                    <app-toggle-switch
+                                                        [id]="'step-' + key + '-vary'"
+                                                        [checked]="step().value().vary"
+                                                        (checkedChange)="setVary(i, $event)"
+                                                        [labelledBy]="
+                                                            'step-' +
+                                                            key +
+                                                            '-title step-' +
+                                                            key +
+                                                            '-vary-label'
+                                                        "
+                                                    />
+                                                </div>
+                                            </div>
+                                            @if (rowsShown) {
+                                                <!-- A row a set, opened onto its wheels one at a
+                                                     time; the rows slide as they open and shut -->
+                                                <ol
+                                                    class="wheel-rows"
+                                                    [attr.aria-labelledby]="
+                                                        'step-' + key + '-vary-label'
+                                                    "
+                                                >
+                                                    @for (
+                                                        row of step.setRows;
+                                                        track $index;
+                                                        let j = $index
+                                                    ) {
+                                                        @let rowId = 'step-' + key + '-set-' + j;
+                                                        @let rowOpen = isSetRowOpen(key, j);
+                                                        <li class="wheel-row">
+                                                            <span
+                                                                class="sr-only"
+                                                                [id]="rowId + '-name'"
+                                                                >Set {{ j + 1 }}</span
+                                                            >
+                                                            <button
+                                                                type="button"
+                                                                class="wheel-row__toggle"
+                                                                [id]="rowId"
+                                                                [attr.aria-expanded]="rowOpen"
+                                                                [attr.aria-controls]="
+                                                                    rowOpen
+                                                                        ? rowId + '-wheels'
+                                                                        : null
+                                                                "
+                                                                (click)="toggleSetRow(key, j)"
+                                                            >
+                                                                {{ setRowText(step().value(), j) }}
+                                                                <mat-icon
+                                                                    class="wheel-row__chevron"
+                                                                    aria-hidden="true"
+                                                                    >expand_more</mat-icon
+                                                                >
+                                                            </button>
+                                                            @if (rowOpen) {
+                                                                <div
+                                                                    class="picker-row wheel-row__wheels"
+                                                                    [id]="rowId + '-wheels'"
+                                                                    animate.enter="step__body--opening"
+                                                                >
+                                                                    @if (kind === 'reps') {
+                                                                        <div class="picker-field">
+                                                                            <span
+                                                                                class="picker-field__label"
+                                                                                [id]="
+                                                                                    rowId +
+                                                                                    '-reps-label'
+                                                                                "
+                                                                            >
+                                                                                Reps
+                                                                            </span>
+                                                                            <app-wheel-picker
+                                                                                [id]="
+                                                                                    rowId + '-reps'
+                                                                                "
+                                                                                [formField]="
+                                                                                    row.reps
+                                                                                "
+                                                                                [options]="
+                                                                                    repOptions
+                                                                                "
+                                                                                [labelledBy]="
+                                                                                    'step-' +
+                                                                                    key +
+                                                                                    '-title ' +
+                                                                                    rowId +
+                                                                                    '-name ' +
+                                                                                    rowId +
+                                                                                    '-reps-label'
+                                                                                "
+                                                                            />
+                                                                        </div>
+                                                                        <div class="picker-field">
+                                                                            <span
+                                                                                class="picker-field__label"
+                                                                                [id]="
+                                                                                    rowId +
+                                                                                    '-weight-label'
+                                                                                "
+                                                                            >
+                                                                                Weight ({{
+                                                                                    weightUnit
+                                                                                }})
+                                                                            </span>
+                                                                            <app-wheel-picker
+                                                                                [id]="
+                                                                                    rowId +
+                                                                                    '-weight'
+                                                                                "
+                                                                                [formField]="
+                                                                                    row.weight
+                                                                                "
+                                                                                [options]="
+                                                                                    weightOptions
+                                                                                "
+                                                                                [labelledBy]="
+                                                                                    'step-' +
+                                                                                    key +
+                                                                                    '-title ' +
+                                                                                    rowId +
+                                                                                    '-name ' +
+                                                                                    rowId +
+                                                                                    '-weight-label'
+                                                                                "
+                                                                            />
+                                                                        </div>
+                                                                    } @else {
+                                                                        <div class="picker-field">
+                                                                            <span
+                                                                                class="picker-field__label"
+                                                                                [id]="
+                                                                                    rowId +
+                                                                                    '-minutes-label'
+                                                                                "
+                                                                            >
+                                                                                Minutes
+                                                                            </span>
+                                                                            <app-wheel-picker
+                                                                                [id]="
+                                                                                    rowId +
+                                                                                    '-minutes'
+                                                                                "
+                                                                                [formField]="
+                                                                                    row.minutes
+                                                                                "
+                                                                                [options]="
+                                                                                    minuteOptions
+                                                                                "
+                                                                                [labelledBy]="
+                                                                                    'step-' +
+                                                                                    key +
+                                                                                    '-title ' +
+                                                                                    rowId +
+                                                                                    '-name ' +
+                                                                                    rowId +
+                                                                                    '-minutes-label'
+                                                                                "
+                                                                            />
+                                                                        </div>
+                                                                        <div class="picker-field">
+                                                                            <span
+                                                                                class="picker-field__label"
+                                                                                [id]="
+                                                                                    rowId +
+                                                                                    '-seconds-label'
+                                                                                "
+                                                                            >
+                                                                                Seconds
+                                                                            </span>
+                                                                            <app-wheel-picker
+                                                                                [id]="
+                                                                                    rowId +
+                                                                                    '-seconds'
+                                                                                "
+                                                                                [formField]="
+                                                                                    row.seconds
+                                                                                "
+                                                                                [options]="
+                                                                                    secondOptions
+                                                                                "
+                                                                                [labelledBy]="
+                                                                                    'step-' +
+                                                                                    key +
+                                                                                    '-title ' +
+                                                                                    rowId +
+                                                                                    '-name ' +
+                                                                                    rowId +
+                                                                                    '-seconds-label'
+                                                                                "
+                                                                            />
+                                                                        </div>
+                                                                    }
+                                                                </div>
+                                                            }
+                                                        </li>
+                                                    }
+                                                </ol>
+                                            }
                                         }
                                     }
                                 </div>
@@ -652,6 +870,9 @@
             }
 
             @if (noTimeError(); as error) {
+                <mat-error>{{ error.message }}</mat-error>
+            }
+            @if (noSetAmountError(); as error) {
                 <mat-error>{{ error.message }}</mat-error>
             }
             <div class="m-4 flex justify-center">

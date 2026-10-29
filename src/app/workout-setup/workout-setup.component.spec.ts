@@ -15,6 +15,7 @@ import {
     asOneGroup,
     MAX_HEADINGS,
     MAX_STEPS,
+    Step,
     UNTIL_STOPPED,
     Workout,
     WorkoutFields,
@@ -958,6 +959,202 @@ describe('WorkoutSetupComponent', () => {
             expect(wheel(0, 'sets')).toBe('3');
             expect(wheel(0, 'rest-minutes')).toBe('0');
             expect(wheel(0, 'rest-seconds')).toBe('45');
+        });
+    });
+
+    describe('vary each set (BLD-11)', () => {
+        /** Picks a number on one of a step's wheels, by the end of its id, e.g. "sets". */
+        function choose(step: number, wheel: string, value: string) {
+            el(`[id$="-${wheel}"] [data-value="${value}"]`, steps()[step]).click();
+            fixture.detectChanges();
+        }
+        const vary = (step: number) =>
+            el<HTMLElement>('[id$="-vary"] [role="switch"]', steps()[step]);
+        async function setVary(step: number) {
+            vary(step).click();
+            fixture.detectChanges();
+            await fixture.whenStable();
+        }
+        const rows = (step: number) =>
+            Array.from(steps()[step].querySelectorAll('.wheel-row__toggle')).map((row) =>
+                row.textContent!.replace('expand_more', '').trim()
+            );
+        async function openRow(step: number, set: number) {
+            (steps()[step].querySelectorAll('.wheel-row__toggle')[set] as HTMLElement).click();
+            fixture.detectChanges();
+            await fixture.whenStable();
+        }
+        const openRows = (step: number) =>
+            Array.from(steps()[step].querySelectorAll('.wheel-row__toggle')).map(
+                (row) => row.getAttribute('aria-expanded') === 'true'
+            );
+        /** 10 reps @ 40 kg, 3 sets. */
+        async function legPress() {
+            await setup();
+            await create({ empty: true });
+            typeName(0, 'Leg press');
+            chooseReps(0, '10');
+            choose(0, 'weight', '40');
+            choose(0, 'sets', '3');
+        }
+
+        it('offers the switch, off, on a timed or rep step of more than one set', async () => {
+            await setup();
+            await create();
+
+            expect(vary(0)).toBeNull();
+            choose(0, 'sets', '2');
+            expect(vary(0).getAttribute('aria-checked')).toBe('false');
+            // A rest step has no sets
+            expect(vary(1)).toBeNull();
+        });
+
+        it('starts a row a set at the step, and a set added copies the last', async () => {
+            await legPress();
+            await setVary(0);
+
+            expect(rows(0)).toEqual([
+                'Set 1 · 10 × 40 kg',
+                'Set 2 · 10 × 40 kg',
+                'Set 3 · 10 × 40 kg',
+            ]);
+            // The rows hold them now, so the step's own wheels go
+            expect(el('[id$="-0-reps"]', steps()[0])).toBeNull();
+
+            await openRow(0, 2);
+            choose(0, 'set-2-reps', '8');
+            choose(0, 'sets', '4');
+            expect(rows(0)[3]).toBe('Set 4 · 8 × 40 kg');
+            choose(0, 'sets', '2');
+            expect(rows(0)).toEqual(['Set 1 · 10 × 40 kg', 'Set 2 · 10 × 40 kg']);
+        });
+
+        it('opens one row at a time on its wheels', async () => {
+            await legPress();
+            await setVary(0);
+
+            await openRow(0, 0);
+            expect(openRows(0)).toEqual([true, false, false]);
+            await openRow(0, 1);
+            expect(openRows(0)).toEqual([false, true, false]);
+            await openRow(0, 1);
+            expect(openRows(0)).toEqual([false, false, false]);
+        });
+
+        it("saves each set's own, set 1's as the step's, and says them when collapsed", async () => {
+            await legPress();
+            await setVary(0);
+            await openRow(0, 0);
+            choose(0, 'set-0-reps', '12');
+            await openRow(0, 1);
+            choose(0, 'set-1-weight', '45');
+            await openRow(0, 2);
+            choose(0, 'set-2-reps', '8');
+            choose(0, 'set-2-weight', '50');
+            await press('Step 1, Leg press, 12, 10, 8 @ 40–50 kg · rest 01:00');
+
+            expect(el('.step__summary-time', steps()[0]).textContent!.trim()).toBe(
+                '12, 10, 8 @ 40–50 kg · rest 01:00'
+            );
+            await submit();
+            expect(allSteps(unlinkedWorkout(store.workouts()[0])!)).toEqual([
+                {
+                    ...reps(12, 'Leg press'),
+                    weight: 40,
+                    sets: [
+                        { reps: 12, weight: 40 },
+                        { reps: 10, weight: 45 },
+                        { reps: 8, weight: 50 },
+                    ],
+                },
+            ]);
+        });
+
+        it("goes back to set 1's for every set when turned off, or down to one set", async () => {
+            await legPress();
+            await setVary(0);
+            await openRow(0, 0);
+            choose(0, 'set-0-reps', '12');
+            await openRow(0, 1);
+            choose(0, 'set-1-reps', '8');
+
+            await setVary(0);
+            expect(rows(0)).toEqual([]);
+            expect(el('.step__body', steps()[0]).textContent).toContain('Reps');
+            await submit();
+            expect(allSteps(unlinkedWorkout(store.workouts()[0])!)).toEqual([
+                { ...reps(12, 'Leg press'), weight: 40 },
+            ]);
+        });
+
+        it('turns off at one set, leaving no sets of its own', async () => {
+            await legPress();
+            await setVary(0);
+            choose(0, 'sets', '1');
+
+            expect(vary(0)).toBeNull();
+            await submit();
+            expect(unlinkedWorkout(store.workouts()[0])!.blocks).toEqual(
+                eachAGroup([{ ...reps(10, 'Leg press'), weight: 40 } as Step], 1, 0)
+            );
+        });
+
+        it('varies the time of a timed step', async () => {
+            await setup();
+            await create();
+            chooseTime(0, 'seconds', '30');
+            choose(0, 'sets', '2');
+            await setVary(0);
+            await openRow(0, 1);
+            choose(0, 'set-1-seconds', '45');
+
+            expect(rows(0)).toEqual(['Set 1 · 00:30', 'Set 2 · 00:45']);
+            // Closed, so its wheels have settled before saving empties the form
+            await press('Step 1, timed, 00:30, 00:45 · rest 01:00');
+            await submit();
+            expect(allSteps(unlinkedWorkout(store.workouts()[0])!)[0]).toEqual({
+                ...work(30),
+                sets: [{ seconds: 30 }, { seconds: 45 }],
+            });
+        });
+
+        it("won't start with a set left at 0 reps", async () => {
+            await legPress();
+            await setVary(0);
+            await openRow(0, 1);
+            choose(0, 'set-1-reps', '0');
+
+            expect(fixture.nativeElement.textContent).toContain('Each set needs some reps or time');
+            expect(submitButton().disabled).toBe(true);
+        });
+
+        it('opens a saved workout with its sets as rows', async () => {
+            await setup({ editId: 'workout-1' });
+            store.addWorkout({
+                ...savedWorkout,
+                blocks: [
+                    {
+                        kind: 'group',
+                        rounds: 2,
+                        restSeconds: 45,
+                        steps: [
+                            {
+                                ...reps(12, 'Bench'),
+                                weight: 40,
+                                sets: [{ reps: 12, weight: 40 }, { reps: 8 }],
+                            } as Step,
+                        ],
+                    },
+                ],
+            });
+            await create();
+
+            expect(el('.step__summary-time', steps()[0]).textContent!.trim()).toBe(
+                '12, 8 @ 40 kg · rest 00:45'
+            );
+            await press('Step 1, Bench, 12, 8 @ 40 kg · rest 00:45');
+            expect(vary(0).getAttribute('aria-checked')).toBe('true');
+            expect(rows(0)).toEqual(['Set 1 · 12 × 40 kg', 'Set 2 · 8 reps']);
         });
     });
 

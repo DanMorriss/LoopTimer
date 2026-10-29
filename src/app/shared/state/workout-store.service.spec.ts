@@ -172,6 +172,38 @@ describe('WorkoutStore', () => {
             ]);
         });
 
+        it("keeps the sets of a step whose sets vary, and drops any that don't fit (BLD-11)", () => {
+            const pyramid = [{ reps: 12, weight: 40 }, { reps: 10, weight: 45 }, { reps: 8 }];
+            const group = (rounds: number, step: object) => ({
+                kind: 'group',
+                rounds,
+                restSeconds: 60,
+                steps: [step],
+            });
+            const blocks = [
+                group(3, { ...reps(12, 'Leg press'), weight: 40, sets: pyramid }),
+                group(2, { ...work(30, 'Plank'), sets: [{ seconds: 30 }, { seconds: 45 }] }),
+                // Too few for its rounds, a broken set, none on a rest, and one round
+                group(4, { ...reps(12, 'Leg press'), sets: pyramid }),
+                group(3, { ...reps(12, 'Leg press'), sets: [...pyramid.slice(0, 2), { reps: 0 }] }),
+                group(2, { ...rest(30), sets: [{ seconds: 30 }, { seconds: 45 }] }),
+                group(1, { ...reps(12, 'Leg press'), sets: [{ reps: 12 }] }),
+            ];
+            localStorage.setItem(
+                'workouts',
+                JSON.stringify([{ ...makeWorkout(), id: 'workout-1', updatedAt: 1, blocks }])
+            );
+
+            expect(allSteps(createStore().workouts()[0])).toEqual([
+                { ...reps(12, 'Leg press'), weight: 40, sets: pyramid },
+                { ...work(30, 'Plank'), sets: [{ seconds: 30 }, { seconds: 45 }] },
+                reps(12, 'Leg press'),
+                reps(12, 'Leg press'),
+                rest(30),
+                reps(12, 'Leg press'),
+            ]);
+        });
+
         it('drops a broken heading, keeping the workout', () => {
             const group = { kind: 'group', rounds: 1, restSeconds: 0, steps: [reps(5)] };
             const headings = ['', '  ', 42, 'x'.repeat(41), '  Warmup  '].map((text) => ({

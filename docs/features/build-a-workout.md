@@ -12,9 +12,10 @@
 - **BLD-8** As a user I want a workout with a time limit (e.g. 20 minutes) in which I do as many rounds as I can, so I can work to the clock rather than to a count.
 - **BLD-9** As a user I want to give an exercise a number of sets and a rest between them (e.g. 3 × 10 with 60 seconds rest), so a gym plan goes in as it's written.
 - **BLD-10** As a user I want an exercise done one side at a time (e.g. 10 reps each leg), so it runs the left, then the right, before the rest.
+- **BLD-11** As a user I want each set of an exercise to have its own reps and weight (e.g. 12 @ 40 kg, 10 @ 45 kg, 8 @ 50 kg), for a pyramid or warm-up sets.
 - **BLD-13** As a user I want to add headings to a workout (e.g. "Warmup", "Upper body"), so a long workout is easy to follow.
 
-Still to come, in [sets-and-supersets](sets-and-supersets.md): sets of their own reps and weight (BLD-11), and supersets (BLD-12).
+Still to come, in [sets-and-supersets](sets-and-supersets.md): supersets (BLD-12).
 
 ## Rules
 
@@ -55,6 +56,17 @@ Still to come, in [sets-and-supersets](sets-and-supersets.md): sets of their own
 - A timed or rep step has an **Each side** switch beside its Sets wheel, off to start with. A rest step has none, and a step changed to rest is saved without it.
 - On, each set runs **both sides**, the reps (or time) and weight being for each side: "10 reps each side" is 10 left and 10 right. Which side goes first, and the countdown between a timed step's two sides, are settings (see [settings](settings.md)); running it is in [run-a-workout](run-a-workout.md).
 - Collapsed, the step says so: "10 reps each side", "00:30 each side", or with sets, "2 × 10 each side · rest 00:45".
+
+### Vary each set (BLD-11)
+
+- A timed or rep step with more than one set has a **Vary each set** switch under Rest between sets, off to start with. Off, every set has the step's one Reps and Weight (or time).
+- On, the step's own Reps and Weight (or Minutes and Seconds) wheels give way to a **row a set** under the switch: "Set 1 · 12 × 40 kg", "Set 2 · 10 reps" (no weight), or "Set 1 · 00:30" for a timed step. Tapping a row opens its own Reps and Weight wheels (or Minutes and Seconds), closing any other; the rows below slide to make room, as steps do when they open and close.
+- Turning it on starts every row at the step's reps and weight (or time). Turning it off sets every set back to **set 1's**.
+- Raising Sets adds a row **copied from the last set**; lowering it removes rows from the end. Down to 1 set there's nothing to vary, so it turns off, the step keeping set 1's.
+- For a step done each side, a row is for both sides.
+- A row left at 0 reps (or 00:00) while others have some stops the workout starting, with "Each set needs some reps or time". A step whose rows are all empty is left out, as any empty step is.
+- Collapsed, the step lists its sets: "12, 10, 8 @ 40–50 kg · rest 01:00" (one weight if they share it, none if none has one), or "00:30, 00:45, 01:00 · rest 00:30".
+- Saved, set 1's reps and weight (or time) are the step's own, and each set's go in its `sets` (see [data](data.md)). Running it, a change mid-workout is for that set only (RUN-6, in [run-a-workout](run-a-workout.md)).
 
 ### Headings (BLD-13)
 
@@ -119,6 +131,8 @@ Still to come, in [sets-and-supersets](sets-and-supersets.md): sets of their own
 - Given one step, when I delete it, then there are none, the hint shows, and focus goes to "Add step".
 - Given + Heading, then a heading is added at the end with the cursor in its box; given " Warmup " typed in it and the workout saved, then it's saved as "Warmup" in its place, and the step after it is numbered as if it weren't there.
 - Given a heading left empty, when I save, then it's left out.
+- Given 3 sets of 10 @ 40 kg, when Vary each set is turned on, then there are 3 rows of 10 × 40 kg; when set 3 is changed to 8 and Sets goes to 4, then a 4th row copies the 3rd (8 × 40 kg).
+- Given rows of 12, 8 and 10, when Vary each set is turned off, then every set is 12, as set 1 was.
 - Given 10 headings, then + Heading is disabled, with the reason shown, and + Step still works.
 - Given a step named "Squats" at 0:45, when I delete it, then it goes at once and "Deleted Step 1, Squats, 00:45" offers Undo; when I press Undo, then it's back in its place.
 - Given steps A, B, C, when I move C up, then the order is A, C, B, and C keeps its name and time.
