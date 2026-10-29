@@ -98,24 +98,36 @@ export function muscleBalance(
 
 export interface SuggestedWorkout {
     workout: Workout;
-    /** Its main muscles, least worked first: the ones it's suggested for. */
+    /** Its main muscles, furthest short of their aims first: the ones it's suggested for. */
     muscles: MuscleGroup[];
 }
 
 /**
- * The saved workout that works the least used muscles: the lowest average of this week's
- * sets over the muscles it works, its main muscles counting twice what its supporting ones
- * do. On a tie, the one done longest ago (never done first), then the library's order.
- * Null when no workout has a step linked to an exercise.
+ * How far a muscle has got towards its aim this week: its sets over the low end of its aim,
+ * so 1 is just in range. Small muscles and training for fitness aim lower, so they get there
+ * sooner.
+ */
+export function shareOfAim(sets: number, muscle: MuscleGroup, goal: TrainingGoal): number {
+    return sets / weeklyAim(muscle, goal).low;
+}
+
+/**
+ * The saved workout that works the muscles furthest short of their aims: the lowest average
+ * of each muscle's share of its aim this week (`shareOfAim`) over the muscles it works, its
+ * main muscles counting twice what its supporting ones do. On a tie, the one done longest ago
+ * (never done first), then the library's order. Null when no workout has a step linked to an
+ * exercise.
  */
 export function suggestNextWorkout(
     workouts: readonly Workout[],
     counts: ReadonlyMap<MuscleGroup, number>,
     byId: (id: string) => Exercise | undefined,
     /** When each workout was last started, by its id; missing for never. */
-    lastDone: ReadonlyMap<string, number>
+    lastDone: ReadonlyMap<string, number>,
+    goal: TrainingGoal
 ): SuggestedWorkout | null {
     let best: { suggestion: SuggestedWorkout; load: number; lastDone: number } | null = null;
+    const share = (muscle: MuscleGroup) => shareOfAim(counts.get(muscle) ?? 0, muscle, goal);
 
     for (const workout of workouts) {
         const weights = muscleWeights(workout, byId);
@@ -126,7 +138,7 @@ export function suggestNextWorkout(
         let weighted = 0;
         let total = 0;
         for (const [muscle, weight] of weights) {
-            weighted += weight * (counts.get(muscle) ?? 0);
+            weighted += weight * share(muscle);
             total += weight;
         }
         const load = weighted / total;
@@ -135,11 +147,12 @@ export function suggestNextWorkout(
             continue;
         }
 
-        const sets = (muscle: MuscleGroup) => counts.get(muscle) ?? 0;
         const muscles = [...weights]
             .filter(([, weight]) => weight === 1)
             .map(([muscle]) => muscle)
-            .sort((a, b) => sets(a) - sets(b) || MUSCLE_LABELS[a].localeCompare(MUSCLE_LABELS[b]));
+            .sort(
+                (a, b) => share(a) - share(b) || MUSCLE_LABELS[a].localeCompare(MUSCLE_LABELS[b])
+            );
         best = { suggestion: { workout, muscles }, load, lastDone: done };
     }
 

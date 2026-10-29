@@ -1,11 +1,12 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 import { MUSCLE_LABELS } from '../../models/exercise';
-import { setsByMuscle, suggestNextWorkout } from '../../models/muscle-balance';
+import { setsByMuscle, suggestNextWorkout, weeklyAim } from '../../models/muscle-balance';
 import { Workout } from '../../models/workout';
 import { ActiveRunService } from '../../shared/run/active-run.service';
 import { ExerciseStore } from '../../shared/state/exercise-store.service';
 import { HistoryStore } from '../../shared/state/history-store.service';
+import { SettingsStore } from '../../shared/state/settings-store.service';
 import { WorkoutStore } from '../../shared/state/workout-store.service';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -16,8 +17,8 @@ const LIST = new Intl.ListFormat('en-GB');
 let nextId = 0;
 
 /**
- * A card with the saved workout for the muscles least worked in the last seven days (PRG-9),
- * on the history page and the workout summary. Nothing shows with no workout to suggest.
+ * A card with the saved workout for the muscles furthest short of their aims in the last seven
+ * days (PRG-9), on the history page and the workout summary. Nothing shows with no workout to suggest.
  */
 @Component({
     selector: 'app-suggested-workout',
@@ -49,6 +50,7 @@ export class SuggestedWorkoutComponent {
     private readonly history = inject(HistoryStore);
     private readonly exercises = inject(ExerciseStore);
     private readonly workouts = inject(WorkoutStore);
+    private readonly settings = inject(SettingsStore);
     private readonly run = inject(ActiveRunService);
     private readonly router = inject(Router);
     private readonly now = Date.now();
@@ -74,7 +76,8 @@ export class SuggestedWorkoutComponent {
             this.workouts.workouts(),
             this.weekSets(),
             (id) => this.exercises.byId(id),
-            lastDone
+            lastDone,
+            this.settings.trainingGoal()
         );
         if (!suggested) {
             return null;
@@ -82,7 +85,8 @@ export class SuggestedWorkoutComponent {
         const muscles = suggested.muscles.slice(0, 3).map((muscle) => {
             const sets = this.weekSets().get(muscle) ?? 0;
             const count = Number.isInteger(sets) ? `${sets}` : sets.toFixed(1);
-            return `${MUSCLE_LABELS[muscle]} (${count} ${sets === 1 ? 'set' : 'sets'})`;
+            const { low } = weeklyAim(muscle, this.settings.trainingGoal());
+            return `${MUSCLE_LABELS[muscle]} (${count} of ${low} sets)`;
         });
         return {
             workout: suggested.workout,

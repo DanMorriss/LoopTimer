@@ -304,7 +304,7 @@ describe('HistoryComponent', () => {
 
         expect(text('.suggestion__title')).toEqual(['Push']);
         expect(text('.suggestion__reason')).toEqual([
-            'For Chest (0 sets), the least worked this week.',
+            'For Chest (0 of 10 sets), the least worked this week.',
         ]);
 
         const router = TestBed.inject(Router);
