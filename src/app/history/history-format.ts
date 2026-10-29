@@ -1,7 +1,7 @@
 import { HistoryEntry, isTimedSet, LoggedSet, RepSet, TimedSet } from '../models/history';
 import { roundsScore, RoundsScore } from '../models/progress';
 import { WeightUnit, weightIn } from '../models/weight';
-import { PlacedHeading } from '../models/workout';
+import { PlacedHeading, PlacedSuperset } from '../models/workout';
 
 /** e.g. 75 → "1:15", 3725 → "1:02:05" */
 export function formatDuration(seconds: number): string {
@@ -95,19 +95,32 @@ export function describeSets(
 export interface SetsSection<Line extends SetsSummary = SetsSummary> {
     heading: string | null;
     lines: Line[];
+    /**
+     * Its lines as they show: each on its own, or with the others of its superset or giant set
+     * under its name (BLD-12).
+     */
+    items: SetsItem<Line>[];
+}
+
+/** One line on its own (`superset` null), or a superset's lines under its name. */
+export interface SetsItem<Line extends SetsSummary = SetsSummary> {
+    superset: 'Superset' | 'Giant set' | null;
+    lines: Line[];
 }
 
 /**
  * Lines of sets grouped under the headings the workout had when it ran (BLD-13), in order:
  * each under the last heading before its step. Lines before the first heading come first,
  * under none, and a heading with no lines under it isn't there. With no headings, it's one
- * section of every line.
+ * section of every line. Within each, the lines of a superset or giant set (BLD-12) go
+ * together under its name, where two or more of its steps have sets.
  */
 export function sectionsOf<Line extends SetsSummary>(
     lines: readonly Line[],
-    headings: readonly PlacedHeading[] = []
+    headings: readonly PlacedHeading[] = [],
+    supersets: readonly PlacedSuperset[] = []
 ): SetsSection<Line>[] {
-    const sections: (SetsSection<Line> & { under: number })[] = [];
+    const sections: (Omit<SetsSection<Line>, 'items'> & { under: number })[] = [];
     for (const line of lines) {
         // Which heading it's under, by its place, as two headings can say the same thing
         let under = -1;
@@ -123,7 +136,36 @@ export function sectionsOf<Line extends SetsSummary>(
             sections.push({ heading: headings[under]?.text ?? null, under, lines: [line] });
         }
     }
-    return sections.map(({ heading, lines }) => ({ heading, lines }));
+    return sections.map(({ heading, lines }) => ({
+        heading,
+        lines,
+        items: itemsOf(lines, supersets),
+    }));
+}
+
+function itemsOf<Line extends SetsSummary>(
+    lines: readonly Line[],
+    supersets: readonly PlacedSuperset[]
+): SetsItem<Line>[] {
+    const runs: { of: PlacedSuperset | undefined; lines: Line[] }[] = [];
+    for (const line of lines) {
+        const of = supersets.find(
+            ({ step, steps }) => step <= line.step && line.step < step + steps
+        );
+        const last = runs.at(-1);
+        if (of && last?.of === of) {
+            last.lines.push(line);
+        } else {
+            runs.push({ of, lines: [line] });
+        }
+    }
+    // A superset with sets on only one of its steps reads as that step alone
+    return runs.map(
+        ({ of, lines }): SetsItem<Line> =>
+            of && lines.length > 1
+                ? { superset: of.kind === 'giant set' ? 'Giant set' : 'Superset', lines }
+                : { superset: null, lines }
+    );
 }
 
 /**

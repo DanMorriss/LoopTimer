@@ -167,6 +167,36 @@ describe('HistoryComponent', () => {
         expect(fixture.nativeElement.querySelectorAll('h4.entry__section')).toHaveLength(2);
     });
 
+    it('puts the lines of a superset together under its name, as it was when it ran (BLD-12)', () => {
+        create(
+            makeEntry({
+                sets: [
+                    { round: 0, step: 0, name: 'Squats', reps: 10 },
+                    { round: 0, step: 1, name: 'Bench', reps: 8 },
+                    { round: 0, step: 2, name: 'Row', reps: 8 },
+                    { round: 1, step: 1, name: 'Bench', reps: 8 },
+                    { round: 1, step: 2, name: 'Row', reps: 8 },
+                ],
+                supersets: [{ kind: 'superset', step: 1, steps: 3 }],
+            })
+        );
+
+        // Squats on its own, then the superset's name with its lines in a list under it
+        const items = Array.from(
+            fixture.nativeElement.querySelectorAll('.entry__sets > li'),
+            (el: Element) =>
+                el.querySelector('.entry__superset-name')?.textContent ??
+                el.querySelector('[aria-hidden]')!.textContent
+        );
+        expect(items).toEqual(['Squats: 10 reps', 'Superset']);
+        expect(
+            Array.from(
+                fixture.nativeElement.querySelectorAll('.entry__superset-lines li'),
+                (el: Element) => el.querySelector('[aria-hidden]')!.textContent
+            )
+        ).toEqual(['Bench: 2 × 8', 'Row: 2 × 8']);
+    });
+
     it('names sets of your own exercise as it is now called, and built-in ones as they ran', () => {
         const exercises = TestBed.inject(ExerciseStore);
         const mine = exercises.addOwn('Sled push', 'reps');
@@ -710,6 +740,68 @@ describe('HistoryComponent', () => {
                     ['Push', 'Bench'],
                     ['Push', 'Row'],
                     ['Push', 'Curl'],
+                ]);
+            });
+        });
+
+        describe('with supersets (BLD-12)', () => {
+            const lines = describeSets(
+                [
+                    set(0, 10, 60, 0, 'Bench'),
+                    set(0, 8, 60, 1, 'Row'),
+                    set(0, 5, 20, 2, 'Curl'),
+                    set(0, 5, 20, 3, 'Dip'),
+                ],
+                'kg'
+            );
+            const items = (sections: ReturnType<typeof sectionsOf>) =>
+                sections.flatMap(({ items }) =>
+                    items.map(({ superset, lines }) => [superset, ...lines.map((l) => l.name)])
+                );
+
+            it('puts the lines of each superset or giant set together under its name', () => {
+                expect(
+                    items(
+                        sectionsOf(
+                            lines,
+                            [],
+                            [
+                                { kind: 'superset', step: 0, steps: 2 },
+                                { kind: 'giant set', step: 2, steps: 3 },
+                            ]
+                        )
+                    )
+                ).toEqual([
+                    ['Superset', 'Bench', 'Row'],
+                    ['Giant set', 'Curl', 'Dip'],
+                ]);
+            });
+
+            it('leaves each line on its own with no supersets, or one with sets on one step', () => {
+                expect(items(sectionsOf(lines))).toEqual([
+                    [null, 'Bench'],
+                    [null, 'Row'],
+                    [null, 'Curl'],
+                    [null, 'Dip'],
+                ]);
+                // Stopped after its first step's set
+                expect(
+                    items(
+                        sectionsOf(lines.slice(0, 1), [], [{ kind: 'superset', step: 0, steps: 2 }])
+                    )
+                ).toEqual([[null, 'Bench']]);
+            });
+
+            it('keeps a superset under its heading', () => {
+                expect(
+                    sectionsOf(
+                        lines,
+                        [{ text: 'Arms', step: 2 }],
+                        [{ kind: 'superset', step: 2, steps: 2 }]
+                    ).map(({ heading, items }) => [heading, items.length])
+                ).toEqual([
+                    [null, 2],
+                    ['Arms', 1],
                 ]);
             });
         });

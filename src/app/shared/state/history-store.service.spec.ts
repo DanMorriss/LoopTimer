@@ -368,6 +368,35 @@ describe('HistoryStore', () => {
         expect('headings' in before).toBe(false);
     });
 
+    it("loads the workout's supersets, dropping broken ones but keeping the workout", async () => {
+        const superset = { kind: 'superset' as const, step: 0, steps: 2 };
+        localStorage.setItem(
+            'history',
+            JSON.stringify([
+                makeEntry({
+                    startedAt: 3_000,
+                    supersets: [
+                        superset,
+                        { kind: 'giant set', step: 2, steps: 3 },
+                        { kind: 'circuit', step: 5, steps: 2 },
+                        { kind: 'superset', step: 7, steps: 0 },
+                    ] as never,
+                }),
+                { ...makeEntry({ startedAt: 2_000 }), supersets: [{ kind: 'superset' }] },
+                makeEntry({ startedAt: 1_000 }),
+            ])
+        );
+
+        const [withSupersets, allBroken, before] = (await createStore()).entries();
+
+        expect(withSupersets.supersets).toEqual([
+            superset,
+            { kind: 'giant set', step: 2, steps: 3 },
+        ]);
+        expect(allBroken).toEqual(makeEntry({ startedAt: 2_000 }));
+        expect('supersets' in before).toBe(false);
+    });
+
     it('loads timed sets, dropping ones that are also reps or weighed', async () => {
         const held = { round: 0, step: 0, name: 'Plank', seconds: 45, exerciseId: 'plank' };
         localStorage.setItem(

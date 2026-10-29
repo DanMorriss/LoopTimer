@@ -1034,11 +1034,50 @@ describe('WorkoutComponent', () => {
             fixture.destroy();
         });
 
-        it('logs no headings for a workout without them', () => {
+        it("logs the workout's supersets, so its sets can be grouped under them (BLD-12)", () => {
+            start({
+                ...makeWorkout({ repeats: 1 }),
+                blocks: [
+                    {
+                        kind: 'group',
+                        rounds: 1,
+                        restSeconds: 0,
+                        steps: [{ ...work(1, 'Bike'), exerciseId: 'b' }],
+                    },
+                    {
+                        kind: 'group',
+                        rounds: 1,
+                        restSeconds: 0,
+                        steps: [
+                            { ...work(1, 'Plank'), exerciseId: 'p' },
+                            { ...work(1, 'Hollow hold'), exerciseId: 'h' },
+                        ],
+                    },
+                ],
+            });
+
+            advance(3000);
+
+            expect(entries()[0].supersets).toEqual([{ kind: 'superset', step: 1, steps: 2 }]);
+            // And the summary groups them the same way
+            const summary = Array.from(
+                fixture.nativeElement.querySelectorAll(
+                    '.summary__lines > li, .summary__superset-lines li'
+                ),
+                (el: Element) =>
+                    el.querySelector('.summary__superset-name')?.textContent ??
+                    el.querySelector('[aria-hidden]')!.textContent
+            ).map((line) => line!.replace(/\s+/g, ' ').trim());
+            expect(summary).toEqual(['Bike: 0:01', 'Superset', 'Plank: 0:01', 'Hollow hold: 0:01']);
+            fixture.destroy();
+        });
+
+        it('logs no headings or supersets for a workout without them', () => {
             start(makeWorkout({ workSeconds: 1, restSeconds: 0, repeats: 1 }));
             advance(1000);
 
             expect('headings' in entries()[0]).toBe(false);
+            expect('supersets' in entries()[0]).toBe(false);
             fixture.destroy();
         });
 
