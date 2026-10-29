@@ -50,17 +50,19 @@ This adds what that needs: sets and rest on an exercise, exercises done one side
 ### Each side (BLD-10)
 
 - An **Each side** switch on Reps and Timed steps, off to start with.
-- Each set runs the **left side, then the right**, then the rest between sets. The face says which, e.g. "Low step down" with "Left side" under it.
-- On a rep step, the right side waits for Done like any rep step, so nothing extra runs between sides.
-- On a timed step (e.g. side plank), a **5 second "Switch sides" countdown** runs between the two, in the rest colour. It isn't a set and isn't logged.
+- Each set runs **both sides, the first side first**, then the rest between sets. The face says which, e.g. "Low step down" with "Left side" under it.
+- **Which side goes first** is a setting: **Start with**, Left or Right, Left to begin with. It applies to every exercise done each side.
+- On a rep step, the second side waits for Done like any rep step, so nothing extra runs between sides.
+- On a timed step (e.g. side plank), a **"Switch sides" countdown** runs between the two, in the rest colour. It isn't a set and isn't logged. How long it is, is a setting: **Switch sides**, Off or 1 to 30 seconds, **5 seconds** to begin with. Off goes straight from one side to the other.
+- Both settings are in Settings under a new **Workouts** heading, are kept per device as other settings are, and go in backups (see [settings](settings.md) once built).
 - The reps (or time) and weight are for **each side**: "2 × 10 each side" is 10 left and 10 right per set.
 - A left and right together count as **one set** wherever sets are counted (e.g. "2 × 10 each side", the muscle bars' sets a week, PRG-8), though each side is logged on its own (see History).
 
 ### Vary each set (BLD-11)
 
-- A **Vary each set** switch on a rep step with more than 1 set. Off, every set has the step's one Reps and Weight, as now.
-- On, the sets are listed as rows under it: "Set 1 · 12 × 40 kg", "Set 2 · 10 × 45 kg"… Tapping a row opens its **Reps and Weight wheels**, one row at a time, closing the others; the rows slide as steps do when they open and close.
-- Turning it on starts every row at the step's Reps and Weight. Turning it off sets every set back to set 1's.
+- A **Vary each set** switch on a rep or timed step with more than 1 set. Off, every set has the step's one Reps and Weight (or time), as now.
+- On, the sets are listed as rows under it: "Set 1 · 12 × 40 kg", "Set 2 · 10 × 45 kg"… for reps, or "Set 1 · 0:30", "Set 2 · 0:45"… for a timed step. Tapping a row opens its **Reps and Weight wheels**, or its **Minutes and Seconds wheels**, one row at a time, closing the others; the rows slide as steps do when they open and close.
+- Turning it on starts every row at the step's Reps and Weight (or time). Turning it off sets every set back to set 1's.
 - Raising Sets adds a row **copied from the last set**; lowering it removes rows from the end.
 - In a superset, the switch is **Vary each round**, with a row per round.
 - For an exercise done each side, a row is for both sides.
@@ -115,8 +117,8 @@ This adds what that needs: sets and rest on an exercise, exercises done one side
 - Each side is **logged as its own set**, with which side it was, so a weaker side shows up in its reps.
 - The history's lines, and the summary's:
     - "Low step down: 2 × 10 each side", or "Low step down: left 10, 8 · right 10, 10" if the sides differ.
-    - Varied sets read as they do now when sets differ: "Single leg press: 12 @ 40, 10 @ 45, 8 @ 50 kg".
-    - Headings don't show in the history.
+    - Varied sets read as they do now when sets differ: "Single leg press: 12 @ 40, 10 @ 45, 8 @ 50 kg", or "Plank: 0:30, 0:45, 1:00".
+- **Headings in the history:** an entry's lines are grouped under the workout's headings as they were when it ran, in order, e.g. "Warmup", then "Exercise bike: 5:00"; "Knee rehabilitation", then its three lines. Lines before the first heading come first, with none over them. A heading with no sets under it (e.g. a section stopped before) isn't shown. Renaming or deleting a heading later doesn't change past entries. The workout summary's sets are grouped the same way. Screen readers hear them as headings within the entry.
 - **"Use these settings next time?"** (RUN-7): Yes puts each set's reps and weight back on the step as done. Sets that all came out the same stay one Reps and Weight; sets that differ turn on Vary each set, so a pyramid worked out mid-workout is kept.
 - **Last time** (PRG-1) on a rep step: for a step with Vary each set on, the same set last time, e.g. "Last time: 10 @ 45 kg" on set 2; otherwise as now.
 - **Next time** (PRG-10): when every set (both sides) got its reps. For varied sets, the step up is the same for every set, so the shape stays, e.g. "Single leg press: try 2.5 kg more on each set", and Apply adds it to every set.
@@ -124,15 +126,15 @@ This adds what that needs: sets and rest on an exercise, exercises done one side
 
 ### Limits
 
-| What                          | Limit                        |
-| ----------------------------- | ---------------------------- |
-| Sets on an exercise           | 1–30                         |
-| Rounds of a superset          | 1–30                         |
-| Rest between sets or rounds   | 0:00–99:59                   |
-| Steps in a workout            | 20, as now                   |
-| Steps in a superset           | 2 up to the 20               |
-| Headings                      | 10, up to 40 characters each |
-| Switch sides, on a timed step | 5 seconds                    |
+| What                          | Limit                                  |
+| ----------------------------- | -------------------------------------- |
+| Sets on an exercise           | 1–30                                   |
+| Rounds of a superset          | 1–30                                   |
+| Rest between sets or rounds   | 0:00–99:59                             |
+| Steps in a workout            | 20, as now                             |
+| Steps in a superset           | 2 up to the 20                         |
+| Headings                      | 10, up to 40 characters each           |
+| Switch sides, on a timed step | Off, or 1–30 seconds (5 to begin with) |
 
 ## Acceptance criteria
 
@@ -141,6 +143,9 @@ This adds what that needs: sets and rest on an exercise, exercises done one side
 - Given an exercise of 3 sets as the last thing in a workout, then the workout finishes on the last set's Done.
 - Given low step down at 10 reps, each side, 2 sets and 0:45 rest, then it runs Left side, Right side, rest 0:45, Left side, Right side; the history says "Low step down: 2 × 10 each side", and the muscle bars count 2 sets.
 - Given a 0:30 side plank done each side, then a 0:05 "Switch sides" runs between the left and right, and neither it nor any rest is logged.
+- Given Start with set to Right, then low step down runs Right side, then Left side; given Switch sides set to Off, then a side plank goes straight from one side to the other.
+- Given a plank of 3 sets with Vary each set on at 0:30, 0:45 and 1:00, then each set counts down its own time, and the history says "Plank: 0:30, 0:45, 1:00".
+- Given a workout with headings "Warmup" and "Knee rehabilitation", when it's done, then its history entry shows the bike's line under "Warmup" and the three knee lines under "Knee rehabilitation"; when the heading is renamed afterwards, then the entry still says "Knee rehabilitation".
 - Given 3 sets of 10 @ 40 kg, when Vary each set is turned on, then there are 3 rows of 10 × 40 kg; when Sets goes to 4, then a 4th row copies the 3rd.
 - Given sets of 12 @ 40, 10 @ 45 and 8 @ 50 kg, when I change set 2 to 47.5 kg mid-workout, then only set 2 changes, here and in the saved workout.
 - Given 3 equal sets of 10 @ 40 kg, when I change set 2 to 45 kg mid-workout, then sets 2 and 3 run at 45 kg and the saved workout has 45 kg.
@@ -213,9 +218,11 @@ The new shape, as `data-version` 5 and backup file version 8:
 - `blocks` takes the place of `steps`. A **group** with one step is an exercise (its `rounds` are its sets); with two or more, a superset. A group's `steps` are steps as now, with `exerciseId` and the rest.
 - `restSeconds`: between rounds, never after the last; 0 for none.
 - `eachSide` (Reps and Timed steps, optional): `true` for each side; missing for not.
-- `sets` (rep steps in a group of more than one round, optional): one `{ reps, weight? }` per round, for Vary each set. Its length is the group's `rounds`; one that isn't is dropped when loading, leaving the step's own reps and weight. The step's `reps` and `weight` are set 1's, so a step always reads as a whole one.
+- `sets` (rep and timed steps in a group of more than one round, optional): one `{ reps, weight? }` (rep steps) or `{ seconds }` (timed steps) per round, for Vary each set. Its length is the group's `rounds`; one that isn't is dropped when loading, leaving the step's own reps and weight or time. The step's `reps` and `weight`, or `seconds`, are set 1's, so a step always reads as a whole one.
 - **4 → 5**: each workout's `steps` become one group of `rounds` 1 and `restSeconds` 0, with no headings, and its `repeats` and `timeLimitSeconds` stay as they are. So it runs exactly as before.
 - A **logged set** gets two optional fields: `set`, which set or round of its group it was, from 0 (missing means 0), and `side`, `"left"` or `"right"` (missing for neither). `round` stays the round of the whole workout, and `step` becomes the step's place among all the workout's steps, counting each step once from the start, across groups. A workout from before this is one group, so its old sets' numbers already mean the same: **the history needs no conversion.**
+- A **history entry** gets `headings` (optional): the workout's headings when it ran, as `{ "text": "Knee rehabilitation", "step": 1 }`, where `step` is the number of the first step after it (counted as a set's `step` is). Missing for none, as in every entry from before this.
+- **Settings** get `eachSideFirst` (`"left"` or `"right"`, `"left"` when missing) and `switchSidesSeconds` (0 for Off, up to 30; 5 when missing).
 - **Version 7 and older backup files** have workouts with `steps`, and are converted as saved data is. A file from version 8 is turned down by an older copy of the app, as any newer file is.
 - **Sync**: a workout written in version 5 is left alone by a copy of the app that's older, until it's updated (as now for any newer row).
 - **The AI prompt** (SYN-6) writes the new shape: sets, rests, each side, varied sets, supersets and headings, straight from the plan, in place of today's advice on turning sets into rounds or steps.
@@ -226,8 +233,8 @@ Each a PR of its own, in this order, each updating the AI prompt and the feature
 
 1. **The new shape, with nothing to see:** `blocks`, the 4 → 5 conversion, backup version 8, the new fields on logged sets, and one place that turns a workout into its run order. Every workout is one group, so the app works exactly as it did.
 2. **Sets and rest between sets (BLD-9)**, in Create and the run, with the round line, the history, the summary, Last time and Next time.
-3. **Each side (BLD-10).**
-4. **Headings (BLD-13)**, and the section line.
+3. **Each side (BLD-10)**, with its two settings.
+4. **Headings (BLD-13)**, the section line, and headings in the history and summary.
 5. **Vary each set (BLD-11)**, and the mid-workout and "Use next time" rules for it.
 6. **Supersets (BLD-12).**
 
@@ -235,9 +242,6 @@ After step 2, the plan at the top can be built with sets (each leg as 20 reps fo
 
 ## Open questions
 
-- Should Switch sides be a setting (e.g. 0, 5 or 10 seconds), and should the user pick which side goes first?
-- Should Vary each set work for timed steps too (e.g. a plank of 0:30, 0:45, 1:00)? For now it's reps and weight only.
-- Should the history group a workout's lines under its headings?
 - PRG-5's suggested next weight with Vary each set on: suggest for set 1 and move the rest by the same, or one per set?
 - "Superset" for three or more exercises: the gym word for that is often a giant set or circuit. "Superset" is kept for all of them, for one word to learn.
 
