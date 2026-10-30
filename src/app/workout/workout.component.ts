@@ -324,6 +324,18 @@ export class WorkoutComponent {
             : null;
     });
 
+    /** In the rest that ends a set: done with it, so its last isn't "Last one!" any more. */
+    private readonly restingAfterSet = computed(() => {
+        const state = this.state();
+        const workout = this.running();
+        if (!state || !workout || state.phase !== 'rest') {
+            return false;
+        }
+        const { places, sets } = runPlan(workout);
+        const i = state.stepIndex;
+        return places[i] === null && sets[i + 1] !== sets[i];
+    });
+
     /**
      * Whether to say which step it is (the step strip, and to screen readers). Only for rounds
      * with more than one work or rep step: a plain work-and-rest workout doesn't need
@@ -491,7 +503,9 @@ export class WorkoutComponent {
                 timeNearlyUp: this.timeNearlyUp(),
                 totalRounds: this.totalRounds(),
                 totalLeft: this.totalLeft(),
-                last: set ? set.set === set.of - 1 : this.repeats() === 1,
+                last: set
+                    ? set.set === set.of - 1 && !this.restingAfterSet()
+                    : this.repeats() === 1,
                 dots: set ? this.setDots(set) : this.totalRounds() > 1 ? this.roundDots() : [],
                 strip: this.stepStrip(),
             },
@@ -507,14 +521,10 @@ export class WorkoutComponent {
         if (state.stepIndex === 0) {
             return state.round > 0;
         }
-        // The first step of a set after the first, rather than the rest before it
-        const { places, sets } = runPlan(workout);
+        // The first step of a set after the first, after the rest that ends the one before
+        const { sets } = runPlan(workout);
         const i = state.stepIndex;
-        return (
-            places[i] !== null &&
-            sets[i].set > 0 &&
-            (places[i - 1] === null || sets[i - 1] !== sets[i])
-        );
+        return sets[i].set > 0 && sets[i - 1] !== sets[i];
     });
 
     /** Where the set in progress begins in the round, which tells one set from the next. */
@@ -574,7 +584,7 @@ export class WorkoutComponent {
     /**
      * The round's steps as a strip in their kinds' colours: done, the one in progress, and
      * those to go. Only where there's more than one work or rep step, and not once finished.
-     * In a workout with sets, a superset's round (BLD-12), with the rest before it.
+     * In a workout with sets, a superset's round (BLD-12), with the rest after it.
      */
     stepStrip = computed((): StripStep[] => {
         const state = this.state();

@@ -45,7 +45,7 @@
 
 - A timed or rep step has **Sets**, 1 to 30 on a wheel, under its other wheels. A new step has 1. A rest step has none: it's just a time.
 - With more than one set, **Rest between sets (mm:ss)** shows under it: a minutes and a seconds wheel under the one label (each named to screen readers), 00:00 to 99:59, at **01:00** the first time Sets goes above 1 (and as saved after that).
-- The rest comes **between sets, never after the last**: 3 sets is set, rest, set, rest, set, then straight on to the next step. Nothing is added between one step and the next; a rest there is a rest step of its own.
+- The rest comes **after each set, the last included**: 3 sets is set, rest, set, rest, set, rest, then the next step, so there's time to get to it. Two exceptions: at the end of the workout there's no rest (it's over), and a rest step straight after takes its place rather than adding to it. One set has no rest.
 - Collapsed, a step with sets says so as the history does, with its rest: "3 × 10 @ 60 kg · rest 01:00", "3 × 00:45 · rest 00:30", or "3 × 10" with no rest.
 - The tip by the Steps heading says "Each round runs these in order, each for its sets. Steps left at 00:00 or 0 reps are skipped."
 - Saved, each step is a group of its own, its sets the group's `rounds` (see [data](data.md)), and a superset is a group of its steps (below). A workout of steps of one set runs as before: each straight after the last.
