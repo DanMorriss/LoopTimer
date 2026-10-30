@@ -1,6 +1,7 @@
 import { inject, provideAppInitializer } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideRouter, withNavigationErrorHandler } from '@angular/router';
+import { sendSignInToAccount } from './app/account/sign-in-landing';
 import { AppComponent } from './app/app.component';
 import { routes } from './app/app.routes';
 import { reloadOnStaleCode } from './app/nav/stale-code';
@@ -15,6 +16,8 @@ bootstrapApplication(AppComponent, {
         // A tab on an older build loads the page afresh when the page's code has gone
         provideRouter(routes, withNavigationErrorHandler(reloadOnStaleCode)),
         provideAppInitializer(() => {
+            // A sign-in coming back to the wrong page goes on to the Account tab, which reads it
+            sendSignInToAccount(location, history);
             // Start listening for the first tap straight away, so sound is unlocked by the
             // time a workout starts (browsers only allow sound after an interaction)
             inject(AlarmService);

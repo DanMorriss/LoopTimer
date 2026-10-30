@@ -1,7 +1,7 @@
 import { DOCUMENT, inject, Service, signal } from '@angular/core';
 import type { Session } from '@supabase/supabase-js';
 import { SyncStarter } from '../sync/sync-starter.service';
-import { AccountClient, ACCOUNT_CLIENT, SignInProvider } from './account-client';
+import { AccountClient, ACCOUNT_CLIENT, SIGN_IN_PATH, SignInProvider } from './account-client';
 
 export type AccountState =
     | { status: 'loading' }
@@ -10,8 +10,7 @@ export type AccountState =
 
 export type SendResult = 'sent' | 'too-many' | 'failed';
 
-/** Where a sign-in link brings you back to. */
-export const SIGN_IN_PATH = '/account';
+export { SIGN_IN_PATH };
 
 /**
  * Signing in to an account (SYN-3), by an email link or the code in the same email, or with

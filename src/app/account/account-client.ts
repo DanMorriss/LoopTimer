@@ -9,6 +9,9 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 export const SUPABASE_URL = 'https://cpgacyzlfyskifzhkotu.supabase.co';
 export const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_YnL-skDr7iSBsqSqaIbWBg_vE-kGXQa';
 
+/** Where signing in (an email link, or Google) brings you back to: the Account tab. */
+export const SIGN_IN_PATH = '/account';
+
 /** Who else can sign you in (SYN-7). */
 export type SignInProvider = 'google' | 'apple';
 
