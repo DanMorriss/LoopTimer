@@ -1974,6 +1974,81 @@ describe('WorkoutSetupComponent', () => {
         });
     });
 
+    describe('adding an exercise from its page (EXR-12)', () => {
+        const backSquat = {
+            kind: 'reps' as const,
+            reps: 10,
+            name: 'Back squat',
+            exerciseId: 'builtin:back-squat',
+        };
+
+        it('starts a new workout with it in ?add: 3 sets of 10, with 1:00 rest', async () => {
+            await setup({ add: 'builtin:back-squat' });
+            await create({ empty: true });
+
+            expect(shown().steps).toEqual([{ kind: 'Reps', name: 'Back squat', time: '10 reps' }]);
+            await submit();
+            expect(store.workouts()[0].blocks).toEqual([
+                { kind: 'group', rounds: 3, restSeconds: 60, steps: [backSquat] },
+            ]);
+        });
+
+        it('adds a timed exercise as 3 sets of 0:30', async () => {
+            await setup({ add: 'builtin:plank' });
+            await create({ empty: true });
+            await submit();
+
+            expect(store.workouts()[0].blocks).toEqual([
+                {
+                    kind: 'group',
+                    rounds: 3,
+                    restSeconds: 60,
+                    steps: [
+                        { kind: 'work', seconds: 30, name: 'Plank', exerciseId: 'builtin:plank' },
+                    ],
+                },
+            ]);
+        });
+
+        it('adds it at the end of the workout in ?editId, the only step open', async () => {
+            await setup({ editId: 'workout-1', add: 'builtin:back-squat' });
+            store.addWorkout(savedWorkout);
+            await create({ empty: true });
+
+            expect(shown().steps.map((step) => step.name)).toEqual(['Squats', '', 'Back squat']);
+            expect(steps().map((step) => isCollapsed(step))).toEqual([true, true, false]);
+            expect(document.activeElement?.id).toMatch(/^step-\d+-toggle$/);
+            expect(steps()[2].contains(document.activeElement)).toBe(true);
+            expect(fixture.nativeElement.textContent).toContain('Added Back squat, step 3');
+        });
+
+        it('takes ?add off the address, leaving the form as it is', async () => {
+            await setup({ editId: 'workout-1', add: 'builtin:back-squat' });
+            store.addWorkout(savedWorkout);
+            await create({ empty: true });
+
+            expect(navigate).toHaveBeenCalledWith(
+                [],
+                expect.objectContaining({ queryParams: { add: null }, replaceUrl: true })
+            );
+            queryParamMap.next(convertToParamMap({ editId: 'workout-1' }));
+            fixture.detectChanges();
+            expect(shown().steps.map((step) => step.name)).toEqual(['Squats', '', 'Back squat']);
+        });
+
+        it("doesn't add to a workout that's already full", async () => {
+            await setup({ editId: 'workout-1', add: 'builtin:back-squat' });
+            store.addWorkout({
+                ...savedWorkout,
+                blocks: eachAGroup(Array.from({ length: MAX_STEPS }, () => reps(10, 'Push-ups'))),
+            });
+            await create({ empty: true });
+
+            expect(steps().length).toBe(MAX_STEPS);
+            expect(fixture.nativeElement.textContent).not.toContain('Back squat');
+        });
+    });
+
     describe('editing a workout', () => {
         it('fills the form from the workout in ?editId', async () => {
             await setup({ editId: 'workout-1' });

@@ -245,6 +245,81 @@ describe('ExercisePageComponent', () => {
         });
     });
 
+    describe('adding it to a workout (EXR-12)', () => {
+        const choices = () =>
+            Array.from(el().querySelectorAll<HTMLButtonElement>('.add__choice')).map((button) =>
+                [
+                    button.querySelector('.add__name')!.textContent!.trim(),
+                    button.querySelector('.add__steps')?.textContent!.trim(),
+                    button.disabled ? '(off)' : '',
+                ]
+                    .filter(Boolean)
+                    .join(' ')
+            );
+
+        beforeEach(() => {
+            const store = TestBed.inject(WorkoutStore);
+            store.addWorkout(
+                makeWorkout({ title: 'Legs', steps: [{ kind: 'reps', reps: 5, name: 'Lunge' }] })
+            );
+            store.addWorkout(
+                makeWorkout({
+                    title: '',
+                    steps: Array.from({ length: 20 }, () => ({
+                        kind: 'reps' as const,
+                        reps: 5,
+                        name: 'Lunge',
+                    })),
+                })
+            );
+        });
+
+        it('offers a new workout, or one from the library with room for it', async () => {
+            await open('/exercises/back-squat');
+
+            await click('#exercise-page-add');
+
+            expect(text('#add-to-workout-title')).toBe('Add Back squat to');
+            expect(choices()).toEqual([
+                'New workout',
+                'Legs 1 step',
+                'Untitled workout Full, 20 steps (off)',
+            ]);
+            expect(document.activeElement).toBe(el().querySelector('.add__choice'));
+        });
+
+        it('opens Create with it added to the workout picked, or a new one', async () => {
+            const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+            const legs = TestBed.inject(WorkoutStore)
+                .workouts()
+                .find((w) => w.title === 'Legs')!;
+            await open('/exercises/back-squat');
+
+            await click('#exercise-page-add');
+            el().querySelectorAll<HTMLButtonElement>('.add__choice')[1].click();
+            await render();
+            expect(navigate).toHaveBeenLastCalledWith(['/setup'], {
+                queryParams: { editId: legs.id, add: 'builtin:back-squat' },
+            });
+
+            await click('#exercise-page-add');
+            await click('.add__choice');
+            expect(navigate).toHaveBeenLastCalledWith(['/setup'], {
+                queryParams: { add: 'builtin:back-squat' },
+            });
+        });
+
+        it('closes with ✕, focus going back to Add to workout', async () => {
+            await open('/exercises/back-squat');
+
+            await click('#exercise-page-add');
+            await click('.add__close');
+
+            expect(el().querySelector('app-add-to-workout-dialog')).toBeNull();
+            expect(document.activeElement).toBe(el().querySelector('#exercise-page-add'));
+        });
+    });
+
     it("says when there's no such exercise", async () => {
         await open('/exercises/not-one');
 

@@ -438,6 +438,23 @@ for (const theme of ['dark', 'light'] as const) {
                 await expectNoViolations();
             });
 
+            it('adding an exercise to a workout, one of them full', async () => {
+                store.addWorkout(makeWorkout({ title: 'Legs' }));
+                store.addWorkout(
+                    makeWorkout({
+                        steps: Array.from({ length: 20 }, () => ({
+                            kind: 'reps' as const,
+                            reps: 5,
+                            name: 'Lunge',
+                        })),
+                    })
+                );
+                await open('/exercises/back-squat');
+                click('#exercise-page-add');
+                await settle();
+                await expectNoViolations();
+            });
+
             it('your own exercise, being edited with errors', async () => {
                 const mine = TestBed.inject(ExerciseStore).addOwn('Sled push', 'reps');
                 await open(`/exercises/${mine.id}`);
