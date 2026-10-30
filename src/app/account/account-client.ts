@@ -9,6 +9,10 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 export const SUPABASE_URL = 'https://cpgacyzlfyskifzhkotu.supabase.co';
 export const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_YnL-skDr7iSBsqSqaIbWBg_vE-kGXQa';
 
+/** Who else can sign you in (SYN-7), as each is set up in Supabase (Authentication → Providers). */
+export const SIGN_IN_PROVIDERS = ['google', 'apple'] as const;
+export type SignInProvider = (typeof SIGN_IN_PROVIDERS)[number];
+
 /** Where the client keeps the sign-in, in localStorage: there while this device is signed in. */
 export const AUTH_STORAGE_KEY = 'sb-cpgacyzlfyskifzhkotu-auth-token';
 

@@ -31,6 +31,11 @@ export function fakeAccountClient(email: string | null = null) {
             data: {},
             error: null as unknown,
         })),
+        // The browser would go to Google or Apple here, and come back signed in
+        signInWithOAuth: vi.fn(async (_credentials: unknown) => ({
+            data: {},
+            error: null as unknown,
+        })),
         verifyOtp: vi.fn(async ({ email: address }: { email: string; token: string }) => {
             change(sessionFor(address));
             return { data: {}, error: null as unknown };

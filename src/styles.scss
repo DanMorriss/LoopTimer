@@ -58,6 +58,13 @@
     --glow-dot: #ecfeff;
     --control-off: #94a3b8;
     --danger: rgba(248, 113, 113, 0.65);
+
+    // Sign in with Google and Apple, in their own colours (Google's dark button, Apple's white)
+    --google-bg: #131314;
+    --google-border: #8e918f;
+    --google-ink: #e3e3e3;
+    --apple-bg: #ffffff;
+    --apple-ink: #000000;
     --danger-soft: rgba(127, 29, 29, 0.35);
     // Solid red, for white text on it (4.8:1): a swipe about to delete
     --danger-strong: #dc2626;
@@ -143,6 +150,13 @@
     --glow-dot: #155e75;
     --control-off: #64748b;
     --danger: rgba(220, 38, 38, 0.6);
+
+    // Google's light button, and Apple's black
+    --google-bg: #ffffff;
+    --google-border: #747775;
+    --google-ink: #1f1f1f;
+    --apple-bg: #000000;
+    --apple-ink: #ffffff;
     --danger-soft: rgba(254, 226, 226, 0.8);
     --danger-strong: #dc2626;
     --button-primary: #0369a1;
