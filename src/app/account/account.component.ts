@@ -14,6 +14,9 @@ import { LoopLogoComponent } from '../shared/components/loop-logo/loop-logo.comp
 import { SyncStarter } from '../sync/sync-starter.service';
 import { syncText } from '../sync/sync-text';
 import { AccountService } from './account.service';
+import { SIGN_IN_PROVIDERS, SignInProvider } from './account-client';
+
+const PROVIDER_NAMES: Record<SignInProvider, string> = { google: 'Google', apple: 'Apple' };
 import { ProfileComponent } from './profile/profile.component';
 import { YourDataComponent } from './your-data/your-data.component';
 
@@ -81,6 +84,22 @@ export class AccountComponent {
      * Sends the sign-in email. Handled here rather than as a form submission, as the form
      * goes once it's sent, and a form taken away mid-submission stays "submitting".
      */
+    /** Whether `provider` is offered, being set up in Supabase (SIGN_IN_PROVIDERS). */
+    protected offers(provider: SignInProvider): boolean {
+        return SIGN_IN_PROVIDERS.includes(provider);
+    }
+
+    /** Off to Google or Apple to sign in, coming back here signed in (SYN-7). */
+    protected async signInWith(provider: SignInProvider) {
+        const name = PROVIDER_NAMES[provider];
+        this.busy.set(true);
+        this.message.set(`Going to ${name}…`);
+        if (!(await this.account.signInWith(provider))) {
+            this.busy.set(false);
+            this.message.set(`Couldn't reach ${name}. Check your connection and try again.`);
+        }
+    }
+
     protected async sendLink(event: Event) {
         event.preventDefault();
         this.emailForm.email().markAsTouched();

@@ -85,6 +85,37 @@ describe('AccountComponent', () => {
             expect(client.auth.signInWithOtp).not.toHaveBeenCalled();
         });
 
+        it('offers Google first (Apple not yet), then the email', () => {
+            const labels = [...element.querySelectorAll('.account__provider')].map((b) =>
+                b.textContent!.trim()
+            );
+            expect(labels).toEqual(['Continue with Google']);
+            const or = element.querySelector('.account__or')!;
+            expect(or.compareDocumentPosition(element.querySelector('#account-email')!)).toBe(
+                Node.DOCUMENT_POSITION_FOLLOWING
+            );
+        });
+
+        it('goes to Google to sign in, saying so', async () => {
+            await press('Continue with Google');
+
+            expect(client.auth.signInWithOAuth).toHaveBeenCalledWith(
+                expect.objectContaining({ provider: 'google' })
+            );
+            expect(status()).toBe('Going to Google…');
+            // Off to Google, so nothing more to press here
+            expect(button('Continue with Google').disabled).toBe(true);
+        });
+
+        it("says when Google can't be reached, and can be tried again", async () => {
+            client.auth.signInWithOAuth.mockRejectedValueOnce(new Error('offline'));
+
+            await press('Continue with Google');
+
+            expect(status()).toBe("Couldn't reach Google. Check your connection and try again.");
+            expect(button('Continue with Google').disabled).toBe(false);
+        });
+
         it('sends the link, then asks for the code from the email', async () => {
             await type('account-email', ' me@example.com ');
             await press('Email me a sign-in link');

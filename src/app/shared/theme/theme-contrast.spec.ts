@@ -117,6 +117,18 @@ for (const theme of ['dark', 'light'] as const) {
             });
         });
 
+        // Sign in with Google and Apple: their words on their buttons, and the buttons' edges
+        it('makes the Google and Apple buttons readable, and stand out on the panel', () => {
+            const panel = flatten(['--page-bg', '--panel']);
+            for (const brand of ['google', 'apple']) {
+                expect(
+                    contrastRatio(token(`--${brand}-ink`), token(`--${brand}-bg`))
+                ).toBeGreaterThanOrEqual(4.5);
+            }
+            expect(contrastRatio(token('--google-border'), panel)).toBeGreaterThanOrEqual(3);
+            expect(contrastRatio(token('--apple-bg'), panel)).toBeGreaterThanOrEqual(3);
+        });
+
         // The history's bars of sets per muscle, filled on an unworked-muscle track
         it('makes each muscle bar stand out on its track (at least 3:1)', () => {
             for (const fill of ['under', 'in', 'over']) {

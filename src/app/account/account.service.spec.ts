@@ -74,6 +74,33 @@ describe('AccountService', () => {
         expect(await account.sendLink('me@example.com')).toBe('failed');
     });
 
+    describe('signInWith (SYN-7)', () => {
+        it('goes to Google or Apple, to come back to the Account tab', async () => {
+            const account = start();
+
+            expect(await account.signInWith('google')).toBe(true);
+            expect(await account.signInWith('apple')).toBe(true);
+
+            expect(client.auth.signInWithOAuth).toHaveBeenCalledWith({
+                provider: 'google',
+                options: { redirectTo: `${location.origin}/account` },
+            });
+            expect(client.auth.signInWithOAuth).toHaveBeenCalledWith({
+                provider: 'apple',
+                options: { redirectTo: `${location.origin}/account` },
+            });
+        });
+
+        it("says when it couldn't start", async () => {
+            const account = start();
+            client.auth.signInWithOAuth.mockResolvedValueOnce({ data: {}, error: { status: 400 } });
+            client.auth.signInWithOAuth.mockRejectedValueOnce(new Error('network'));
+
+            expect(await account.signInWith('google')).toBe(false);
+            expect(await account.signInWith('apple')).toBe(false);
+        });
+    });
+
     describe('sendLink', () => {
         it('emails a link back to the Account tab, making the account if it is new', async () => {
             const account = start();
@@ -177,6 +204,18 @@ describe('AccountService', () => {
 
             expect(account.linkProblem()).toBe(
                 'That sign-in link has expired or was used already. Send yourself another.'
+            );
+            expect(replaceState).toHaveBeenCalledWith(null, '', '/account');
+        });
+
+        it("says when signing in with Google or Apple didn't finish", () => {
+            const { account, replaceState } = startAt(
+                '',
+                '?error=access_denied&error_description=The+user+cancelled'
+            );
+
+            expect(account.linkProblem()).toBe(
+                "Signing in didn't finish. Try again, or sign in another way."
             );
             expect(replaceState).toHaveBeenCalledWith(null, '', '/account');
         });

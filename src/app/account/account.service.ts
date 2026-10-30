@@ -1,7 +1,7 @@
 import { DOCUMENT, inject, Service, signal } from '@angular/core';
 import type { Session } from '@supabase/supabase-js';
 import { SyncStarter } from '../sync/sync-starter.service';
-import { AccountClient, ACCOUNT_CLIENT } from './account-client';
+import { AccountClient, ACCOUNT_CLIENT, SignInProvider } from './account-client';
 
 export type AccountState =
     | { status: 'loading' }
@@ -14,8 +14,8 @@ export type SendResult = 'sent' | 'too-many' | 'failed';
 export const SIGN_IN_PATH = '/account';
 
 /**
- * Signing in to an account (SYN-3), by an email link or the code in the same email, signing
- * out and deleting the account (SYN-8). Signing out and deleting leave this device's data as
+ * Signing in to an account (SYN-3), by an email link or the code in the same email, or with
+ * Google or Apple (SYN-7); signing out and deleting the account (SYN-8). Signing out and deleting leave this device's data as
  * it is. Made when the Account tab first opens, which loads Supabase's code.
  */
 @Service()
@@ -90,6 +90,25 @@ export class AccountService {
         }
     }
 
+    /**
+     * Goes to Google or Apple to sign in, which come back to the Account tab signed in (the
+     * account's tokens in the address, as an email link's are). An account with the same
+     * email, made by email or the other, is the same account. Gives false if it couldn't
+     * start (offline, say); otherwise the page is on its way there.
+     */
+    async signInWith(provider: SignInProvider): Promise<boolean> {
+        try {
+            const client = await this.connect();
+            const { error } = await client.auth.signInWithOAuth({
+                provider,
+                options: { redirectTo: this.document.location.origin + SIGN_IN_PATH },
+            });
+            return !error;
+        } catch {
+            return false;
+        }
+    }
+
     /** Signs in with the code from the email, giving whether it worked. */
     async enterCode(email: string, code: string): Promise<boolean> {
         try {
@@ -131,9 +150,10 @@ export class AccountService {
     }
 
     /**
-     * A link that didn't work comes back with why in the address, e.g.
-     * `#error=access_denied&error_code=otp_expired`. Takes it out of the address, so a
-     * refresh doesn't show it again, and says what to do.
+     * A sign-in that didn't work comes back with why in the address: an email link that's
+     * expired or used, e.g. `#error=access_denied&error_code=otp_expired`, or Google or Apple
+     * turned down or cancelled. Takes it out of the address, so a refresh doesn't show it
+     * again, and says what to do.
      */
     private takeLinkProblem(): string | null {
         const location = this.document.location;
@@ -142,6 +162,8 @@ export class AccountService {
             return null;
         }
         this.document.defaultView?.history.replaceState(null, '', location.pathname);
-        return 'That sign-in link has expired or was used already. Send yourself another.';
+        return params.get('error_code') === 'otp_expired'
+            ? 'That sign-in link has expired or was used already. Send yourself another.'
+            : "Signing in didn't finish. Try again, or sign in another way.";
     }
 }
