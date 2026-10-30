@@ -4,6 +4,7 @@ import { provideRouter, withNavigationErrorHandler } from '@angular/router';
 import { sendSignInToAccount } from './app/account/sign-in-landing';
 import { AppComponent } from './app/app.component';
 import { routes } from './app/app.routes';
+import { AddressMove } from './app/nav/moved-banner/address-move.service';
 import { reloadOnStaleCode } from './app/nav/stale-code';
 import { AlarmService } from './app/shared/alarms/alarm.service';
 import { ActiveRunService } from './app/shared/run/active-run.service';
@@ -29,6 +30,8 @@ bootstrapApplication(AppComponent, {
             inject(DeviceDataService);
             // Sync, if this device is signed in (loading its code only then)
             inject(SyncStarter).startIfSignedIn();
+            // On the old address, move to loopworkouts.com once nothing here would be lost
+            inject(AddressMove).start();
         }),
     ],
 }).catch((err) => console.error(err));
