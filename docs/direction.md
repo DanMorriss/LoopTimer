@@ -47,4 +47,4 @@ Agreed October 2026. This sets the direction; the stories are in [features](feat
 
 Sync sits after the progress pages so the app's most useful features arrive first, but its groundwork is in step 1, so nothing needs reshaping again.
 
-Where it's got to (October 2026): steps 1–6 are done, with sync on Supabase in Europe, signing in by email, Google or Apple. Gym plans as they're written (sets, each side, varied sets, supersets and headings; see [sets-and-supersets](features/sets-and-supersets.md)) came in out of order, from a friend's plan, and are done too. Simple planning (step 5) followed: a weekly plan, with what's due today on Home. Google and Apple sign-in followed.
+Where it's got to (October 2026): steps 1–6 are done, with sync on Supabase in Europe, signing in by email or Google. Gym plans as they're written (sets, each side, varied sets, supersets and headings; see [sets-and-supersets](features/sets-and-supersets.md)) came in out of order, from a friend's plan, and are done too. Simple planning (step 5) followed: a weekly plan, with what's due today on Home. Google sign-in followed; Apple waits on an Apple Developer account.

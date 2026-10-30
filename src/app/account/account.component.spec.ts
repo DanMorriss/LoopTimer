@@ -85,25 +85,25 @@ describe('AccountComponent', () => {
             expect(client.auth.signInWithOtp).not.toHaveBeenCalled();
         });
 
-        it('offers Google and Apple first, then the email', () => {
+        it('offers Google first (Apple not yet), then the email', () => {
             const labels = [...element.querySelectorAll('.account__provider')].map((b) =>
                 b.textContent!.trim()
             );
-            expect(labels).toEqual(['Continue with Google', 'Continue with Apple']);
+            expect(labels).toEqual(['Continue with Google']);
             const or = element.querySelector('.account__or')!;
             expect(or.compareDocumentPosition(element.querySelector('#account-email')!)).toBe(
                 Node.DOCUMENT_POSITION_FOLLOWING
             );
         });
 
-        it('goes to Google or Apple to sign in, saying so', async () => {
-            await press('Continue with Apple');
+        it('goes to Google to sign in, saying so', async () => {
+            await press('Continue with Google');
 
             expect(client.auth.signInWithOAuth).toHaveBeenCalledWith(
-                expect.objectContaining({ provider: 'apple' })
+                expect.objectContaining({ provider: 'google' })
             );
-            expect(status()).toBe('Going to Apple…');
-            // Off to Apple, so nothing more to press here
+            expect(status()).toBe('Going to Google…');
+            // Off to Google, so nothing more to press here
             expect(button('Continue with Google').disabled).toBe(true);
         });
 
