@@ -80,10 +80,11 @@ and in `built-in-exercise-text.ts`:
 
 ## Backlog
 
-80 written (batches 1–8). The list is complete for now; more can be added at the end of the backlog.
+97 written (batches 1–9). The list is complete for now; more can be added at the end of the backlog.
 
 - [x] **Batch 4, core, carries and variations:** side plank, dead bug, Russian twist, farmer's carry, sumo deadlift, Bulgarian split squat, step-up, hammer curl, skull crusher, glute bridge
 - [x] **Batch 5, chest, shoulders and arms:** dumbbell bench press, incline bench press, close-grip bench press, dumbbell fly, cable crossover, Arnold press, rear delt fly, shrug, preacher curl, overhead triceps extension
 - [x] **Batch 6, legs:** hack squat, walking lunge, reverse lunge, single-leg Romanian deadlift, good morning, back extension, Nordic curl, seated calf raise, hip abduction machine, hip adduction machine
 - [x] **Batch 7, back, pulling and bodyweight pushing:** inverted row, T-bar row, straight-arm pulldown, rack pull, band pull-apart, cable curl, bench dip, diamond push-up, pike push-up, dead hang
 - [x] **Batch 8, conditioning and abs:** burpee, mountain climber, jumping jack, jump squat, box jump, bodyweight squat, wall sit, crunch, bicycle crunch, ab wheel rollout
+- [x] **Batch 9, kettlebells (17, asked for by Dan):** kettlebell thruster, kettlebell clean and press, kettlebell snatch, kettlebell pistol squat, kettlebell floor press, Turkish get-up, kettlebell sumo high pull, chainsaw row, kettlebell reverse crunch, plank pull-through, half-kneeling kettlebell press, kettlebell halo, kettlebell around the world, kettlebell push-up, and kettlebell takes on dumbbell exercises: kettlebell lunge, kettlebell curl, kettlebell press
