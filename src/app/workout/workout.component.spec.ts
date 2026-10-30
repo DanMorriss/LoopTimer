@@ -3065,6 +3065,30 @@ describe('WorkoutComponent', () => {
                 fixture.destroy();
             });
 
+            it('keeps what was applied on "Yes, use next time", carrying the rest over', () => {
+                const saved = finishPushDay();
+                apply('Bench press: try 82.5 kg, up from 80 kg')!.click();
+                fixture.detectChanges();
+
+                // Push-ups' one set corrected to 10 reps
+                pressInSummary('Change reps or weight');
+                const picker = summary()!.querySelector(
+                    'app-wheel-picker:has([aria-labelledby="summary-set-1 summary-reps-1"])'
+                ) as HTMLElement;
+                (picker.querySelector('[data-value="10"]') as HTMLElement).click();
+                fixture.detectChanges();
+                pressInSummary('Yes, use next time');
+
+                expect(savedSteps(saved.id)[1]).toEqual(
+                    expect.objectContaining({ reps: 5, weight: 82.5 })
+                );
+                expect(savedSteps(saved.id)[2]).toEqual(expect.objectContaining({ reps: 10 }));
+                expect(summaryText()).toContain(
+                    'Saved: next time starts from these, with the step-ups you applied.'
+                );
+                fixture.destroy();
+            });
+
             it('has no Apply for a workout no longer in the library', () => {
                 const saved = finishPushDay();
                 TestBed.inject(WorkoutStore).deleteWorkout(saved.id);
@@ -3430,6 +3454,38 @@ describe('WorkoutComponent', () => {
                     expect.objectContaining({ kind: 'reps', reps: 18, weight: 40 })
                 );
                 expect(summaryText()).toContain('Saved: next time starts from these.');
+                fixture.destroy();
+            });
+
+            it("groups them under the workout's headings and supersets, as the lines are", () => {
+                start({
+                    ...makeWorkout({ repeats: 1 }),
+                    blocks: [
+                        { kind: 'heading', text: 'Upper' },
+                        {
+                            kind: 'group',
+                            rounds: 1,
+                            restSeconds: 0,
+                            steps: [reps(10, 'Bench'), reps(10, 'Row')],
+                        },
+                        { kind: 'group', rounds: 1, restSeconds: 0, steps: [reps(10, 'Curl')] },
+                    ],
+                });
+                for (let i = 0; i < 3; i++) {
+                    (
+                        fixture.nativeElement.querySelector('.workout-next--done') as HTMLElement
+                    ).click();
+                    fixture.detectChanges();
+                }
+                openChanges();
+
+                const shown = Array.from(
+                    summary()!.querySelectorAll(
+                        '.summary__part, .summary__superset-name, .summary__group-name'
+                    ),
+                    (el) => `${el.tagName} ${el.textContent!.trim()}`
+                );
+                expect(shown).toEqual(['H4 Upper', 'P Superset', 'H5 Bench', 'H5 Row', 'H5 Curl']);
                 fixture.destroy();
             });
 

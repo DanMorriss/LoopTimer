@@ -14,7 +14,8 @@ import { ownExerciseName } from '../summary-sets/summary-sets.component';
  * What to step up next time on the workout summary (PRG-10), e.g. "Squats: try 62.5 kg, up
  * from 60 kg", for each rep step where every set got its reps: a weight step up (as PRG-5
  * offers mid-workout), or one more rep with no weight. Follows the sets as they're corrected.
- * Apply puts a step-up on the saved workout's step, and it stays said as applied.
+ * Apply puts a step-up on the saved workout's step, and it stays said as applied; "Yes, use
+ * next time" in Sets leaves it there (ActiveRunService.keepStepUp()).
  */
 @Component({
     selector: 'app-summary-step-ups',
@@ -142,6 +143,7 @@ export class SummaryStepUpsComponent {
                       : { ...current, reps: suggestion.to }
             );
             next.set(suggestion.step, suggestion);
+            this.run.keepStepUp(suggestion.step);
         }
         this.applied.set(next);
         afterNextRender(() => document.getElementById(`step-up-${step}`)?.focus(), {

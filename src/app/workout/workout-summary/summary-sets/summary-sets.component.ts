@@ -15,6 +15,8 @@ import { WorkoutStore } from '../../../shared/state/workout-store.service';
 /** One rep step's sets, for correcting them one by one. */
 interface SetGroup {
     name: string;
+    /** Which step of the workout it is, to go under its heading and superset. */
+    step: number;
     /** Each set, with where it is in the run's list of sets. */
     sets: { index: number; set: RepSet }[];
 }
@@ -74,7 +76,7 @@ export class SummarySetsComponent {
     protected readonly setGroups = computed((): SetGroup[] => {
         const groups = new Map<number, SetGroup>();
         this.store.activeSets().forEach((set, index) => {
-            const group = groups.get(set.step) ?? { name: '', sets: [] };
+            const group = groups.get(set.step) ?? { name: '', step: set.step, sets: [] };
             group.sets.push({ index, set });
             groups.set(set.step, group);
         });
@@ -88,6 +90,15 @@ export class SummarySetsComponent {
             )[0].name,
         }));
     });
+    /** The sets to change, under the workout's headings and with its supersets, as above. */
+    protected readonly groupSections = computed(() => {
+        const workout = this.run.workout();
+        return workout
+            ? sectionsOf(this.setGroups(), placedHeadings(workout), placedSupersets(workout))
+            : sectionsOf(this.setGroups());
+    });
+    /** Some steps were given a step-up, which "Yes, use next time" leaves as they are. */
+    protected readonly steppedUp = computed(() => this.run.steppedUp().size > 0);
     protected readonly repOptions = REP_OPTIONS;
     protected readonly weightOptions = computed(() => weightOptions(this.weightUnit()));
     protected weightValue(set: RepSet): number {

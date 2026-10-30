@@ -46,7 +46,7 @@
     - A line is named as the step was when it ran, except for an exercise of your own, which shows its name now, so renaming it (EXR-3) renames it here too. Built-in exercises can't be renamed, so a set from a step called "Squats" stays "Squats".
     - Screen readers hear words, e.g. "Squats, 3 sets of 10 reps at 60 kg".
     - **Under the workout's headings** as they were when it ran (BLD-13), in order: e.g. "Warmup", then "Exercise bike: 5:00"; "Knee rehabilitation", then its lines. Lines before the first heading come first, with none over them, and a heading with no sets under it (e.g. a part stopped before) isn't shown. Screen readers hear them as headings within the entry. The workout summary's sets are grouped the same way.
-    - **With its supersets** as they were when it ran (BLD-12): the lines of a superset's (or giant set's) steps go together under "Superset" (or "Giant set"), in a list of their own, set in a little with a line down their left. A superset with sets on only one of its steps (stopped before the second) shows that line on its own. The workout summary's sets are grouped the same way; its Change reps or weight view isn't.
+    - **With its supersets** as they were when it ran (BLD-12): the lines of a superset's (or giant set's) steps go together under "Superset" (or "Giant set"), in a list of their own, set in a little with a line down their left. A superset with sets on only one of its steps (stopped before the second) shows that line on its own. The workout summary's sets are grouped the same way, and so is its Change reps or weight view.
 - The note, if any, sits under the entry.
 - With no workouts: "No workouts yet. Finished and stopped workouts show up here." with a link to the library.
 
