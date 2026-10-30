@@ -36,7 +36,10 @@
                         "stylePreprocessorOptions": {
                             "includePaths": ["src/styles"]
                         },
-                        "scripts": []
+                        "scripts": [],
+                        "security": {
+                            "autoCsp": true
+                        }
                     },
                     "configurations": {
                         "production": {
