@@ -1,0 +1,36 @@
+:host {
+    display: block;
+    padding-inline: 1rem;
+}
+
+// A card at the top of the page, as Due today is on Home
+.moved {
+    max-width: 42rem;
+    margin: 1rem auto 0;
+    padding: 1rem;
+    border: 1px solid var(--accent-line);
+    border-radius: 0.9rem;
+    background: var(--card);
+}
+
+.moved__title {
+    margin: 0 0 0.5rem;
+    color: var(--text-strong);
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+.moved__text {
+    margin: 0 0 0.5rem;
+    color: var(--text);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.moved__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}

@@ -16,6 +16,7 @@ import { HistoryStore } from './shared/state/history-store.service';
 import { PlanStore } from './shared/state/plan-store.service';
 import { weekdayOf } from './models/plan';
 import { WorkoutStore } from './shared/state/workout-store.service';
+import { AddressMove } from './nav/moved-banner/address-move.service';
 import { asOneGroup } from './models/workout';
 
 /**
@@ -115,6 +116,14 @@ for (const theme of ['dark', 'light'] as const) {
             );
             expect(report, 'axe violations').toEqual([]);
         }
+
+        it('the banner on the old address, over Home', async () => {
+            TestBed.inject(AddressMove).state.set('guest');
+            store.addWorkout(sprints);
+            await open('/home');
+            expect(fixture.nativeElement.querySelector('.moved')).not.toBeNull();
+            await expectNoViolations();
+        });
 
         describe('the bars along the bottom', () => {
             it('the tabs, on a page under one (setup, under Library)', async () => {
