@@ -61,14 +61,30 @@ $$;
 -- here, a deletion winning a tie, as the app merges. A date more than a minute ahead of the
 -- server's clock (a device's clock running fast) is taken as now. Gives the server's time,
 -- so the device can date its changes by it.
+--
+-- Limits, so one account can't fill the database (anyone can make one): at most 500 changes
+-- a call (the app sends 200), an id of at most 200 characters, a record of at most 64 kB, and
+-- an account of at most 20,000 records and 20 MB. Over any of them, nothing is written and it
+-- says why; far above what anyone's workouts need.
 create or replace function public.push_records(changes jsonb) returns bigint
 language plpgsql security definer set search_path = '' as $$
 declare
     me uuid := auth.uid();
     server_now bigint := public.now_ms();
+    record_count bigint;
+    total_bytes bigint;
 begin
     if me is null then
         raise exception 'Not signed in';
+    end if;
+    if jsonb_typeof(changes) <> 'array' or jsonb_array_length(changes) > 500 then
+        raise exception 'Too many changes at once';
+    end if;
+    if exists (
+        select from jsonb_array_elements(changes) as c
+        where length(c ->> 'id') > 200 or pg_column_size(c -> 'data') > 65536
+    ) then
+        raise exception 'Record too large';
     end if;
     -- One write at a time for each account, so its rows' seq goes up in the order they're
     -- written, and a device that's fetched up to a seq can't miss one below it
@@ -98,6 +114,14 @@ begin
         where excluded.updated_at > r.updated_at
             or (excluded.updated_at = r.updated_at
                 and excluded.deleted_at is not null and r.deleted_at is null);
+    -- Raising undoes the write above
+    select count(*), coalesce(sum(pg_column_size(data)), 0)
+        into record_count, total_bytes
+        from public.records
+        where user_id = me;
+    if record_count > 20000 or total_bytes > 20 * 1024 * 1024 then
+        raise exception 'Account storage full';
+    end if;
     return server_now;
 end;
 $$;

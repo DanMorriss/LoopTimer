@@ -30,6 +30,10 @@
             } catch (e) {
                 // Unreadable settings: stay on the default dark theme
             }
+            // An empty touchstart listener makes iPhones show :active styles while a finger is
+            // down: Safari skips them on pages that listen for no touches. Here rather than an
+            // ontouchstart attribute, which the Content-Security-Policy blocks.
+            document.addEventListener('touchstart', function () {}, { passive: true });
         </script>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -40,9 +44,7 @@
         />
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
     </head>
-    <!-- The empty touchstart handler makes iPhones show :active styles while a finger is
-         down: Safari skips them on pages that listen for no touches -->
-    <body class="mat-typography" ontouchstart="">
+    <body class="mat-typography">
         <app-root></app-root>
     </body>
 </html>
