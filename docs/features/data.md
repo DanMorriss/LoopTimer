@@ -210,6 +210,10 @@ While signed in (SYN-3): the account's user id, the last `seq` fetched from the 
 
 In ms since the epoch, by the device's clock, for the Account tab. Signing out removes it.
 
+### `welcomed`: the welcome screen's been answered
+
+`guest` or `signed-in` once the welcome screen (NAV-3) has been answered on this device, or set to `guest` for a device that already had workouts or history when it came in. Missing on a device new to the app, which opens the welcome screen. Signing out, deleting the account and Clear this device remove it.
+
 ### `clock-offset`: how far this device's clock is from the server's
 
 In ms, added to the device's clock to date changes (see [backup and sync](backup-and-sync.md), Sync). Kept after signing out, as the clock's no less off; so are the settings, which are this device's. Signing out removes everything else.

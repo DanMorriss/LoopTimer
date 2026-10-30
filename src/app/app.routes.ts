@@ -1,6 +1,7 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Routes } from '@angular/router';
 import { HistoryStore } from './shared/state/history-store.service';
+import { welcomeFirst } from './welcome/welcome-first';
 
 // Pages that read the history wait for it to load, so they don't show it empty at first
 const historyLoaded: CanActivateFn = () => inject(HistoryStore).ready.then(() => true);
@@ -10,8 +11,13 @@ export const routes: Routes = [
     { path: '', pathMatch: 'full', redirectTo: 'home' },
     {
         path: 'home',
-        canActivate: [historyLoaded],
+        // A device new to the app is welcomed first, to sign in or go on as a guest
+        canActivate: [historyLoaded, welcomeFirst],
         loadComponent: () => import('./home/home.component').then((m) => m.HomeComponent),
+    },
+    {
+        path: 'welcome',
+        loadComponent: () => import('./welcome/welcome.component').then((m) => m.WelcomeComponent),
     },
     {
         path: 'setup',

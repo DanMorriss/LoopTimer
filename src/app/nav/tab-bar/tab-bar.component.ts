@@ -19,7 +19,10 @@ export class TabBarComponent {
     protected readonly tabs = TABS;
     private readonly url = injectCurrentUrl();
 
-    protected readonly shown = computed(() => !isOnPage(this.url(), '/workout'));
+    // Not on the workout, nor the welcome screen, which are one thing at a time
+    protected readonly shown = computed(
+        () => !isOnPage(this.url(), '/workout') && !isOnPage(this.url(), '/welcome')
+    );
     /** The chosen tab's index, or -1 when the page isn't one of theirs. */
     protected readonly chosen = computed(() =>
         TABS.findIndex(

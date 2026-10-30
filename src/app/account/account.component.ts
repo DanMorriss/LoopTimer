@@ -3,33 +3,39 @@ import {
     Component,
     computed,
     DOCUMENT,
+    effect,
     inject,
     Injector,
     signal,
 } from '@angular/core';
-import { email, form, FormField, pattern, required } from '@angular/forms/signals';
 import { MatIconModule } from '@angular/material/icon';
+import { Router } from '@angular/router';
 import { PageSlide } from '../nav/page-slide';
 import { LoopLogoComponent } from '../shared/components/loop-logo/loop-logo.component';
 import { SyncStarter } from '../sync/sync-starter.service';
 import { syncText } from '../sync/sync-text';
 import { AccountService } from './account.service';
 import { DeviceDataService, SIGNED_OUT_NOTE } from '../shared/state/device-data.service';
-import { SIGN_IN_PROVIDERS, SignInProvider } from './account-client';
-
-const PROVIDER_NAMES: Record<SignInProvider, string> = { google: 'Google', apple: 'Apple' };
 import { ProfileComponent } from './profile/profile.component';
+import { SignInComponent } from './sign-in/sign-in.component';
+import { hasSignInTokens } from './sign-in-landing';
 import { YourDataComponent } from './your-data/your-data.component';
 
 /**
- * The Account tab (SYN-3, SYN-8, SYN-9): signing in by an email link or its code, who's
+ * The Account tab (SYN-3, SYN-7, SYN-8, SYN-9): signing in (SignInComponent), who's
  * signed in and how sync is going, signing out and deleting the account; then your profile
  * (sex and weight units), Settings, which slides in over it, your data (backups and Clear
  * this device), and About.
  */
 @Component({
     selector: 'app-account',
-    imports: [FormField, LoopLogoComponent, MatIconModule, ProfileComponent, YourDataComponent],
+    imports: [
+        LoopLogoComponent,
+        MatIconModule,
+        ProfileComponent,
+        SignInComponent,
+        YourDataComponent,
+    ],
     templateUrl: './account.component.html',
     styleUrl: './account.component.scss',
 })
@@ -50,8 +56,6 @@ export class AccountComponent {
     /** How sync is going, e.g. "Synced at 12:30." */
     protected readonly syncText = computed(() => syncText(this.sync.status()));
 
-    /** Where the email was sent, once it has been: then the code is asked for. */
-    protected readonly sentTo = signal<string | null>(null);
     /** Waiting on the server, so the buttons can't be pressed twice. */
     protected readonly busy = signal(false);
     /** What the last thing done did, read out as it changes. */
@@ -61,8 +65,19 @@ export class AccountComponent {
     /** Signing out would lose changes that haven't synced, so it's asking first. */
     protected readonly confirmingSignOut = signal(false);
     private readonly deviceData = inject(DeviceDataService);
+    private readonly router = inject(Router);
+    /**
+     * Back from Google or an email link with the account's tokens in the address, which
+     * Supabase's client is reading: once it's signed in, on to Home.
+     */
+    private readonly returning = hasSignInTokens(this.document.location);
 
     constructor() {
+        effect(() => {
+            if (this.returning && this.account.state().status === 'signed-in') {
+                this.goHome();
+            }
+        });
         // Back from signing out or deleting the account, which reloaded the app
         const left = sessionStorage.getItem(SIGNED_OUT_NOTE);
         if (left !== null) {
@@ -75,99 +90,14 @@ export class AccountComponent {
         }
     }
 
-    private readonly emailModel = signal({ email: '' });
-    protected readonly emailForm = form(this.emailModel, (fields) => {
-        required(fields.email, { message: 'Enter your email address.' });
-        email(fields.email, { message: "That isn't an email address. Check it and try again." });
-    });
-    protected readonly emailError = computed(() =>
-        this.emailForm.email().touched()
-            ? this.emailForm.email().errors().at(0)?.message
-            : undefined
-    );
-
-    private readonly codeModel = signal({ code: '' });
-    protected readonly codeForm = form(this.codeModel, (fields) => {
-        required(fields.code, { message: 'Enter the code from the email.' });
-        pattern(fields.code, /^\s*\d{6,10}\s*$/, {
-            message: 'The code is the number in the email, e.g. 123456.',
-        });
-    });
-    protected readonly codeError = computed(() =>
-        this.codeForm.code().touched() ? this.codeForm.code().errors().at(0)?.message : undefined
-    );
-
-    /**
-     * Sends the sign-in email. Handled here rather than as a form submission, as the form
-     * goes once it's sent, and a form taken away mid-submission stays "submitting".
-     */
-    /** Whether `provider` is offered, being set up in Supabase (SIGN_IN_PROVIDERS). */
-    protected offers(provider: SignInProvider): boolean {
-        return SIGN_IN_PROVIDERS.includes(provider);
+    /** Signed in with the code: on to Home. */
+    protected signedIn() {
+        this.goHome();
     }
 
-    /** Off to Google or Apple to sign in, coming back here signed in (SYN-7). */
-    protected async signInWith(provider: SignInProvider) {
-        const name = PROVIDER_NAMES[provider];
-        this.busy.set(true);
-        this.message.set(`Going to ${name}…`);
-        if (!(await this.account.signInWith(provider))) {
-            this.busy.set(false);
-            this.message.set(`Couldn't reach ${name}. Check your connection and try again.`);
-        }
-    }
-
-    protected async sendLink(event: Event) {
-        event.preventDefault();
-        this.emailForm.email().markAsTouched();
-        if (this.emailForm().invalid()) {
-            this.focus('account-email');
-            return;
-        }
-        const address = this.emailModel().email.trim();
-        this.busy.set(true);
-        const result = await this.account.sendLink(address);
-        this.busy.set(false);
-        if (result === 'sent') {
-            this.message.set('');
-            this.account.linkProblem.set(null);
-            this.sentTo.set(address);
-            this.focus('account-sent');
-        } else {
-            this.message.set(
-                result === 'too-many'
-                    ? 'Too many sign-in emails for now. Wait a while, then try again.'
-                    : "The email couldn't be sent. Check your connection and try again."
-            );
-        }
-    }
-
-    protected async enterCode(event: Event) {
-        event.preventDefault();
-        const address = this.sentTo();
-        this.codeForm.code().markAsTouched();
-        if (!address || this.codeForm().invalid()) {
-            this.focus('account-code');
-            return;
-        }
-        this.busy.set(true);
-        const signedIn = await this.account.enterCode(address, this.codeModel().code.trim());
-        this.busy.set(false);
-        if (signedIn) {
-            this.reset('Signed in.');
-        } else {
-            this.message.set(
-                "That code didn't work: it may be wrong, or expired. Check it, or send another email."
-            );
-        }
-    }
-
-    /** Back to the email field, e.g. to fix a typo in it. */
-    protected useAnotherEmail() {
-        this.sentTo.set(null);
-        this.message.set('');
-        this.codeModel.set({ code: '' });
-        this.focus('account-email');
+    /** Signed in, so on to Home, in place of the Account tab (and the tokens in its address). */
+    private goHome() {
+        void this.router.navigateByUrl('/home', { replaceUrl: true });
     }
 
     /**
@@ -225,17 +155,6 @@ export class AccountComponent {
                 "Your account couldn't be deleted. Check your connection and try again."
             );
         }
-    }
-
-    /** Back to the start, saying what happened, with focus on the page's title. */
-    private reset(message: string) {
-        this.sentTo.set(null);
-        this.emailModel.set({ email: '' });
-        this.codeModel.set({ code: '' });
-        this.emailForm().reset();
-        this.codeForm().reset();
-        this.message.set(message);
-        this.focus('account-title');
     }
 
     /** Moves focus to an element once it's on the page. */

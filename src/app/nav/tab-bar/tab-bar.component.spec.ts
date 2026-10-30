@@ -81,4 +81,10 @@ describe('TabBarComponent', () => {
 
         expect(element.querySelector('nav')).toBeNull();
     });
+
+    it('is not on the welcome screen, which is one choice', async () => {
+        await go('/welcome');
+
+        expect(element.querySelector('nav')).toBeNull();
+    });
 });
