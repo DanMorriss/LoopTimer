@@ -42,7 +42,7 @@ This adds what that needs: sets and rest on an exercise, exercises done one side
 
 - **Sets: 1 to 30**, on a wheel. A new exercise has 1 set.
 - **Rest between sets**: 0:00 to 99:59, on Minutes and Seconds wheels, shown once Sets is above 1. It starts at **1:00** the first time Sets goes above 1.
-- The rest comes **between sets, never after the last one**: 3 sets is set, rest, set, rest, set, then straight on to what's next.
+- The rest comes **after each set, the last included**: 3 sets is set, rest, set, rest, set, rest, then what's next. It's skipped at the end of the workout, and when a rest step comes next (which takes its place).
 - Nothing is added between one exercise and the next. A rep step waits for Done anyway, so the next exercise starts when the user is ready; a rest between exercises is a Rest step of its own.
 - A **Rest step** has no Sets or Rest between sets: it's just a time, as now.
 - Timed exercises have sets too, e.g. "Plank: 3 × 0:45, rest 0:30".
@@ -74,7 +74,7 @@ This adds what that needs: sets and rest on an exercise, exercises done one side
 - A superset shows as one card: a heading line "Superset" (or "Giant set"), a **Rounds** wheel (1 to 30), **Rest between rounds** (as Rest between sets), and its steps inside it, each as a step is now, with Each side and Vary each round, but no Sets of its own.
 - **+ Step** inside it adds a rep step at its end. Its steps move up and down within it.
 - **Take out** on one of its steps makes it an exercise of its own again, just after the superset, with the superset's rounds as its sets. A superset left with one step becomes that exercise, the same way.
-- Rest between rounds comes after each round but the last, as for sets.
+- Rest between rounds comes after each round, the last included, as for sets.
 
 ### Headings (BLD-13)
 
@@ -92,7 +92,7 @@ This adds what that needs: sets and rest on an exercise, exercises done one side
 
 ### Running it (RUN-10)
 
-- The workout runs in this order: for each round of the whole workout, each exercise or superset in turn; for each of its sets (or rounds), each of its steps; for each side, left then right; then the rest between sets, except after the last.
+- The workout runs in this order: for each round of the whole workout, each exercise or superset in turn; for each of its sets (or rounds), each of its steps; for each side, left then right; then the rest after each set, except at the end of the workout or before a rest step.
 - **Rest at the very end of the workout is skipped**, as now, so the last set's rest and any rest steps after the last work never run.
 - **The section line**, above the ring: the heading of the part it's in, if there's one before it, and how far through the workout's exercises it is, e.g. "Knee rehabilitation · 2 of 7". Supersets count as one, and Rest steps and headings don't count. Screen readers hear "Knee rehabilitation, exercise 2 of 7" as each exercise starts.
 - **The round line** is the exercise's or superset's:
@@ -157,7 +157,7 @@ This adds what that needs: sets and rest on an exercise, exercises done one side
 - Given sets of 12 @ 40, 10 @ 45 and 8 @ 50 kg, when I change set 2 to 47.5 kg mid-workout, then only set 2 changes, here and in the saved workout.
 - Given 3 equal sets of 10 @ 40 kg, when I change set 2 to 45 kg mid-workout, then sets 2 and 3 run at 45 kg and the saved workout has 45 kg.
 - Given sets done at 12 @ 40, 10 @ 45 and 8 @ 50 kg on a step of equal sets, when I answer "Yes, use next time", then the step has Vary each set on with those three sets.
-- Given bench press and seated cable row, when I pick Join with next on bench press (3 sets, 1:00 rest), then they're a superset of 3 rounds with 1:00 rest between rounds; it runs bench, row, rest, bench, row, rest, bench, row.
+- Given bench press and seated cable row, when I pick Join with next on bench press (3 sets, 1:00 rest), then they're a superset of 3 rounds with 1:00 rest between rounds; it runs bench, row, rest, bench, row, rest, bench, row, rest, then what's next.
 - Given that superset, when I join shoulder press to it, then it's called a giant set; when I take shoulder press out again, then it's a superset.
 - Given a superset of two steps, when I take one out, then both are exercises of their own, each with the superset's rounds as its sets.
 - Given last time's sets of 12 @ 40, 10 @ 45 and 8 @ 50 kg all got their reps, then set 1 shows "↑ Try 2.5 kg more on each set"; pressing it makes them 42.5, 47.5 and 52.5 kg, here and in the saved workout. Given set 3 got 7, then nothing's suggested.
@@ -225,7 +225,7 @@ The new shape, when it's all built. Groups and headings came in with `data-versi
 ```
 
 - `blocks` takes the place of `steps`. A **group** with one step is an exercise (its `rounds` are its sets); with two or more, a superset. A group's `steps` are steps as now, with `exerciseId` and the rest.
-- `restSeconds`: between rounds, never after the last; 0 for none.
+- `restSeconds`: after each round, the last included unless it ends the workout or a rest group comes next; 0 for none.
 - `eachSide` (Reps and Timed steps, optional): `true` for each side; missing for not.
 - `sets` (rep and timed steps in a group of more than one round, optional): one `{ reps, weight? }` (rep steps) or `{ seconds }` (timed steps) per round, for Vary each set. Its length is the group's `rounds`; one that isn't is dropped when loading, leaving the step's own reps and weight or time. The step's `reps` and `weight`, or `seconds`, are set 1's, so a step always reads as a whole one.
 - **4 → 5**: each workout's `steps` become one group of `rounds` 1 and `restSeconds` 0, with no headings, and its `repeats` and `timeLimitSeconds` stay as they are. So it runs exactly as before.

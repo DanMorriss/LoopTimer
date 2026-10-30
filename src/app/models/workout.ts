@@ -107,7 +107,11 @@ export interface StepGroup {
     kind: 'group';
     /** How many times its steps run, 1 to MAX_REPEATS: an exercise's sets, a superset's rounds. */
     rounds: number;
-    /** Rest between its rounds, never after the last, in whole seconds; 0 for none. */
+    /**
+     * Rest after each of its rounds, in whole seconds; 0 for none. With one round, none. It
+     * comes after the last round too, before the next exercise, unless a rest comes next (see
+     * `runPlan()`); at the end of the workout it's skipped, as the workout is over.
+     */
     restSeconds: number;
     /** At least one. */
     steps: Step[];
@@ -322,13 +326,13 @@ export interface StepPlace {
 export interface RunPlan {
     steps: Step[];
     /**
-     * Where each of `steps` comes from; null for a rest between a group's rounds, and for
+     * Where each of `steps` comes from; null for the rest after a group's round, and for
      * Switch sides between a timed step's two sides.
      */
     places: (StepPlace | null)[];
     /**
      * For each of `steps`, which set of its group it's part of, from 0, and how many its
-     * group has: a rest between rounds is part of the round it leads to.
+     * group has: the rest after a round is part of that round.
      */
     sets: GroupSet[];
     /** For each of `steps`, the part of the workout it's in (RUN-10). */
@@ -380,7 +384,8 @@ const plans = new WeakMap<Pick<Workout, 'blocks'>, RunPlan>();
 /**
  * A workout's round as it runs (see `RunPlan`). A step done each side runs both sides in
  * each set, with Switch sides between a timed one's, as `sides` has them (the run's, or the
- * defaults).
+ * defaults). A group of more than one round rests after each, the last included, unless the
+ * next group is a rest of its own.
  */
 export function runPlan(workout: Pick<RunningWorkout, 'blocks' | 'sides'>): RunPlan {
     const saved = plans.get(workout);
@@ -392,7 +397,7 @@ export function runPlan(workout: Pick<RunningWorkout, 'blocks' | 'sides'>): RunP
     const plan: RunPlan = { steps: [], places: [], sets: [], sections: [], exercises: 0 };
     let first = 0;
     let heading: string | null = null;
-    for (const block of workout.blocks) {
+    for (const [b, block] of workout.blocks.entries()) {
         if (block.kind !== 'group') {
             heading = block.text;
             continue;
@@ -414,11 +419,9 @@ export function runPlan(workout: Pick<RunningWorkout, 'blocks' | 'sides'>): RunP
             plan.sets.push(of);
             plan.sections.push({ heading, exercise, starts });
         };
+        const restsAfterLast = !restComesNext(workout.blocks, b);
         for (let set = 0; set < block.rounds; set++) {
             const of = { set, of: block.rounds, group };
-            if (set > 0 && block.restSeconds > 0) {
-                push({ kind: 'rest', seconds: block.restSeconds, name: '' }, null, of);
-            }
             block.steps.forEach((step, i) => {
                 const forSet = stepForSet(step, set);
                 if (!step.eachSide || step.kind === 'rest') {
@@ -437,11 +440,21 @@ export function runPlan(workout: Pick<RunningWorkout, 'blocks' | 'sides'>): RunP
                     push(forSet, { step: first + i, set, side }, of);
                 });
             });
+            const rests = block.rounds > 1 && (set < block.rounds - 1 || restsAfterLast);
+            if (rests && block.restSeconds > 0) {
+                push({ kind: 'rest', seconds: block.restSeconds, name: '' }, null, of);
+            }
         }
         first += block.steps.length;
     }
     plans.set(workout, plan);
     return plan;
+}
+
+/** Whether the next group after block `b` is only rest, e.g. a rest between exercises. */
+function restComesNext(blocks: readonly Block[], b: number): boolean {
+    const next = blocks.slice(b + 1).find((block) => block.kind === 'group');
+    return next?.kind === 'group' && next.steps.every((step) => step.kind === 'rest');
 }
 
 /** Whether any of a workout's groups runs more than once a round, e.g. an exercise's sets. */

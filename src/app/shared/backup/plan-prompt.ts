@@ -131,9 +131,9 @@ A workout needs at least one step that isn't rest.
 
 A GROUP is one exercise and its sets: { "kind": "group", "rounds": 3, "restSeconds": 90, "steps": [one step] }
 - "rounds": how many sets, 1–${MAX_REPEATS}
-- "restSeconds": the rest between sets, 0–${MAX_STEP_SECONDS} seconds; it never comes after the last set. 0 for none, or for one set.
+- "restSeconds": the rest after each set, 0–${MAX_STEP_SECONDS} seconds; it comes after the last set too, before the next exercise (not at the end of the workout, nor when a rest group comes next). 0 for none, or for one set.
 - "steps": the one step it is, as below
-So "3 × 8 squats, 90 seconds rest" is one group with "rounds": 3 and "restSeconds": 90. A rest between one exercise and the next is a group of one rest step, with "rounds": 1. Something done once, e.g. a warm-up, is a group with "rounds": 1.
+So "3 × 8 squats, 90 seconds rest" is one group with "rounds": 3 and "restSeconds": 90. A rest between one exercise and the next is a group of one rest step, with "rounds": 1; after an exercise with sets, only for a rest unlike its rest between sets, as it takes that one's place. Something done once, e.g. a warm-up, is a group with "rounds": 1.
 A SUPERSET (or giant set, or exercises paired as "A1/A2") is one group with two or more steps, done one after another each round, then the rest: "3 rounds of 12 leg extensions and 12 leg curls, 60 seconds rest" is one group with "rounds": 3, "restSeconds": 60 and both steps. A rest inside a round (e.g. 15 seconds between the two) is a rest step between them. Each step counts towards the ${MAX_STEPS}. Only for exercises the plan pairs up and does more than once; otherwise give each exercise a group of its own.
 
 A HEADING is a label over the part of the workout after it, e.g. "Warmup" or "Upper body": { "kind": "heading", "text": "Warmup" }. Use the plan's own section titles, up to ${MAX_HEADINGS} of them, each up to ${MAX_HEADING_LENGTH} characters. Leave them out if the plan has none; they don't count as steps.

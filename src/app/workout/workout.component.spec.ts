@@ -3501,32 +3501,41 @@ describe('WorkoutComponent', () => {
             expect(said()).toBe('exercise 1 of 2, Leg press, 10 reps, set 1 of 3, round 1 of 1');
 
             pressDone();
-            // Resting before set 2 is part of it
+            // Resting after set 1 is part of it
             expect(component.isRestActive()).toBe(true);
-            expect(status()).toBe('set 2 of 3');
-            expect(dots()).toEqual(['done', 'current', 'left']);
+            expect(status()).toBe('set 1 of 3');
+            expect(dots()).toEqual(['current', 'left', 'left']);
             expect(text()).toContain('then Leg press · set 2 of 3 · 10 reps');
 
             advance(5000);
             expect(component.isRepsActive()).toBe(true);
+            expect(status()).toBe('set 2 of 3');
+            expect(dots()).toEqual(['done', 'current', 'left']);
             expect(said()).toBe('Leg press, 10 reps, set 2 of 3');
             pressDone();
             advance(5000);
 
             expect(status()).toBe('Last one!');
             expect(said()).toBe('Leg press, 10 reps, last set');
+            // Resting after it, it's done: no Last one! any more
+            pressDone();
+            expect(component.isRestActive()).toBe(true);
+            expect(status()).toBe('set 3 of 3');
             fixture.destroy();
         });
 
-        it('goes straight on to the next step after the last set, with no rest', () => {
+        it('rests after the last set too, then goes on to the next step', () => {
             start(legDay());
             pressDone();
             advance(5000);
             pressDone();
             advance(5000);
 
-            expect(text()).toContain('Next: Plank · 00:03');
+            expect(text()).toContain('Next: Rest · 00:05');
             pressDone();
+            expect(component.isRestActive()).toBe(true);
+            expect(text()).toContain('then Plank · 00:03');
+            advance(5000);
 
             expect(component.isWorkActive()).toBe(true);
             expect(text()).toContain('Plank');
@@ -3564,6 +3573,7 @@ describe('WorkoutComponent', () => {
             expect(component.reps()).toBe(8);
             expect(allSteps(store.workouts()[0])[0]).toEqual(expect.objectContaining({ reps: 8 }));
             pressDone();
+            advance(5000);
             advance(3000);
             const [entry] = TestBed.inject(HistoryStore).entries();
             expect(
@@ -3610,7 +3620,7 @@ describe('WorkoutComponent', () => {
         beforeEach(() => localStorage.clear());
         afterEach(() => localStorage.clear());
 
-        it('runs its steps in turn each round, with the rest between rounds', () => {
+        it('runs its steps in turn each round, with the rest after each', () => {
             start(upperBody());
 
             expect(text()).toContain('Bench');
@@ -3622,9 +3632,10 @@ describe('WorkoutComponent', () => {
             pressDone();
 
             expect(component.isRestActive()).toBe(true);
-            expect(status()).toBe('superset round 2 of 3');
+            expect(status()).toBe('superset round 1 of 3');
             expect(text()).toContain('then Bench · superset round 2 of 3 · 10 reps');
             advance(5000);
+            expect(status()).toBe('superset round 2 of 3');
             expect(said()).toBe('Bench, 10 reps, superset round 2 of 3');
             pressDone();
             pressDone();
@@ -3634,7 +3645,10 @@ describe('WorkoutComponent', () => {
             expect(said()).toBe('Bench, 10 reps, superset, last round');
             pressDone();
             pressDone();
-            // Straight on, with no rest after the last round
+            // The rest after the last round, before the plank
+            expect(component.isRestActive()).toBe(true);
+            expect(status()).toBe('superset round 3 of 3');
+            advance(5000);
             expect(component.isWorkActive()).toBe(true);
             fixture.destroy();
         });
@@ -3646,14 +3660,14 @@ describe('WorkoutComponent', () => {
             fixture.destroy();
         });
 
-        it("shows a strip of the round's steps, with the rest before it", () => {
+        it("shows a strip of the round's steps, with the rest after it", () => {
             start(upperBody());
 
-            expect(strip()).toEqual(['current', 'left']);
-            pressDone();
-            expect(strip()).toEqual(['done', 'current']);
-            pressDone();
             expect(strip()).toEqual(['current', 'left', 'left']);
+            pressDone();
+            expect(strip()).toEqual(['done', 'current', 'left']);
+            pressDone();
+            expect(strip()).toEqual(['done', 'done', 'current']);
             fixture.destroy();
         });
     });
@@ -3704,12 +3718,13 @@ describe('WorkoutComponent', () => {
             fixture.detectChanges();
             // Changed mid-run, it waits for the next one
             TestBed.inject(SettingsStore).update({ switchSidesSeconds: 20 });
-            // Two sets of step-ups, with a rest between them but not after
+            // Two sets of step-ups, with a rest after each
             pressDone();
             pressDone();
             advance(5000);
             pressDone();
             pressDone();
+            advance(5000);
             expect(face()).toContain('Left side');
 
             advance(3000);
