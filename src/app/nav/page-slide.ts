@@ -1,9 +1,16 @@
 import { ApplicationRef, inject, Service } from '@angular/core';
 import { Router } from '@angular/router';
-import { spring } from '../shared/spring';
+import { spring, springCurve } from '../shared/spring';
+import { letInputThrough } from './let-input-through';
 
 /** On <html> while a page slides, naming the parts that move. */
 export const SLIDING_CLASS = 'page-sliding';
+
+/**
+ * On <html> while the page cross-fades instead, with reduced motion (here and in
+ * WorkoutMorph): the slide's and the morph's named parts stay unnamed, so the whole page fades.
+ */
+export const FADING_CLASS = 'page-fading';
 
 /** Into a page further in (`in`, e.g. an exercise from the list), or back out of it (`out`). */
 export type SlideWay = 'in' | 'out';
@@ -22,6 +29,8 @@ export class PageSlide {
     private readonly appRef = inject(ApplicationRef);
     /** How far down the list was scrolled when an exercise was opened from it. */
     private listScroll = 0;
+    /** See takeCaught(). */
+    private caught = 0;
 
     /**
      * For a link's (click): goes to `url`, sliding `way`. A click that opens a new tab or
@@ -43,8 +52,8 @@ export class PageSlide {
     }
 
     /**
-     * Goes to `url`, sliding `way`. With reduced motion, or a browser without view
-     * transitions, it just goes. After a swipe back, `velocity` (px/s to the right) hands the
+     * Goes to `url`, sliding `way`. With reduced motion the pages cross-fade instead; in a
+     * browser without view transitions, it just goes. After a swipe back, `velocity` (px/s to the right) hands the
      * finger's speed on, so the page carries on at the speed it was let go. It carries on from
      * where the finger left it too, as the old picture is taken with the page still moved
      * along (SwipeBackDirective).
@@ -60,15 +69,17 @@ export class PageSlide {
             this.appRef.tick();
             window.scrollTo({ top, behavior: 'instant' });
         };
-        const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-        if (reduced || !document.startViewTransition) {
+        if (!document.startViewTransition) {
             void go();
             return;
         }
+        // With reduced motion the pages cross-fade instead, briefly, so it's still clear
+        // the page changed
+        const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
         const root = document.documentElement;
-        const classes = [SLIDING_CLASS, `${SLIDING_CLASS}--${way}`];
+        const classes = reduced ? [FADING_CLASS] : [SLIDING_CLASS, `${SLIDING_CLASS}--${way}`];
         root.classList.add(...classes);
-        if (velocity !== undefined) {
+        if (velocity !== undefined && !reduced) {
             // A spring already moving at the finger's speed, as a fraction of the way across
             // (the page's width) per second
             const timing = spring(0.3, {
@@ -78,6 +89,12 @@ export class PageSlide {
             root.style.setProperty('--slide-duration', `${timing.duration}ms`);
         }
         const transition = document.startViewTransition(go);
+        // A press mid-slide ends it and lands, rather than doing nothing till it's over. On a
+        // page sliding in, it notes where the page was, so a swipe back can take it from there.
+        letInputThrough(
+            transition,
+            way === 'in' && !reduced ? () => this.catchArriving() : undefined
+        );
         // Interrupted (e.g. another view transition starting) rejects `ready`; nothing waits on it
         transition.ready.catch(() => undefined);
         transition.finished.finally(() => {
@@ -86,4 +103,37 @@ export class PageSlide {
             root.style.removeProperty('--slide-duration');
         });
     }
+
+    /**
+     * How far right of its place (px) a page sliding in was showing when a press stopped it
+     * (0 if none did), for that press's pointerdown only: SwipeBackDirective puts the page back
+     * there, and the finger takes it on from where it was seen.
+     */
+    takeCaught(): number {
+        const caught = this.caught;
+        this.caught = 0;
+        return caught;
+    }
+
+    /** Notes where the page sliding in is on screen now, as a press is about to stop it. */
+    private catchArriving() {
+        const arriving = document.documentElement
+            .getAnimations({ subtree: true })
+            .find(
+                (animation) =>
+                    (animation.effect as KeyframeEffect | null)?.pseudoElement ===
+                    '::view-transition-new(slide-over)'
+            );
+        if (!arriving) {
+            return;
+        }
+        // From the right edge (100vw) to its place, on the app's spring (--ease-spring)
+        const seconds = Number(arriving.currentTime ?? 0) / 1000;
+        this.caught = (1 - Math.min(1, SLIDE_SPRING.progress(seconds))) * window.innerWidth;
+        // The press is sent on straight away; nothing after it should find this
+        queueMicrotask(() => (this.caught = 0));
+    }
 }
+
+/** The spring a page slides in on: --ease-spring, a 0.3s response with no bounce. */
+const SLIDE_SPRING = springCurve(0.3);

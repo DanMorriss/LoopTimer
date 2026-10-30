@@ -64,6 +64,8 @@
                 [first]="first"
                 [last]="last"
                 (cdkDragStarted)="closeWorkoutMenus()"
+                (cdkDragMoved)="drop.moved($event)"
+                (cdkDragReleased)="drop.released($event)"
                 (started)="startWorkout(workout)"
                 (menuToggled)="toggleWorkoutMenu(workout.id)"
                 (menuClosed)="closeWorkoutMenu(workout.id)"

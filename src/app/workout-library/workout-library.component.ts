@@ -1,4 +1,5 @@
 import { CdkDrag, CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop';
+import { DropSpring } from '../shared/drop-spring';
 import { PageSlide } from '../nav/page-slide';
 import {
     afterNextRender,
@@ -54,6 +55,8 @@ export class WorkoutLibraryComponent {
     /** What screen readers hear once a workout has moved. */
     protected readonly announcement = signal('');
     protected readonly holdMs = HOLD_MS;
+    /** A card let go settles into its place at the finger's speed. */
+    protected readonly drop = new DropSpring();
 
     protected isExistingWorkouts = computed(() => this.workoutStore.workouts().length > 0);
 

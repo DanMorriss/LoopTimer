@@ -30,6 +30,9 @@
     // canvases, so front and back line up and match in size
     aspect-ratio: 1 / 2;
     height: auto;
+    // A tapped muscle's own ring shows the press (BodyMapComponent.press), not the browser's
+    // grey flash over the muscle's box
+    -webkit-tap-highlight-color: transparent;
 }
 
 .body-map__shape {

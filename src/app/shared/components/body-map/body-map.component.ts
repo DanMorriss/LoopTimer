@@ -39,6 +39,8 @@ export class BodyMapComponent {
     private readonly settings = inject(SettingsStore);
     protected readonly id = `body-map-${nextId++}`;
     protected readonly hoveredMuscle = signal<MuscleGroup | null>(null);
+    /** The muscle a finger, pen or mouse button is down on, ringed as a hovered one is. */
+    protected readonly pressedMuscle = signal<MuscleGroup | null>(null);
 
     protected readonly sides = computed(() => {
         const figure = BODY_FIGURES[this.settings.bodyFigure()];
@@ -106,6 +108,28 @@ export class BodyMapComponent {
             return;
         }
         this.hoveredMuscle.set(muscle);
+    }
+
+    /**
+     * A mouse over a muscle rings it. Only a mouse: a finger's tap would otherwise leave it
+     * ringed until the next tap elsewhere, as a touch screen's :hover sticks.
+     */
+    protected pointerOver(event: PointerEvent, muscle: MuscleGroup | null): void {
+        if (event.pointerType === 'mouse') {
+            this.setHover(muscle);
+        }
+    }
+
+    protected pointerOff(): void {
+        this.setHover(null);
+        this.pressedMuscle.set(null);
+    }
+
+    /** Rings the muscle the moment it's pressed, before the tap lands, as a button lights up. */
+    protected press(event: PointerEvent, muscle: MuscleGroup | null): void {
+        if (this.tappable() && muscle !== null && event.isPrimary) {
+            this.pressedMuscle.set(muscle);
+        }
     }
 }
 

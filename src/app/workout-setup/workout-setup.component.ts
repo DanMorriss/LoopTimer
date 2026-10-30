@@ -56,6 +56,7 @@ import { ExercisePickerComponent } from './exercise-picker/exercise-picker.compo
 import { InfinitySwitchComponent } from '../shared/components/infinity-switch/infinity-switch.component';
 import { ToggleSwitchComponent } from '../shared/components/toggle-switch/toggle-switch.component';
 import { UndoService } from '../shared/undo/undo.service';
+import { DropSpring } from '../shared/drop-spring';
 import { changeSmoothly } from '../shared/layout-change';
 import {
     WheelPickerComponent,
@@ -963,6 +964,8 @@ export class WorkoutSetupComponent {
      * the step, so it stays on screen.
      */
     protected readonly grabbedAt = signal({ x: 0, y: 0, width: 0 });
+    /** A step let go settles into its place at the finger's speed. */
+    protected readonly drop = new DropSpring();
 
     /**
      * The superset whose handle is held: its steps hide from then until it's dropped, so it

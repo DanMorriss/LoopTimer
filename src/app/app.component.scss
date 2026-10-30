@@ -27,3 +27,24 @@ main {
     padding-inline: max(0.75rem, env(safe-area-inset-left)) max(0.75rem, env(safe-area-inset-right));
     pointer-events: none;
 }
+
+// Where the page scrolls under the bars, it softens into a blur that fades in towards the
+// screen's bottom edge, rather than running sharp up to the bars' edges: a scroll edge, as iOS
+// has under its floating bars. Behind the bars, and only while there are any.
+.bottom-bars:has(.tab-bar, .run-bar, .undo-bar)::before {
+    content: '';
+    position: fixed;
+    z-index: -1;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: calc(var(--bars-height) + 1rem);
+    backdrop-filter: blur(8px);
+    mask-image: linear-gradient(to top, #000 40%, transparent);
+    pointer-events: none;
+
+    // Not where the system asks for less see-through: the bars are solid there instead
+    @media (prefers-reduced-transparency: reduce) {
+        display: none;
+    }
+}

@@ -96,6 +96,8 @@
                         cdkDrag
                         [cdkDragData]="key"
                         (cdkDragStarted)="dragStarted()"
+                        (cdkDragMoved)="drop.moved($event)"
+                        (cdkDragReleased)="drop.released($event)"
                     >
                         <!-- What follows the pointer: a compact card, as the wheels don't copy well.
                              Held where the step was grabbed (grabbedAt), not by its corner. A

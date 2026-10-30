@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 
 import { fakeReducedMotion } from '../shared/testing/fake-reduced-motion';
-import { PageSlide, SLIDING_CLASS } from './page-slide';
+import { FADING_CLASS, PageSlide, SLIDING_CLASS } from './page-slide';
 
 @Component({ template: '' })
 class BlankPage {}
@@ -23,7 +23,12 @@ describe('PageSlide', () => {
     });
 
     afterEach(() =>
-        root.classList.remove(SLIDING_CLASS, `${SLIDING_CLASS}--in`, `${SLIDING_CLASS}--out`)
+        root.classList.remove(
+            SLIDING_CLASS,
+            `${SLIDING_CLASS}--in`,
+            `${SLIDING_CLASS}--out`,
+            FADING_CLASS
+        )
     );
 
     const click = (init: MouseEventInit = {}) =>
@@ -90,14 +95,17 @@ describe('PageSlide', () => {
         expect(router.url).toBe('/exercises');
     });
 
-    it('just goes with reduced motion, with no view transition', async () => {
+    it('cross-fades with reduced motion, rather than sliding', async () => {
         fakeReducedMotion(true);
         const start = vi.spyOn(document, 'startViewTransition');
 
         slide.follow(click(), '/exercises/back-squat', 'in');
 
-        expect(start).not.toHaveBeenCalled();
+        expect(start).toHaveBeenCalledTimes(1);
+        expect(root.classList).toContain(FADING_CLASS);
         expect(root.classList).not.toContain(SLIDING_CLASS);
         await landed('/exercises/back-squat');
+        await start.mock.results[0].value.finished;
+        expect(root.classList).not.toContain(FADING_CLASS);
     });
 });

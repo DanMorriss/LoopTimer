@@ -17,8 +17,11 @@
                         "
                         (click)="tapMuscle(shape.muscle)"
                         (keydown)="toggleByKey($event, shape.muscle)"
-                        (mouseenter)="setHover(shape.muscle)"
-                        (mouseleave)="setHover(null)"
+                        (pointerenter)="pointerOver($event, shape.muscle)"
+                        (pointerleave)="pointerOff()"
+                        (pointerdown)="press($event, shape.muscle)"
+                        (pointerup)="pressedMuscle.set(null)"
+                        (pointercancel)="pressedMuscle.set(null)"
                         (focus)="setHover(shape.muscle)"
                         (blur)="setHover(null)"
                     >
@@ -28,7 +31,9 @@
                                 [class]="'body-map__shape body-map__shape--' + shape.shade"
                                 [class.body-map__shape--tappable]="tappable() && shape.muscle"
                                 [class.body-map__shape--hovered]="
-                                    !!shape.muscle && hoveredMuscle() === shape.muscle
+                                    !!shape.muscle &&
+                                    (hoveredMuscle() === shape.muscle ||
+                                        pressedMuscle() === shape.muscle)
                                 "
                             />
                         }

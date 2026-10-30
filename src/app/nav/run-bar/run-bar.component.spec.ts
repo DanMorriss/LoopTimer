@@ -175,6 +175,30 @@ describe('RunBarComponent', () => {
             expect(TestBed.inject(ActiveRunService).summaryOpen()).toBe(true);
         });
 
+        it('keeps going when caught on its way off, from where it was seen', async () => {
+            pointer('pointerdown', 20);
+            pointer('pointermove', 120);
+            pointer('pointermove', 280);
+            await pause();
+            pointer('pointerup', 280);
+            await new Promise((resolve) => setTimeout(resolve, 30));
+
+            // Caught part of the way off: stopped there, not jumped off the end
+            const seen = new DOMMatrix(getComputedStyle(bar()!).transform).m41;
+            pointer('pointerdown', 300);
+            expect(new DOMMatrix(bar()!.style.transform).m41).toBeCloseTo(seen, 0);
+            expect(seen).toBeLessThan(400);
+            // Let go short of halfway, it comes back, and the workout goes on
+            pointer('pointermove', 330);
+            pointer('pointermove', 100);
+            await pause();
+            pointer('pointerup', 100);
+            await new Promise((resolve) => setTimeout(resolve, 600));
+
+            expect(TestBed.inject(ActiveRunService).summaryOpen()).toBe(false);
+            expect(TestBed.inject(Router).url).toBe('/library');
+        });
+
         it('springs back, still going, when let go short of halfway', async () => {
             pointer('pointerdown', 20);
             pointer('pointermove', 60);
@@ -202,7 +226,7 @@ describe('RunBarComponent', () => {
             expect(TestBed.inject(Router).url).toBe('/library');
         });
 
-        it('leaves a mouse drag, an up-and-down move, and a move left alone', () => {
+        it('leaves a mouse drag and an up-and-down move alone, and resists a move left', () => {
             pointer('pointerdown', 20, 20, { pointerType: 'mouse' });
             pointer('pointermove', 300, 20, { pointerType: 'mouse' });
             pointer('pointerup', 300, 20, { pointerType: 'mouse' });
@@ -214,11 +238,15 @@ describe('RunBarComponent', () => {
             pointer('pointerup', 300, 80);
             expect(bar()!.style.transform).toBe('');
 
+            // Left of where it rests, it moves less than the finger, rather than stopping dead
             pointer('pointerdown', 200, 20);
             pointer('pointermove', 230);
             pointer('pointermove', 100);
-            expect(bar()!.style.transform).toBe('');
+            const moved = new DOMMatrix(bar()!.style.transform).m41;
+            expect(moved).toBeLessThan(0);
+            expect(moved).toBeGreaterThan(-100);
             pointer('pointercancel', 100);
+            expect(bar()!.style.transform).toBe('');
 
             expect(TestBed.inject(ActiveRunService).summaryOpen()).toBe(false);
         });

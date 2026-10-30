@@ -1,10 +1,10 @@
 @use 'type' as *;
 
-// The app's name, or the workout's, in the display face (with the 12px margin
-// .mat-typography gives paragraphs, as it was when it was a <p>)
+// The app's name, or the workout's, in the display face (with the margin .mat-typography gives
+// paragraphs, as it was when it was a <p>: 12px at the default text size, growing with it)
 .site-title {
     @include display;
-    margin: 0 0 12px;
+    margin: 0 0 0.75rem;
 }
 
 // The sides only ever hold the workout page's 44px back link, so a long title gets the middle
