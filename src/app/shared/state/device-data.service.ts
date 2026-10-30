@@ -6,6 +6,12 @@ import { WorkoutStore } from './workout-store.service';
 export const DEVICE_CHANNEL = 'loop-workouts-device';
 const CLEARED = 'cleared';
 
+/** This device's own choices, which signing out keeps: the settings, and its clock's offset. */
+const DEVICE_KEYS = ['settings', 'clock-offset'];
+
+/** Left in sessionStorage by signing out, for the Account tab to say so once it's reloaded. */
+export const SIGNED_OUT_NOTE = 'signed-out';
+
 /**
  * Everything the app keeps on this device, as a whole: Clear this device (SYN-9) removes it,
  * e.g. on a shared computer, and starts the app again empty. It's started with the app, so
@@ -31,18 +37,31 @@ export class DeviceDataService {
     }
 
     /**
-     * Removes the workouts, history, exercises, notes, deletions and settings from this
+     * Removes the workouts, history, exercises, notes, plan, deletions and settings from this
      * device, then reloads the app, and the app's other open tabs. A workout going is
      * dropped, not logged: logging it as the page unloads would put it straight back in the
-     * history.
+     * history. Signing out (`signingOut`) keeps this device's settings, and leaves a note
+     * for the Account tab to say it's done.
      */
-    async clear() {
+    async clear({ signingOut = false } = {}) {
         this.workouts.stop();
+        const kept = signingOut
+            ? DEVICE_KEYS.flatMap((key) => {
+                  const value = localStorage.getItem(key);
+                  return value === null ? [] : [[key, value] as const];
+              })
+            : [];
         // Storage is cleared, and the history's deletion asked for, in this same task, so
         // it's all done before another tab hears this and reloads
         this.channel?.postMessage(CLEARED);
         localStorage.clear();
         sessionStorage.clear();
+        for (const [key, value] of kept) {
+            localStorage.setItem(key, value);
+        }
+        if (signingOut) {
+            sessionStorage.setItem(SIGNED_OUT_NOTE, '1');
+        }
         await deleteDatabase();
         this.reload();
     }

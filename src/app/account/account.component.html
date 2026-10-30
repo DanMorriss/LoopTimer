@@ -45,11 +45,41 @@
                                 </button>
                             </div>
                         </div>
+                    } @else if (confirmingSignOut()) {
+                        <div
+                            class="account__ask"
+                            role="group"
+                            aria-labelledby="account-sign-out-warning"
+                        >
+                            <p class="account__warning" id="account-sign-out-warning" tabindex="-1">
+                                Some changes on this device haven't synced, maybe because you're
+                                offline. Signing out removes them from this device, so they'd be
+                                lost.
+                            </p>
+                            <div class="account__actions">
+                                <button
+                                    type="button"
+                                    class="btn-pill btn-pill--danger"
+                                    [disabled]="busy()"
+                                    (click)="signOut(true)"
+                                >
+                                    Sign out anyway
+                                </button>
+                                <button type="button" class="btn-pill" (click)="cancelSignOut()">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
                     } @else {
+                        <p class="account__hint account__sign-out-hint">
+                            Signing out removes your workouts and history from this device. Your
+                            account keeps them, ready for when you sign in again.
+                        </p>
                         <div class="account__actions">
                             <button
                                 type="button"
                                 class="btn-pill"
+                                id="account-sign-out"
                                 [disabled]="busy()"
                                 (click)="signOut()"
                             >

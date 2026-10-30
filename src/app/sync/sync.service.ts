@@ -109,6 +109,18 @@ export class SyncService {
         return this.running;
     }
 
+    /**
+     * Syncs, then gives whether everything here has been sent: before signing out, which
+     * removes it from this device.
+     */
+    async syncAll(): Promise<boolean> {
+        await this.sync();
+        const state = this.state;
+        return (
+            state !== null && changedSince(recordsHere(this.copyHere()), state.seen).length === 0
+        );
+    }
+
     private soon(delayMs: number) {
         clearTimeout(this.timer);
         this.timer = setTimeout(() => void this.sync(), delayMs);

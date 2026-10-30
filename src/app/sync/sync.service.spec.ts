@@ -254,6 +254,19 @@ describe('SyncService', () => {
         expect(status()).toMatchObject({ syncing: false, problem: 'failed', lastSyncedAt: null });
     });
 
+    it('says whether everything here has been sent, before signing out', async () => {
+        await start();
+        workouts().addWorkout(newWorkout('Sprints'));
+
+        expect(await sync.syncAll()).toBe(true);
+        expect(onServer('workout', workouts().workouts()[0].id)).toBeDefined();
+
+        // Offline: the change can't go
+        client.rpc.mockResolvedValue({ data: null, error: { message: 'offline' } });
+        workouts().addWorkout(newWorkout('Hills'));
+        expect(await sync.syncAll()).toBe(false);
+    });
+
     it("doesn't sync while signed out", async () => {
         TestBed.resetTestingModule();
         signIn(null);

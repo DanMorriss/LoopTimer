@@ -94,9 +94,10 @@ Signing in makes the account, if it's new, and starts sync (below).
     - A link that's expired or been used comes back with "That sign-in link has expired or was used already. Send yourself another." above the email field, and the reason is taken out of the address.
     - Signing in with the code says "Signed in.", and focus goes to the page's title.
 - **Signed in**, it says "Signed in as me@example.com.", then "Your workouts, history and exercises sync between the devices you sign in on. Settings stay a choice for each device.", how sync is going (below), and offers **Sign out** and **Delete account**. This device's hint adds "That signs this device out too; your account keeps what's in it."
-    - **Sign out** signs this device out only, and keeps its data: "Signed out. Your data is still on this device."
+    - Over the buttons: "Signing out removes your workouts and history from this device. Your account keeps them, ready for when you sign in again."
+    - **Sign out** syncs first ("Syncing before signing out…"), then signs this device out and **removes the account's data from it**: workouts, the library's order, the weekly plan, history, your own exercises, notes, hidden exercises and deletions, and a workout in progress. This device's settings stay (theme, sound, units, your profile and equipment). Other devices stay signed in. The app reloads on the Account tab, saying "Signed out. Your data was removed from this device; your account keeps it." It's removed so the next person to use the device doesn't see it, nor have it merged into their account when they sign in. (Decided on 2026-10-30; until then signing out kept the data.)
+    - If something couldn't be sent (offline, say), it asks first: "Some changes on this device haven't synced, maybe because you're offline. Signing out removes them from this device, so they'd be lost.", with **Sign out anyway** and **Cancel** (focus on the warning; Cancel puts it back on Sign out).
     - **Delete account** asks first, as Clear this device does: "This deletes your account and everything of yours on the server. What's on this device stays. It can't be undone.", with **Delete my account** and **Cancel** (focus on the warning; Cancel puts it back on Delete account). Deleting signs this device out: "Your account has been deleted. Your data is still on this device." If it fails: "Your account couldn't be deleted. Check your connection and try again.", still signed in.
-    - Sign out failing: "You couldn't be signed out. Check your connection and try again."
 - While it checks whether you're signed in: "Checking whether you're signed in…". If Supabase's code can't be loaded (offline, say), it shows as signed out.
 - What each of these did is read out by screen readers, under the section.
 
@@ -107,7 +108,7 @@ Decided with Dan on 2026-10-27:
 - **An account is optional.** Without one, the app works as it did before accounts, on the device only.
 - **Signing in is by an email link** (type your email, tap the link it sends) or its code, or with Google (SYN-7), and Apple once it's set up. If an iPhone app offers Google, the App Store asks for Sign in with Apple beside it.
 - **An Account tab** in the tab bar is where you sign in, see when it last synced, sign out and **delete your account** (SYN-8). Deleting it removes everything of yours on the server; what's on the device stays.
-- **Signing out keeps the data on the device**, so the app carries on as it would without an account. To remove it too, there's **Clear this device** (above).
+- **Signing out removes the account's data from the device**, after syncing it, keeping only the device's settings, so a shared device doesn't keep one person's workouts for the next. Deleting the account leaves the data on the device, as without an account; **Clear this device** (above) removes that.
 - **The device's copy is the one the app works from.** Nothing waits on the network: changes are saved here first, sent when online, and other devices' changes are merged in as an import's are, record by record, the most recent change winning.
 - **What syncs:** workouts, the library's order, the weekly plan, the history, your own exercises, your notes on exercises, hidden exercises and deletions. **Settings don't:** theme, sound, units and your equipment stay a choice for each device, as with import. The run in progress doesn't either.
 - **The first sign-in on a device** merges what's here with what's in the account, as importing a backup does, so nothing is lost on either side.
@@ -166,7 +167,8 @@ Compared on 2026-10-27, for cost, how it fits the device-first design above, sig
 - Given an account made by email link as me@example.com, when I sign in with Google as me@example.com, then it's the same account, with the same data.
 - Given I've asked for a sign-in email, when I type its code and press Sign in, then I'm signed in, and the tab says "Signed in as" my address.
 - Given a sign-in link that's expired, when it opens the app, then the Account tab says so, and its address no longer has the reason in it.
-- Given I'm signed in, when I press Sign out, then I'm signed out and my workouts and history are still here.
+- Given I'm signed in with everything synced, when I press Sign out, then I'm signed out, my workouts and history are gone from this device and my theme isn't; when I sign in again, they come back.
+- Given I'm signed in and offline with a change not synced, when I press Sign out, then it asks first; Cancel leaves me signed in with the change; Sign out anyway signs out and removes it.
 - Given I'm signed in, when I press Delete account, then nothing is deleted until I press Delete my account; then the account is gone, I'm signed out, and my workouts and history are still here.
 - Given workouts and history on my phone, when I sign in on my laptop with the same account, then they're on my laptop too, and the laptop's are on my phone the next time it syncs.
 - Given I'm signed in on two devices, when I change a workout on one, then the other has the change the next time it syncs (on opening it, or coming back to it); when I delete one, then it's deleted on the other.

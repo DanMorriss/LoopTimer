@@ -119,7 +119,15 @@ export class AccountService {
         }
     }
 
-    /** Signs this device out, keeping its data. Gives whether it worked. */
+    /**
+     * Syncs, then gives whether everything on this device has been sent to the account:
+     * signing out removes it from the device, so anything unsent would be lost.
+     */
+    syncAll(): Promise<boolean> {
+        return this.sync.syncAll();
+    }
+
+    /** Signs this device out. Gives whether it worked. */
     async signOut(): Promise<boolean> {
         try {
             const client = await this.connect();
