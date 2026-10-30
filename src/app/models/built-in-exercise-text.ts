@@ -990,4 +990,236 @@ export const BUILT_IN_EXERCISE_TEXT: Readonly<Record<BuiltInExercise['id'], Exer
             'Too easy? Do it from your feet instead of your knees.',
         ],
     },
+    // Ninth batch: kettlebells, including kettlebell takes on dumbbell exercises
+    'builtin:kettlebell-thruster': {
+        description:
+            'A squat that flows straight into pressing a kettlebell overhead. Works your legs and shoulders, and gets your heart going.',
+        steps: [
+            'Hold a kettlebell at your shoulder, or one at each, the bell resting on the outside of your forearm.',
+            'Stand with your feet a little wider than your shoulders and sit down into a squat, elbows tucked in.',
+            'Drive up out of the squat, and use that push to press the kettlebell straight overhead.',
+            'Bring it back to your shoulder as you sit down into the next squat.',
+        ],
+        tips: [
+            'Make it one smooth movement: the press starts as your legs straighten, not after.',
+            'With one kettlebell, do all your reps on one side, then swap.',
+        ],
+    },
+    'builtin:kettlebell-clean-and-press': {
+        description:
+            'You swing a kettlebell up to rest at your shoulder, then press it overhead. A whole-body lift with one weight.',
+        steps: [
+            'Stand with your feet a little wider than your shoulders, the kettlebell on the floor in front of you.',
+            'Hike it back between your legs with one hand, then snap your hips forward and pull it up close to your body.',
+            'Let it roll round your hand to rest at your shoulder, on the outside of your forearm, wrist straight.',
+            'Press it straight overhead until your arm is straight, then lower it to your shoulder and let it drop back down.',
+        ],
+        tips: [
+            'Keep the bell close as it comes up, so it lands softly instead of banging your forearm.',
+            'Do all your reps on one side, then swap.',
+        ],
+    },
+    'builtin:kettlebell-snatch': {
+        description:
+            'In one movement, you swing a kettlebell from between your legs to straight overhead. Powerful hips and hard conditioning.',
+        steps: [
+            'Stand with your feet a little wider than your shoulders, the kettlebell on the floor in front of you.',
+            'Hike it back between your legs with one hand, then snap your hips forward to send it up.',
+            'As it rises, keep it close and punch your hand up through the handle, so it lands softly overhead.',
+            'Let it drop back between your legs, pushing your hips back, and go straight into the next one.',
+        ],
+        tips: [
+            'Bruised forearm? Punch your hand through sooner, rather than letting the bell flip over.',
+            "Learn the kettlebell swing first: the snatch is a swing that doesn't stop at chest height.",
+        ],
+    },
+    'builtin:kettlebell-pistol-squat': {
+        description:
+            'A squat on one leg, the other held out straight in front, with a kettlebell at your chest. Leg strength and balance.',
+        steps: [
+            'Hold a kettlebell by its horns against your chest, and stand on one leg.',
+            'Lift the other leg out straight in front of you, and push the kettlebell forward a little to help you balance.',
+            'Sit down as low as you can on your standing leg, keeping its heel on the floor.',
+            'Push through your whole foot to stand back up. Do all your reps, then swap legs.',
+        ],
+        tips: [
+            'A light kettlebell held out in front often makes balancing easier, not harder.',
+            "Can't go all the way down yet? Squat down to a bench or box behind you.",
+        ],
+    },
+    'builtin:kettlebell-floor-press': {
+        description:
+            'Lying on the floor, you press a kettlebell up from your chest with one arm. A bench press with no bench.',
+        steps: [
+            'Lie on your side next to the kettlebell, grip its handle with both hands, and roll onto your back with it.',
+            'Bend your knees, feet flat, and take one hand away. The bell rests on the outside of your forearm.',
+            'Press it straight up over your shoulder until your arm is straight.',
+            'Lower it until your upper arm touches the floor, then press again. Do all your reps, then swap sides.',
+        ],
+        tips: [
+            'Let your upper arm rest on the floor for a moment each rep, without bouncing off it.',
+            'Keep your wrist straight, not bent back by the weight of the bell.',
+        ],
+    },
+    'builtin:turkish-get-up': {
+        description:
+            'You go from lying down to standing with a kettlebell held overhead, then back down. Strength, balance and steady shoulders.',
+        steps: [
+            'Lie on your back holding a kettlebell straight up in your right hand, right knee bent, left arm out to the side.',
+            'Eyes on the bell, roll up onto your left elbow, then your left hand, keeping your right arm straight.',
+            'Lift your hips, sweep your left leg back under you to kneel, and turn your body upright.',
+            'Stand up from the kneel, the bell still overhead and your arm straight.',
+            'Go back down the same way, one step at a time. Do all your reps, then swap sides.',
+        ],
+        tips: [
+            'Learn it with no weight, or a shoe balanced on your fist, before using a kettlebell.',
+            'Go slowly: each step is a position to hold, not a rush to the top.',
+        ],
+    },
+    'builtin:kettlebell-sumo-high-pull': {
+        description:
+            'From a wide stance, you stand up with a kettlebell and pull it up to your chin. Works your legs and upper back together.',
+        steps: [
+            'Stand with your feet wide, toes turned out, the kettlebell on the floor between them.',
+            'Squat down and grip the handle with both hands, back flat, chest up.',
+            'Stand up fast and keep it moving, pulling the handle up to your chin, elbows high and wide.',
+            'Lower it until your arms are straight, then sit back down to touch the bell to the floor.',
+        ],
+        tips: [
+            'Your legs start it and your arms finish it: stand up first, then pull.',
+            'Stand tall at the top, rather than leaning back to get the bell higher.',
+        ],
+    },
+    'builtin:chainsaw-row': {
+        description:
+            'From a split stance, leaning on your front thigh, you pull a kettlebell up to your hip. A one-arm row with no bench.',
+        steps: [
+            'Step your left foot forward and lean forward, resting your left forearm on your left thigh, back flat.',
+            'Hold a kettlebell or dumbbell in your right hand, hanging below your shoulder with your arm straight.',
+            'Pull it up towards your hip, elbow close to your side, as if starting a chainsaw.',
+            'Lower it slowly, then do all your reps before swapping sides.',
+        ],
+        tips: ["Keep your shoulders square to the floor; if you twist to lift it, it's too heavy."],
+    },
+    'builtin:kettlebell-reverse-crunch': {
+        description:
+            'Lying on your back holding a kettlebell behind your head, you curl your hips up off the floor. Hard work for your abs.',
+        steps: [
+            'Lie on your back with a heavy kettlebell on the floor behind your head, and hold its handle with both hands.',
+            'Lift your legs, knees bent at a right angle, so your knees are over your hips.',
+            'Breathe out and curl your hips up off the floor, bringing your knees towards your chest.',
+            'Lower your hips slowly back down, without letting your feet touch the floor.',
+        ],
+        tips: [
+            "Lift with your abs, not by swinging your legs: it's a small, slow curl.",
+            'Too easy? Straighten your legs more as you get stronger.',
+        ],
+    },
+    'builtin:plank-pull-through': {
+        description:
+            'Holding a plank on your hands, you drag a kettlebell from side to side underneath you. Builds a middle that resists twisting.',
+        steps: [
+            'Get into a plank on your hands, feet a little wider than your hips, a kettlebell beside your left hand.',
+            'Reach under your body with your right hand and drag the kettlebell across to your right side.',
+            'Put your hand back down, then reach under with your left hand and drag it back.',
+            'Keep your hips level and still the whole time.',
+        ],
+        tips: [
+            'Feet wider apart makes it easier to keep your hips still; closer together makes it harder.',
+            'Count each drag as a rep, or each pair, but always count the same way.',
+        ],
+    },
+    'builtin:half-kneeling-kettlebell-press': {
+        description:
+            "Kneeling on one knee, you press a kettlebell overhead with one hand. Your legs can't help, so your shoulder does it all.",
+        steps: [
+            'Kneel on your right knee, left foot flat in front of you, both knees at right angles.',
+            'Hold a kettlebell at your right shoulder, the bell resting on the outside of your forearm.',
+            'Squeeze your right glute, brace your middle, and press the bell up until your arm is straight.',
+            'Lower it slowly back to your shoulder. Do all your reps, then swap sides and knees.',
+        ],
+        tips: [
+            "Don't lean away from the bell to get it up; stay tall, and go lighter if you have to.",
+        ],
+    },
+    'builtin:kettlebell-halo': {
+        description:
+            'You circle a kettlebell around your head, holding it upside down by its horns. Keeps your shoulders strong and moving well.',
+        steps: [
+            'Stand tall, or kneel, holding a kettlebell upside down by its horns in front of your chest.',
+            'Circle it round one side of your head, then behind your head, close to your neck.',
+            "Bring it round the other side and back to your chest. That's one rep.",
+            'Do half your reps one way, then half the other.',
+        ],
+        tips: [
+            'Keep it close to your head and go slowly; this is about control, not weight.',
+            "Squeeze your glutes so your lower back doesn't arch as the bell goes behind you.",
+        ],
+    },
+    'builtin:kettlebell-around-the-world': {
+        description:
+            'Standing tall, you pass a kettlebell from hand to hand around your waist. Works your grip and holds your middle steady.',
+        steps: [
+            'Stand tall, feet hip-width apart, holding a kettlebell by its handle in your right hand.',
+            'Swing it round your right side and behind you, and pass it to your left hand behind your back.',
+            "Bring it round your left side to the front and pass it back to your right hand. That's one rep.",
+            'Do half your reps one way, then half the other.',
+        ],
+        tips: ['Keep your hips facing forward: only the bell goes round.'],
+    },
+    'builtin:kettlebell-push-up': {
+        description:
+            'A push-up with your hands on the handles of two kettlebells. Lets you go lower than you can on the floor.',
+        steps: [
+            'Set two kettlebells upright on the floor, a little wider than your shoulders, and grip their handles.',
+            'Step your feet back into a plank, wrists straight and body in one straight line.',
+            'Lower yourself until your chest is between the handles, elbows angled back a little.',
+            'Push back up until your arms are straight.',
+        ],
+        tips: [
+            'Only one kettlebell? Put one hand on it and the other on the floor, and swap each set.',
+            "Use bells with flat bases on a floor that grips, so they can't roll.",
+        ],
+    },
+    'builtin:kettlebell-lunge': {
+        description:
+            'With a kettlebell in each hand, or one at your chest, you step forward and drop your back knee towards the floor.',
+        steps: [
+            'Stand tall with a kettlebell in each hand by your sides, or one held by its horns against your chest.',
+            'Take a long step forward and bend both knees until your back knee nearly touches the floor.',
+            'Push through your front foot to step back to standing.',
+            'Swap legs each time, or do all your reps on one leg, then the other.',
+        ],
+        tips: [
+            'Only one kettlebell? Hold it at your chest; it helps you stay upright, too.',
+            'Count each leg as a rep, or each pair, but always count the same way.',
+        ],
+    },
+    'builtin:kettlebell-curl': {
+        description:
+            'Standing, you bend your elbows to lift a kettlebell from your thighs to your chest. Works your biceps and grip.',
+        steps: [
+            'Stand tall holding a kettlebell by its horns, arms straight, the bell hanging in front of your thighs.',
+            'Keeping your elbows by your sides, bend them to lift it towards your chest.',
+            'Lower it slowly until your arms are straight.',
+        ],
+        tips: [
+            "If you're swinging your body to lift it, it's too heavy.",
+            'Got two? Hold one by its handle in each hand, the bells hanging below, and curl them together.',
+        ],
+    },
+    'builtin:kettlebell-press': {
+        description:
+            'Standing, you press a kettlebell from your shoulder to straight overhead, one arm at a time.',
+        steps: [
+            'Swing the kettlebell up to your shoulder, or lift it there with both hands. It rests on the outside of your forearm.',
+            'Stand tall with your feet hip-width apart. Squeeze your glutes and brace your middle.',
+            'Press it straight up until your arm is straight and your biceps is by your ear.',
+            'Lower it slowly back to your shoulder. Do all your reps, then swap sides.',
+        ],
+        tips: [
+            "Don't lean away to get it up; if you have to, it's too heavy.",
+            'Squeeze the handle hard; it makes the press feel steadier.',
+        ],
+    },
 };
