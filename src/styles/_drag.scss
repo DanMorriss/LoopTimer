@@ -1,0 +1,16 @@
+// Something dragged in a drop list (Angular CDK: the library's cards, setup's steps), let go:
+// the copy following the finger settles into its place on the app's spring, carrying on at
+// the finger's speed (--drop-easing and --drop-duration, set as it's let go by DropSpring,
+// src/app/shared/drop-spring.ts). Here rather than with the pages, as the copy is put on
+// <body>, outside them.
+
+.cdk-drag-preview.cdk-drag-animating {
+    transition: transform var(--drop-duration, var(--spring-duration))
+        var(--drop-easing, var(--ease-spring));
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cdk-drag-preview.cdk-drag-animating {
+        transition: none;
+    }
+}

@@ -1,5 +1,6 @@
 @use 'styles/buttons';
 @use 'styles/dialog';
+@use 'styles/drag';
 @use 'styles/forms';
 @use 'styles/info';
 @use 'styles/menu';
@@ -334,6 +335,38 @@ body.mat-typography {
     font-family: var(--font-text);
     font-weight: 600;
     letter-spacing: normal;
+}
+
+// Material sets each heading's size, leading and margin (and a paragraph's margin) in px,
+// which stay put when the browser's text is made bigger: a title that wraps would run its
+// lines into each other. The same at the default size, in rem so they grow with the text. A
+// heading that sets its own size keeps these leadings and margins unless it sets its own too.
+.mat-typography h1 {
+    font-size: 1.5rem;
+    line-height: 2rem;
+    margin: 0 0 1rem;
+}
+
+.mat-typography h2 {
+    font-size: 1.25rem;
+    line-height: 2rem;
+    margin: 0 0 1rem;
+}
+
+.mat-typography h3 {
+    font-size: 1rem;
+    line-height: 1.75rem;
+    margin: 0 0 1rem;
+}
+
+.mat-typography h4 {
+    font-size: 1rem;
+    line-height: 1.5rem;
+    margin: 0 0 1rem;
+}
+
+.mat-typography p {
+    margin: 0 0 0.75rem;
 }
 
 // Changing the theme in settings fades the page between the old colours and the new, with a

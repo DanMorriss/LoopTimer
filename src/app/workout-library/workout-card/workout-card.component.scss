@@ -53,9 +53,10 @@
     // A long press lifts the card, rather than starting the phone's text selection or link menu
     user-select: none;
     -webkit-touch-callout: none;
-    // Lifting when held, below
+    // Lifting when held, below, on the app's spring (over its own length: squeezed shorter, the
+    // curve would be a different, much stiffer spring)
     transition:
-        scale 0.2s var(--ease-spring),
+        scale var(--spring-duration) var(--ease-spring),
         box-shadow 0.2s ease;
 }
 

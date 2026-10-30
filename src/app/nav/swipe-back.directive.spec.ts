@@ -28,14 +28,22 @@ describe('SwipeBackDirective', () => {
     let fixture: ComponentFixture<SwipePage>;
     let page: HTMLElement;
     const navigate = vi.fn();
+    /** Where a page sliding in was when the press stopped it (PageSlide.takeCaught). */
+    let caught = 0;
 
     beforeEach(async () => {
         navigate.mockReset();
+        caught = 0;
         fakeReducedMotion(false);
         // Pointers made up by a test aren't active, so the browser won't capture them
         vi.spyOn(Element.prototype, 'setPointerCapture').mockImplementation(() => undefined);
+        const takeCaught = () => {
+            const was = caught;
+            caught = 0;
+            return was;
+        };
         TestBed.configureTestingModule({
-            providers: [{ provide: PageSlide, useValue: { navigate } }],
+            providers: [{ provide: PageSlide, useValue: { navigate, takeCaught } }],
         });
         fixture = TestBed.createComponent(SwipePage);
         await fixture.whenStable();
@@ -100,12 +108,59 @@ describe('SwipeBackDirective', () => {
         expect(navigate.mock.calls[0][2]).toBeGreaterThan(0);
     });
 
-    it("doesn't follow the finger back past where it started", () => {
+    it('resists the finger back past where it started, rather than stopping dead', () => {
         pointer('pointerdown', 100);
         pointer('pointermove', 130);
         pointer('pointermove', 40, 110);
 
-        expect(page.style.transform).toBe('translateX(0px)');
+        // 60px past, it moves less than that, but some
+        const moved = new DOMMatrix(page.style.transform).m41;
+        expect(moved).toBeLessThan(0);
+        expect(moved).toBeGreaterThan(-60);
+    });
+
+    it('takes the page from where it is when caught springing back into place', async () => {
+        pointer('pointerdown', 20);
+        pointer('pointermove', 120);
+        await pause();
+        pointer('pointerup', 120);
+        expect(page.getAnimations()).toHaveLength(1);
+
+        // Caught part of the way back: stopped there, not jumped into place
+        await tick();
+        const seen = new DOMMatrix(getComputedStyle(page).transform).m41;
+        pointer('pointerdown', 200);
+        expect(page.getAnimations()).toHaveLength(0);
+        expect(new DOMMatrix(page.style.transform).m41).toBeCloseTo(seen, 0);
+        expect(seen).toBeGreaterThan(0);
+
+        // And follows the finger on from there
+        pointer('pointermove', 230);
+        expect(new DOMMatrix(page.style.transform).m41).toBeCloseTo(seen + 30, 0);
+    });
+
+    it('springs on into place from a tap that caught it on the way', async () => {
+        pointer('pointerdown', 20);
+        pointer('pointermove', 120);
+        await pause();
+        pointer('pointerup', 120);
+        await tick();
+
+        pointer('pointerdown', 200);
+        pointer('pointerup', 200);
+
+        expect(page.style.transform).toBe('');
+        expect(page.getAnimations()).toHaveLength(1);
+    });
+
+    it('takes a page caught sliding in from where it was seen', () => {
+        caught = 150;
+
+        pointer('pointerdown', 20);
+        expect(page.style.transform).toBe('translateX(150px)');
+        pointer('pointermove', 60);
+
+        expect(page.style.transform).toBe('translateX(190px)');
     });
 
     it('leaves an up-and-down move to the page, as a scroll', () => {

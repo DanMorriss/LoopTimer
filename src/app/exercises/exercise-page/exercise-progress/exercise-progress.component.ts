@@ -205,6 +205,7 @@ export class ExerciseProgressComponent {
     }
 
     /** Hovering snaps to the workout nearest the pointer, across the chart's whole height. */
+    /** The point nearest the pointer, from the moment it's pressed (a tap, too) as it moves. */
     protected onPointerMove(event: PointerEvent) {
         const svg = event.currentTarget as SVGSVGElement;
         const box = svg.getBoundingClientRect();

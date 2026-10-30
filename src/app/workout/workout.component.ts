@@ -1,5 +1,6 @@
 import {
     afterNextRender,
+    AnimationCallbackEvent,
     Component,
     DOCUMENT,
     computed,
@@ -55,6 +56,7 @@ import { describeSets } from '../history/history-format';
 import { injectPrefersReducedMotion } from '../shared/reduced-motion';
 import { criticallyDampedSpring } from '../shared/spring';
 import { fitName } from './fit-name';
+import { rollIn, rollOut, RollWay } from './step-roll';
 import { RoundDot, RoundDotsComponent } from './round-dots/round-dots.component';
 import { StepStripComponent, StripStep } from './step-strip/step-strip.component';
 import { WorkoutNoteComponent } from './workout-note/workout-note.component';
@@ -526,6 +528,37 @@ export class WorkoutComponent {
         const i = state.stepIndex;
         return sets[i].set > 0 && sets[i - 1] !== sets[i];
     });
+
+    /**
+     * How the face's text rolls between steps: up, or sideways for a new round, or settling
+     * in for a rest; with reduced motion, a short cross-fade. The round line above the ring
+     * always turns sideways, with a new round.
+     */
+    private faceRoll(): RollWay {
+        if (this.reducedMotion()) {
+            return 'fade';
+        }
+        if (this.newRound()) {
+            return 'sideways';
+        }
+        return this.isRestActive() ? 'rest' : 'up';
+    }
+
+    protected rollFaceIn(event: AnimationCallbackEvent) {
+        rollIn(event, this.faceRoll());
+    }
+
+    protected rollFaceOut(event: AnimationCallbackEvent) {
+        rollOut(event, this.faceRoll());
+    }
+
+    protected rollRoundIn(event: AnimationCallbackEvent) {
+        rollIn(event, this.reducedMotion() ? 'fade' : 'sideways');
+    }
+
+    protected rollRoundOut(event: AnimationCallbackEvent) {
+        rollOut(event, this.reducedMotion() ? 'fade' : 'sideways');
+    }
 
     /** Where the set in progress begins in the round, which tells one set from the next. */
     private readonly setStartIndex = computed(() => {

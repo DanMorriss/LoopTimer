@@ -122,8 +122,8 @@
 // A new step rolls up into the face as the last one rolls away over the top, as if both were
 // on a drum behind it, like the number wheels. A new round turns the drum the other way, from
 // right to left, and the round line above the ring turns with it. With reduced motion, a short
-// crossfade.
-$roll: 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+// crossfade. The rolls run from script (step-roll.ts), so one caught mid-roll turns on from
+// where it is.
 
 // The face and the round line look onto their drums, so what's on them curves away in depth
 .workout-face,
@@ -132,70 +132,10 @@ $roll: 0.75s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 // The drum's axle, behind the face; the far side of the drum is never seen
-.face-in,
-.face-out,
-.slide-in-sideways,
-.slide-out-sideways {
+.workout-face__content,
+.workout-status__round {
     transform-origin: 50% 50% -9rem;
     backface-visibility: hidden;
-}
-
-@keyframes in-from-below {
-    from {
-        transform: rotateX(-75deg);
-        opacity: 0;
-    }
-}
-
-@keyframes out-above {
-    to {
-        transform: rotateX(75deg);
-        opacity: 0;
-    }
-}
-
-@keyframes in-from-right {
-    from {
-        transform: rotateY(75deg);
-        opacity: 0;
-    }
-}
-
-@keyframes out-left {
-    to {
-        transform: rotateY(-75deg);
-        opacity: 0;
-    }
-}
-
-@keyframes fade-in {
-    from {
-        opacity: 0;
-    }
-}
-
-@keyframes fade-out {
-    to {
-        opacity: 0;
-    }
-}
-
-.face-in {
-    animation: in-from-below $roll both;
-}
-
-.face-out {
-    animation: out-above $roll both;
-}
-
-.workout-face--new-round .face-in,
-.slide-in-sideways {
-    animation: in-from-right $roll both;
-}
-
-.workout-face--new-round .face-out,
-.slide-out-sideways {
-    animation: out-left $roll both;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -203,17 +143,5 @@ $roll: 0.75s cubic-bezier(0.22, 1, 0.36, 1);
     .workout-next--soon::before,
     .workout-face--soon::before {
         animation: none;
-    }
-
-    .face-in,
-    .workout-face--new-round .face-in,
-    .slide-in-sideways {
-        animation: fade-in 0.2s ease-out both;
-    }
-
-    .face-out,
-    .workout-face--new-round .face-out,
-    .slide-out-sideways {
-        animation: fade-out 0.2s ease-out both;
     }
 }

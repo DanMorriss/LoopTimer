@@ -3,7 +3,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
 import { ActiveRunService } from '../../shared/run/active-run.service';
 import { formatTime } from '../../shared/format-time';
-import { project, VelocityTracker } from '../../shared/gesture';
+import { project, rubberband, VelocityTracker } from '../../shared/gesture';
 import { injectPrefersReducedMotion } from '../../shared/reduced-motion';
 import { criticallyDampedSpring } from '../../shared/spring';
 import { injectCurrentUrl, isOnPage } from '../current-url';
@@ -80,6 +80,10 @@ export class RunBarComponent {
     private start?: { id: number; x: number; y: number };
     /** Moved sideways past SLOP: the bar is following it. */
     private swiping = false;
+    /** Where the bar was when the finger went down (px), caught mid-spring. */
+    private startOffset = 0;
+    /** Counts presses, so a swipe's spring knows if a new press caught the bar mid-way. */
+    private presses = 0;
     /** The bar's move with the finger (px). */
     private offset = 0;
     private tracker = new VelocityTracker();
@@ -96,10 +100,15 @@ export class RunBarComponent {
         if (!bar || event.pointerType === 'mouse' || !event.isPrimary || this.finished()) {
             return;
         }
-        bar.getAnimations().forEach((animation) => animation.cancel());
+        this.presses++;
+        // Where it is on screen now, mid-spring included, and stop it there (End workout
+        // behind with it)
+        const offset = new DOMMatrix(getComputedStyle(bar).transform).m41;
+        this.host.getAnimations({ subtree: true }).forEach((animation) => animation.cancel());
+        this.moveTo(offset);
         this.start = { id: event.pointerId, x: event.clientX, y: event.clientY };
         this.swiping = false;
-        this.offset = 0;
+        this.startOffset = offset;
         this.tracker = new VelocityTracker();
         this.tracker.add(event.clientX, event.timeStamp);
     }
@@ -116,17 +125,21 @@ export class RunBarComponent {
             if (Math.hypot(dx, dy) < SLOP) {
                 return;
             }
-            // Mostly rightwards is a swipe; anything else is the page's, so let it go
+            // Mostly rightwards is a swipe; anything else is the page's, so let it go (and a
+            // bar caught on its way back into place carries on there)
             if (dx <= Math.abs(dy)) {
                 this.start = undefined;
+                void this.springTo(0, 0);
                 return;
             }
             this.swiping = true;
             bar.setPointerCapture(event.pointerId);
         }
         const wasPast = this.isPast(this.offset);
-        // Only right: there's nothing to the left
-        this.moveTo(Math.max(0, dx));
+        // Left of where it rests there's nothing, so it resists more the further it's pulled,
+        // rather than stopping dead
+        const pulled = this.startOffset + dx;
+        this.moveTo(pulled < 0 ? rubberband(pulled, bar.offsetWidth || 1) : pulled);
         this.tracker.add(event.clientX, event.timeStamp);
         // A tick as it crosses the point where letting go would end the workout
         if (wasPast !== this.isPast(this.offset)) {
@@ -141,6 +154,8 @@ export class RunBarComponent {
         }
         this.start = undefined;
         if (!this.swiping) {
+            // A tap on a bar caught mid-spring: it carries on into place
+            void this.springTo(0, 0);
             return;
         }
         this.swiping = false;
@@ -148,9 +163,14 @@ export class RunBarComponent {
         // Cleared after the click this pointerup makes, if any, has gone by
         setTimeout(() => (this.swallowClick = false));
         const velocity = this.tracker.velocity(event.timeStamp);
+        const press = this.presses;
         // Where a flick would carry it: past halfway over, the workout ends
         if (this.isPast(this.offset + project(velocity))) {
             await this.springTo(bar.offsetWidth, velocity);
+            // Caught again on its way off: the new press has it now, so the workout goes on
+            if (press !== this.presses) {
+                return;
+            }
             this.run.end();
             // Off to its summary; the bar is put back once it's gone with the page
             await this.router.navigateByUrl('/workout');
@@ -162,10 +182,8 @@ export class RunBarComponent {
 
     protected cancel() {
         this.start = undefined;
-        if (this.swiping) {
-            this.swiping = false;
-            void this.springTo(0, 0);
-        }
+        this.swiping = false;
+        void this.springTo(0, 0);
     }
 
     private onClick(event: MouseEvent) {

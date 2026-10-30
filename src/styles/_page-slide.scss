@@ -27,6 +27,21 @@
     }
 }
 
+// With reduced motion, the page cross-fades rather than sliding (or the workout morphing out of
+// its bar): nothing is named, so the whole page fades, and briefly
+:root.page-fading::view-transition-old(root),
+:root.page-fading::view-transition-new(root) {
+    animation-duration: 0.2s;
+}
+
+// A press mid-transition ends it and goes on to the page (letInputThrough,
+// src/app/nav/let-input-through.ts). The browser decides what a finger's move is for from where
+// it went down, which mid-transition is <html>: up and down stay the page's scroll, and
+// sideways the page's own (a swipe back taking the page from under the finger).
+:root:is(.page-sliding, .page-fading, .workout-morphing, .theme-switching) {
+    touch-action: pan-y;
+}
+
 // The page further in is over the list both ways, and the bars over both
 ::view-transition-group(slide-over) {
     z-index: 1;

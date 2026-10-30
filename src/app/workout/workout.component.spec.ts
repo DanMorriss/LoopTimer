@@ -63,6 +63,22 @@ describe('WorkoutComponent', () => {
         fixture.detectChanges();
     }
 
+    /**
+     * As advance(), then lets the last step's text go: it rolls away from script
+     * (step-roll.ts), so Angular takes it off the page a moment later, even with animations
+     * off as they are in tests.
+     */
+    async function advanceAndRoll(ms: number) {
+        advance(ms);
+        await roll();
+    }
+
+    /** Lets the last step's text go, after a step changes some other way (Done, say). */
+    async function roll() {
+        await vi.advanceTimersByTimeAsync(0);
+        fixture.detectChanges();
+    }
+
     function text(): string {
         return (fixture.nativeElement as HTMLElement).textContent?.replace(/\s+/g, ' ') ?? '';
     }
@@ -224,7 +240,7 @@ describe('WorkoutComponent', () => {
             expect(text()).toContain('round 1 of 4');
             expect(dots()).toEqual(['current', 'left', 'left', 'left']);
 
-            advance(3000);
+            await advanceAndRoll(3000);
 
             expect(text()).toContain('round 2 of 4');
             expect(dots()).toEqual(['done', 'current', 'left', 'left']);
@@ -243,7 +259,7 @@ describe('WorkoutComponent', () => {
             start(makeWorkout({ workSeconds: 3, restSeconds: 2, repeats: 2 }));
             expect(status()).not.toContain('Last one!');
 
-            advance(5000);
+            await advanceAndRoll(5000);
 
             expect(status()).toContain('Last one!');
             expect(status()).not.toContain('round 2 of 2');
@@ -283,10 +299,10 @@ describe('WorkoutComponent', () => {
             fixture.destroy();
         });
 
-        it('clears the rounds once the workout is finished', () => {
+        it('clears the rounds once the workout is finished', async () => {
             start(makeWorkout({ workSeconds: 3, restSeconds: 0, repeats: 2 }));
 
-            advance(6000);
+            await advanceAndRoll(6000);
 
             expect(component.isComplete()).toBe(true);
             expect(text()).not.toContain('Last one!');
@@ -316,6 +332,7 @@ describe('WorkoutComponent', () => {
 
         store.setActiveWorkout(makeWorkout({ id: 'workout-2', title: 'Second', workSeconds: 20 }));
         fixture.detectChanges();
+        await roll();
 
         expect(component.isWorkActive()).toBe(true);
         expect(component.isRestActive()).toBe(false);
@@ -1271,15 +1288,15 @@ describe('WorkoutComponent', () => {
         const said = () =>
             (fixture.nativeElement.querySelector('[aria-live]') as HTMLElement).textContent?.trim();
 
-        it("shows the step's name and its time, leaving which step it is to the strip", () => {
+        it("shows the step's name and its time, leaving which step it is to the strip", async () => {
             start(circuit());
 
             expect(face()).toBe('Squats 00:03');
 
-            advance(3000);
+            await advanceAndRoll(3000);
             expect(face()).toBe('Plank 00:02');
 
-            advance(2000);
+            await advanceAndRoll(2000);
             expect(face()).toBe('Rest 00:02');
             fixture.destroy();
         });
@@ -1387,7 +1404,7 @@ describe('WorkoutComponent', () => {
             fixture.destroy();
         });
 
-        it("marks each step's kind with an icon, hidden from screen readers", () => {
+        it("marks each step's kind with an icon, hidden from screen readers", async () => {
             start(makeWorkout({ steps: [work(3, 'Squats'), rest(2), reps(10)], repeats: 2 }));
             const icon = () =>
                 fixture.nativeElement.querySelector(
@@ -1396,10 +1413,10 @@ describe('WorkoutComponent', () => {
             expect(icon().textContent!.trim()).toBe('timer');
             expect(icon().getAttribute('aria-hidden')).toBe('true');
 
-            advance(3000);
+            await advanceAndRoll(3000);
             expect(icon().textContent!.trim()).toBe('self_improvement');
 
-            advance(2000);
+            await advanceAndRoll(2000);
             expect(icon().textContent!.trim()).toBe('fitness_center');
             fixture.destroy();
         });
@@ -1417,22 +1434,22 @@ describe('WorkoutComponent', () => {
             fixture.destroy();
         });
 
-        it("pops the countdown on each of a timed step's last 3 seconds", () => {
+        it("pops the countdown on each of a timed step's last 3 seconds", async () => {
             start(makeWorkout({ steps: [work(10, 'Squats'), rest(10)], repeats: 2 }));
             const pop = () =>
                 fixture.nativeElement.querySelector('.workout-face__pop') as HTMLElement | null;
-            advance(6000);
+            await advanceAndRoll(6000);
             expect(pop()).toBeNull();
 
-            advance(1000);
+            await advanceAndRoll(1000);
             const first = pop();
             expect(first).not.toBeNull();
-            advance(1000);
+            await advanceAndRoll(1000);
             // A fresh one, so it pops again
             expect(pop()).not.toBe(first);
 
             // Not rest, which stays calm
-            advance(9000);
+            await advanceAndRoll(9000);
             expect(pop()).toBeNull();
             fixture.destroy();
         });
@@ -3548,7 +3565,7 @@ describe('WorkoutComponent', () => {
         beforeEach(() => localStorage.clear());
         afterEach(() => localStorage.clear());
 
-        it('says which set it is on, with a dot per set, and Last one! on the last', () => {
+        it('says which set it is on, with a dot per set, and Last one! on the last', async () => {
             start(legDay());
 
             expect(status()).toBe('set 1 of 3');
@@ -3557,41 +3574,47 @@ describe('WorkoutComponent', () => {
             expect(said()).toBe('exercise 1 of 2, Leg press, 10 reps, set 1 of 3, round 1 of 1');
 
             pressDone();
+            await roll();
             // Resting after set 1 is part of it
             expect(component.isRestActive()).toBe(true);
             expect(status()).toBe('set 1 of 3');
             expect(dots()).toEqual(['current', 'left', 'left']);
             expect(text()).toContain('then Leg press · set 2 of 3 · 10 reps');
 
-            advance(5000);
+            await advanceAndRoll(5000);
             expect(component.isRepsActive()).toBe(true);
             expect(status()).toBe('set 2 of 3');
             expect(dots()).toEqual(['done', 'current', 'left']);
             expect(said()).toBe('Leg press, 10 reps, set 2 of 3');
             pressDone();
-            advance(5000);
+            await roll();
+            await advanceAndRoll(5000);
 
             expect(status()).toBe('Last one!');
             expect(said()).toBe('Leg press, 10 reps, last set');
             // Resting after it, it's done: no Last one! any more
             pressDone();
+            await roll();
             expect(component.isRestActive()).toBe(true);
             expect(status()).toBe('set 3 of 3');
             fixture.destroy();
         });
 
-        it('rests after the last set too, then goes on to the next step', () => {
+        it('rests after the last set too, then goes on to the next step', async () => {
             start(legDay());
             pressDone();
-            advance(5000);
+            await roll();
+            await advanceAndRoll(5000);
             pressDone();
-            advance(5000);
+            await roll();
+            await advanceAndRoll(5000);
 
             expect(text()).toContain('Next: Rest · 00:05');
             pressDone();
+            await roll();
             expect(component.isRestActive()).toBe(true);
             expect(text()).toContain('then Plank · 00:03');
-            advance(5000);
+            await advanceAndRoll(5000);
 
             expect(component.isWorkActive()).toBe(true);
             expect(text()).toContain('Plank');
@@ -3676,35 +3699,41 @@ describe('WorkoutComponent', () => {
         beforeEach(() => localStorage.clear());
         afterEach(() => localStorage.clear());
 
-        it('runs its steps in turn each round, with the rest after each', () => {
+        it('runs its steps in turn each round, with the rest after each', async () => {
             start(upperBody());
 
             expect(text()).toContain('Bench');
             expect(status()).toBe('superset round 1 of 3');
             expect(text()).toContain('Next: Row · 10 reps');
             pressDone();
+            await roll();
             expect(text()).toContain('Row');
             expect(status()).toBe('superset round 1 of 3');
             pressDone();
+            await roll();
 
             expect(component.isRestActive()).toBe(true);
             expect(status()).toBe('superset round 1 of 3');
             expect(text()).toContain('then Bench · superset round 2 of 3 · 10 reps');
-            advance(5000);
+            await advanceAndRoll(5000);
             expect(status()).toBe('superset round 2 of 3');
             expect(said()).toBe('Bench, 10 reps, superset round 2 of 3');
             pressDone();
+            await roll();
             pressDone();
-            advance(5000);
+            await roll();
+            await advanceAndRoll(5000);
 
             expect(status()).toBe('Last one!');
             expect(said()).toBe('Bench, 10 reps, superset, last round');
             pressDone();
+            await roll();
             pressDone();
+            await roll();
             // The rest after the last round, before the plank
             expect(component.isRestActive()).toBe(true);
             expect(status()).toBe('superset round 3 of 3');
-            advance(5000);
+            await advanceAndRoll(5000);
             expect(component.isWorkActive()).toBe(true);
             fixture.destroy();
         });
@@ -3949,7 +3978,7 @@ describe('WorkoutComponent', () => {
             fixture.destroy();
         });
 
-        it('suggests it only on set 1, as it moves the whole step', () => {
+        it('suggests it only on set 1, as it moves the whole step', async () => {
             lastTime([
                 [12, 40],
                 [10, 45],
@@ -3957,6 +3986,7 @@ describe('WorkoutComponent', () => {
             ]);
             start(legDay());
             nextSet();
+            await roll();
             expect(button('more on each set')).toBeUndefined();
             fixture.destroy();
         });

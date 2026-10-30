@@ -271,15 +271,14 @@
     background: var(--accent-soft);
 }
 
-// The other steps slide aside to make room, and the dropped one settles into place
-.cdk-drop-list-dragging .step:not(.cdk-drag-placeholder),
-.step.cdk-drag-animating {
-    transition: transform 0.25s cubic-bezier(0, 0, 0.2, 1);
+// The other steps slide aside to make room, on the app's spring (and the dropped one settles
+// into place on the same: styles/_drag.scss)
+.cdk-drop-list-dragging .step:not(.cdk-drag-placeholder) {
+    transition: transform var(--spring-duration) var(--ease-spring);
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .cdk-drop-list-dragging .step:not(.cdk-drag-placeholder),
-    .step.cdk-drag-animating {
+    .cdk-drop-list-dragging .step:not(.cdk-drag-placeholder) {
         transition: none;
     }
 }

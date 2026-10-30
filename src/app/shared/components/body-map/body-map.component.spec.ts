@@ -225,11 +225,37 @@ describe('BodyMapComponent', () => {
         const absPath = el().querySelectorAll('.body-map__shape')[absPathsBefore] as SVGPathElement;
 
         // Hovering a muscle is hovering its group of paths
-        absPath.parentElement!.dispatchEvent(new MouseEvent('mouseenter'));
+        absPath.parentElement!.dispatchEvent(
+            new PointerEvent('pointerenter', { pointerType: 'mouse' })
+        );
         fixture.detectChanges();
 
         const highlighted = el().querySelectorAll('.body-map__shape--hovered').length;
         expect(highlighted).toBe(pathsFor(['abs']));
+    });
+
+    it('rings a muscle the moment a finger presses it, and not after the tap', () => {
+        create(['abs']);
+        fixture.componentRef.setInput('tappable', true);
+        fixture.detectChanges();
+        const absShapeIndex = BODY_FIGURES.male.front.shapes.findIndex((s) => s.muscle === 'abs');
+        const absPathsBefore = BODY_FIGURES.male.front.shapes
+            .slice(0, absShapeIndex)
+            .reduce((total, shape) => total + shape.paths.length, 0);
+        const abs = el().querySelectorAll('.body-map__shape')[absPathsBefore].parentElement!;
+        const ringed = () => el().querySelectorAll('.body-map__shape--hovered').length;
+
+        // A finger "entering" it as it taps doesn't count as hovering
+        abs.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'touch' }));
+        abs.dispatchEvent(
+            new PointerEvent('pointerdown', { pointerType: 'touch', isPrimary: true })
+        );
+        fixture.detectChanges();
+        expect(ringed()).toBe(pathsFor(['abs']));
+
+        abs.dispatchEvent(new PointerEvent('pointerup', { pointerType: 'touch' }));
+        fixture.detectChanges();
+        expect(ringed()).toBe(0);
     });
 
     it('can remove a listed muscle when removable labels are enabled', () => {

@@ -42,15 +42,14 @@
     margin: 1rem 0 0;
 }
 
-// The other cards slide aside to make room for a dragged one, and it settles into place
-.library-list.cdk-drop-list-dragging > :not(.cdk-drag-placeholder),
-.library-list > .cdk-drag-animating {
-    transition: transform 0.25s cubic-bezier(0, 0, 0.2, 1);
+// The other cards slide aside to make room for a dragged one, on the app's spring (and it
+// settles into place on the same: styles/_drag.scss)
+.library-list.cdk-drop-list-dragging > :not(.cdk-drag-placeholder) {
+    transition: transform var(--spring-duration) var(--ease-spring);
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .library-list.cdk-drop-list-dragging > :not(.cdk-drag-placeholder),
-    .library-list > .cdk-drag-animating {
+    .library-list.cdk-drop-list-dragging > :not(.cdk-drag-placeholder) {
         transition: none;
     }
 }

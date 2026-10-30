@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 
 import { fakeReducedMotion } from '../shared/testing/fake-reduced-motion';
+import { FADING_CLASS } from './page-slide';
 import { MORPHING_CLASS, WorkoutMorph } from './workout-morph';
 
 @Component({ template: '' })
@@ -23,7 +24,12 @@ describe('WorkoutMorph', () => {
     });
 
     afterEach(() =>
-        root.classList.remove(MORPHING_CLASS, `${MORPHING_CLASS}--open`, `${MORPHING_CLASS}--close`)
+        root.classList.remove(
+            MORPHING_CLASS,
+            `${MORPHING_CLASS}--open`,
+            `${MORPHING_CLASS}--close`,
+            FADING_CLASS
+        )
     );
 
     const click = (init: MouseEventInit = {}) =>
@@ -86,14 +92,17 @@ describe('WorkoutMorph', () => {
         expect(router.url).toBe('/library');
     });
 
-    it('just goes with reduced motion, with no view transition', async () => {
+    it('cross-fades with reduced motion, rather than morphing', async () => {
         fakeReducedMotion(true);
         const start = vi.spyOn(document, 'startViewTransition');
 
         morph.follow(click(), '/workout');
 
-        expect(start).not.toHaveBeenCalled();
+        expect(start).toHaveBeenCalledTimes(1);
+        expect(root.classList).toContain(FADING_CLASS);
         expect(root.classList).not.toContain(MORPHING_CLASS);
         await landed('/workout');
+        await start.mock.results[0].value.finished;
+        expect(root.classList).not.toContain(FADING_CLASS);
     });
 });

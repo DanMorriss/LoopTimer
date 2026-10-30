@@ -46,6 +46,7 @@
                     class="progress__svg"
                     [attr.viewBox]="'0 0 ' + width + ' ' + height"
                     aria-hidden="true"
+                    (pointerdown)="onPointerMove($event)"
                     (pointermove)="onPointerMove($event)"
                     (pointerleave)="active.set(null)"
                 >

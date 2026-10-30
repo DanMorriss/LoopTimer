@@ -1,5 +1,6 @@
 import { ApplicationRef, Component, computed, DOCUMENT, inject } from '@angular/core';
 import { BackLinkComponent } from '../nav/back-link/back-link.component';
+import { letInputThrough } from '../nav/let-input-through';
 import { SwipeBackDirective } from '../nav/swipe-back.directive';
 import { AlarmService } from '../shared/alarms/alarm.service';
 import { ToggleSwitchComponent } from '../shared/components/toggle-switch/toggle-switch.component';
@@ -94,6 +95,8 @@ export class SettingsComponent {
             this.appRef.tick();
         });
         this.transition = transition;
+        // A tap mid-fade ends it and lands, so choosing again doesn't wait for it
+        letInputThrough(transition);
         // Choosing again mid-fade skips this one (the setting is still saved), which rejects `ready`
         transition.ready.catch(() => undefined);
         transition.finished.finally(() => {

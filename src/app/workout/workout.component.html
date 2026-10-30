@@ -37,8 +37,8 @@
                 @for (slide of roundSlides(); track slide.key) {
                     <div
                         class="workout-status__round"
-                        animate.enter="slide-in-sideways"
-                        animate.leave="slide-out-sideways"
+                        (animate.enter)="rollRoundIn($event)"
+                        (animate.leave)="rollRoundOut($event)"
                     >
                         @if (slide.set; as set) {
                             <!-- An exercise's sets, or a superset's rounds, and the whole
@@ -145,8 +145,8 @@
                             <div
                                 class="workout-face__content"
                                 [attr.data-step]="slide.key"
-                                animate.enter="face-in"
-                                animate.leave="face-out"
+                                (animate.enter)="rollFaceIn($event)"
+                                (animate.leave)="rollFaceOut($event)"
                             >
                                 @if (!slide.complete) {
                                     <!-- The kind's icon, on its own line, so it isn't told by colour

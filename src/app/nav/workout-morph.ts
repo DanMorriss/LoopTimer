@@ -1,6 +1,8 @@
 import { ApplicationRef, inject, Service } from '@angular/core';
 import { Router } from '@angular/router';
 import { isOnPage } from './current-url';
+import { letInputThrough } from './let-input-through';
+import { FADING_CLASS } from './page-slide';
 
 /** On <html> while the workout morphs, naming the parts that move. */
 export const MORPHING_CLASS = 'workout-morphing';
@@ -36,21 +38,24 @@ export class WorkoutMorph {
     }
 
     /**
-     * Goes to `url`, morphing between the bar and the workout page. With reduced motion, or a
-     * browser without view transitions, it just goes. The names that pair the bar with the
+     * Goes to `url`, morphing between the bar and the workout page. With reduced motion the
+     * pages cross-fade instead (FADING_CLASS); in a browser without view transitions, it just
+     * goes. The names that pair the bar with the
      * page (styles/_workout-morph.scss) only apply under MORPHING_CLASS, as a named element is
      * drawn on its own, which would keep the summary's blur off the header the rest of the
      * time. Which way it's going (`--open` into the workout, `--close` back to the bar)
      * decides which picture is the bar's.
      */
     navigate(url: string) {
-        const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-        if (reduced || !document.startViewTransition) {
+        if (!document.startViewTransition) {
             void this.router.navigateByUrl(url);
             return;
         }
+        const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
         const opening = isOnPage(url, '/workout');
-        const classes = [MORPHING_CLASS, `${MORPHING_CLASS}--${opening ? 'open' : 'close'}`];
+        const classes = reduced
+            ? [FADING_CLASS]
+            : [MORPHING_CLASS, `${MORPHING_CLASS}--${opening ? 'open' : 'close'}`];
         const root = document.documentElement;
         root.classList.add(...classes);
         const transition = document.startViewTransition(async () => {
@@ -58,6 +63,8 @@ export class WorkoutMorph {
             // Render now, so the new page is what the browser morphs into
             this.appRef.tick();
         });
+        // A tap mid-morph ends it and lands, rather than doing nothing till it's over
+        letInputThrough(transition);
         // Interrupted (e.g. another view transition starting) rejects `ready`; nothing waits on it
         transition.ready.catch(() => undefined);
         transition.finished.finally(() => root.classList.remove(...classes));

@@ -9,6 +9,8 @@ import {
     viewChild,
 } from '@angular/core';
 import { project, VelocityTracker } from '../../gesture';
+import { injectPrefersReducedMotion } from '../../reduced-motion';
+import { criticallyDampedSpring } from '../../spring';
 
 /** How far (px) a press moves sideways before it's dragging the knob rather than a tap. */
 const DRAG_THRESHOLD = 5;
@@ -56,6 +58,7 @@ export class ToggleSwitchComponent {
 
     private readonly knob = viewChild.required<ElementRef<HTMLElement>>('knob');
     private readonly injector = inject(Injector);
+    private readonly reducedMotion = injectPrefersReducedMotion();
     private dragging: {
         pointerId: number;
         startX: number;
@@ -87,6 +90,20 @@ export class ToggleSwitchComponent {
         // From the knob's place when off to its place when on
         const travel = track.clientWidth - knob.offsetWidth - 2 * knob.offsetLeft;
         const from = this.checked() ? travel : 0;
+        // Caught on the spring from a drag: it stops where it is, and its own transition takes
+        // it on from there (to wherever a tap's flip sends it), unless a drag takes it first
+        const springs = this.springs(knob);
+        if (springs.length) {
+            const x = this.knobX(knob, travel);
+            springs.forEach((animation) => animation.cancel());
+            knob.style.transform = `translate(${x}px, -50%)`;
+            knob.style.transition = '';
+            requestAnimationFrame(() => {
+                if (!this.dragging?.moved) {
+                    knob.style.transform = '';
+                }
+            });
+        }
         this.dragging = {
             pointerId: event.pointerId,
             startX: event.clientX,
@@ -104,19 +121,38 @@ export class ToggleSwitchComponent {
             return;
         }
         const dx = event.clientX - dragging.startX;
+        const knob = this.knob().nativeElement;
         if (!dragging.moved) {
             if (Math.abs(dx) < DRAG_THRESHOLD) {
                 return;
             }
             dragging.moved = true;
             (event.currentTarget as Element).setPointerCapture(event.pointerId);
+            // Taken from where it is on screen now (still moving from a tap, say), rather
+            // than from where that move was going
+            dragging.from = this.knobX(knob, dragging.travel);
+            this.springs(knob).forEach((animation) => animation.cancel());
+            knob.style.transition = 'none';
         }
         // Follows the finger, within the track
-        dragging.x = Math.min(dragging.travel, Math.max(0, dragging.from + dx));
+        dragging.x = Math.min(
+            dragging.travel,
+            Math.max(0, dragging.from + event.clientX - dragging.startX)
+        );
         dragging.tracker.add(dragging.x, event.timeStamp);
-        const knob = this.knob().nativeElement;
-        knob.style.transition = 'none';
         knob.style.transform = `translate(${dragging.x}px, -50%)`;
+    }
+
+    /** The spring a drag let go of, if it's still running (not the knob's own transitions). */
+    private springs(knob: HTMLElement): Animation[] {
+        return knob.getAnimations().filter((animation) => !(animation instanceof CSSTransition));
+    }
+
+    /** Where the knob is on screen now (px from off), mid-move included. */
+    private knobX(knob: HTMLElement, travel: number): number {
+        // Its transform moves it across from where it sits when off (and centres it upright)
+        const x = new DOMMatrix(getComputedStyle(knob).transform).m41;
+        return Math.min(travel, Math.max(0, x));
     }
 
     protected letGo(event: PointerEvent) {
@@ -136,12 +172,27 @@ export class ToggleSwitchComponent {
         const velocity = dragging.tracker.velocity(event.timeStamp);
         const on = dragging.x + project(velocity, 0.99) > dragging.travel / 2;
         this.checked.set(on);
-        // Once the switch shows its new state, the knob springs there from where it was let go
+        // Once the switch shows its new state, the knob springs there from where it was let
+        // go, carrying on at the finger's speed so there's no seam where the drag ends
         afterNextRender(
             () => {
                 const knob = this.knob().nativeElement;
-                knob.style.transition = '';
                 knob.style.transform = '';
+                const to = on ? dragging.travel : 0;
+                const distance = to - dragging.x;
+                if (Math.abs(distance) < 0.5 || this.reducedMotion()) {
+                    knob.style.transition = '';
+                    return;
+                }
+                // Its own transition stays off while the spring has it, so the two don't race
+                const spring = knob.animate(
+                    [
+                        { transform: `translate(${dragging.x}px, -50%)` },
+                        { transform: `translate(${to}px, -50%)` },
+                    ],
+                    criticallyDampedSpring(0.3, { velocity: velocity / distance })
+                );
+                spring.finished.then(() => (knob.style.transition = '')).catch(() => undefined);
             },
             { injector: this.injector }
         );
