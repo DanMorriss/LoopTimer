@@ -6,7 +6,13 @@ import { ActiveRunService } from '../shared/run/active-run.service';
 import { HistoryStore } from '../shared/state/history-store.service';
 import { WorkoutStore } from '../shared/state/workout-store.service';
 import { UndoService } from '../shared/undo/undo.service';
-import { describeRounds, describeSets, formatDuration, sectionsOf } from './history-format';
+import {
+    describeRounds,
+    describeSets,
+    formatDuration,
+    sectionsOf,
+    SetsSection,
+} from './history-format';
 import { SettingsStore } from '../shared/state/settings-store.service';
 import { ExerciseStore } from '../shared/state/exercise-store.service';
 import { HistoryComponent } from './history.component';
@@ -714,7 +720,7 @@ describe('HistoryComponent', () => {
                 [set(0, 10, 60, 0, 'Bench'), set(0, 8, 60, 1, 'Row'), set(0, 5, 20, 2, 'Curl')],
                 'kg'
             );
-            const names = (sections: ReturnType<typeof sectionsOf>) =>
+            const names = (sections: SetsSection[]) =>
                 sections.map(({ heading, lines }) => [heading, ...lines.map((line) => line.name)]);
 
             it('is one section of every line, with no headings', () => {
@@ -754,7 +760,7 @@ describe('HistoryComponent', () => {
                 ],
                 'kg'
             );
-            const items = (sections: ReturnType<typeof sectionsOf>) =>
+            const items = (sections: SetsSection[]) =>
                 sections.flatMap(({ items }) =>
                     items.map(({ superset, lines }) => [superset, ...lines.map((l) => l.name)])
                 );

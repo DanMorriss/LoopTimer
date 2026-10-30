@@ -18,48 +18,37 @@
 
         <div id="summary-sets-list">
             @if (changingSets()) {
-                @for (group of setGroups(); track $index; let g = $index) {
-                    <div class="summary__group">
-                        <h4 class="summary__group-name">{{ group.name }}</h4>
-                        <div class="summary__set summary__set--head" aria-hidden="true">
-                            <span></span>
-                            <span>Reps</span>
-                            <span>Weight ({{ weightUnit() }})</span>
-                        </div>
-                        @for (item of group.sets; track item.index; let s = $index) {
-                            <div class="summary__set">
-                                <span class="summary__set-label" [id]="'summary-set-' + item.index">
-                                    <span class="sr-only">{{ group.name }}, </span>Set
-                                    {{ s + 1 }}
-                                </span>
-                                <span class="sr-only" [id]="'summary-reps-' + item.index"
-                                    >reps</span
-                                >
-                                <app-wheel-picker
-                                    [value]="item.set.reps"
-                                    (valueChange)="setReps(item.index, $event)"
-                                    [options]="repOptions"
-                                    [labelledBy]="
-                                        'summary-set-' + item.index + ' summary-reps-' + item.index
-                                    "
-                                />
-                                <span class="sr-only" [id]="'summary-weight-' + item.index"
-                                    >weight in {{ weightUnit() }}</span
-                                >
-                                <app-wheel-picker
-                                    [value]="weightValue(item.set)"
-                                    (valueChange)="setWeight(item.index, $event)"
-                                    [options]="weightOptions()"
-                                    [labelledBy]="
-                                        'summary-set-' +
-                                        item.index +
-                                        ' summary-weight-' +
-                                        item.index
-                                    "
-                                />
+                <!-- Under the workout's headings and with its supersets, as the lines are -->
+                @for (section of groupSections(); track $index) {
+                    @if (section.heading) {
+                        <h4 class="summary__part">{{ section.heading }}</h4>
+                    }
+                    @for (item of section.items; track $index) {
+                        @if (item.superset) {
+                            <p class="summary__superset-name summary__superset-name--change">
+                                {{ item.superset }}
+                            </p>
+                            <div class="summary__superset-lines">
+                                @for (group of item.lines; track group.step) {
+                                    <ng-container
+                                        [ngTemplateOutlet]="setGroup"
+                                        [ngTemplateOutletContext]="{
+                                            $implicit: group,
+                                            underPart: !!section.heading,
+                                        }"
+                                    />
+                                }
                             </div>
+                        } @else {
+                            <ng-container
+                                [ngTemplateOutlet]="setGroup"
+                                [ngTemplateOutletContext]="{
+                                    $implicit: item.lines[0],
+                                    underPart: !!section.heading,
+                                }"
+                            />
                         }
-                    </div>
+                    }
                 }
             } @else {
                 <!-- Under the workout's headings, as in the history -->
@@ -117,12 +106,55 @@
                     </div>
                 }
                 @case ('yes') {
-                    <p>Saved: next time starts from these.</p>
+                    @if (steppedUp()) {
+                        <p>Saved: next time starts from these, with the step-ups you applied.</p>
+                    } @else {
+                        <p>Saved: next time starts from these.</p>
+                    }
                 }
             }
         </div>
     </section>
 }
+
+<!-- One step's sets on their wheels; a level down under one of the workout's headings -->
+<ng-template #setGroup let-group let-underPart="underPart">
+    <div class="summary__group">
+        @if (underPart) {
+            <h5 class="summary__group-name">{{ group.name }}</h5>
+        } @else {
+            <h4 class="summary__group-name">{{ group.name }}</h4>
+        }
+        <div class="summary__set summary__set--head" aria-hidden="true">
+            <span></span>
+            <span>Reps</span>
+            <span>Weight ({{ weightUnit() }})</span>
+        </div>
+        @for (item of group.sets; track item.index; let s = $index) {
+            <div class="summary__set">
+                <span class="summary__set-label" [id]="'summary-set-' + item.index">
+                    <span class="sr-only">{{ group.name }}, </span>Set {{ s + 1 }}
+                </span>
+                <span class="sr-only" [id]="'summary-reps-' + item.index">reps</span>
+                <app-wheel-picker
+                    [value]="item.set.reps"
+                    (valueChange)="setReps(item.index, $event)"
+                    [options]="repOptions"
+                    [labelledBy]="'summary-set-' + item.index + ' summary-reps-' + item.index"
+                />
+                <span class="sr-only" [id]="'summary-weight-' + item.index"
+                    >weight in {{ weightUnit() }}</span
+                >
+                <app-wheel-picker
+                    [value]="weightValue(item.set)"
+                    (valueChange)="setWeight(item.index, $event)"
+                    [options]="weightOptions()"
+                    [labelledBy]="'summary-set-' + item.index + ' summary-weight-' + item.index"
+                />
+            </div>
+        }
+    </div>
+</ng-template>
 
 <ng-template #setLine let-line>
     <span aria-hidden="true"

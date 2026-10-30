@@ -92,7 +92,7 @@ export function describeSets(
 }
 
 /** Lines of sets under one of the workout's headings, or none for those before the first. */
-export interface SetsSection<Line extends SetsSummary = SetsSummary> {
+export interface SetsSection<Line extends Pick<SetsSummary, 'step'> = SetsSummary> {
     heading: string | null;
     lines: Line[];
     /**
@@ -103,7 +103,7 @@ export interface SetsSection<Line extends SetsSummary = SetsSummary> {
 }
 
 /** One line on its own (`superset` null), or a superset's lines under its name. */
-export interface SetsItem<Line extends SetsSummary = SetsSummary> {
+export interface SetsItem<Line extends Pick<SetsSummary, 'step'> = SetsSummary> {
     superset: 'Superset' | 'Giant set' | null;
     lines: Line[];
 }
@@ -115,7 +115,7 @@ export interface SetsItem<Line extends SetsSummary = SetsSummary> {
  * section of every line. Within each, the lines of a superset or giant set (BLD-12) go
  * together under its name, where two or more of its steps have sets.
  */
-export function sectionsOf<Line extends SetsSummary>(
+export function sectionsOf<Line extends Pick<SetsSummary, 'step'>>(
     lines: readonly Line[],
     headings: readonly PlacedHeading[] = [],
     supersets: readonly PlacedSuperset[] = []
@@ -143,7 +143,7 @@ export function sectionsOf<Line extends SetsSummary>(
     }));
 }
 
-function itemsOf<Line extends SetsSummary>(
+function itemsOf<Line extends Pick<SetsSummary, 'step'>>(
     lines: readonly Line[],
     supersets: readonly PlacedSuperset[]
 ): SetsItem<Line>[] {

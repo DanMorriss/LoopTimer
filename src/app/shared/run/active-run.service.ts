@@ -286,6 +286,7 @@ export class ActiveRunService {
         });
         this.resumedAt.set(0);
         this.ending.set(false);
+        this._steppedUp.set(new Set());
         this.sync();
     }
 
@@ -420,12 +421,25 @@ export class ActiveRunService {
         this.recordRun('finished');
     }
 
+    private readonly _steppedUp = signal<ReadonlySet<number>>(new Set());
+    /**
+     * The steps given a Next time step-up on the summary (PRG-10), by their place in the
+     * workout, which useSetsNextTime() leaves as they are.
+     */
+    readonly steppedUp = this._steppedUp.asReadonly();
+
+    /** Step `step` was given a step-up on the summary, which "Yes, use next time" keeps. */
+    keepStepUp(step: number) {
+        this._steppedUp.update((steps) => new Set([...steps, step]));
+    }
+
     /**
      * Makes each rep step of the saved workout start next time from its sets in this run, e.g.
      * after the summary's sets were corrected: each set as it was last done (both sides as one,
      * the second), and any not done as it was. Sets that came out alike are one reps and
      * weight; sets that differ vary (BLD-11), so a pyramid worked out mid-workout is kept. A
-     * set cut short by a time limit doesn't count, as it wasn't all of the step.
+     * set cut short by a time limit doesn't count, as it wasn't all of the step. A step given a
+     * step-up on the summary keeps it, as that was asked for since (see steppedUp).
      */
     useSetsNextTime() {
         const workout = this.running();
@@ -443,7 +457,11 @@ export class ActiveRunService {
         const lastSets = new Map(done.map((set) => [`${set.step}/${set.set ?? 0}`, set]));
         const rounds = stepRounds(workout);
         allSteps(workout).forEach((step, stepIndex) => {
-            if (step.kind !== 'reps' || !done.some((set) => set.step === stepIndex)) {
+            if (
+                step.kind !== 'reps' ||
+                this._steppedUp().has(stepIndex) ||
+                !done.some((set) => set.step === stepIndex)
+            ) {
                 return;
             }
             const amounts = Array.from({ length: rounds[stepIndex] }, (_, set): RepSetAmount => {
