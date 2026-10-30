@@ -44,7 +44,7 @@
 ### Sets (BLD-9)
 
 - A timed or rep step has **Sets**, 1 to 30 on a wheel, under its other wheels. A new step has 1. A rest step has none: it's just a time.
-- With more than one set, **Rest between sets (mm:ss)** shows under it: a minutes and a seconds wheel under the one label (each named to screen readers), 00:00 to 99:59, at **01:00** the first time Sets goes above 1 (and as saved after that).
+- With more than one set, **Rest after each set (mm:ss)** shows under it: a minutes and a seconds wheel under the one label (each named to screen readers), 00:00 to 99:59, at **01:00** the first time Sets goes above 1 (and as saved after that).
 - The rest comes **after each set, the last included**: 3 sets is set, rest, set, rest, set, rest, then the next step, so there's time to get to it. Two exceptions: at the end of the workout there's no rest (it's over), and a rest step straight after takes its place rather than adding to it. One set has no rest.
 - Collapsed, a step with sets says so as the history does, with its rest: "3 × 10 @ 60 kg · rest 01:00", "3 × 00:45 · rest 00:30", or "3 × 10" with no rest.
 - The tip by the Steps heading says "Each round runs these in order, each for its sets. Steps left at 00:00 or 0 reps are skipped."
@@ -58,7 +58,7 @@
 
 ### Vary each set (BLD-11)
 
-- A timed or rep step with more than one set has a **Vary each set** switch under Rest between sets, off to start with. Off, every set has the step's one Reps and Weight (or time).
+- A timed or rep step with more than one set has a **Vary each set** switch under Rest after each set, off to start with. Off, every set has the step's one Reps and Weight (or time).
 - On, the step's own Reps and Weight (or Minutes and Seconds) wheels give way to a **row a set** under the switch: "Set 1 · 12 × 40 kg", "Set 2 · 10 reps" (no weight), or "Set 1 · 00:30" for a timed step. Tapping a row opens its own Reps and Weight wheels (or Minutes and Seconds), closing any other; the rows below slide to make room, as steps do when they open and close.
 - Turning it on starts every row at the step's reps and weight (or time). Turning it off sets every set back to **set 1's**.
 - Raising Sets adds a row **copied from the last set**; lowering it removes rows from the end. Down to 1 set there's nothing to vary, so it turns off, the step keeping set 1's.
@@ -70,8 +70,8 @@
 ### Supersets (BLD-12)
 
 - **What it's called goes by how many exercises are in it:** a **superset** with 2, a **giant set** with 3 or more (rest steps don't count). It's one thing either way, and the name changes by itself as exercises are joined or taken out, in Create and on the run screen.
-- **Join with next**, at the bottom of an open timed or rep step, joins it and the exercise straight after it (a timed or rep step not in a superset) into a superset, with the first one's Sets as its **Rounds** and its Rest between sets as its **Rest between rounds**. The second's sets become the rounds too (with Vary each set on, as Sets does to its rows). On a superset, Join with next adds the exercise after it, making it a giant set. Focus goes to the superset, and screen readers hear what it is, e.g. "Superset, steps 1 to 2, 3 rounds · rest 01:00: Bench, Row".
-- A superset has a **row of its own** heading its steps: "SUPERSET" (or "GIANT SET") where a step has its kind pill, a **Rounds** wheel (1 to 30) and, with more than one round, **Rest between rounds** (as Rest between sets). Its steps sit in from it, joined to it by a line, each as a step is, with Each side and **Vary each round** (rows "Round 1 · 10 reps"…), but no Sets of their own: Rounds sets each of their sets. A rest step can go in it too (e.g. bench, rest 0:15, row).
+- **Join with next**, at the bottom of an open timed or rep step, joins it and the exercise straight after it (a timed or rep step not in a superset) into a superset, with the first one's Sets as its **Rounds** and its Rest after each set as its **Rest after each round**. The second's sets become the rounds too (with Vary each set on, as Sets does to its rows). On a superset, Join with next adds the exercise after it, making it a giant set. Focus goes to the superset, and screen readers hear what it is, e.g. "Superset, steps 1 to 2, 3 rounds · rest 01:00: Bench, Row".
+- A superset has a **row of its own** heading its steps: "SUPERSET" (or "GIANT SET") where a step has its kind pill, a **Rounds** wheel (1 to 30) and, with more than one round, **Rest after each round** (as Rest after each set). Its steps sit in from it, joined to it by a line, each as a step is, with Each side and **Vary each round** (rows "Round 1 · 10 reps"…), but no Sets of their own: Rounds sets each of their sets. A rest step can go in it too (e.g. bench, rest 0:15, row).
 - Its **+ Step** adds a rep step at its end, opened with the cursor in its name box; the 20 steps include a superset's steps, and its own row doesn't count.
 - **Take out**, on one of its steps, makes it an exercise of its own again, just after the superset, with its rounds as its sets and its rest between them. A superset left with one step becomes that exercise the same way, and so does one left with one step by a delete.
 - **Collapsed**, a superset is one line of its steps' names and its rounds and rest, e.g. "Bench, Row" and "3 rounds · rest 01:00", and its steps are hidden with it, so a collapsed workout reads as its plan.

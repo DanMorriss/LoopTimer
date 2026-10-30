@@ -33,18 +33,18 @@ This adds what that needs: sets and rest on an exercise, exercises done one side
 ### A workout
 
 - A workout is a list of **exercises**, **supersets** and **headings**, in order, and its whole-workout **Repeat** (rounds or a time limit) as now. Repeat starts at 1 round, so most gym workouts run once.
-- An **exercise** is a step as now (Reps, Timed or Rest), plus **Sets** and **Rest between sets**, and the **Each side** and **Vary each set** switches.
-- A **superset** is two or more steps done in order, then **Rest between rounds**, for a number of **rounds**. Its steps can be any kind, so rest steps can go in the middle of it as well (e.g. bench, rest 0:15, row).
+- An **exercise** is a step as now (Reps, Timed or Rest), plus **Sets** and **Rest after each set**, and the **Each side** and **Vary each set** switches.
+- A **superset** is two or more steps done in order, then **Rest after each round**, for a number of **rounds**. Its steps can be any kind, so rest steps can go in the middle of it as well (e.g. bench, rest 0:15, row).
 - A **heading** is a label only: it doesn't loop and takes no time.
 - Every saved workout from before this becomes one group of its steps, run once a round, so it runs exactly as it did (see Data).
 
 ### Sets and rest (BLD-9)
 
 - **Sets: 1 to 30**, on a wheel. A new exercise has 1 set.
-- **Rest between sets**: 0:00 to 99:59, on Minutes and Seconds wheels, shown once Sets is above 1. It starts at **1:00** the first time Sets goes above 1.
+- **Rest after each set**: 0:00 to 99:59, on Minutes and Seconds wheels, shown once Sets is above 1. It starts at **1:00** the first time Sets goes above 1.
 - The rest comes **after each set, the last included**: 3 sets is set, rest, set, rest, set, rest, then what's next. It's skipped at the end of the workout, and when a rest step comes next (which takes its place).
 - Nothing is added between one exercise and the next. A rep step waits for Done anyway, so the next exercise starts when the user is ready; a rest between exercises is a Rest step of its own.
-- A **Rest step** has no Sets or Rest between sets: it's just a time, as now.
+- A **Rest step** has no Sets or Rest after each set: it's just a time, as now.
 - Timed exercises have sets too, e.g. "Plank: 3 × 0:45, rest 0:30".
 
 ### Each side (BLD-10)
@@ -70,11 +70,11 @@ This adds what that needs: sets and rest on an exercise, exercises done one side
 ### Supersets (BLD-12)
 
 - **What it's called goes by how many exercises are in it:** a **superset** with 2, a **giant set** with 3 or more (rest steps don't count). It's one thing either way, and the name changes by itself as exercises are joined or taken out, wherever it shows (Create, the run screen, the history). There's no "circuit": going round the whole workout is Repeat the whole workout, as now.
-- Made by **Join with next** on an exercise, which joins it and the next exercise into a superset with the first one's Sets as its rounds, and its Rest between sets as the Rest between rounds. Doing it again on the superset adds the next exercise to it, making it a giant set.
-- A superset shows as one card: a heading line "Superset" (or "Giant set"), a **Rounds** wheel (1 to 30), **Rest between rounds** (as Rest between sets), and its steps inside it, each as a step is now, with Each side and Vary each round, but no Sets of its own.
+- Made by **Join with next** on an exercise, which joins it and the next exercise into a superset with the first one's Sets as its rounds, and its Rest after each set as the Rest after each round. Doing it again on the superset adds the next exercise to it, making it a giant set.
+- A superset shows as one card: a heading line "Superset" (or "Giant set"), a **Rounds** wheel (1 to 30), **Rest after each round** (as Rest after each set), and its steps inside it, each as a step is now, with Each side and Vary each round, but no Sets of its own.
 - **+ Step** inside it adds a rep step at its end. Its steps move up and down within it.
 - **Take out** on one of its steps makes it an exercise of its own again, just after the superset, with the superset's rounds as its sets. A superset left with one step becomes that exercise, the same way.
-- Rest between rounds comes after each round, the last included, as for sets.
+- Rest after each round comes after each round, the last included, as for sets.
 
 ### Headings (BLD-13)
 
@@ -137,7 +137,7 @@ This adds what that needs: sets and rest on an exercise, exercises done one side
 | ----------------------------- | -------------------------------------- |
 | Sets on an exercise           | 1–30                                   |
 | Rounds of a superset          | 1–30                                   |
-| Rest between sets or rounds   | 0:00–99:59                             |
+| Rest after each set or round  | 0:00–99:59                             |
 | Steps in a workout            | 20, as now                             |
 | Steps in a superset           | 2 up to the 20                         |
 | Headings                      | 10, up to 40 characters each           |
@@ -146,7 +146,7 @@ This adds what that needs: sets and rest on an exercise, exercises done one side
 ## Acceptance criteria
 
 - Given single leg press at 10 reps, 3 sets and 1:00 rest, then it runs set 1 (waiting for Done), rest 1:00, set 2, rest 1:00, set 3, and straight on to the next exercise with no rest.
-- Given an exercise of 3 sets, when Sets goes from 1 to 3, then Rest between sets shows at 1:00.
+- Given an exercise of 3 sets, when Sets goes from 1 to 3, then Rest after each set shows at 1:00.
 - Given an exercise of 3 sets as the last thing in a workout, then the workout finishes on the last set's Done.
 - Given low step down at 10 reps, each side, 2 sets and 0:45 rest, then it runs Left side, Right side, rest 0:45, Left side, Right side; the history says "Low step down: 2 × 10 each side", and the muscle bars count 2 sets.
 - Given a 0:30 side plank done each side, then a 0:05 "Switch sides" runs between the left and right, and neither it nor any rest is logged.

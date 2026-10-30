@@ -314,7 +314,7 @@ export class WorkoutComponent {
 
     /**
      * The set in progress of an exercise with more than one, e.g. set 1 (from 0) of 3, or
-     * null. A rest between sets is part of the set it leads to.
+     * null. The rest after a set is part of that set.
      */
     groupSet = computed(() => {
         const state = this.state();
