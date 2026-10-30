@@ -14,6 +14,7 @@ import { LoopLogoComponent } from '../shared/components/loop-logo/loop-logo.comp
 import { SyncStarter } from '../sync/sync-starter.service';
 import { syncText } from '../sync/sync-text';
 import { AccountService } from './account.service';
+import { DeviceDataService, SIGNED_OUT_NOTE } from '../shared/state/device-data.service';
 import { SIGN_IN_PROVIDERS, SignInProvider } from './account-client';
 
 const PROVIDER_NAMES: Record<SignInProvider, string> = { google: 'Google', apple: 'Apple' };
@@ -57,6 +58,19 @@ export class AccountComponent {
     protected readonly message = signal('');
     /** Delete account was pressed: its warning is open. */
     protected readonly confirmingDelete = signal(false);
+    /** Signing out would lose changes that haven't synced, so it's asking first. */
+    protected readonly confirmingSignOut = signal(false);
+    private readonly deviceData = inject(DeviceDataService);
+
+    constructor() {
+        // Back from signing out, which reloaded the app
+        if (sessionStorage.getItem(SIGNED_OUT_NOTE) !== null) {
+            sessionStorage.removeItem(SIGNED_OUT_NOTE);
+            this.message.set(
+                'Signed out. Your data was removed from this device; your account keeps it.'
+            );
+        }
+    }
 
     private readonly emailModel = signal({ email: '' });
     protected readonly emailForm = form(this.emailModel, (fields) => {
@@ -153,15 +167,34 @@ export class AccountComponent {
         this.focus('account-email');
     }
 
-    protected async signOut() {
+    /**
+     * Signs out, removing the account's data from this device so the next person to use it
+     * doesn't see it, or have it merged into their account; this device's settings stay.
+     * It syncs first, and if anything couldn't be sent (offline, say), asks before losing it,
+     * unless `anyway`. Clearing reloads the app, which then says it's signed out.
+     */
+    protected async signOut(anyway = false) {
+        this.confirmingSignOut.set(false);
         this.busy.set(true);
-        const done = await this.account.signOut();
-        this.busy.set(false);
-        if (done) {
-            this.reset('Signed out. Your data is still on this device.');
-        } else {
-            this.message.set("You couldn't be signed out. Check your connection and try again.");
+        if (!anyway) {
+            this.message.set('Syncing before signing out…');
+            if (!(await this.account.syncAll())) {
+                this.busy.set(false);
+                this.message.set('');
+                this.confirmingSignOut.set(true);
+                this.focus('account-sign-out-warning');
+                return;
+            }
         }
+        this.message.set('Signing out…');
+        // Signed out here either way, as clearing takes the sign-in with it
+        await this.account.signOut();
+        await this.deviceData.clear({ signingOut: true });
+    }
+
+    protected cancelSignOut() {
+        this.confirmingSignOut.set(false);
+        this.focus('account-sign-out');
     }
 
     protected askToDelete() {

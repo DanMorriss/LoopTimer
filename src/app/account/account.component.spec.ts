@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { DeviceDataService, SIGNED_OUT_NOTE } from '../shared/state/device-data.service';
 import { PageSlide } from '../nav/page-slide';
 import {
     FakeAccountClient,
@@ -18,11 +19,18 @@ describe('AccountComponent', () => {
     let client: FakeAccountClient;
     let sync: FakeSyncStarter;
 
+    let clear: ReturnType<typeof vi.fn>;
+
     async function create(signedInAs: string | null = null) {
         client = fakeAccountClient(signedInAs);
         sync = fakeSyncStarter();
+        clear = vi.fn(async () => undefined);
         TestBed.configureTestingModule({
-            providers: [provideFakeAccountClient(client), provideFakeSyncStarter(sync)],
+            providers: [
+                provideFakeAccountClient(client),
+                provideFakeSyncStarter(sync),
+                { provide: DeviceDataService, useValue: { clear } },
+            ],
         });
         fixture = TestBed.createComponent(AccountComponent);
         element = fixture.nativeElement;
@@ -53,6 +61,16 @@ describe('AccountComponent', () => {
         input.dispatchEvent(new Event('input'));
         await settle();
     }
+
+    it('says it signed out, once the app has reloaded from signing out', async () => {
+        sessionStorage.setItem(SIGNED_OUT_NOTE, '1');
+        await create();
+
+        expect(status()).toBe(
+            'Signed out. Your data was removed from this device; your account keeps it.'
+        );
+        expect(sessionStorage.getItem(SIGNED_OUT_NOTE)).toBeNull();
+    });
 
     describe('signed out', () => {
         beforeEach(() => create());
@@ -214,12 +232,36 @@ describe('AccountComponent', () => {
             expect(syncLine()).toBe("You're offline: it'll sync when you're back online.");
         });
 
-        it('signs out, keeping the data on the device', async () => {
+        it('says signing out removes the data from this device, which the account keeps', () => {
+            expect(text()).toContain(
+                'Signing out removes your workouts and history from this device. Your account keeps them'
+            );
+        });
+
+        it('syncs, then signs out and removes the data from this device, keeping settings', async () => {
             await press('Sign out');
 
+            expect(sync.syncAll).toHaveBeenCalled();
             expect(client.auth.signOut).toHaveBeenCalledWith({ scope: 'local' });
-            expect(status()).toBe('Signed out. Your data is still on this device.');
-            expect(element.querySelector('#account-email')).not.toBeNull();
+            expect(clear).toHaveBeenCalledWith({ signingOut: true });
+        });
+
+        it("asks first when something hasn't synced, and can sign out anyway or not", async () => {
+            sync.syncAll.mockResolvedValue(false);
+
+            await press('Sign out');
+            expect(text()).toContain("Some changes on this device haven't synced");
+            expect(document.activeElement!.id).toBe('account-sign-out-warning');
+            expect(clear).not.toHaveBeenCalled();
+
+            await press('Cancel');
+            expect(document.activeElement!.id).toBe('account-sign-out');
+            expect(client.auth.signOut).not.toHaveBeenCalled();
+
+            await press('Sign out');
+            await press('Sign out anyway');
+            expect(client.auth.signOut).toHaveBeenCalled();
+            expect(clear).toHaveBeenCalledWith({ signingOut: true });
         });
 
         it('asks before deleting the account, with focus on the warning', async () => {

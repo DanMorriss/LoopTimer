@@ -81,6 +81,8 @@ export function fakeSyncStarter(status: Partial<SyncStatus> = {}) {
     return {
         start: vi.fn(),
         startIfSignedIn: vi.fn(),
+        /** Everything sent, unless a test says otherwise. */
+        syncAll: vi.fn(async () => true),
         status: signal<SyncStatus>({
             syncing: false,
             lastSyncedAt: null,

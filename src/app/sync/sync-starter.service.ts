@@ -1,4 +1,5 @@
 import { EnvironmentInjector, inject, Service, signal } from '@angular/core';
+import type { SyncService } from './sync.service';
 import { AUTH_STORAGE_KEY } from '../account/account-client';
 
 /** When this device last synced, in localStorage. */
@@ -24,7 +25,7 @@ export interface SyncStatus {
 @Service()
 export class SyncStarter {
     private readonly injector = inject(EnvironmentInjector);
-    private loading: Promise<unknown> | null = null;
+    private loading: Promise<SyncService | undefined> | null = null;
 
     /** How sync is going. Set by `SyncService`. */
     readonly status = signal<SyncStatus>({
@@ -40,6 +41,16 @@ export class SyncStarter {
         }
     }
 
+    /**
+     * Syncs, then gives whether everything on this device has been sent, so signing out can
+     * remove it (see `SyncService.syncAll()`). False if sync couldn't load.
+     */
+    async syncAll(): Promise<boolean> {
+        this.start();
+        const service = await this.loading;
+        return service ? service.syncAll() : false;
+    }
+
     /** Loads sync's code and starts it, once: from then on, it follows signing in and out. */
     start() {
         this.loading ??= import('./sync.service')
@@ -47,6 +58,7 @@ export class SyncStarter {
             .catch(() => {
                 // Offline with the code not loaded yet: try again next time
                 this.loading = null;
+                return undefined;
             });
     }
 }

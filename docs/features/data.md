@@ -212,7 +212,7 @@ In ms since the epoch, by the device's clock, for the Account tab. Signing out r
 
 ### `clock-offset`: how far this device's clock is from the server's
 
-In ms, added to the device's clock to date changes (see [backup and sync](backup-and-sync.md), Sync). Kept after signing out, as the clock's no less off.
+In ms, added to the device's clock to date changes (see [backup and sync](backup-and-sync.md), Sync). Kept after signing out, as the clock's no less off; so are the settings, which are this device's. Signing out removes everything else.
 
 ## Saved for the run in progress (`sessionStorage` on the web, per tab)
 

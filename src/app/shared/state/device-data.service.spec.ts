@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HistoryEntry } from '../../models/history';
 import { makeWorkout } from '../testing/make-workout';
 import { savedHistory } from '../testing/history-database';
-import { DEVICE_CHANNEL, DeviceDataService } from './device-data.service';
+import { DEVICE_CHANNEL, DeviceDataService, SIGNED_OUT_NOTE } from './device-data.service';
 import { HistoryStore } from './history-store.service';
 import { WorkoutStore } from './workout-store.service';
 
@@ -50,6 +50,23 @@ describe('DeviceDataService', () => {
 
         expect(localStorage.length).toBe(0);
         expect(await savedHistory()).toEqual([]);
+        expect(reload).toHaveBeenCalledTimes(1);
+    });
+
+    it("keeps this device's settings when signing out, and leaves a note to say so", async () => {
+        const workouts = TestBed.inject(WorkoutStore);
+        workouts.addWorkout({ title: 'Legs', blocks: makeWorkout().blocks, repeats: 3 });
+        localStorage.setItem('settings', JSON.stringify({ theme: 'light' }));
+        localStorage.setItem('clock-offset', '120');
+        localStorage.setItem('week-plan', '{}');
+
+        await TestBed.inject(DeviceDataService).clear({ signingOut: true });
+
+        expect({ ...localStorage }).toEqual({
+            settings: JSON.stringify({ theme: 'light' }),
+            'clock-offset': '120',
+        });
+        expect(sessionStorage.getItem(SIGNED_OUT_NOTE)).toBe('1');
         expect(reload).toHaveBeenCalledTimes(1);
     });
 
