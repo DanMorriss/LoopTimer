@@ -26,6 +26,11 @@ export interface SyncStatus {
 export class SyncStarter {
     private readonly injector = inject(EnvironmentInjector);
     private loading: Promise<SyncService | undefined> | null = null;
+    /**
+     * Signing out or deleting the account here, which clears the device itself; any other
+     * sign-out wasn't asked for, and SyncService clears the device for it.
+     */
+    leaving = false;
 
     /** How sync is going. Set by `SyncService`. */
     readonly status = signal<SyncStatus>({

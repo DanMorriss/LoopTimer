@@ -1,17 +1,25 @@
 <!-- Always there, so what's offered is read out as it appears -->
 <div role="status">
     @if (undo.offer(); as offer) {
-        <div class="undo-bar" animate.leave="undo-bar--leaving" (keydown.escape)="undo.dismiss()">
+        <div
+            class="undo-bar"
+            [class.undo-bar--notice]="!offer.undo"
+            animate.leave="undo-bar--leaving"
+            (keydown.escape)="undo.dismiss()"
+        >
             <span class="undo-bar__message" id="undo-bar-message">{{ offer.message }}.</span>
-            <button
-                #undoButton
-                type="button"
-                class="undo-bar__undo"
-                aria-describedby="undo-bar-message"
-                (click)="undo.undo()"
-            >
-                Undo
-            </button>
+            <!-- A notice only says what happened -->
+            @if (offer.undo) {
+                <button
+                    #undoButton
+                    type="button"
+                    class="undo-bar__undo"
+                    aria-describedby="undo-bar-message"
+                    (click)="undo.undo()"
+                >
+                    Undo
+                </button>
+            }
             <button
                 type="button"
                 class="btn-icon undo-bar__close"

@@ -1,4 +1,8 @@
 import { DestroyRef, DOCUMENT, inject, Service } from '@angular/core';
+import { NavigationEnd, Router } from '@angular/router';
+import { filter, take } from 'rxjs';
+import { AUTH_STORAGE_KEY } from '../../account/account-client';
+import { UndoService } from '../undo/undo.service';
 import { deleteDatabase } from './history-database';
 import { WorkoutStore } from './workout-store.service';
 
@@ -10,12 +14,20 @@ const CLEARED = 'cleared';
 const DEVICE_KEYS = ['settings', 'clock-offset'];
 
 /**
- * Left in sessionStorage by signing out (or deleting the account), for the Account tab to say
- * so once it's reloaded: what happened, `signed-out` or `deleted`.
+ * Left in sessionStorage by leaving the account, to say so once the app's reloaded: signed
+ * out here, the account deleted, or signed out without asking (`ended`: the account deleted
+ * on another device, say, or the sign-in not renewed).
  */
 export const SIGNED_OUT_NOTE = 'signed-out';
 
-export type LeftAccount = 'signed-out' | 'deleted';
+export type LeftAccount = 'signed-out' | 'deleted' | 'ended';
+
+/** What's said once the app's reloaded, for each way of leaving the account. */
+export const LEFT_ACCOUNT_TEXT: Record<LeftAccount, string> = {
+    'signed-out': 'Signed out. Your data was removed from this device; your account keeps it',
+    deleted: 'Your account has been deleted, and its data removed from this device',
+    ended: 'You were signed out, so your data was removed from this device. Signing in again brings back what your account has',
+};
 
 /**
  * Everything the app keeps on this device, as a whole: Clear this device (SYN-9) removes it,
@@ -26,10 +38,33 @@ export type LeftAccount = 'signed-out' | 'deleted';
 export class DeviceDataService {
     private readonly workouts = inject(WorkoutStore);
     private readonly document = inject(DOCUMENT);
+    private readonly router = inject(Router);
+    private readonly undo = inject(UndoService);
     private readonly channel =
         typeof BroadcastChannel === 'undefined' ? null : new BroadcastChannel(DEVICE_CHANNEL);
 
     constructor() {
+        this.sayWhyItWasCleared();
+        // Signed in in another tab: this one starts again when it's next looked at, so it has
+        // the account's data and syncs too, rather than saving what it had over what was fetched
+        const view = this.document.defaultView;
+        let signedInElsewhere = false;
+        const heard = (event: StorageEvent) => {
+            if (event.key === AUTH_STORAGE_KEY && event.oldValue === null && event.newValue) {
+                signedInElsewhere = true;
+            }
+        };
+        const shown = () => {
+            if (signedInElsewhere && this.document.visibilityState === 'visible') {
+                this.reload();
+            }
+        };
+        view?.addEventListener('storage', heard);
+        this.document.addEventListener('visibilitychange', shown);
+        inject(DestroyRef).onDestroy(() => {
+            view?.removeEventListener('storage', heard);
+            this.document.removeEventListener('visibilitychange', shown);
+        });
         // Another tab cleared the device: what this one has in memory would be saved back
         // the next time anything changed, so drop it and start again empty too
         this.channel?.addEventListener('message', (event: MessageEvent) => {
@@ -70,6 +105,24 @@ export class DeviceDataService {
         }
         await deleteDatabase();
         this.reload();
+    }
+
+    /**
+     * Back from leaving the account, which reloaded the app: says so in the bar, on the page
+     * it opened on, once it's open.
+     */
+    private sayWhyItWasCleared() {
+        const left = sessionStorage.getItem(SIGNED_OUT_NOTE) as LeftAccount | null;
+        if (left === null || !(left in LEFT_ACCOUNT_TEXT)) {
+            return;
+        }
+        sessionStorage.removeItem(SIGNED_OUT_NOTE);
+        this.router.events
+            .pipe(
+                filter((event) => event instanceof NavigationEnd),
+                take(1)
+            )
+            .subscribe(() => this.undo.notify(LEFT_ACCOUNT_TEXT[left]));
     }
 
     /** Starts the app again, with nothing in memory from before. */

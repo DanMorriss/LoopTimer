@@ -54,6 +54,19 @@
     white-space: nowrap;
 }
 
+// A notice can run to a sentence or two (e.g. why the device was cleared), so it wraps,
+// in a rounded card rather than a capsule, rather than being cut short
+.undo-bar--notice {
+    padding-block: 0.5rem;
+    border-radius: 1.2rem;
+
+    .undo-bar__message {
+        overflow: visible;
+        white-space: normal;
+        line-height: 1.4;
+    }
+}
+
 // The action, as a word in the accent colour, as iOS does it
 .undo-bar__undo {
     flex-shrink: 0;

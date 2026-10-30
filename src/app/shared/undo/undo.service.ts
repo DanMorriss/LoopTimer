@@ -5,8 +5,11 @@ import { Router } from '@angular/router';
 export interface UndoOffer {
     /** What happened, e.g. "Deleted Legs day". */
     message: string;
-    /** Puts it back. Where focus goes next is the caller's to decide: it knows what came back. */
-    undo: () => void;
+    /**
+     * Puts it back. Where focus goes next is the caller's to decide: it knows what came back.
+     * Missing for a notice, which only says what happened (see `notify()`).
+     */
+    undo?: () => void;
     /** Where focus goes if the offer is closed without undoing, e.g. the step after it. */
     dismissed?: () => void;
 }
@@ -32,11 +35,20 @@ export class UndoService {
         this._offer.set({ ...offer, id: this.nextId++, url: this.router.url });
     }
 
+    /**
+     * Says what just happened in the same bar, with nothing to undo, e.g. "Signed in as
+     * me@example.com" on the page signing in ends on. Read out as it shows; it doesn't take
+     * focus, and goes as an offer does.
+     */
+    notify(message: string) {
+        this.offerUndo({ message });
+    }
+
     /** Takes the offer up. */
     undo() {
         const offer = this._offer();
         this._offer.set(null);
-        offer?.undo();
+        offer?.undo?.();
     }
 
     /** Closes the offer without undoing. */

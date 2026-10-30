@@ -1,4 +1,5 @@
 import { BACKUP_VERSION } from '../shared/backup/backup-file';
+import { DeviceDataService } from '../shared/state/device-data.service';
 import { TestBed } from '@angular/core/testing';
 import { HistoryEntry } from '../models/history';
 import { WorkoutFields } from '../models/workout';
@@ -41,6 +42,7 @@ describe('SyncService', () => {
     let client: FakeAccountClient;
     let server: FakeSyncServer;
     let sync: SyncService;
+    let clear: ReturnType<typeof vi.fn>;
     const workouts = () => TestBed.inject(WorkoutStore);
     const history = () => TestBed.inject(HistoryStore);
     const exercises = () => TestBed.inject(ExerciseStore);
@@ -58,7 +60,13 @@ describe('SyncService', () => {
     function signIn(email: string | null) {
         client = fakeAccountClient(email);
         client.rpc.mockImplementation(server.rpc);
-        TestBed.configureTestingModule({ providers: [provideFakeAccountClient(client)] });
+        clear = vi.fn(async () => undefined);
+        TestBed.configureTestingModule({
+            providers: [
+                provideFakeAccountClient(client),
+                { provide: DeviceDataService, useValue: { clear } },
+            ],
+        });
     }
 
     /** Starts sync once what's saved here is in, and lets its first sync finish. */
@@ -281,13 +289,23 @@ describe('SyncService', () => {
         await start();
         expect(localStorage.getItem('sync')).not.toBeNull();
 
+        // As Sign out does, which clears the device itself
+        TestBed.inject(SyncStarter).leaving = true;
         await client.auth.signOut();
         await heard();
 
         expect(localStorage.getItem('sync')).toBeNull();
         expect(localStorage.getItem('synced-at')).toBeNull();
         expect(status().lastSyncedAt).toBeNull();
-        // The data stays on the device
-        expect(workouts().workouts()).toHaveLength(1);
+        expect(clear).not.toHaveBeenCalled();
+    });
+
+    it('clears the device when signed out without asking, e.g. the account deleted elsewhere', async () => {
+        await start();
+
+        await client.auth.signOut();
+        await heard();
+
+        expect(clear).toHaveBeenCalledWith({ leaving: 'ended' });
     });
 });
