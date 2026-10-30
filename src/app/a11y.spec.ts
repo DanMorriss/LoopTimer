@@ -279,6 +279,7 @@ for (const theme of ['dark', 'light'] as const) {
 
         describe('home', () => {
             it('before any workout', async () => {
+                localStorage.setItem('welcomed', 'guest');
                 await open('/home');
                 expect(fixture.nativeElement.querySelector('.home__empty')).not.toBeNull();
                 await expectNoViolations();
@@ -622,6 +623,14 @@ for (const theme of ['dark', 'light'] as const) {
             });
         });
 
+        describe('welcome', () => {
+            it('on a device new to the app', async () => {
+                await open('/');
+                expect(fixture.nativeElement.querySelector('app-welcome')).not.toBeNull();
+                await expectNoViolations();
+            });
+        });
+
         describe('account', () => {
             it('as first opened, signed out', async () => {
                 await open('/account');
@@ -630,7 +639,7 @@ for (const theme of ['dark', 'light'] as const) {
 
             it('signing in with no email (and its error)', async () => {
                 await open('/account');
-                click('.account__form button[type="submit"]');
+                click('.sign-in__form button[type="submit"]');
                 await settle();
                 await expectNoViolations();
             });
@@ -642,7 +651,7 @@ for (const theme of ['dark', 'light'] as const) {
                 ) as HTMLInputElement;
                 input.value = 'me@example.com';
                 input.dispatchEvent(new Event('input'));
-                click('.account__form button[type="submit"]');
+                click('.sign-in__form button[type="submit"]');
                 await settle();
                 expect(fixture.nativeElement.querySelector('#account-code')).not.toBeNull();
                 await expectNoViolations();

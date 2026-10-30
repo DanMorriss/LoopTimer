@@ -78,6 +78,7 @@ Export and import (SYN-1, SYN-2) are built, with a prompt for having an AI turn 
 
 Signing in makes the account, if it's new, and starts sync (below).
 
+- The same sign-in is on the **welcome screen** a device new to the app opens on (NAV-3, see [home-and-navigation](home-and-navigation.md)), with **Continue as guest** under it.
 - **Signed out**, the Account tab's Sync section says "Sign in, and your workouts and history will be the same on every device you sign in on. An account is optional: without one, everything stays on this device.", then **Continue with Google** (and **Continue with Apple** once it's set up; SYN-7, below), "or", and an **Email** field and **Email me a sign-in link**.
 - **Google and Apple** (SYN-7): Apple isn't offered yet, as it needs an Apple Developer account; the button is built, and shows once `'apple'` is added to `SIGN_IN_PROVIDERS`. Each button goes to Google or Apple to sign in, saying "Going to Google…" while it leaves, and comes back to the Account tab signed in. They're in their own colours and with their marks, as their guidelines ask: Google's dark button (light in the light theme) and Apple's white (black in the light theme).
     - An account is one per email address: signing in with Google or Apple with the email you signed up with by link signs in to that account, and the other way round. Apple may give a private relay address (…@privaterelay.appleid.com) if you choose to hide yours, which is then the account's address.

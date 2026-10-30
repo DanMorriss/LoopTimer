@@ -48,7 +48,12 @@ describe('AccountComponent', () => {
     }
 
     const text = () => element.textContent!.replace(/\s+/g, ' ');
-    const status = () => element.querySelector('[role="status"]')!.textContent!.trim();
+    /** What's been said: the sign-in's, and the tab's own, as there's one of each signed out. */
+    const status = () =>
+        [...element.querySelectorAll('[role="status"]')]
+            .map((region) => region.textContent!.trim())
+            .filter(Boolean)
+            .join(' ');
     const button = (label: string) =>
         [...element.querySelectorAll('button')].find((b) => b.textContent!.trim() === label)!;
     async function press(label: string) {
@@ -113,11 +118,11 @@ describe('AccountComponent', () => {
         });
 
         it('offers Google first (Apple not yet), then the email', () => {
-            const labels = [...element.querySelectorAll('.account__provider')].map((b) =>
+            const labels = [...element.querySelectorAll('.sign-in__provider')].map((b) =>
                 b.textContent!.trim()
             );
             expect(labels).toEqual(['Continue with Google']);
-            const or = element.querySelector('.account__or')!;
+            const or = element.querySelector('.sign-in__or')!;
             expect(or.compareDocumentPosition(element.querySelector('#account-email')!)).toBe(
                 Node.DOCUMENT_POSITION_FOLLOWING
             );

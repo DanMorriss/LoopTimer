@@ -1,0 +1,115 @@
+@use 'interaction' as *;
+
+:host {
+    display: block;
+}
+
+.sign-in__hint {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.sign-in__status {
+    margin-top: 0.5rem;
+}
+
+.sign-in__text {
+    margin: 0 0 0.5rem;
+    color: var(--text);
+}
+
+// A long address breaks rather than widening the page
+.sign-in__email {
+    overflow-wrap: anywhere;
+    color: var(--text-strong);
+}
+
+.sign-in__form {
+    margin-top: 1rem;
+}
+
+.sign-in__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+}
+
+.sign-in__error {
+    margin: 0.5rem 0 0;
+    font-size: 0.85rem;
+    color: var(--text-danger);
+}
+
+// Sign in with Google or Apple (SYN-7): full-width buttons in their own colours, with their
+// marks, as their guidelines ask
+.sign-in__providers {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-top: 1rem;
+}
+
+.sign-in__provider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    min-height: 44px;
+    padding: 0 1rem;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: scale 0.2s ease-out;
+
+    @include pressed-scale;
+
+    &:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 3px;
+    }
+
+    &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    &--google {
+        border-color: var(--google-border);
+        background: var(--google-bg);
+        color: var(--google-ink);
+    }
+
+    &--apple {
+        border-color: var(--apple-bg);
+        background: var(--apple-bg);
+        color: var(--apple-ink);
+    }
+}
+
+.sign-in__provider-mark {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+// "or", between the buttons and the email, on a line
+.sign-in__or {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 1rem 0 0;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+
+    &::before,
+    &::after {
+        content: '';
+        flex: 1;
+        border-top: 1px solid var(--border-soft);
+    }
+}
