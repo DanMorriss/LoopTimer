@@ -247,10 +247,10 @@ describe('ExercisePageComponent', () => {
 
     describe('adding it to a workout (EXR-12)', () => {
         const choices = () =>
-            Array.from(el().querySelectorAll<HTMLButtonElement>('.add__choice')).map((button) =>
+            Array.from(el().querySelectorAll<HTMLButtonElement>('.choice__choice')).map((button) =>
                 [
-                    button.querySelector('.add__name')!.textContent!.trim(),
-                    button.querySelector('.add__steps')?.textContent!.trim(),
+                    button.querySelector('.choice__name')!.textContent!.trim(),
+                    button.querySelector('.choice__detail')?.textContent!.trim(),
                     button.disabled ? '(off)' : '',
                 ]
                     .filter(Boolean)
@@ -279,13 +279,13 @@ describe('ExercisePageComponent', () => {
 
             await click('#exercise-page-add');
 
-            expect(text('#add-to-workout-title')).toBe('Add Back squat to');
+            expect(text('.choice__title')).toBe('Add Back squat to');
             expect(choices()).toEqual([
                 'New workout',
                 'Legs 1 step',
                 'Untitled workout Full, 20 steps (off)',
             ]);
-            expect(document.activeElement).toBe(el().querySelector('.add__choice'));
+            expect(document.activeElement).toBe(el().querySelector('.choice__choice'));
         });
 
         it('opens Create with it added to the workout picked, or a new one', async () => {
@@ -296,14 +296,14 @@ describe('ExercisePageComponent', () => {
             await open('/exercises/back-squat');
 
             await click('#exercise-page-add');
-            el().querySelectorAll<HTMLButtonElement>('.add__choice')[1].click();
+            el().querySelectorAll<HTMLButtonElement>('.choice__choice')[1].click();
             await render();
             expect(navigate).toHaveBeenLastCalledWith(['/setup'], {
                 queryParams: { editId: legs.id, add: 'builtin:back-squat' },
             });
 
             await click('#exercise-page-add');
-            await click('.add__choice');
+            await click('.choice__choice');
             expect(navigate).toHaveBeenLastCalledWith(['/setup'], {
                 queryParams: { add: 'builtin:back-squat' },
             });
@@ -313,9 +313,9 @@ describe('ExercisePageComponent', () => {
             await open('/exercises/back-squat');
 
             await click('#exercise-page-add');
-            await click('.add__close');
+            await click('.choice__close');
 
-            expect(el().querySelector('app-add-to-workout-dialog')).toBeNull();
+            expect(el().querySelector('app-workout-choice-dialog')).toBeNull();
             expect(document.activeElement).toBe(el().querySelector('#exercise-page-add'));
         });
     });

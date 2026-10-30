@@ -1,0 +1,95 @@
+<div
+    class="flex justify-center"
+    [appSwipeBack]="'/library'"
+    [swipeBackDisabled]="addingTo() !== null"
+>
+    <div
+        class="m-4 w-full max-w-md rounded-xl border border-(--panel-border) bg-(--panel) p-6 shadow-xl shadow-(color:--shadow)"
+    >
+        <app-back-link url="/library" label="Library" />
+        <h2 class="plan__title">Plan</h2>
+        <p class="plan__hint">
+            Which workouts you do on which days, the same every week. What's due shows on Home.
+        </p>
+        @if (weekSoFar()) {
+            <p class="plan__so-far">{{ weekSoFar() }}</p>
+        }
+        @if (!hasWorkouts()) {
+            <p class="plan__hint">Make a workout in the library first, then plan it here.</p>
+        }
+
+        @for (day of days(); track day.day) {
+            <section
+                class="plan__day"
+                [class.plan__day--today]="day.day === today"
+                [attr.aria-labelledby]="'plan-day-' + day.day"
+            >
+                <div class="plan__day-head">
+                    <h3 class="plan__day-name" [id]="'plan-day-' + day.day">
+                        {{ day.name }}
+                        @if (day.day === today) {
+                            <span class="plan__today">· today</span>
+                        }
+                    </h3>
+                    @if (hasWorkouts() && canAdd(day.day)) {
+                        <button
+                            type="button"
+                            class="btn-pill plan__add"
+                            [id]="'plan-add-' + day.day"
+                            aria-haspopup="dialog"
+                            [attr.aria-label]="'Add a workout to ' + day.name"
+                            (click)="addingTo.set(day.day)"
+                        >
+                            <mat-icon aria-hidden="true">add</mat-icon>
+                            Add
+                        </button>
+                    }
+                </div>
+                @if (day.workouts.length) {
+                    <ul class="plan__workouts">
+                        @for (planned of day.workouts; track planned.workoutId) {
+                            <li
+                                class="plan__workout"
+                                [class.plan__workout--done]="planned.status === 'done'"
+                                [class.plan__workout--missed]="planned.status === 'missed'"
+                                [class.plan__workout--today]="planned.status === 'today'"
+                            >
+                                <span class="plan__workout-name">{{ planned.name }}</span>
+                                @if (statusText[planned.status]; as status) {
+                                    <span class="plan__status">
+                                        @if (planned.status === 'done') {
+                                            <mat-icon aria-hidden="true">check</mat-icon>
+                                        }
+                                        {{ status }}
+                                    </span>
+                                }
+                                <button
+                                    type="button"
+                                    class="btn-icon plan__remove"
+                                    [attr.aria-label]="'Take ' + planned.name + ' off ' + day.name"
+                                    (click)="remove(day.day, planned.workoutId)"
+                                >
+                                    <mat-icon aria-hidden="true">close</mat-icon>
+                                </button>
+                            </li>
+                        }
+                    </ul>
+                } @else {
+                    <p class="plan__rest">Nothing planned</p>
+                }
+            </section>
+        }
+
+        <p class="sr-only" role="status">{{ announcement() }}</p>
+
+        @if (addingTo() !== null) {
+            <app-workout-choice-dialog
+                animate.leave="dialog-leave"
+                [heading]="'Plan on ' + days()[addingTo()!].name"
+                [choices]="choices()"
+                (closed)="closeAdding()"
+                (picked)="add(addingTo()!, $event)"
+            />
+        }
+    </div>
+</div>

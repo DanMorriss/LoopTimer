@@ -1,3 +1,4 @@
+import { copyPlan, isWeekPlan, WeekPlan } from '../models/plan';
 import { isDeletion, isLibraryOrder, LibraryOrder, SyncedKind } from '../models/sync';
 import { BACKUP_VERSION } from '../shared/backup/backup-file';
 import { CopyToMerge } from '../shared/backup/backup.service';
@@ -9,11 +10,17 @@ import {
 import { readHistoryEntry } from '../shared/state/history-store.service';
 import { readWorkout } from '../shared/state/workout-store.service';
 
-/** The kinds of record on the server: those that leave a deletion, and the library's order. */
-export type RecordKind = SyncedKind | 'library-order';
+/**
+ * The kinds of record on the server: those that leave a deletion, the library's order, and
+ * the weekly plan.
+ */
+export type RecordKind = SyncedKind | 'library-order' | 'plan';
 
 /** The library's order is one record, under this id. */
 export const LIBRARY_ORDER_ID = 'library';
+
+/** The weekly plan is one record, under this id. */
+export const PLAN_ID = 'week';
 
 /** A record as the server keeps it (see supabase/schema.sql). A deletion has `deleted_at`. */
 export interface ServerRecord {
@@ -29,8 +36,12 @@ export interface ServerRecord {
 }
 
 /** Everything on this device that syncs. */
-export type CopyHere = Omit<CopyToMerge, 'libraryOrder' | 'fromVersion1' | 'newWorkouts'> & {
+export type CopyHere = Omit<
+    CopyToMerge,
+    'libraryOrder' | 'plan' | 'fromVersion1' | 'newWorkouts'
+> & {
     libraryOrder: LibraryOrder;
+    plan: WeekPlan;
 };
 
 /** Everything on this device, as the server keeps it. */
@@ -53,6 +64,8 @@ export function recordsHere(copy: CopyHere): ServerRecord[] {
         ...(copy.libraryOrder.updatedAt > 0
             ? [record('library-order', { id: LIBRARY_ORDER_ID, ...copy.libraryOrder })]
             : []),
+        // Never planned, so there's no plan to give
+        ...(copy.plan.updatedAt > 0 ? [record('plan', { id: PLAN_ID, ...copy.plan })] : []),
         ...copy.deleted.map(
             (deletion): ServerRecord => ({
                 kind: deletion.kind,
@@ -114,6 +127,7 @@ export function readPulled(fetched: readonly unknown[]): PulledPage {
         exerciseNotes: [],
         hiddenExercises: [],
         libraryOrder: null,
+        plan: null,
         deleted: [],
     };
     const read: ServerRecord[] = [];
@@ -170,6 +184,7 @@ const RECORD_KINDS: readonly RecordKind[] = [
     'exercise-note',
     'hidden-exercise',
     'library-order',
+    'plan',
 ];
 
 /** Adds a record to the copy to merge, if it's usable, and gives whether it was. */
@@ -203,6 +218,12 @@ function addTo(copy: CopyToMerge, record: ServerRecord): boolean {
                 return false;
             }
             copy.libraryOrder = { ids: [...record.data.ids], updatedAt: record.updated_at };
+            return true;
+        case 'plan':
+            if (record.id !== PLAN_ID || !isWeekPlan(record.data)) {
+                return false;
+            }
+            copy.plan = { ...copyPlan(record.data), updatedAt: record.updated_at };
             return true;
     }
 }

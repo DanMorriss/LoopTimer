@@ -1,5 +1,6 @@
 import { ExerciseNote, HiddenExercise, OwnExercise } from '../../models/exercise';
 import { HistoryEntry } from '../../models/history';
+import { copyPlan, isWeekPlan, WeekPlan } from '../../models/plan';
 import { Deletion, isDeletion, isLibraryOrder, LibraryOrder, newId } from '../../models/sync';
 import { Workout } from '../../models/workout';
 import {
@@ -42,8 +43,9 @@ import { readWorkout } from '../state/workout-store.service';
  * 12: `supersets` on history entries, the workout's supersets and giant sets when it ran.
  *    Nothing to convert; an older app turns the file down rather than syncing entries back
  *    without them.
+ * 13: `plan`, the weekly plan (PLN-1): the workouts planned on each day, and when it changed.
  */
-export const BACKUP_VERSION = 12;
+export const BACKUP_VERSION = 13;
 
 /** Far more than years of workouts take (about 1 KB each), so a bigger file isn't a backup. */
 export const MAX_BACKUP_BYTES = 50 * 1024 * 1024;
@@ -63,6 +65,8 @@ export interface BackupFile {
     hiddenExercises: HiddenExercise[];
     /** The library's order, taken by an import if a workout was moved there more recently. */
     libraryOrder: LibraryOrder;
+    /** The weekly plan, taken by an import if it changed there more recently. */
+    plan: WeekPlan;
     /** Records deleted on the device it came from, so importing deletes them here too. */
     deleted: Deletion[];
     settings: Settings;
@@ -82,6 +86,8 @@ export type ReadBackup =
           hiddenExercises: HiddenExercise[];
           /** None before version 7, or in a file written by hand. */
           libraryOrder: LibraryOrder | null;
+          /** None before version 13, or in a file written by hand. */
+          plan: WeekPlan | null;
           deleted: Deletion[];
           /**
            * From version 1, whose workout ids were only unique on their device: its workouts have
@@ -107,6 +113,7 @@ export function makeBackup(
         | 'exerciseNotes'
         | 'hiddenExercises'
         | 'libraryOrder'
+        | 'plan'
         | 'deleted'
         | 'settings'
     >,
@@ -189,6 +196,7 @@ export function readBackup(text: string, now = Date.now()): ReadBackup {
     const libraryOrder = isLibraryOrder(file['libraryOrder'])
         ? { ids: [...file['libraryOrder'].ids], updatedAt: file['libraryOrder'].updatedAt }
         : null;
+    const plan = isWeekPlan(file['plan']) ? copyPlan(file['plan']) : null;
     const skipped =
         savedWorkouts.length -
         workouts.length -
@@ -203,6 +211,7 @@ export function readBackup(text: string, now = Date.now()): ReadBackup {
         exerciseNotes,
         hiddenExercises,
         libraryOrder,
+        plan,
         deleted,
         fromVersion1,
         newWorkouts,

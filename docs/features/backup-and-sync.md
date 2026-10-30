@@ -19,7 +19,7 @@ Export and import (SYN-1, SYN-2) are built, with a prompt for having an AI turn 
 ### Export and import (SYN-1, SYN-2)
 
 - They're in **Account → Your data** (in Settings until 2026-10-28), under the hint "Your workouts and history are saved on this device, and with your account if you sign in. Export a backup to keep a copy of your own."
-- **Export backup** downloads one file of the workouts, the library's order, history, your own exercises, your notes on exercises, which exercises are hidden from the picker, deletions and settings (your equipment included), e.g. `loop-workouts-2026-10-21.json` (dated by the device's calendar), and says "Backup saved as loop-workouts-2026-10-21.json." The file's shape is in [data](data.md#backup-file).
+- **Export backup** downloads one file of the workouts, the library's order, the weekly plan, history, your own exercises, your notes on exercises, which exercises are hidden from the picker, deletions and settings (your equipment included), e.g. `loop-workouts-2026-10-21.json` (dated by the device's calendar), and says "Backup saved as loop-workouts-2026-10-21.json." The file's shape is in [data](data.md#backup-file).
 - **Import backup** opens a file picker. The chosen file is **merged** with what's here, by id:
     - A workout, history entry, exercise of your own, note on an exercise or hidden exercise only in the file is **added**.
     - One in both keeps **the most recent change**: an edit, a note, a change of reps mid-workout. On a tie, this device's stays.
@@ -27,6 +27,7 @@ Export and import (SYN-1, SYN-2) are built, with a prompt for having an AI turn 
     - An **exercise of your own with the same name** as one here (matched as names are, so "sled push" is "Sled push") but another id, e.g. typed on two devices, is taken to be the one here: it isn't added, and the file's steps, sets, note and hidden mark for it go to the one here.
     - One **deleted where the backup came from** is deleted here too, unless it's changed here since. One **deleted here** doesn't come back, unless it changed there after it was deleted here.
     - The **library's order** in the file is taken if a workout was moved there more recently than here (LIB-3): the workouts it lists go in its order, and any others (e.g. made here since) after them. A library never moved keeps its order. It isn't counted in what the import says it did.
+    - The **weekly plan** in the file (PLN-1) is taken if it changed there more recently than here; not counted either.
     - Nothing else here is changed or removed.
     - **Settings** in the file are left out: theme, sound, your equipment and so on are a choice for each device.
     - Workouts and history entries in the file that aren't usable are left out, the same as when the app loads its own data, and older workout formats convert.
@@ -69,7 +70,7 @@ Export and import (SYN-1, SYN-2) are built, with a prompt for having an AI turn 
 
 - **Clear this device** is at the end of **Account → Your data**, under "Done with this device, on a shared computer say? Clear your workouts, history and settings from it." (and, signed in, "That signs this device out too; your account keeps what's in it."). It works signed in or not.
 - It can't be undone, so unlike deleting elsewhere it **asks first**: the button opens a warning in its place, "This removes your workouts, history, exercises and settings from this device. It can't be undone, so export a backup first to keep them.", with **Clear everything** and **Cancel**. Focus goes to the warning, so it's read out; Cancel puts it back on the button.
-- **Clear everything** removes all the app keeps on the device: workouts, the library's order, history, your own exercises, notes, hidden exercises, deletions and settings, and the workout in progress, which isn't logged. Then the app starts again, empty, on the page it was on.
+- **Clear everything** removes all the app keeps on the device: workouts, the library's order, the weekly plan, history, your own exercises, notes, hidden exercises, deletions and settings, and the workout in progress, which isn't logged. Then the app starts again, empty, on the page it was on.
 - **Other open tabs** of the app start again empty too, on the page each was on: they're told as it clears, so none keeps what it had in memory and saves it back. A workout going in one of them is dropped, not logged.
 - Signed in, it signs this device out too, as the sign-in is kept on the device. The account keeps what it holds, and signing in again brings it back.
 
@@ -103,14 +104,14 @@ Decided with Dan on 2026-10-27:
 - **An Account tab** in the tab bar is where you sign in, see when it last synced, sign out and **delete your account** (SYN-8). Deleting it removes everything of yours on the server; what's on the device stays.
 - **Signing out keeps the data on the device**, so the app carries on as it would without an account. To remove it too, there's **Clear this device** (above).
 - **The device's copy is the one the app works from.** Nothing waits on the network: changes are saved here first, sent when online, and other devices' changes are merged in as an import's are, record by record, the most recent change winning.
-- **What syncs:** workouts, the library's order, the history, your own exercises, your notes on exercises, hidden exercises and deletions. **Settings don't:** theme, sound, units and your equipment stay a choice for each device, as with import. The run in progress doesn't either.
+- **What syncs:** workouts, the library's order, the weekly plan, the history, your own exercises, your notes on exercises, hidden exercises and deletions. **Settings don't:** theme, sound, units and your equipment stay a choice for each device, as with import. The run in progress doesn't either.
 - **The first sign-in on a device** merges what's here with what's in the account, as importing a backup does, so nothing is lost on either side.
 - **The privacy notice and terms** are updated before anything is sent off the device: what's stored, where, and who to contact.
 - **The server keeps the data in Europe** (an EU region).
 
 How it works:
 
-- **On the server**, one table of records of every kind: the user, the kind (`workout`, `history`, `exercise`, `exercise-note`, `hidden-exercise` or `library-order`), the record's id, its `updatedAt`, `deletedAt` if it was deleted, the record itself as JSON, the app's data version it was written in, and a number (`seq`) the server counts up on every write. A deletion is a record with `deletedAt` set, kept for good, so the device's cap of 5,000 doesn't apply there. Each user can only read their own rows, and write them only through the sending function.
+- **On the server**, one table of records of every kind: the user, the kind (`workout`, `history`, `exercise`, `exercise-note`, `hidden-exercise`, `library-order` or `plan`), the record's id, its `updatedAt`, `deletedAt` if it was deleted, the record itself as JSON, the app's data version it was written in, and a number (`seq`) the server counts up on every write. A deletion is a record with `deletedAt` set, kept for good, so the device's cap of 5,000 doesn't apply there. Each user can only read their own rows, and write them only through the sending function.
 - **Fetching** comes first: the device asks for the rows written since the last `seq` it saw, 500 at a time, merges them as an import does (the same merge, so an exercise of your own made on two devices under one name becomes one), and remembers the new `seq`. A row written by a newer version of the app is left alone, and fetched again until this one is updated; the Account tab says so.
 - **Sending:** then the records changed here since they were last sent or fetched go up, 200 at a time. The server keeps one only if it's newer than its copy, a deletion winning a tie, as merging does. What was fetched isn't sent back, unless it lost to a newer change here. Writes for an account go one at a time, so a device that's fetched up to a `seq` can't miss one written below it.
 - **When:** on opening the app and signing in, 3 seconds after a change (so a burst goes as one), on coming back online, and on coming back to the app. One person's devices don't need changes to arrive live. One that doesn't finish is tried again a minute later.

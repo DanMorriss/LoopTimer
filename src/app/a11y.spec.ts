@@ -13,6 +13,8 @@ import { provideFakeSyncStarter } from './shared/testing/fake-sync';
 import { makeWorkout, reps, rest, work } from './shared/testing/make-workout';
 import { ExerciseStore } from './shared/state/exercise-store.service';
 import { HistoryStore } from './shared/state/history-store.service';
+import { PlanStore } from './shared/state/plan-store.service';
+import { weekdayOf } from './models/plan';
 import { WorkoutStore } from './shared/state/workout-store.service';
 import { asOneGroup } from './models/workout';
 
@@ -319,6 +321,54 @@ for (const theme of ['dark', 'light'] as const) {
                 await open('/home');
                 expect(fixture.nativeElement.querySelector('.suggestion')).not.toBeNull();
                 expect(fixture.nativeElement.querySelector('.muscles-week')).not.toBeNull();
+                await expectNoViolations();
+            });
+        });
+
+        describe('plan', () => {
+            /** Legs planned yesterday (missed) and today, Push today too and done. */
+            function planned() {
+                const legs = store.addWorkout(makeWorkout({ title: 'Legs' }));
+                const push = store.addWorkout(makeWorkout({ title: 'Push' }));
+                const plan = TestBed.inject(PlanStore);
+                const today = weekdayOf(Date.now());
+                plan.add((today + 6) % 7, legs.id);
+                plan.add(today, legs.id);
+                plan.add(today, push.id);
+                const now = Date.now();
+                TestBed.inject(HistoryStore).record({
+                    id: 'run-0',
+                    workoutId: push.id,
+                    title: 'Push',
+                    startedAt: now - 1,
+                    endedAt: now,
+                    activeSeconds: 1,
+                    roundsCompleted: 1,
+                    totalRounds: 1,
+                    outcome: 'finished',
+                    sets: [],
+                });
+            }
+
+            it('the week, with workouts done, missed and due', async () => {
+                planned();
+                await open('/plan');
+                expect(fixture.nativeElement.querySelector('.plan__workout')).not.toBeNull();
+                await expectNoViolations();
+            });
+
+            it('picking a workout to plan', async () => {
+                planned();
+                await open('/plan');
+                click('#plan-add-0');
+                await settle();
+                await expectNoViolations();
+            });
+
+            it('due today on Home', async () => {
+                planned();
+                await open('/home');
+                expect(fixture.nativeElement.querySelector('.due')).not.toBeNull();
                 await expectNoViolations();
             });
         });

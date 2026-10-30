@@ -1,7 +1,7 @@
 @use 'type' as *;
 
 // Over the page like the exercise dialog, scrolling within itself
-.add-overlay {
+.choice-overlay {
     position: fixed;
     inset: 0;
     display: grid;
@@ -16,7 +16,7 @@
     }
 }
 
-.add {
+.choice {
     width: min(420px, 100%);
     max-height: calc(100dvh - 2rem);
     overflow-y: auto;
@@ -27,19 +27,19 @@
     padding: 1.2rem;
 }
 
-.add__header {
+.choice__header {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
     gap: 0.75rem;
 }
 
-.add__close {
+.choice__close {
     flex-shrink: 0;
     margin: -0.35rem -0.35rem 0 0;
 }
 
-.add__title {
+.choice__title {
     margin: 0;
     padding-top: 0.35rem;
     @include display;
@@ -48,7 +48,7 @@
     overflow-wrap: anywhere;
 }
 
-.add__hint {
+.choice__hint {
     margin: 0.5rem 0 1rem;
     color: var(--text-muted);
     font-size: 0.85rem;
@@ -56,7 +56,7 @@
 }
 
 // The choices as one panel of full-width rows, as a menu's are
-.add__choices {
+.choice__choices {
     margin: 0;
     padding: 0;
     list-style: none;
@@ -64,24 +64,37 @@
     border-radius: 0.65rem;
     overflow: hidden;
 
-    li:not(:last-child) .add__choice {
+    li:not(:last-child) .choice__choice {
         border-bottom: 1px solid var(--border-soft);
     }
 }
 
-.add__choice:disabled {
+.choice__choice:disabled {
     color: var(--text-muted);
     cursor: not-allowed;
 }
 
-.add__name {
+.choice__name {
     flex: 1;
     min-width: 0;
     overflow-wrap: anywhere;
 }
 
-.add__steps {
+.choice__detail {
     flex-shrink: 0;
     color: var(--text-muted);
     font-size: 0.8rem;
+}
+
+.choice__none {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+// With no hint between them, the list keeps its distance from the title
+.choice__header + .choice__choices,
+.choice__header + .choice__none {
+    margin-top: 1rem;
 }

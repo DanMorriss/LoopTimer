@@ -7,6 +7,7 @@ import { HistoryStore } from '../state/history-store.service';
 import { savedHistory } from '../testing/history-database';
 import { SettingsStore } from '../state/settings-store.service';
 import { WorkoutStore } from '../state/workout-store.service';
+import { PlanStore } from '../state/plan-store.service';
 import { makeWorkout } from '../testing/make-workout';
 import { BACKUP_VERSION, BackupFile, MAX_BACKUP_BYTES } from './backup-file';
 import { BackupService, ImportResult } from './backup.service';
@@ -104,6 +105,7 @@ describe('BackupService', () => {
             expect(file.app).toBe('Loop Workouts');
             expect(file.version).toBe(BACKUP_VERSION);
             expect(file.libraryOrder).toEqual(workouts().libraryOrder());
+            expect(file.plan).toEqual(TestBed.inject(PlanStore).plan());
             expect(file.workouts).toEqual(workouts().workouts());
             expect(file.history).toEqual(history().entries());
             expect(file.deleted).toEqual([
@@ -150,6 +152,30 @@ describe('BackupService', () => {
 
             await backup.import(file(200));
             expect(ids()).toEqual(['c', 'b', 'a']);
+        });
+
+        it('takes the weekly plan from the file if it changed there more recently', async () => {
+            localStorage.setItem(
+                'week-plan',
+                JSON.stringify({ days: [['a'], [], [], [], [], [], []], updatedAt: 100 })
+            );
+            start();
+            const file = (updatedAt: number) =>
+                new Blob([
+                    JSON.stringify({
+                        app: 'Loop Workouts',
+                        version: BACKUP_VERSION,
+                        workouts: [],
+                        plan: { days: [[], ['b'], [], [], [], [], []], updatedAt },
+                    }),
+                ]);
+            const plan = () => TestBed.inject(PlanStore).plan();
+
+            await backup.import(file(50));
+            expect(plan().days[0]).toEqual(['a']);
+
+            await backup.import(file(200));
+            expect(plan()).toEqual({ days: [[], ['b'], [], [], [], [], []], updatedAt: 200 });
         });
 
         it('takes the most recent change to each workout and history entry', async () => {

@@ -6,6 +6,7 @@ import { DeletionStore } from '../state/deletion-store.service';
 import { ExerciseStore } from '../state/exercise-store.service';
 import { HistoryStore } from '../state/history-store.service';
 import { SettingsStore } from '../state/settings-store.service';
+import { PlanStore } from '../state/plan-store.service';
 import { WorkoutStore } from '../state/workout-store.service';
 import {
     BackupProblem,
@@ -48,6 +49,7 @@ export type CopyToMerge = Pick<
     | 'exerciseNotes'
     | 'hiddenExercises'
     | 'libraryOrder'
+    | 'plan'
     | 'deleted'
 > &
     Partial<Pick<Extract<ReadBackup, { ok: true }>, 'fromVersion1' | 'newWorkouts'>>;
@@ -64,6 +66,7 @@ export class BackupService {
     private readonly exercises = inject(ExerciseStore);
     private readonly deletions = inject(DeletionStore);
     private readonly settings = inject(SettingsStore);
+    private readonly plan = inject(PlanStore);
     private readonly document = inject(DOCUMENT);
 
     /** Downloads a backup of everything, once the history has loaded, and gives the file's name. */
@@ -78,6 +81,7 @@ export class BackupService {
                 exerciseNotes: this.exercises.notes(),
                 hiddenExercises: this.exercises.hidden(),
                 libraryOrder: this.workouts.libraryOrder(),
+                plan: this.plan.plan(),
                 deleted: [...this.deletions.all()],
                 settings: {
                     theme: this.settings.theme(),
@@ -172,6 +176,9 @@ export class BackupService {
         // Once the workouts are in, so new ones take their place in it too
         if (backup.libraryOrder) {
             this.workouts.mergeLibraryOrder(backup.libraryOrder);
+        }
+        if (backup.plan) {
+            this.plan.merge(backup.plan);
         }
         const entries = this.history.mergeEntries(linkedHistory, backup.deleted);
         return {

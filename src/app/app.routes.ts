@@ -26,6 +26,11 @@ export const routes: Routes = [
             ),
     },
     {
+        path: 'plan',
+        canActivate: [historyLoaded],
+        loadComponent: () => import('./plan/plan.component').then((m) => m.PlanComponent),
+    },
+    {
         path: 'exercises',
         canActivate: [historyLoaded],
         loadComponent: () =>

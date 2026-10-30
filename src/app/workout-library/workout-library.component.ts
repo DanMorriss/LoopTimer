@@ -1,4 +1,5 @@
 import { CdkDrag, CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop';
+import { PageSlide } from '../nav/page-slide';
 import {
     afterNextRender,
     Component,
@@ -42,6 +43,7 @@ export class WorkoutLibraryComponent {
     private host = inject<ElementRef<HTMLElement>>(ElementRef);
     private injector = inject(Injector);
     private readonly undo = inject(UndoService);
+    protected readonly slide = inject(PageSlide);
     protected openWorkoutMenuId = signal<string | null>(null);
     /** The workout whose details are open, if any. */
     private readonly detailsId = signal<string | null>(null);
