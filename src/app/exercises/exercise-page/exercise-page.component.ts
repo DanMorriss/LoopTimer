@@ -6,6 +6,7 @@ import { map } from 'rxjs';
 import { ExerciseDetailsComponent } from '../../shared/components/exercise-details/exercise-details.component';
 import { ExerciseEditorComponent } from '../../shared/components/exercise-editor/exercise-editor.component';
 import { ExerciseProgressComponent } from './exercise-progress/exercise-progress.component';
+import { AddToWorkoutDialogComponent } from './add-to-workout/add-to-workout-dialog.component';
 import { BackLinkComponent } from '../../nav/back-link/back-link.component';
 import { PageSlide } from '../../nav/page-slide';
 import { SwipeBackDirective } from '../../nav/swipe-back.directive';
@@ -19,7 +20,8 @@ import { UndoService } from '../../shared/undo/undo.service';
 
 /**
  * One exercise (EXR-7, EXR-8): what it needs, its description and your note on it, the
- * muscles it works on the body map, then how to do it and tips. A built-in one takes a note;
+ * muscles it works on the body map, then how to do it and tips. It can be added to a workout,
+ * new or in the library, which opens in Create with it at the end (EXR-12). A built-in one takes a note;
  * your own can be edited. Either can be hidden from the picker, and your own deleted unless a
  * workout uses it (one with history is hidden instead, so its history keeps its name).
  *
@@ -30,6 +32,7 @@ import { UndoService } from '../../shared/undo/undo.service';
     selector: 'app-exercise-page',
     imports: [
         MatIconModule,
+        AddToWorkoutDialogComponent,
         BackLinkComponent,
         ExerciseDetailsComponent,
         ExerciseEditorComponent,
@@ -97,6 +100,8 @@ export class ExercisePageComponent {
     });
 
     protected readonly editing = signal(false);
+    /** The dialog asking which workout to add it to is open. */
+    protected readonly adding = signal(false);
     /** Delete was pressed while a workout uses it, so it says why it can't be deleted. */
     protected readonly inUse = signal(false);
     private readonly undo = inject(UndoService);
@@ -108,6 +113,23 @@ export class ExercisePageComponent {
     protected closeEditor() {
         this.editing.set(false);
         document.getElementById('exercise-page-edit')?.focus();
+    }
+
+    protected closeAdding() {
+        this.adding.set(false);
+        document.getElementById('exercise-page-add')?.focus();
+    }
+
+    /** Opens Create on the workout picked, or a new one, with the exercise added at the end. */
+    protected addTo(workoutId: string | null) {
+        const exercise = this.exercise();
+        if (!exercise) {
+            return;
+        }
+        this.adding.set(false);
+        void this.router.navigate(['/setup'], {
+            queryParams: workoutId ? { editId: workoutId, add: exercise.id } : { add: exercise.id },
+        });
     }
 
     protected toggleHidden() {

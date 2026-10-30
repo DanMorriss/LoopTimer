@@ -11,10 +11,6 @@ Accounts and sync are built and working (SYN-3, SYN-4, SYN-8, SYN-9); how they w
 - [ ] **Sign in with Google and Apple (SYN-7).**
 - [ ] **Move everyone to loopworkouts.com:** the app moved there on 2026-10-28 (Vercel, with www redirecting to it; DNS at GoDaddy), and loop-workouts.vercel.app still serves it, not redirected. Each address keeps its own data, so a redirect would strand what's saved on the old one. Now that sync is in, redirect vercel.app to loopworkouts.com (signing in on the new address brings the data back), and take it out of Supabase's Redirect URLs.
 
-### Exercises
-
-- [ ] **Add an exercise to a workout from its page:** on an exercise's page (e.g. Pull-ups), let the user add it to a workout in their library, or start a new workout with it in. Needs a story in `docs/features/exercises.md`.
-
 ### Simple planning
 
 - [ ] **Weekly plan and Due today (PLN-1–3).**

@@ -1,4 +1,8 @@
-<div class="flex justify-center" [appSwipeBack]="backUrl" [swipeBackDisabled]="editing()">
+<div
+    class="flex justify-center"
+    [appSwipeBack]="backUrl"
+    [swipeBackDisabled]="editing() || adding()"
+>
     <div
         class="m-4 w-full max-w-md rounded-xl border border-(--panel-border) bg-(--panel) p-5 shadow-xl shadow-(color:--shadow)"
     >
@@ -11,6 +15,16 @@
                 [emptyHint]="builtIn() ? '' : 'No how-to steps or tips yet. Add them with Edit.'"
             >
                 <div class="exercise__actions">
+                    <button
+                        type="button"
+                        id="exercise-page-add"
+                        class="btn-pill"
+                        aria-haspopup="dialog"
+                        (click)="adding.set(true)"
+                    >
+                        <mat-icon aria-hidden="true">playlist_add</mat-icon>
+                        Add to workout
+                    </button>
                     <button
                         type="button"
                         id="exercise-page-edit"
@@ -65,6 +79,15 @@
                     </p>
                 }
             </div>
+
+            @if (adding()) {
+                <app-add-to-workout-dialog
+                    animate.leave="dialog-leave"
+                    [exercise]="exercise"
+                    (closed)="closeAdding()"
+                    (picked)="addTo($event)"
+                />
+            }
 
             @if (editing()) {
                 <app-exercise-editor

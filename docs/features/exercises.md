@@ -1,6 +1,6 @@
 # Exercises
 
-Built: exercises are in the data (#86), with the built-in list, your own exercises and notes, and existing data carried over (EXR-4). In the app: the Exercises list and a page per exercise (EXR-6–8), the picker in Create (EXR-2) with each exercise's details a tap away (EXR-11), and mid-workout from the (i) by its name (RUN-9), making, renaming and editing your own exercises (EXR-3, EXR-9), your notes, shown on the exercise's page and mid-workout (EXR-10), hiding any exercise from the picker, and deleting your own. Each card has its latest and best (PRG-3), and the page its progress (PRG-4; see [progress](progress.md)).
+Built: exercises are in the data (#86), with the built-in list, your own exercises and notes, and existing data carried over (EXR-4). In the app: the Exercises list and a page per exercise (EXR-6–8), the picker in Create (EXR-2) with each exercise's details a tap away (EXR-11), and mid-workout from the (i) by its name (RUN-9), making, renaming and editing your own exercises (EXR-3, EXR-9), your notes, shown on the exercise's page and mid-workout (EXR-10), hiding any exercise from the picker, and deleting your own. From its page, an exercise can be added to a workout, new or in the library (EXR-12). Each card has its latest and best (PRG-3), and the page its progress (PRG-4; see [progress](progress.md)).
 
 ## Stories
 
@@ -15,6 +15,7 @@ Built: exercises are in the data (#86), with the built-in list, your own exercis
 - **EXR-9** As a user I want to make my own exercise, with its own description and the muscles it works.
 - **EXR-10** As a user I want to add my own note to any exercise, built-in ones included (e.g. "Pause at the bottom").
 - **EXR-11** As a user I want to see an exercise's details while building a workout, so I can tell it's the one I want before I use it.
+- **EXR-12** As a user I want to add an exercise to one of my workouts, or start a new workout with it, from its page, so finding an exercise I like leads straight to doing it.
 
 ## Rules (draft)
 
@@ -84,13 +85,21 @@ At `/exercises/<name>` for a built-in exercise (e.g. `/exercises/back-squat`, it
 - "Hidden from the picker in Create." when it's hidden.
 - The one-line description, when it has one.
 - **Your note**, set apart, when you've written one (EXR-10).
-- **Add note** / **Edit note** (built-in) or **Edit** (your own), opening the exercise dialog. Focus goes back to it when the dialog closes.
+- **Add to workout** (EXR-12; see below), then **Add note** / **Edit note** (built-in) or **Edit** (your own), opening the exercise dialog. Focus goes back to it when the dialog closes.
 - **Muscles worked**: the body map.
 - **Progress** (PRG-4): bests, a chart and recent sessions; see [progress](progress.md).
 - **How to do it** (numbered steps) and **Tips**, each when it has any. Your own with neither says "No how-to steps or tips yet. Add them with Edit."
 - **Hide from the picker** / **Show in the picker**, and **Delete** on your own (see below).
 
 A link to an exercise that isn't there (deleted, or mistyped) says "Exercise not found", with a link to all exercises.
+
+### Adding it to a workout (EXR-12)
+
+- **Add to workout** on the page opens a dialog, "Add Back squat to", saying "It goes at the end with 3 sets, to change before you save." Under it, **New workout**, then each workout in the library in the library's order, with how many steps it has beside it ("6 steps"; a blank title is "Untitled workout"). Focus starts on New workout. ✕, Escape or a tap outside close it, with focus back on Add to workout; swiping back is off while it's open.
+- A workout already at the most steps (20) says "Full, 20 steps" and can't be picked.
+- Picking a workout opens it in **Create** with the exercise added at the end, linked to it, as the only step open and focused, and screen readers hear "Added Back squat, step 7". **New workout** opens Create with it as the only step (in place of the empty one a new workout starts with).
+- It's added as **3 sets with 1:00 rest**: of 10 reps for a rep exercise, or of 0:30 for a timed one, with no weight. Nothing is saved until Save & start; leaving Create leaves the workout as it was.
+- Reloading Create, or coming back to it, doesn't add it again.
 
 ### Hiding and deleting
 
@@ -187,6 +196,9 @@ Past logged sets are linked the same way. Unnamed steps stay unnamed and aren't 
 - Given the Exercises list scrolled down, when I open Back squat, then its page slides in from the right and opens at its top; when I press ‹ Exercises, then it slides off to the right and the list is scrolled where it was.
 - Given Back squat's page, when I swipe right past halfway and let go, then it slides off and the list is back; when I swipe right a little and let go slowly, then the page springs back and stays.
 - Given reduced motion is on, when I open an exercise or go back, then the page changes at once, without sliding.
+- Given Back squat's page and workouts "Legs" (6 steps) and "Arms" (20 steps), when I press Add to workout, then the dialog offers New workout, Legs and Arms, and Arms says it's full and can't be picked.
+- Given that dialog, when I pick Legs, then Create opens on Legs with Back squat as step 7, 3 sets of 10 with 1:00 rest, open; when I pick New workout instead, then Create opens a new workout with only Back squat. Given Plank (timed), then it's 3 sets of 0:30.
+- Given Create opened on Legs that way, when I reload it, then Legs opens as saved, without Back squat added again.
 - Given my own exercise in no workout and not in the history, when I delete it, then it's gone, with my note on it, and the list shows with Undo; when I press Undo, then it's back with my note, on its page.
 
 ## Platform notes

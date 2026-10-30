@@ -351,9 +351,62 @@ export class WorkoutSetupComponent {
 
         // Not just the snapshot: the page stays open when only the query changes, e.g. Create
         // from the menu while editing, which goes from ?editId=1 to a new workout
-        this.route.queryParamMap
-            .pipe(takeUntilDestroyed())
-            .subscribe((params) => this.load(this.findWorkoutToEdit(params)));
+        this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+            if (this.addedExercise) {
+                // Only ?add= taken off the address, after adding it: the form stays as it is
+                this.addedExercise = false;
+                return;
+            }
+            this.load(this.findWorkoutToEdit(params));
+            const add = params.get('add');
+            if (add !== null) {
+                this.addExercise(add);
+                this.addedExercise = true;
+                // Off the address, so going back to it or reloading doesn't add it again
+                void this.router.navigate([], {
+                    relativeTo: this.route,
+                    queryParams: { add: null },
+                    queryParamsHandling: 'merge',
+                    replaceUrl: true,
+                });
+            }
+        });
+    }
+
+    /** An exercise was just added from ?add=, which is being taken off the address. */
+    private addedExercise = false;
+
+    /**
+     * Adds an exercise from its page (EXR-12) at the end of the workout, as the one step open:
+     * 3 sets of 10 reps (or of 0:30, for a timed one) with 1:00 rest, to change before saving.
+     * A new workout's empty first step makes way for it. Nothing happens for an exercise
+     * that isn't there, or a workout already at MAX_STEPS.
+     */
+    private addExercise(exerciseId: string) {
+        const exercise = this.exercises.byId(exerciseId);
+        const fresh = this.editingWorkoutId() === null;
+        if (!exercise || (!fresh && this.stepCount() >= MAX_STEPS)) {
+            return;
+        }
+        const { name, id } = exercise;
+        const step = this.stepModel(
+            exercise.measuredBy === 'timed'
+                ? { kind: 'work', seconds: 30, name, exerciseId: id }
+                : { kind: 'reps', reps: 10, name, exerciseId: id },
+            3
+        );
+        this.updateSteps((steps) => (fresh ? [step] : [...steps, step]));
+        this.expandedKeys.set(new Set([step.key]));
+        this.stepAnnouncement.set(`Added ${name}, step ${this.stepCount()}`);
+        // In the middle of the screen, as at the end of a long workout it'd be under the tab bar
+        afterNextRender(
+            () => {
+                const toggle = document.getElementById(`step-${step.key}-toggle`);
+                toggle?.focus({ preventScroll: true });
+                toggle?.closest('.step')?.scrollIntoView({ block: 'center', behavior: 'instant' });
+            },
+            { injector: this.injector }
+        );
     }
 
     /** Fills the form from a saved workout, or empties it for a new one. */
