@@ -6,18 +6,14 @@ Open work, highest priority first. Tick items off (or delete them) as they're do
 
 ### Sync
 
-The plan is in `docs/features/backup-and-sync.md` (Sync and The backend), as agreed with Dan on 2026-10-27: Supabase in an EU region, an optional account, email sign-in first, signing out keeping the data on the device, settings staying per device, and changes dated by the server's clock. The library's order merges as a record of its own (in backups now, and in sync).
-
-The Account tab is in (at `/account`); since 2026-10-28 it also holds Your data (backups and **Clear this device**, SYN-9), About, and a row into Settings, which is no longer a tab of its own. Dan made the Supabase project on 2026-10-27, in an EU region: `https://cpgacyzlfyskifzhkotu.supabase.co`, with a publishable key (safe in the app; the service role key never goes in it).
-
-Signing in by an email link or its code, signing out and deleting the account are built (PR #140): Supabase's code loads only on the Account tab. Supabase checked on 2026-10-28: the free tier has 50,000 monthly users, a 500 MB database and 5 GB of egress, and pauses after a week unused; Pro is $25 a month.
-
-Set up by Dan on 2026-10-28 and tested on his phone (the code in the Home Screen app, and the link in Safari): `supabase/schema.sql` is run, and sign-in emails come from Loop Workouts <signin@mail.loopworkouts.com>, sent by Resend (EU) through Supabase's custom SMTP, with the code in the Magic Link and Confirm signup templates. The domain, loopworkouts.com, is at GoDaddy, with Microsoft 365 for Dan's own email on the bare domain; Resend's DNS records are on the `mail` subdomain so they don't clash, and GoDaddy's DMARC record covers it.
-
-Sync is built (SYN-3, SYN-4; PR #144): fetch, merge as an import does, then send what's changed, with `pull_records()` and `push_records()` in `supabase/schema.sql` (and the server's clock check there). Its code loads only once signed in. The privacy notice and terms say what's sent. Dan ran the new `supabase/schema.sql` and tried sync on two devices on 2026-10-28: it all works.
+Accounts and sync are built and working (SYN-3, SYN-4, SYN-8, SYN-9); how they work is in `docs/features/backup-and-sync.md`. Worth knowing when planning: Supabase's free tier has 50,000 monthly users, a 500 MB database and 5 GB of egress, and pauses after a week unused (Pro is $25 a month, checked 2026-10-28). loopworkouts.com's DNS is at GoDaddy, with Microsoft 365 for Dan's email on the bare domain and Resend's records on the `mail` subdomain.
 
 - [ ] **Sign in with Google and Apple (SYN-7).**
 - [ ] **Move everyone to loopworkouts.com:** the app moved there on 2026-10-28 (Vercel, with www redirecting to it; DNS at GoDaddy), and loop-workouts.vercel.app still serves it, not redirected. Each address keeps its own data, so a redirect would strand what's saved on the old one. Now that sync is in, redirect vercel.app to loopworkouts.com (signing in on the new address brings the data back), and take it out of Supabase's Redirect URLs.
+
+### Exercises
+
+- [ ] **Add an exercise to a workout from its page:** on an exercise's page (e.g. Pull-ups), let the user add it to a workout in their library, or start a new workout with it in. Needs a story in `docs/features/exercises.md`.
 
 ### Simple planning
 
@@ -30,6 +26,8 @@ Sync is built (SYN-3, SYN-4; PR #144): fetch, merge as an import does, then send
 - [ ] **Alarms on a locked phone:** iPhones suspend web audio when locked, so the beeps stop if the phone is locked by hand ("Keep screen on" stops it locking by itself). Scheduled notifications aren't possible on iOS (no Notification Triggers), and server push needs a backend (possible now that sync has one, in Supabase). Tried (PR #64, taken out again): playing the beeps as an `<audio>` track made on the spot, unlocked with a moment of silence on the first tap and shown on the lock screen via Media Session. In Safari on an iPhone it was silent once locked, so don't repeat it as it was. Parked for now (ALM-2 in `docs/features/alarms.md`).
 
 ## 2. Known issues
+
+- [ ] **The rest between sets belongs to the wrong set (BLD-9):** on the run screen, the rest after a set shows as part of the next set ("set 2 of 3" while resting after set 1); it should count as part of the set being rested from. And the last set's rest is skipped, so the run goes straight into the next exercise: it should still happen, unless it's the last exercise of the whole workout. Both are written down as rules in `docs/features/run-a-workout.md` ("not after the last", and "the rest between sets is part of the set it leads to"), so change those with it.
 
 - [ ] **Have the Privacy notice and Terms of use looked over:** written on 2026-10-26 from what the app does, and updated on 2026-10-28 for accounts and sync (Supabase and Resend in Europe; workouts, history and exercises kept with the account) and dan@loopworkouts.com to contact. They name no country's law, nor who's responsible for the data (as the UK and EU GDPR ask); decide whether they should, now that data leaves the device.
 - [ ] **Try the summary's drag from its content on an iPhone:** added on 2026-10-25 with touch events (Safari has no `touch-action: pan-down`), and tested only in Chromium with simulated touches. Check that, scrolled to the top, a finger moving down on the stats drags the sheet; moving up scrolls; a scrolled-down wheel in the sets still turns; and the button a drag starts on isn't pressed.
