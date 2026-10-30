@@ -437,8 +437,8 @@
                                         </div>
                                     }
 
-                                    <!-- How many times it runs, with a rest between, never after
-                                         the last. A rest step is just a time. A superset has
+                                    <!-- How many times it runs, with a rest after each (see
+                                         runPlan()). A rest step is just a time. A superset has
                                          rounds, which are its steps' sets. -->
                                     @if (kind !== 'rest' && kind !== 'heading') {
                                         <div class="picker-row">
@@ -508,8 +508,8 @@
                                                     class="picker-field__label"
                                                     [id]="'step-' + key + '-rest-label'"
                                                 >
-                                                    Rest between
-                                                    {{ kind === 'superset' ? 'rounds' : 'sets' }}
+                                                    Rest after each
+                                                    {{ kind === 'superset' ? 'round' : 'set' }}
                                                     (mm:ss)
                                                 </span>
                                                 <div class="picker-row">

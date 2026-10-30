@@ -889,13 +889,13 @@ describe('WorkoutSetupComponent', () => {
             expect(wheel(2, 'sets')).toBe('1');
         });
 
-        it('shows Rest between sets at 01:00 once there is more than one', async () => {
+        it('shows Rest after each set at 01:00 once there is more than one', async () => {
             await setup();
             await create();
 
             choose(0, 'sets', '3');
 
-            expect(steps()[0].textContent).toContain('Rest between sets');
+            expect(steps()[0].textContent).toContain('Rest after each set');
             expect(wheel(0, 'rest-minutes')).toBe('1');
             expect(wheel(0, 'rest-seconds')).toBe('0');
         });
@@ -1380,7 +1380,7 @@ describe('WorkoutSetupComponent', () => {
             expect(badge(0)).toBe('Superset');
             expect(wheel(0, 'sets')).toBe('3');
             expect(wheel(0, 'rest-minutes')).toBe('1');
-            expect(steps()[0].textContent).toContain('Rest between rounds');
+            expect(steps()[0].textContent).toContain('Rest after each round');
             // Its steps have no Sets of their own
             expect(wheel(1, 'sets')).toBeNull();
             expect(wheel(2, 'sets')).toBeNull();
