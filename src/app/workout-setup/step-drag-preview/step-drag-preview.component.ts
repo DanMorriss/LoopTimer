@@ -2,8 +2,8 @@ import { Component, input } from '@angular/core';
 import { StepKind, stepKindName } from '../../models/workout';
 
 /**
- * What follows the pointer while a step (or a heading) is dragged in Create: a compact card
- * of its kind, name and time, as the wheels don't copy well.
+ * What follows the pointer while a step (a heading, or a superset with its steps) is dragged
+ * in Create: a compact card of its kind, name and time, as the wheels don't copy well.
  */
 @Component({
     selector: 'app-step-drag-preview',
@@ -13,11 +13,13 @@ import { StepKind, stepKindName } from '../../models/workout';
         '[class.rest]': "kind() === 'rest'",
         '[class.reps]': "kind() === 'reps'",
         '[class.heading]': "kind() === 'heading'",
+        '[class.superset]': "kind() === 'superset'",
     },
 })
 export class StepDragPreviewComponent {
-    /** A superset's own row is never dragged (it moves with its steps), but has a name. */
     readonly kind = input.required<StepKind | 'heading' | 'superset'>();
+    /** In place of its kind's name, e.g. "Giant set" for a superset of 3. */
+    readonly badge = input('');
     readonly name = input('');
     /** e.g. "00:30", or "10 reps". */
     readonly time = input('');

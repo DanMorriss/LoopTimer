@@ -95,38 +95,39 @@
                         [class.step--collapsed]="!expanded"
                         cdkDrag
                         [cdkDragData]="key"
-                        [cdkDragDisabled]="kind === 'superset'"
+                        (cdkDragStarted)="dragStarted()"
                     >
                         <!-- What follows the pointer: a compact card, as the wheels don't copy well.
-                             Held where the step was grabbed (grabbedAt), not by its corner. -->
+                             Held where the step was grabbed (grabbedAt), not by its corner. A
+                             superset's names its steps, which it takes with it. -->
                         <app-step-drag-preview
                             [kind]="kind"
-                            [name]="step().value().name.trim()"
+                            [badge]="kind === 'superset' ? supersetName(i) : ''"
+                            [name]="summaryName(i)"
                             [time]="time"
                             [style.translate]="-grabbedAt().x + 'px ' + -grabbedAt().y + 'px'"
+                            [style.max-width.px]="grabbedAt().width || null"
                             *cdkDragPreview
                         />
                         <!-- Where it will land -->
                         <div class="step-placeholder" *cdkDragPlaceholder></div>
 
                         <div class="step__header">
-                            @if (kind === 'superset') {
-                                <!-- Moved with its up and down buttons, as it goes with its steps -->
-                                <span class="step__handle step__handle--none" aria-hidden="true">
-                                    <mat-icon>layers</mat-icon>
-                                </span>
-                            } @else {
-                                <!-- Pointer only, so hidden from screen readers: they use the move buttons -->
-                                <span
-                                    class="step__handle"
-                                    cdkDragHandle
-                                    aria-hidden="true"
-                                    title="Drag to reorder"
-                                    (pointerdown)="grabStep($event)"
-                                >
-                                    <mat-icon>drag_indicator</mat-icon>
-                                </span>
-                            }
+                            <!-- Pointer only, so hidden from screen readers: they use the move buttons.
+                                 A superset's takes its steps with it. -->
+                            <span
+                                class="step__handle"
+                                cdkDragHandle
+                                aria-hidden="true"
+                                [title]="
+                                    kind === 'superset'
+                                        ? 'Drag to move it with its steps'
+                                        : 'Drag to reorder'
+                                "
+                                (pointerdown)="grabStep($event, key)"
+                            >
+                                <mat-icon>drag_indicator</mat-icon>
+                            </span>
                             @if (kind === 'superset') {
                                 <!-- What it's called goes by how many exercises it has -->
                                 <span class="step__heading-badge" [id]="'step-' + key + '-title'">

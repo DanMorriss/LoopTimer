@@ -1578,6 +1578,84 @@ describe('WorkoutSetupComponent', () => {
             expect(el('[aria-live]').textContent).toContain('Moved reps to step 3');
         });
 
+        it('drags whole by its handle, taking its steps with it', async () => {
+            await setup();
+            await benchAndRow();
+            await press('Join Step 1, Bench with the next step');
+            await addStep();
+            typeName(3, 'Plank');
+            await press('Collapse all');
+            await press('Expand all');
+            const list = fixture.debugElement
+                .query(By.directive(CdkDropList))
+                .injector.get(CdkDropList);
+            const canDrop = (from: number, to: number) =>
+                list.sortPredicate(to, list.getSortedItems()[from], list);
+            const hidden = () => steps().map((step) => step.classList.contains('step--hidden'));
+            const handle = el('.step__handle', steps()[0]);
+            const grab = () => {
+                handle.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+                fixture.detectChanges();
+            };
+
+            expect(handle.getAttribute('aria-hidden')).toBe('true');
+            // Held, its steps hide, so it drags as one row; let go without dragging, they're back
+            grab();
+            expect(hidden()).toEqual([false, true, true, false]);
+            window.dispatchEvent(new PointerEvent('pointerup'));
+            fixture.detectChanges();
+            expect(hidden()).toEqual([false, false, false, false]);
+
+            // It can go past Plank, its steps following it
+            grab();
+            expect(canDrop(0, 3)).toBe(true);
+            list.dropped.emit({ previousIndex: 0, currentIndex: 3 } as CdkDragDrop<unknown>);
+            fixture.detectChanges();
+
+            expect(hidden()).toEqual([false, false, false, false]);
+            expect(el('.step__number', steps()[0]).textContent).toContain('Step 1, Plank');
+            expect(steps()[1].classList).toContain('step--superset');
+            expect(steps()[2].classList).toContain('step--in-superset');
+            expect(steps()[3].classList).toContain('step--in-superset');
+            expect(el('[aria-live]').textContent).toContain('Moved superset to the end');
+        });
+
+        it('can not drag a superset into another, and goes after one that is collapsed', async () => {
+            await setup();
+            await benchAndRow();
+            await press('Join Step 1, Bench with the next step');
+            await addStep();
+            typeName(3, 'Curl');
+            await addStep();
+            typeName(4, 'Dip');
+            await press('Collapse all');
+            await press('Expand all');
+            await press('Join Step 3, Curl with the next step');
+            const list = fixture.debugElement
+                .query(By.directive(CdkDropList))
+                .injector.get(CdkDropList);
+            const canDrop = (from: number, to: number) =>
+                list.sortPredicate(to, list.getSortedItems()[from], list);
+
+            // Rows: Superset, Bench, Row, Superset, Curl, Dip
+            el('.step__handle', steps()[0]).dispatchEvent(
+                new PointerEvent('pointerdown', { bubbles: true })
+            );
+            fixture.detectChanges();
+            // Straight after the other's row, or between its steps, is in it; after them isn't
+            expect(canDrop(0, 3)).toBe(false);
+            expect(canDrop(0, 4)).toBe(false);
+            expect(canDrop(0, 5)).toBe(true);
+            // Collapsed, straight after its row is after it on screen, where it goes
+            await press('Collapse all');
+            expect(canDrop(0, 3)).toBe(true);
+            list.dropped.emit({ previousIndex: 0, currentIndex: 3 } as CdkDragDrop<unknown>);
+            fixture.detectChanges();
+            expect(
+                steps().map((step) => el('.step__summary-name', step)?.textContent!.trim())
+            ).toEqual(['Curl, Dip', 'Curl', 'Dip', 'Bench, Row', 'Bench', 'Row']);
+        });
+
         it('deletes with its steps, and comes back with Undo', async () => {
             await setup();
             await benchAndRow();

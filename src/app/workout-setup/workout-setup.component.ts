@@ -2,6 +2,7 @@ import {
     afterNextRender,
     Component,
     computed,
+    DOCUMENT,
     effect,
     ElementRef,
     inject,
@@ -304,6 +305,7 @@ export class WorkoutSetupComponent {
     /** Read out by screen readers after a step is added, moved, changed or deleted. */
     protected readonly stepAnnouncement = signal('');
     private readonly undo = inject(UndoService);
+    private readonly document = inject(DOCUMENT);
 
     /** The exercise open in the editor, and the step it was opened from. */
     /** The exercise whose details are showing, and the step they were opened from. */
@@ -655,7 +657,9 @@ export class WorkoutSetupComponent {
 
     /** Whether a row's in a superset that's collapsed, which shows as one line. */
     protected isHidden(step: StepModel): boolean {
-        return step.group !== 0 && !this.isExpanded(step.group);
+        return (
+            step.group !== 0 && (!this.isExpanded(step.group) || step.group === this.heldSuperset())
+        );
     }
 
     /**
@@ -902,15 +906,48 @@ export class WorkoutSetupComponent {
     /**
      * Where a step's handle was grabbed, from the step's top left (px). The CDK puts a custom
      * preview's top left corner at the pointer, so the preview is moved back by this much,
-     * keeping the pointer where it took hold rather than jumping to the corner.
+     * keeping the pointer where it took hold rather than jumping to the corner. No wider than
+     * the step, so it stays on screen.
      */
-    protected readonly grabbedAt = signal({ x: 0, y: 0 });
+    protected readonly grabbedAt = signal({ x: 0, y: 0, width: 0 });
 
-    protected grabStep(event: PointerEvent) {
+    /**
+     * The superset whose handle is held: its steps hide from then until it's dropped, so it
+     * drags as one row, its steps following it (`dropStep`). 0 for none.
+     */
+    protected readonly heldSuperset = signal(0);
+    private supersetDragging = false;
+
+    protected grabStep(event: PointerEvent, key: number) {
         const step = (event.currentTarget as Element).closest('.step')?.getBoundingClientRect();
         if (step) {
-            this.grabbedAt.set({ x: event.clientX - step.left, y: event.clientY - step.top });
+            this.grabbedAt.set({
+                x: event.clientX - step.left,
+                y: event.clientY - step.top,
+                width: step.width,
+            });
         }
+        const row = this.model().steps.find((other) => other.key === key);
+        if (row?.kind !== 'superset') {
+            return;
+        }
+        // Hidden before the drag starts, so the list measures itself without them
+        this.heldSuperset.set(key);
+        this.supersetDragging = false;
+        // Let go without dragging, its steps come back
+        this.document.defaultView?.addEventListener(
+            'pointerup',
+            () => {
+                if (!this.supersetDragging) {
+                    this.heldSuperset.set(0);
+                }
+            },
+            { once: true }
+        );
+    }
+
+    protected dragStarted() {
+        this.supersetDragging = this.heldSuperset() !== 0;
     }
 
     /**
@@ -919,28 +956,31 @@ export class WorkoutSetupComponent {
      * superset's row is let through too, as that's after the superset on screen (`dropStep`).
      */
     protected readonly canDropAt = (index: number, drag: CdkDrag<number>): boolean => {
-        const rows = [...this.model().steps];
-        const from = rows.findIndex((row) => row.key === drag.data);
-        moveItemInArray(rows, from, index);
-        const before = rows[index - 1];
+        const from = this.model().steps.findIndex((row) => row.key === drag.data);
+        const rows = movedRow(this.model().steps, from, index);
+        const at = rows.findIndex((row) => row.key === drag.data);
+        const before = rows[at - 1];
         return (
             wellFormed(rows) ||
-            (rows[index].group === 0 && before?.kind === 'superset' && !this.isExpanded(before.key))
+            (rows[at].group === 0 && before?.kind === 'superset' && !this.isExpanded(before.key))
         );
     };
 
     /** A step dragged by its handle and dropped in a new place. */
     protected dropStep(event: CdkDragDrop<unknown>) {
+        this.heldSuperset.set(0);
+        this.supersetDragging = false;
         if (event.previousIndex === event.currentIndex) {
             return;
         }
-        const rows = [...this.model().steps];
-        const key = rows[event.previousIndex].key;
-        moveItemInArray(rows, event.previousIndex, event.currentIndex);
+        const key = this.model().steps[event.previousIndex].key;
+        let rows = movedRow(this.model().steps, event.previousIndex, event.currentIndex);
         if (!wellFormed(rows)) {
             // Dropped just after a collapsed superset's row: it goes after its steps
-            const [row] = rows.splice(event.currentIndex, 1);
-            rows.splice(partEnd(rows, event.currentIndex - 1), 0, row);
+            const at = rows.findIndex((row) => row.key === key);
+            const part = rows.slice(at, partEnd(rows, at));
+            rows = rows.filter((row) => !part.includes(row));
+            rows.splice(partEnd(rows, at - 1), 0, ...part);
         }
         this.placeRows(rows, key);
     }
@@ -1228,6 +1268,23 @@ function moved(rows: readonly StepModel[], index: number, by: -1 | 1): StepModel
         ...rows.slice(start, index),
         ...rows.slice(end),
     ];
+}
+
+/**
+ * The rows with the one at `from` dragged to `to`, as the drag list counts places; a
+ * superset's row takes its steps with it, straight after it.
+ */
+function movedRow(rows: readonly StepModel[], from: number, to: number): StepModel[] {
+    const next = [...rows];
+    moveItemInArray(next, from, to);
+    const row = rows[from];
+    if (row.kind !== 'superset') {
+        return next;
+    }
+    const steps = next.filter((other) => other.group === row.key);
+    const others = next.filter((other) => other.group !== row.key);
+    const at = others.indexOf(row) + 1;
+    return [...others.slice(0, at), ...steps, ...others.slice(at)];
 }
 
 /** Whether each superset's steps follow its row, together. */
