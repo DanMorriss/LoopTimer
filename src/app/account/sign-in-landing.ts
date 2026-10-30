@@ -12,6 +12,13 @@ export function isSignInReturn(location: Pick<Location, 'hash' | 'search'>): boo
     });
 }
 
+/** Whether the address carries a sign-in that worked: the account's tokens. */
+export function hasSignInTokens(location: Pick<Location, 'hash' | 'search'>): boolean {
+    return [location.hash.slice(1), location.search.slice(1)].some((part) =>
+        new URLSearchParams(part).has('access_token')
+    );
+}
+
 /**
  * Sends a sign-in coming back to the Account tab, where Supabase's code reads it, if it's
  * landed anywhere else: Supabase goes to the site's home page instead of /account when it

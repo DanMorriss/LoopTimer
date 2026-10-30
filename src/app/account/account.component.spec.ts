@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
 import { DeviceDataService, SIGNED_OUT_NOTE } from '../shared/state/device-data.service';
 import { PageSlide } from '../nav/page-slide';
 import {
@@ -20,6 +21,7 @@ describe('AccountComponent', () => {
     let sync: FakeSyncStarter;
 
     let clear: ReturnType<typeof vi.fn>;
+    let navigate: ReturnType<typeof vi.spyOn>;
 
     async function create(signedInAs: string | null = null) {
         client = fakeAccountClient(signedInAs);
@@ -32,6 +34,7 @@ describe('AccountComponent', () => {
                 { provide: DeviceDataService, useValue: { clear } },
             ],
         });
+        navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
         fixture = TestBed.createComponent(AccountComponent);
         element = fixture.nativeElement;
         document.body.appendChild(element);
@@ -74,6 +77,27 @@ describe('AccountComponent', () => {
         expect(status()).toBe(
             'Your account has been deleted, and its data removed from this device.'
         );
+    });
+
+    describe('back from Google or an email link', () => {
+        afterEach(() => history.replaceState(null, '', location.pathname + location.search));
+
+        it('goes Home once signed in', async () => {
+            history.replaceState(
+                null,
+                '',
+                location.pathname + location.search + '#access_token=abc'
+            );
+            await create('me@example.com');
+
+            expect(navigate).toHaveBeenCalledWith('/home', { replaceUrl: true });
+        });
+
+        it('stays on the Account tab when opened as usual', async () => {
+            await create('me@example.com');
+
+            expect(navigate).not.toHaveBeenCalled();
+        });
     });
 
     it('says it signed out, once the app has reloaded from signing out', async () => {
@@ -162,7 +186,7 @@ describe('AccountComponent', () => {
             expect(code.autocomplete).toBe('one-time-code');
         });
 
-        it('signs in with the code, saying so', async () => {
+        it('signs in with the code, then goes Home', async () => {
             await type('account-email', 'me@example.com');
             await press('Email me a sign-in link');
             await type('account-code', '123456');
@@ -173,9 +197,7 @@ describe('AccountComponent', () => {
                 token: '123456',
                 type: 'email',
             });
-            expect(status()).toBe('Signed in.');
-            expect(text()).toContain('Signed in as me@example.com.');
-            expect(document.activeElement!.id).toBe('account-title');
+            expect(navigate).toHaveBeenCalledWith('/home', { replaceUrl: true });
         });
 
         it("says when a code didn't work, or isn't one", async () => {

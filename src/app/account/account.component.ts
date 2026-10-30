@@ -3,11 +3,13 @@ import {
     Component,
     computed,
     DOCUMENT,
+    effect,
     inject,
     Injector,
     signal,
 } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
+import { Router } from '@angular/router';
 import { PageSlide } from '../nav/page-slide';
 import { LoopLogoComponent } from '../shared/components/loop-logo/loop-logo.component';
 import { SyncStarter } from '../sync/sync-starter.service';
@@ -16,6 +18,7 @@ import { AccountService } from './account.service';
 import { DeviceDataService, SIGNED_OUT_NOTE } from '../shared/state/device-data.service';
 import { ProfileComponent } from './profile/profile.component';
 import { SignInComponent } from './sign-in/sign-in.component';
+import { hasSignInTokens } from './sign-in-landing';
 import { YourDataComponent } from './your-data/your-data.component';
 
 /**
@@ -62,8 +65,19 @@ export class AccountComponent {
     /** Signing out would lose changes that haven't synced, so it's asking first. */
     protected readonly confirmingSignOut = signal(false);
     private readonly deviceData = inject(DeviceDataService);
+    private readonly router = inject(Router);
+    /**
+     * Back from Google or an email link with the account's tokens in the address, which
+     * Supabase's client is reading: once it's signed in, on to Home.
+     */
+    private readonly returning = hasSignInTokens(this.document.location);
 
     constructor() {
+        effect(() => {
+            if (this.returning && this.account.state().status === 'signed-in') {
+                this.goHome();
+            }
+        });
         // Back from signing out or deleting the account, which reloaded the app
         const left = sessionStorage.getItem(SIGNED_OUT_NOTE);
         if (left !== null) {
@@ -76,9 +90,14 @@ export class AccountComponent {
         }
     }
 
-    /** Signed in with the code: says so, with focus on the page's title. */
+    /** Signed in with the code: on to Home. */
     protected signedIn() {
-        this.reset('Signed in.');
+        this.goHome();
+    }
+
+    /** Signed in, so on to Home, in place of the Account tab (and the tokens in its address). */
+    private goHome() {
+        void this.router.navigateByUrl('/home', { replaceUrl: true });
     }
 
     /**
@@ -136,12 +155,6 @@ export class AccountComponent {
                 "Your account couldn't be deleted. Check your connection and try again."
             );
         }
-    }
-
-    /** Back to the start, saying what happened, with focus on the page's title. */
-    private reset(message: string) {
-        this.message.set(message);
-        this.focus('account-title');
     }
 
     /** Moves focus to an element once it's on the page. */
