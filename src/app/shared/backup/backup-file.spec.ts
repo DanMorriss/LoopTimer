@@ -1,4 +1,5 @@
 import { HistoryEntry } from '../../models/history';
+import { WeekPlan } from '../../models/plan';
 import { Deletion, LibraryOrder } from '../../models/sync';
 import { Settings } from '../state/settings-store.service';
 import { makeWorkout, rest, savedBeforeGroups, work } from '../testing/make-workout';
@@ -33,6 +34,7 @@ const ENTRY: HistoryEntry = {
 };
 
 const ORDER: LibraryOrder = { ids: ['workout-1'], updatedAt: 3_000_000 };
+const PLAN: WeekPlan = { days: [['workout-1'], [], [], [], [], [], []], updatedAt: 3_500_000 };
 
 const DELETION: Deletion = { kind: 'history', id: 'gone', deletedAt: 2_000_000 };
 
@@ -67,6 +69,7 @@ describe('backup file', () => {
                 exerciseNotes: [],
                 hiddenExercises: [],
                 libraryOrder: ORDER,
+                plan: PLAN,
                 deleted: [DELETION],
                 settings: SETTINGS,
             },
@@ -83,6 +86,7 @@ describe('backup file', () => {
             exerciseNotes: [],
             hiddenExercises: [],
             libraryOrder: ORDER,
+            plan: PLAN,
             deleted: [DELETION],
             settings: SETTINGS,
         });
@@ -99,6 +103,7 @@ describe('backup file', () => {
                     exerciseNotes: [],
                     hiddenExercises: [],
                     libraryOrder: ORDER,
+                    plan: PLAN,
                     deleted: [DELETION],
                     settings: SETTINGS,
                 },
@@ -114,11 +119,24 @@ describe('backup file', () => {
             exerciseNotes: [],
             hiddenExercises: [],
             libraryOrder: ORDER,
+            plan: PLAN,
             deleted: [DELETION],
             fromVersion1: false,
             newWorkouts: [],
             skipped: 0,
         });
+    });
+
+    it('has no plan when the file has none, or a broken one', () => {
+        for (const plan of [
+            undefined,
+            { days: [[], [], []], updatedAt: 1 },
+            { days: [[1], [], [], [], [], [], []], updatedAt: 1 },
+            { days: [[], [], [], [], [], [], []] },
+        ]) {
+            const backup = readBackup(fileWith({ plan }));
+            expect(backup.ok && backup.plan).toBeNull();
+        }
     });
 
     it('has no library order when the file has none, or a broken one', () => {
@@ -180,6 +198,7 @@ describe('backup file', () => {
             exerciseNotes: [],
             hiddenExercises: [],
             libraryOrder: null,
+            plan: null,
             deleted: [DELETION],
             fromVersion1: false,
             newWorkouts: [],

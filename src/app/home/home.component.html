@@ -5,10 +5,15 @@
         <h2 class="sr-only">Home</h2>
         <app-loop-logo class="home__logo" />
 
+        <!-- The weekly plan's workouts for today (PLN-2) -->
+        <app-due-today #dueToday class="home__card" />
         @if (hasHistory()) {
-            <app-suggested-workout class="home__card" />
+            <!-- With a planned workout still to do today, that's what to do next -->
+            @if (!dueToday.due().length) {
+                <app-suggested-workout class="home__card" />
+            }
             <app-muscles-this-week class="home__card" />
-        } @else {
+        } @else if (!dueToday.due().length) {
             <div class="home__empty">
                 <p>Do a workout, and what to do next and the muscles you've worked show here.</p>
                 <a routerLink="/library" class="btn-pill">Go to the library</a>

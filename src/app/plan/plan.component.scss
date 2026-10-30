@@ -1,0 +1,109 @@
+@use 'type' as *;
+
+:host {
+    display: block;
+}
+
+.plan__title {
+    margin: 0 0 0.5rem;
+    @include display;
+    font-size: 1.6rem;
+    color: var(--text-strong);
+}
+
+.plan__hint,
+.plan__so-far {
+    margin: 0 0 0.75rem;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+.plan__so-far {
+    color: var(--text-strong);
+    font-size: 0.95rem;
+}
+
+// A day, its name and Add over its workouts, divided from the next by a line
+.plan__day {
+    padding: 0.85rem 0;
+    border-top: 1px solid var(--border-soft);
+}
+
+.plan__day-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    min-height: 44px;
+}
+
+.plan__day-name {
+    margin: 0;
+    color: var(--text-strong);
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.plan__today {
+    color: var(--accent);
+    font-weight: 500;
+}
+
+.plan__workouts {
+    margin: 0.35rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.plan__workout {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+
+    & + & {
+        margin-top: 0.35rem;
+    }
+}
+
+.plan__workout-name {
+    flex: 1;
+    min-width: 0;
+    color: var(--text);
+    overflow-wrap: anywhere;
+}
+
+.plan__status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    flex-shrink: 0;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+
+    .mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+    }
+}
+
+.plan__workout--done .plan__status,
+.plan__workout--today .plan__status {
+    color: var(--accent);
+}
+
+// Gone by without it: the name steps back
+.plan__workout--missed .plan__workout-name {
+    color: var(--text-muted);
+}
+
+.plan__remove {
+    flex-shrink: 0;
+}
+
+.plan__rest {
+    margin: 0.25rem 0 0;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}

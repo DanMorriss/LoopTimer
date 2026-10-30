@@ -2,6 +2,7 @@ import { DestroyRef, DOCUMENT, effect, inject, Service, untracked } from '@angul
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { AccountClient, ACCOUNT_CLIENT } from '../account/account-client';
 import { BackupService } from '../shared/backup/backup.service';
+import { PlanStore } from '../shared/state/plan-store.service';
 import { DeletionStore } from '../shared/state/deletion-store.service';
 import { ExerciseStore } from '../shared/state/exercise-store.service';
 import { HistoryStore } from '../shared/state/history-store.service';
@@ -47,6 +48,7 @@ export class SyncService {
     private readonly exercises = inject(ExerciseStore);
     private readonly deletions = inject(DeletionStore);
     private readonly backup = inject(BackupService);
+    private readonly plan = inject(PlanStore);
     private readonly clock = inject(SyncClock);
     private readonly status = inject(SyncStarter).status;
     private readonly document = inject(DOCUMENT);
@@ -64,6 +66,7 @@ export class SyncService {
         effect(() => {
             this.workouts.workouts();
             this.workouts.libraryOrder();
+            this.plan.plan();
             this.history.entries();
             this.exercises.own();
             this.exercises.notes();
@@ -269,6 +272,7 @@ export class SyncService {
             exerciseNotes: this.exercises.notes(),
             hiddenExercises: this.exercises.hidden(),
             libraryOrder: this.workouts.libraryOrder(),
+            plan: this.plan.plan(),
             deleted: [...this.deletions.all()],
         };
     }

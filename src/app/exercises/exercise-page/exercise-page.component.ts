@@ -6,12 +6,16 @@ import { map } from 'rxjs';
 import { ExerciseDetailsComponent } from '../../shared/components/exercise-details/exercise-details.component';
 import { ExerciseEditorComponent } from '../../shared/components/exercise-editor/exercise-editor.component';
 import { ExerciseProgressComponent } from './exercise-progress/exercise-progress.component';
-import { AddToWorkoutDialogComponent } from './add-to-workout/add-to-workout-dialog.component';
+import {
+    WorkoutChoice,
+    WorkoutChoiceDialogComponent,
+} from '../../shared/components/workout-choice-dialog/workout-choice-dialog.component';
 import { BackLinkComponent } from '../../nav/back-link/back-link.component';
 import { PageSlide } from '../../nav/page-slide';
 import { SwipeBackDirective } from '../../nav/swipe-back.directive';
 import { Exercise, exercisePath, isBuiltIn } from '../../models/exercise';
 import { exerciseUsage } from '../../models/exercise-links';
+import { allSteps, MAX_STEPS } from '../../models/workout';
 import { parseMusclesParam, serialiseMusclesParam } from '../muscle-filter-query';
 import { ExerciseStore } from '../../shared/state/exercise-store.service';
 import { HistoryStore } from '../../shared/state/history-store.service';
@@ -32,7 +36,7 @@ import { UndoService } from '../../shared/undo/undo.service';
     selector: 'app-exercise-page',
     imports: [
         MatIconModule,
-        AddToWorkoutDialogComponent,
+        WorkoutChoiceDialogComponent,
         BackLinkComponent,
         ExerciseDetailsComponent,
         ExerciseEditorComponent,
@@ -102,6 +106,21 @@ export class ExercisePageComponent {
     protected readonly editing = signal(false);
     /** The dialog asking which workout to add it to is open. */
     protected readonly adding = signal(false);
+    /** The library's workouts to add it to, in order; one already at MAX_STEPS can't be. */
+    protected readonly workoutChoices = computed((): WorkoutChoice[] =>
+        this.workouts.workouts().map((workout) => {
+            const steps = allSteps(workout).length;
+            const full = steps >= MAX_STEPS;
+            return {
+                id: workout.id,
+                name: workout.title.trim() || 'Untitled workout',
+                detail: full
+                    ? `Full, ${steps} steps`
+                    : `${steps} ${steps === 1 ? 'step' : 'steps'}`,
+                disabled: full,
+            };
+        })
+    );
     /** Delete was pressed while a workout uses it, so it says why it can't be deleted. */
     protected readonly inUse = signal(false);
     private readonly undo = inject(UndoService);

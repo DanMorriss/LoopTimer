@@ -18,12 +18,33 @@ function copyHere(overrides: Partial<CopyHere> = {}): CopyHere {
         exerciseNotes: [],
         hiddenExercises: [],
         libraryOrder: { ids: [], updatedAt: 0 },
+        plan: { days: [[], [], [], [], [], [], []], updatedAt: 0 },
         deleted: [],
         ...overrides,
     };
 }
 
 describe('recordsHere', () => {
+    it('gives the weekly plan as one record, once something has been planned', () => {
+        const days = [[], ['w1'], [], [], [], [], []];
+
+        expect(recordsHere(copyHere()).filter((record) => record.kind === 'plan')).toEqual([]);
+        expect(
+            recordsHere(copyHere({ plan: { days, updatedAt: 9 } })).filter(
+                (record) => record.kind === 'plan'
+            )
+        ).toEqual([
+            {
+                kind: 'plan',
+                id: 'week',
+                updated_at: 9,
+                deleted_at: null,
+                data: { id: 'week', days, updatedAt: 9 },
+                version: BACKUP_VERSION,
+            },
+        ]);
+    });
+
     it('gives each record and deletion here as the server keeps it', () => {
         const workout = makeWorkout({ id: 'w1', updatedAt: 5 });
         const records = recordsHere(
@@ -106,6 +127,36 @@ describe('readPulled', () => {
         data: makeWorkout({ id: 'w1', updatedAt: 5 }),
         version: BACKUP_VERSION,
         ...fields,
+    });
+
+    it('reads the weekly plan, dated as the server has it, and not a broken one', () => {
+        const days = [['w1'], [], [], [], [], [], []];
+        const page = readPulled([
+            row({
+                seq: 1,
+                kind: 'plan',
+                id: 'week',
+                updated_at: 6,
+                data: { id: 'week', days, updatedAt: 99 },
+            }),
+            row({
+                seq: 2,
+                kind: 'plan',
+                id: 'other',
+                updated_at: 7,
+                data: { id: 'other', days, updatedAt: 7 },
+            }),
+            row({
+                seq: 3,
+                kind: 'plan',
+                id: 'week',
+                updated_at: 8,
+                data: { id: 'week', days: [], updatedAt: 8 },
+            }),
+        ]);
+
+        expect(page.copy.plan).toEqual({ days, updatedAt: 6 });
+        expect(page.read.map(keyOf)).toEqual(['plan:week']);
     });
 
     it('reads records and deletions to merge, dated as the server has them', () => {

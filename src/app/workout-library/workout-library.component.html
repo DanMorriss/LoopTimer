@@ -5,6 +5,15 @@
         <h2 class="library__title">Library</h2>
         <!-- One way to add a workout at a time: an empty library has "Create a workout" instead -->
         @if (existingWorkouts) {
+            <!-- The weekly plan (PLN-1), which slides in over the library -->
+            <a
+                href="/plan"
+                class="btn-pill library__plan"
+                (click)="$event.stopPropagation(); slide.follow($event, '/plan', 'in')"
+            >
+                <mat-icon aria-hidden="true">calendar_month</mat-icon>
+                Plan
+            </a>
             <button
                 type="button"
                 class="btn-main btn-main--small library-add-button"

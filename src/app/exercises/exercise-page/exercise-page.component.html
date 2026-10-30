@@ -81,9 +81,12 @@
             </div>
 
             @if (adding()) {
-                <app-add-to-workout-dialog
+                <app-workout-choice-dialog
                     animate.leave="dialog-leave"
-                    [exercise]="exercise"
+                    [heading]="'Add ' + exercise.name + ' to'"
+                    hint="It goes at the end with 3 sets, to change before you save."
+                    newLabel="New workout"
+                    [choices]="workoutChoices()"
                     (closed)="closeAdding()"
                     (picked)="addTo($event)"
                 />
