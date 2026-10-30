@@ -1,4 +1,5 @@
 import { DestroyRef, DOCUMENT, effect, inject, Service, untracked } from '@angular/core';
+import { DeviceDataService } from '../shared/state/device-data.service';
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { AccountClient, ACCOUNT_CLIENT } from '../account/account-client';
 import { BackupService } from '../shared/backup/backup.service';
@@ -50,7 +51,9 @@ export class SyncService {
     private readonly backup = inject(BackupService);
     private readonly plan = inject(PlanStore);
     private readonly clock = inject(SyncClock);
-    private readonly status = inject(SyncStarter).status;
+    private readonly starter = inject(SyncStarter);
+    private readonly status = this.starter.status;
+    private readonly deviceData = inject(DeviceDataService);
     private readonly document = inject(DOCUMENT);
 
     /** Listening to the client for signing in and out, once it's loaded. */
@@ -146,6 +149,11 @@ export class SyncService {
     private follow(event: AuthChangeEvent, session: Session | null) {
         if (event === 'SIGNED_OUT') {
             this.forget();
+            // Not from Sign out here: the account deleted on another device, say, or the
+            // sign-in not renewed. What's here is the account's, so it goes, as on signing out
+            if (!this.starter.leaving) {
+                void this.deviceData.clear({ leaving: 'ended' });
+            }
         }
         const user = session?.user.id ?? null;
         if (user === null) {

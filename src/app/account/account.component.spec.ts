@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { DeviceDataService, SIGNED_OUT_NOTE } from '../shared/state/device-data.service';
+import { DeviceDataService } from '../shared/state/device-data.service';
 import { PageSlide } from '../nav/page-slide';
 import {
     FakeAccountClient,
@@ -70,15 +70,6 @@ describe('AccountComponent', () => {
         await settle();
     }
 
-    it('says the account was deleted, once the app has reloaded from deleting it', async () => {
-        sessionStorage.setItem(SIGNED_OUT_NOTE, 'deleted');
-        await create();
-
-        expect(status()).toBe(
-            'Your account has been deleted, and its data removed from this device.'
-        );
-    });
-
     describe('back from Google or an email link', () => {
         afterEach(() => history.replaceState(null, '', location.pathname + location.search));
 
@@ -98,16 +89,6 @@ describe('AccountComponent', () => {
 
             expect(navigate).not.toHaveBeenCalled();
         });
-    });
-
-    it('says it signed out, once the app has reloaded from signing out', async () => {
-        sessionStorage.setItem(SIGNED_OUT_NOTE, 'signed-out');
-        await create();
-
-        expect(status()).toBe(
-            'Signed out. Your data was removed from this device; your account keeps it.'
-        );
-        expect(sessionStorage.getItem(SIGNED_OUT_NOTE)).toBeNull();
     });
 
     describe('signed out', () => {

@@ -15,7 +15,7 @@ import { LoopLogoComponent } from '../shared/components/loop-logo/loop-logo.comp
 import { SyncStarter } from '../sync/sync-starter.service';
 import { syncText } from '../sync/sync-text';
 import { AccountService } from './account.service';
-import { DeviceDataService, SIGNED_OUT_NOTE } from '../shared/state/device-data.service';
+import { DeviceDataService } from '../shared/state/device-data.service';
 import { ProfileComponent } from './profile/profile.component';
 import { SignInComponent } from './sign-in/sign-in.component';
 import { hasSignInTokens } from './sign-in-landing';
@@ -78,16 +78,6 @@ export class AccountComponent {
                 this.goHome();
             }
         });
-        // Back from signing out or deleting the account, which reloaded the app
-        const left = sessionStorage.getItem(SIGNED_OUT_NOTE);
-        if (left !== null) {
-            sessionStorage.removeItem(SIGNED_OUT_NOTE);
-            this.message.set(
-                left === 'deleted'
-                    ? 'Your account has been deleted, and its data removed from this device.'
-                    : 'Signed out. Your data was removed from this device; your account keeps it.'
-            );
-        }
     }
 
     /** Signed in with the code: on to Home. */
@@ -97,7 +87,7 @@ export class AccountComponent {
 
     /** Signed in, so on to Home, in place of the Account tab (and the tokens in its address). */
     private goHome() {
-        void this.router.navigateByUrl('/home', { replaceUrl: true });
+        void this.account.goHomeSignedIn(this.router);
     }
 
     /**

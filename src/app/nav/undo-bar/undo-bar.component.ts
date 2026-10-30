@@ -16,7 +16,8 @@ import { injectCurrentUrl } from '../current-url';
  * The Undo bar, floating above the tabs (and the workout's bar) after a delete: what
  * happened, Undo, and a close button. Focus goes to Undo as it appears, so it's one key away;
  * screen readers hear what happened as it does. It goes when it's used, closed (or Escape),
- * replaced, or the page changes. See UndoService.
+ * replaced, or the page changes. A notice (UndoService.notify()) has no Undo, and leaves focus
+ * where it is. See UndoService.
  */
 @Component({
     selector: 'app-undo-bar',
@@ -42,7 +43,7 @@ export class UndoBarComponent {
 
         // Each new offer takes focus, so Undo is one key away
         effect(() => {
-            if (this.undo.offer()?.id) {
+            if (this.undo.offer()?.undo) {
                 afterNextRender(() => this.undoButton()?.nativeElement.focus(), {
                     injector: this.injector,
                 });

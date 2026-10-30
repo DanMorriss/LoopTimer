@@ -1,4 +1,6 @@
 import { DOCUMENT } from '@angular/core';
+import { Router } from '@angular/router';
+import { UndoService } from '../shared/undo/undo.service';
 import { TestBed } from '@angular/core/testing';
 import {
     FakeAccountClient,
@@ -72,6 +74,18 @@ describe('AccountService', () => {
 
         expect(account.state()).toEqual({ status: 'signed-out' });
         expect(await account.sendLink('me@example.com')).toBe('failed');
+    });
+
+    it('goes Home once signed in, saying who in the bar there', async () => {
+        const account = start('me@example.com');
+        await settled();
+        const router = TestBed.inject(Router);
+        const navigate = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+
+        await account.goHomeSignedIn(router);
+
+        expect(navigate).toHaveBeenCalledWith('/home', { replaceUrl: true });
+        expect(TestBed.inject(UndoService).offer()?.message).toBe('Signed in as me@example.com');
     });
 
     describe('signInWith (SYN-7)', () => {

@@ -64,7 +64,12 @@ export class WelcomeComponent {
 
     /** Answered, so it isn't asked again on this device, and on to Home. */
     protected goHome(answer: 'guest' | 'signed-in') {
+        if (localStorage.getItem(WELCOMED_KEY) === answer) {
+            return;
+        }
         localStorage.setItem(WELCOMED_KEY, answer);
-        void this.router.navigateByUrl('/home', { replaceUrl: true });
+        void (answer === 'signed-in'
+            ? this.account.goHomeSignedIn(this.router)
+            : this.router.navigateByUrl('/home', { replaceUrl: true }));
     }
 }

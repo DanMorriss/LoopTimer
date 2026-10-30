@@ -2,7 +2,15 @@ import { TestBed } from '@angular/core/testing';
 import { HistoryEntry } from '../../models/history';
 import { makeWorkout } from '../testing/make-workout';
 import { savedHistory } from '../testing/history-database';
-import { DEVICE_CHANNEL, DeviceDataService, SIGNED_OUT_NOTE } from './device-data.service';
+import { Router } from '@angular/router';
+import { AUTH_STORAGE_KEY } from '../../account/account-client';
+import { UndoService } from '../undo/undo.service';
+import {
+    DEVICE_CHANNEL,
+    DeviceDataService,
+    LEFT_ACCOUNT_TEXT,
+    SIGNED_OUT_NOTE,
+} from './device-data.service';
 import { HistoryStore } from './history-store.service';
 import { WorkoutStore } from './workout-store.service';
 
@@ -67,6 +75,39 @@ describe('DeviceDataService', () => {
             'clock-offset': '120',
         });
         expect(sessionStorage.getItem(SIGNED_OUT_NOTE)).toBe('signed-out');
+        expect(reload).toHaveBeenCalledTimes(1);
+    });
+
+    it('says why it was cleared once the app has opened again, in the bar', async () => {
+        for (const left of ['signed-out', 'deleted', 'ended'] as const) {
+            TestBed.resetTestingModule();
+            sessionStorage.setItem(SIGNED_OUT_NOTE, left);
+            TestBed.inject(DeviceDataService);
+            await TestBed.inject(Router).navigateByUrl('/');
+
+            expect(TestBed.inject(UndoService).offer()?.message).toBe(LEFT_ACCOUNT_TEXT[left]);
+            expect(sessionStorage.getItem(SIGNED_OUT_NOTE)).toBeNull();
+        }
+        expect(LEFT_ACCOUNT_TEXT.ended).toBe(
+            'You were signed out, so your data was removed from this device. Signing in again brings back what your account has'
+        );
+    });
+
+    it('starts again when next looked at, after another tab signs in', () => {
+        TestBed.inject(DeviceDataService);
+        const storage = (oldValue: string | null, newValue: string | null) =>
+            window.dispatchEvent(
+                new StorageEvent('storage', { key: AUTH_STORAGE_KEY, oldValue, newValue })
+            );
+
+        // A sign-in renewed isn't a new one
+        storage('{"a":1}', '{"a":2}');
+        document.dispatchEvent(new Event('visibilitychange'));
+        expect(reload).not.toHaveBeenCalled();
+
+        storage(null, '{"a":1}');
+        expect(reload).not.toHaveBeenCalled();
+        document.dispatchEvent(new Event('visibilitychange'));
         expect(reload).toHaveBeenCalledTimes(1);
     });
 

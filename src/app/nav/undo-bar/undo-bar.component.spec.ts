@@ -83,6 +83,22 @@ describe('UndoBarComponent', () => {
         expect(calls).toEqual({ undone: 0, dismissed: 1 });
     });
 
+    it('says a notice with no Undo, leaving focus where it is', () => {
+        const before = document.activeElement;
+
+        undo.notify('Signed in as me@example.com');
+        fixture.detectChanges();
+
+        expect(element.querySelector('[role="status"]')!.textContent).toContain(
+            'Signed in as me@example.com.'
+        );
+        expect(undoButton()).toBeUndefined();
+        expect(document.activeElement).toBe(before);
+        closeButton()!.click();
+        fixture.detectChanges();
+        expect(bar()).toBeNull();
+    });
+
     it("doesn't go by itself after a while", async () => {
         offer();
 

@@ -1,6 +1,8 @@
 import { DOCUMENT, inject, Service, signal } from '@angular/core';
 import type { Session } from '@supabase/supabase-js';
+import { Router } from '@angular/router';
 import { SyncStarter } from '../sync/sync-starter.service';
+import { UndoService } from '../shared/undo/undo.service';
 import { AccountClient, ACCOUNT_CLIENT, SIGN_IN_PATH, SignInProvider } from './account-client';
 
 export type AccountState =
@@ -22,6 +24,7 @@ export class AccountService {
     private readonly makeClient = inject(ACCOUNT_CLIENT);
     private readonly document = inject(DOCUMENT);
     private readonly sync = inject(SyncStarter);
+    private readonly undo = inject(UndoService);
     private client: Promise<AccountClient> | null = null;
 
     private readonly _state = signal<AccountState>({ status: 'loading' });
@@ -127,8 +130,23 @@ export class AccountService {
         return this.sync.syncAll();
     }
 
+    /**
+     * On to Home once signed in, wherever it was started, saying who's signed in in the bar
+     * there, read out as it shows.
+     */
+    async goHomeSignedIn(router: Router) {
+        await router.navigateByUrl('/home', { replaceUrl: true });
+        const state = this._state();
+        this.undo.notify(
+            state.status === 'signed-in' && state.email
+                ? `Signed in as ${state.email}`
+                : 'Signed in'
+        );
+    }
+
     /** Signs this device out. Gives whether it worked. */
     async signOut(): Promise<boolean> {
+        this.sync.leaving = true;
         try {
             const client = await this.connect();
             const { error } = await client.auth.signOut({ scope: 'local' });
@@ -143,10 +161,12 @@ export class AccountService {
      * keeping its data. Gives whether the account was deleted.
      */
     async deleteAccount(): Promise<boolean> {
+        this.sync.leaving = true;
         try {
             const client = await this.connect();
             const { error } = await client.rpc('delete_my_account');
             if (error) {
+                this.sync.leaving = false;
                 return false;
             }
             await client.auth.signOut({ scope: 'local' });
