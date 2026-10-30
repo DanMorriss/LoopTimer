@@ -63,11 +63,14 @@ export class AccountComponent {
     private readonly deviceData = inject(DeviceDataService);
 
     constructor() {
-        // Back from signing out, which reloaded the app
-        if (sessionStorage.getItem(SIGNED_OUT_NOTE) !== null) {
+        // Back from signing out or deleting the account, which reloaded the app
+        const left = sessionStorage.getItem(SIGNED_OUT_NOTE);
+        if (left !== null) {
             sessionStorage.removeItem(SIGNED_OUT_NOTE);
             this.message.set(
-                'Signed out. Your data was removed from this device; your account keeps it.'
+                left === 'deleted'
+                    ? 'Your account has been deleted, and its data removed from this device.'
+                    : 'Signed out. Your data was removed from this device; your account keeps it.'
             );
         }
     }
@@ -189,7 +192,7 @@ export class AccountComponent {
         this.message.set('Signing out…');
         // Signed out here either way, as clearing takes the sign-in with it
         await this.account.signOut();
-        await this.deviceData.clear({ signingOut: true });
+        await this.deviceData.clear({ leaving: 'signed-out' });
     }
 
     protected cancelSignOut() {
@@ -207,14 +210,17 @@ export class AccountComponent {
         this.focus('account-delete');
     }
 
+    /**
+     * Deletes the account and everything of it on the server, then clears this device as
+     * signing out does, keeping its settings; the app reloads and says so.
+     */
     protected async deleteAccount() {
         this.busy.set(true);
         const deleted = await this.account.deleteAccount();
-        this.busy.set(false);
         if (deleted) {
-            this.confirmingDelete.set(false);
-            this.reset('Your account has been deleted. Your data is still on this device.');
+            await this.deviceData.clear({ leaving: 'deleted' });
         } else {
+            this.busy.set(false);
             this.message.set(
                 "Your account couldn't be deleted. Check your connection and try again."
             );

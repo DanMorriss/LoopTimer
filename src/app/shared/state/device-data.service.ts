@@ -9,8 +9,13 @@ const CLEARED = 'cleared';
 /** This device's own choices, which signing out keeps: the settings, and its clock's offset. */
 const DEVICE_KEYS = ['settings', 'clock-offset'];
 
-/** Left in sessionStorage by signing out, for the Account tab to say so once it's reloaded. */
+/**
+ * Left in sessionStorage by signing out (or deleting the account), for the Account tab to say
+ * so once it's reloaded: what happened, `signed-out` or `deleted`.
+ */
 export const SIGNED_OUT_NOTE = 'signed-out';
+
+export type LeftAccount = 'signed-out' | 'deleted';
 
 /**
  * Everything the app keeps on this device, as a whole: Clear this device (SYN-9) removes it,
@@ -40,10 +45,11 @@ export class DeviceDataService {
      * Removes the workouts, history, exercises, notes, plan, deletions and settings from this
      * device, then reloads the app, and the app's other open tabs. A workout going is
      * dropped, not logged: logging it as the page unloads would put it straight back in the
-     * history. Signing out (`signingOut`) keeps this device's settings, and leaves a note
-     * for the Account tab to say it's done.
+     * history. Signing out or deleting the account (`leaving`) keeps this device's settings,
+     * and leaves a note for the Account tab to say it's done.
      */
-    async clear({ signingOut = false } = {}) {
+    async clear({ leaving }: { leaving?: LeftAccount } = {}) {
+        const signingOut = leaving !== undefined;
         this.workouts.stop();
         const kept = signingOut
             ? DEVICE_KEYS.flatMap((key) => {
@@ -60,7 +66,7 @@ export class DeviceDataService {
             localStorage.setItem(key, value);
         }
         if (signingOut) {
-            sessionStorage.setItem(SIGNED_OUT_NOTE, '1');
+            sessionStorage.setItem(SIGNED_OUT_NOTE, leaving);
         }
         await deleteDatabase();
         this.reload();

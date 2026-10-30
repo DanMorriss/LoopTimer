@@ -60,13 +60,13 @@ describe('DeviceDataService', () => {
         localStorage.setItem('clock-offset', '120');
         localStorage.setItem('week-plan', '{}');
 
-        await TestBed.inject(DeviceDataService).clear({ signingOut: true });
+        await TestBed.inject(DeviceDataService).clear({ leaving: 'signed-out' });
 
         expect({ ...localStorage }).toEqual({
             settings: JSON.stringify({ theme: 'light' }),
             'clock-offset': '120',
         });
-        expect(sessionStorage.getItem(SIGNED_OUT_NOTE)).toBe('1');
+        expect(sessionStorage.getItem(SIGNED_OUT_NOTE)).toBe('signed-out');
         expect(reload).toHaveBeenCalledTimes(1);
     });
 
