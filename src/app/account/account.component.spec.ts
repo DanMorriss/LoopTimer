@@ -62,8 +62,17 @@ describe('AccountComponent', () => {
         await settle();
     }
 
+    it('says the account was deleted, once the app has reloaded from deleting it', async () => {
+        sessionStorage.setItem(SIGNED_OUT_NOTE, 'deleted');
+        await create();
+
+        expect(status()).toBe(
+            'Your account has been deleted, and its data removed from this device.'
+        );
+    });
+
     it('says it signed out, once the app has reloaded from signing out', async () => {
-        sessionStorage.setItem(SIGNED_OUT_NOTE, '1');
+        sessionStorage.setItem(SIGNED_OUT_NOTE, 'signed-out');
         await create();
 
         expect(status()).toBe(
@@ -243,7 +252,7 @@ describe('AccountComponent', () => {
 
             expect(sync.syncAll).toHaveBeenCalled();
             expect(client.auth.signOut).toHaveBeenCalledWith({ scope: 'local' });
-            expect(clear).toHaveBeenCalledWith({ signingOut: true });
+            expect(clear).toHaveBeenCalledWith({ leaving: 'signed-out' });
         });
 
         it("asks first when something hasn't synced, and can sign out anyway or not", async () => {
@@ -261,7 +270,7 @@ describe('AccountComponent', () => {
             await press('Sign out');
             await press('Sign out anyway');
             expect(client.auth.signOut).toHaveBeenCalled();
-            expect(clear).toHaveBeenCalledWith({ signingOut: true });
+            expect(clear).toHaveBeenCalledWith({ leaving: 'signed-out' });
         });
 
         it('asks before deleting the account, with focus on the warning', async () => {
@@ -276,15 +285,24 @@ describe('AccountComponent', () => {
             expect(document.activeElement!.id).toBe('account-delete');
         });
 
-        it('deletes the account, then says the data is still here', async () => {
+        it('deletes the account, then removes its data from this device too', async () => {
             await press('Delete account');
+            expect(text()).toContain('on the server and on this device');
             await press('Delete my account');
 
             expect(client.rpc).toHaveBeenCalledWith('delete_my_account');
+            expect(clear).toHaveBeenCalledWith({ leaving: 'deleted' });
+        });
+
+        it("leaves this device as it is if the account couldn't be deleted", async () => {
+            client.rpc.mockResolvedValueOnce({ data: null, error: { message: 'down' } });
+            await press('Delete account');
+            await press('Delete my account');
+
+            expect(clear).not.toHaveBeenCalled();
             expect(status()).toBe(
-                'Your account has been deleted. Your data is still on this device.'
+                "Your account couldn't be deleted. Check your connection and try again."
             );
-            expect(element.querySelector('#account-email')).not.toBeNull();
         });
 
         it("says when the account couldn't be deleted", async () => {
