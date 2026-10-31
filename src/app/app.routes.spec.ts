@@ -33,7 +33,7 @@ describe('routes', () => {
         await harness.navigateByUrl('/');
 
         expect(TestBed.inject(Router).url).toBe('/home');
-        expect(harness.routeNativeElement!.querySelector('app-loop-logo')).not.toBeNull();
+        expect(harness.routeNativeElement!.querySelector('.home')).not.toBeNull();
     });
 
     describe('the welcome screen (NAV-3)', () => {

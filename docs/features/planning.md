@@ -35,7 +35,7 @@ Built (PLN-1–3): a weekly plan of which workouts you do on which days, the sam
 
 ### Due today (PLN-2)
 
-- On **Home**, first under the logo: a **Due today** card listing today's planned workouts not yet run today, in the plan's order, each with **Start**. The first's Start is the page's main button; the others' are smaller.
+- On **Home**, first: a **Due today** card listing today's planned workouts not yet run today, in the plan's order, each with **Start**. The first's Start is the page's main button; the others' are smaller.
 - When some have been run today: "Done today: Legs" under the list. When all have: "✓ All done: Push, Legs" in place of the list.
 - While any are due, the **suggested next workout** isn't shown: the plan says what's next. It's back once they're all done, or on a day with nothing planned.
 - With nothing planned today, there's no card, and Home is as it was.

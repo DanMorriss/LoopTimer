@@ -17,9 +17,9 @@
     - There's no tab bar on it, as there isn't on the workout, so it's one choice. Linking straight to another page (e.g. an exercise) opens that page; the welcome screen waits for Home.
 
 - The app opens on **Home** (NAV-2), at `/home`; `/` goes there. It came back on 2026-10-28, after the app had opened on the Library since the tab bar came in.
-- Home has the **∞ logo** at the top (the loop draws itself in and a light travels round it; it rests where the loops cross with reduced motion on), then **Due today**, the weekly plan's workouts for today, each with Start (PLN-2, see [planning](planning.md)), then the **suggested next workout** card, with Start (not shown while a planned workout is still due today), and the **muscles worked this week** card (the body map and a bar per muscle group), both the same as on the History page (see [progress](progress.md)). A card with nothing to show isn't there.
-- Before any workout, under the logo it says "Do a workout, and what to do next and the muscles you've worked show here.", with **Go to the library**.
-- The logo is in **Account**, under **About**, too.
+- Home opens with **Due today**, the weekly plan's workouts for today, each with Start (PLN-2, see [planning](planning.md)), then the **suggested next workout** card, with Start (not shown while a planned workout is still due today), and the **muscles worked this week** card (the body map and a bar per muscle group), both the same as on the History page (see [progress](progress.md)). A card with nothing to show isn't there.
+- Before any workout, it says "Do a workout, and what to do next and the muscles you've worked show here.", with **Go to the library**.
+- Home has no logo: it's on the welcome screen, and in **Account**, under **About** (the loop draws itself in and a light travels round it; it rests where the loops cross with reduced motion on).
 - **On the old address** (loop-workouts.vercel.app, before the app moved to loopworkouts.com on 2026-10-28), the app moves itself to loopworkouts.com, on the same page, once nothing would be left behind: each address keeps its own data. That's straight away with nothing saved (no workouts, history, exercises of your own, notes, hidden exercises or plan), or once signed in and everything has synced, as signing in there brings it back. A sign-in coming back is left to finish first. Until then, every page starts with a card, "Loop Workouts has moved to loopworkouts.com", saying what to do:
     - **A guest with things saved:** "Your workouts and history are saved on this address only. Sign in to take them with you: signing in there brings them back.", with **Sign in** (the Account tab) and **Open loopworkouts.com**. It moves once they've signed in and synced.
     - **Signed in, with changes not synced** (offline, say): "Some of your changes haven't synced yet: check your connection. Once they have, signing in there brings back everything.", with **Try again**. It moves by itself once a sync goes through.
@@ -62,8 +62,8 @@
 - Given nothing saved on loop-workouts.vercel.app, when I open a page there, then the same page opens on loopworkouts.com.
 - Given workouts saved on loop-workouts.vercel.app as a guest, when I open it, then it stays, with the card saying it's moved; when I sign in and it's synced, then it moves to loopworkouts.com.
 - Given I open the app, then it's on Home, with Home chosen in the tab bar.
-- Given no workouts yet, when I open Home, then it shows the logo and Go to the library.
-- Given a workout done this week and a saved workout to suggest, when I open Home, then it shows the logo, then the suggested next workout, then the muscles worked this week.
+- Given no workouts yet, when I open Home, then it shows Go to the library, and no logo.
+- Given a workout done this week and a saved workout to suggest, when I open Home, then it shows the suggested next workout, then the muscles worked this week.
 - Given the History tab, when I press Account, then Account opens and the highlight slides to it.
 - Given Settings, opened from Account, then Account is chosen in the tab bar.
 - Given I'm making a workout, then Library is chosen.
