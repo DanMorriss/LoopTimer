@@ -1,0 +1,93 @@
+@let workout = card().workout;
+<div
+    class="preview-overlay dialog-overlay"
+    role="presentation"
+    (click)="closed.emit()"
+    (keydown.escape)="closed.emit()"
+>
+    <div
+        #dialogCard
+        class="preview dialog-card"
+        cdkTrapFocus
+        [cdkTrapFocusAutoCapture]="true"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ready-made-title"
+        aria-describedby="ready-made-description"
+        (click)="$event.stopPropagation()"
+    >
+        <!-- Focus starts here, so it opens at the top rather than at the buttons below -->
+        <h2 id="ready-made-title" class="preview__title" tabindex="-1" cdkFocusInitial>
+            {{ workout.title }}
+        </h2>
+        <p id="ready-made-description" class="preview__description">{{ workout.description }}</p>
+        <ul class="preview__chips" aria-label="Equipment">
+            @for (need of card().equipment; track need) {
+                <li class="preview__chip">{{ need }}</li>
+            }
+        </ul>
+        @if (card().inLibrary) {
+            <p class="preview__note">You have a workout called this in your library already.</p>
+        }
+
+        <section class="preview__section" aria-labelledby="ready-made-steps">
+            <h3 id="ready-made-steps" class="preview__heading">What's in it</h3>
+            <p class="preview__repeats">{{ repeats() }}</p>
+            <ul class="preview__lines">
+                @for (line of lines(); track $index) {
+                    @switch (line.kind) {
+                        @case ('heading') {
+                            <li class="preview__part">{{ line.text }}</li>
+                        }
+                        @case ('step') {
+                            <li class="preview__line">
+                                <span class="preview__name">{{ line.name }}</span>
+                                {{ ' ' }}
+                                <span class="preview__amount">{{ line.amount }}</span>
+                            </li>
+                        }
+                        @case ('superset') {
+                            <li class="preview__line preview__line--superset">
+                                <span class="preview__name">{{ line.name }}</span>
+                                {{ ' ' }}
+                                <span class="preview__amount">{{ line.amount }}</span>
+                                <ul class="preview__lines preview__lines--inner">
+                                    @for (step of line.steps; track $index) {
+                                        <li class="preview__line">
+                                            <span class="preview__name">{{ step.name }}</span>
+                                            {{ ' ' }}
+                                            <span class="preview__amount">{{ step.amount }}</span>
+                                        </li>
+                                    }
+                                </ul>
+                            </li>
+                        }
+                    }
+                }
+            </ul>
+        </section>
+
+        <section class="preview__section" aria-labelledby="ready-made-muscles">
+            <h3 id="ready-made-muscles" class="preview__heading">Muscles it works</h3>
+            <app-body-map [main]="muscles().main" [supporting]="muscles().supporting" />
+        </section>
+
+        <div class="preview__actions">
+            <button type="button" class="btn-pill preview__close" (click)="closed.emit()">
+                Close
+            </button>
+            <button type="button" class="btn-pill preview__add" (click)="added.emit()">
+                <mat-icon aria-hidden="true">add</mat-icon>
+                Add to library
+            </button>
+            <button
+                type="button"
+                class="btn-main btn-main--small preview__start"
+                (click)="started.emit()"
+            >
+                <mat-icon aria-hidden="true">play_arrow</mat-icon>
+                Add and start
+            </button>
+        </div>
+    </div>
+</div>

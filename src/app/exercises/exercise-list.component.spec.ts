@@ -179,7 +179,7 @@ describe('ExerciseListComponent', () => {
 
     it('shows only what you can do with your equipment, remembered', async () => {
         await create();
-        el().querySelector<HTMLButtonElement>('.exercises__kit-edit')!.click();
+        el().querySelector<HTMLButtonElement>('.kit__edit')!.click();
         await render();
         button('Pull-up bar').click();
         el().querySelector<HTMLButtonElement>('[role="switch"]')!.click();

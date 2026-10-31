@@ -32,6 +32,13 @@ export const routes: Routes = [
             ),
     },
     {
+        path: 'ready-made',
+        loadComponent: () =>
+            import('./workout-library/ready-made/ready-made.component').then(
+                (m) => m.ReadyMadeComponent
+            ),
+    },
+    {
         path: 'plan',
         canActivate: [historyLoaded],
         loadComponent: () => import('./plan/plan.component').then((m) => m.PlanComponent),

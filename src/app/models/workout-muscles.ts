@@ -19,7 +19,7 @@ export interface MusclesWorked {
  * step, or one whose exercise has gone, works nothing that's known). In the app's order.
  */
 export function musclesWorked(
-    workouts: readonly Workout[],
+    workouts: readonly Pick<Workout, 'blocks'>[],
     byId: (id: string) => Exercise | undefined
 ): MusclesWorked {
     return musclesOf(

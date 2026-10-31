@@ -335,6 +335,23 @@ for (const theme of ['dark', 'light'] as const) {
             });
         });
 
+        describe('ready-made workouts', () => {
+            it('the list, with the equipment open', async () => {
+                await open('/ready-made');
+                click('.kit__edit');
+                await settle();
+                await expectNoViolations();
+            });
+
+            it('a workout previewed', async () => {
+                await open('/ready-made');
+                click('[data-ready-made="builtin:gym-legs"]');
+                await settle();
+                expect(fixture.nativeElement.querySelector('[role="dialog"]')).not.toBeNull();
+                await expectNoViolations();
+            });
+        });
+
         describe('plan', () => {
             /** Legs planned yesterday (missed) and today, Push today too and done. */
             function planned() {
@@ -468,7 +485,7 @@ for (const theme of ['dark', 'light'] as const) {
                 exercises.addOwn('Sled push', 'reps');
                 exercises.setHidden('builtin:plank', true);
                 await open('/exercises');
-                click('.exercises__kit-edit');
+                click('.kit__edit');
                 click('.exercises__hidden-toggle');
                 await settle();
                 await expectNoViolations();
