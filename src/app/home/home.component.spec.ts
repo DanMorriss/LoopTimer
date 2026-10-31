@@ -58,15 +58,15 @@ describe('HomeComponent', () => {
             el.textContent!.replace(/\s+/g, ' ').trim()
         );
 
-    it('shows the logo, and before any workout a way to the library', () => {
+    it('shows no logo, and before any workout a way to the library', () => {
         create();
 
-        expect(element().querySelector('app-loop-logo')).not.toBeNull();
+        expect(element().querySelector('app-loop-logo')).toBeNull();
         expect(element().querySelector('.home__empty a')!.getAttribute('href')).toBe('/library');
         expect(element().querySelector('app-muscles-this-week')).toBeNull();
     });
 
-    it('shows the logo, then the suggested next workout, then the muscles worked this week', () => {
+    it('shows the suggested next workout, then the muscles worked this week', () => {
         const workouts = TestBed.inject(WorkoutStore);
         workouts.addWorkout({
             title: 'Push',
@@ -81,10 +81,10 @@ describe('HomeComponent', () => {
         expect(text('.suggestion__title')).toEqual(['Push']);
         expect(text('.muscles-week__title')).toEqual(['Muscles worked this week']);
         expect(element().querySelector('.home__empty')).toBeNull();
-        const order = [
-            ...element().querySelectorAll('app-loop-logo, .suggestion, .muscles-week'),
-        ].map((el) => el.className || el.tagName.toLowerCase());
-        expect(order).toEqual(['home__logo', 'suggestion', 'muscles-week']);
+        const order = [...element().querySelectorAll('.suggestion, .muscles-week')].map(
+            (el) => el.className || el.tagName.toLowerCase()
+        );
+        expect(order).toEqual(['suggestion', 'muscles-week']);
     });
 
     describe('due today (PLN-2)', () => {

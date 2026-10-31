@@ -7,7 +7,7 @@ import { welcomeFirst } from './welcome/welcome-first';
 const historyLoaded: CanActivateFn = () => inject(HistoryStore).ready.then(() => true);
 
 export const routes: Routes = [
-    // The app opens on Home: the ∞ logo, the workout to do next and the muscles worked this week
+    // The app opens on Home: the workouts due today, the workout to do next and the muscles worked this week
     { path: '', pathMatch: 'full', redirectTo: 'home' },
     {
         path: 'home',

@@ -4,11 +4,6 @@
     gap: 1.25rem;
 }
 
-.home__logo {
-    width: min(20rem, 100%);
-    margin: 0.5rem auto;
-}
-
 // A card that has nothing to show leaves no gap
 .home__card:empty {
     display: none;
