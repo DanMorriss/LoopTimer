@@ -63,8 +63,8 @@ export const BUILT_IN_EXERCISE_MOTION: Readonly<
                     hips: [82.9, -47.5],
                     torso: 109.55,
                     arms: [
-                        { reach: [128, -4.5], bend: 'cw' },
-                        { reach: [125, -4.5], bend: 'cw' },
+                        { reach: [128, -5.5], bend: 'cw' },
+                        { reach: [125, -5.5], bend: 'cw' },
                     ],
                     legs: [{ angles: [-70.45, -70.45] }, { angles: [-70.45, -70.45] }],
                     feet: [15, 15],
@@ -78,8 +78,8 @@ export const BUILT_IN_EXERCISE_MOTION: Readonly<
                     hips: [88, -19.3],
                     torso: 90.82,
                     arms: [
-                        { reach: [128, -4.5], bend: 'cw' },
-                        { reach: [125, -4.5], bend: 'cw' },
+                        { reach: [128, -5.5], bend: 'cw' },
+                        { reach: [125, -5.5], bend: 'cw' },
                     ],
                     legs: [{ angles: [-89.18, -89.18] }, { angles: [-89.18, -89.18] }],
                     feet: [5, 5],

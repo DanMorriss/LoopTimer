@@ -8,7 +8,8 @@
                         class="demo__figure demo__figure--still"
                         [motion]="motion"
                         [pose]="frame.pose"
-                        [worked]="exercise().mainMuscles"
+                        [main]="exercise().mainMuscles"
+                        [supporting]="exercise().supportingMuscles"
                     />
                     <span class="demo__label">{{ frame.label }}</span>
                 </li>
@@ -20,7 +21,8 @@
                 class="demo__figure"
                 [motion]="motion"
                 [pose]="pose()!"
-                [worked]="exercise().mainMuscles"
+                [main]="exercise().mainMuscles"
+                [supporting]="exercise().supportingMuscles"
             />
             <button
                 type="button"

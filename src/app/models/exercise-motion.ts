@@ -1,4 +1,5 @@
 import { MuscleGroup } from './exercise';
+import { FIGURE_ART, PartArt, PartName } from './exercise-figure-art';
 
 /**
  * How an exercise moves, for its animated demo (EXR-13): a figure posed at a few key
@@ -64,8 +65,6 @@ export interface ExerciseMotion {
 
 /** The figure's proportions, about a 175 cm person's. */
 export const BODY = {
-    headRadius: 11,
-    neck: 7,
     torso: 52,
     upperArm: 30,
     /** From the elbow to the middle of the hand. */
@@ -74,78 +73,55 @@ export const BODY = {
     shin: 44,
 } as const;
 
-/** How the figure is drawn from each view. */
+/** How the figure is put together from each view. */
 const VIEWS = {
     side: {
-        /** Half the torso's depth or width, at the hips and at the shoulders. */
-        hipHalf: 8,
-        shoulderHalf: 9,
         /** How far from the middle each hip and shoulder joint is. */
         hipSpread: 0,
         shoulderSpread: 0,
-        foot: 20,
-        /** How far back of the ankle the heel is. */
-        heel: 5,
+        /** The angle of a foot flat on the floor. */
         footAngle: 90,
     },
     front: {
-        hipHalf: 12,
-        shoulderHalf: 15,
         hipSpread: 9,
         shoulderSpread: 17,
-        foot: 8,
-        heel: 0,
         footAngle: 0,
     },
 } as const;
 
-/** How thick each part is drawn. */
-const WIDTH = {
-    neck: 8,
-    upperArm: 10,
-    forearm: 8,
-    thigh: 15,
-    shin: 11,
-    foot: 7,
-    handRadius: 4.5,
-    /** The rounding added around the torso's outline. */
-    torsoRound: 8,
-} as const;
+/** One of the figure's parts, drawn as in `FIGURE_ART`, placed with its joint at `at`. */
+export interface PlacedPart {
+    readonly type: 'part';
+    readonly name: PartName;
+    readonly art: PartArt;
+    readonly at: Point;
+    /** The way it points from its joint, as the pose's angles are given. */
+    readonly angle: number;
+    /** Flipped across its length: the near limbs from the front, and the head from the side. */
+    readonly mirror: boolean;
+}
 
-/** Which muscles each part holds, to shade it when one of them is worked. */
-const PART_MUSCLES = {
-    torso: ['chest', 'abs', 'obliques', 'traps', 'upper-back', 'lower-back'],
-    neck: ['neck'],
-    upperArm: ['shoulders', 'biceps', 'triceps'],
-    forearm: ['forearms'],
-    thigh: ['glutes', 'quads', 'hamstrings', 'abductors', 'adductors'],
-    shin: ['calves', 'shins'],
-} as const satisfies Record<string, readonly MuscleGroup[]>;
-
-/** Body (not worked), worked, the ends (head, hands, feet) that are never shaded, or kit. */
-export type Tone = 'body' | 'worked' | 'end' | 'prop';
-
-export type Shape =
+/** Kit drawn with the figure: a circle (a plate or dumbbell end on), or a bar. */
+export type PlacedProp =
+    | { readonly type: 'circle'; readonly at: Point; readonly r: number; readonly tone: PropTone }
     | {
           readonly type: 'line';
           readonly from: Point;
           readonly to: Point;
           readonly width: number;
-          readonly tone: Tone;
-      }
-    | { readonly type: 'circle'; readonly at: Point; readonly r: number; readonly tone: Tone }
-    | {
-          readonly type: 'polygon';
-          readonly points: readonly Point[];
-          readonly round: number;
-          readonly tone: Tone;
+          readonly tone: PropTone;
       };
 
-/** The figure's shapes in drawing order: behind it (far side), its body, then in front. */
+/** A plate or a dumbbell, or the bar (the end of a bar seen from the side). */
+export type PropTone = 'plate' | 'bar';
+
+export type FigureItem = PlacedPart | PlacedProp;
+
+/** What's drawn in drawing order: behind the figure (its far side), its body, then in front. */
 export interface FigureLayers {
-    readonly far: readonly Shape[];
-    readonly body: readonly Shape[];
-    readonly near: readonly Shape[];
+    readonly far: readonly FigureItem[];
+    readonly body: readonly FigureItem[];
+    readonly near: readonly FigureItem[];
 }
 
 export interface Box {
@@ -155,10 +131,27 @@ export interface Box {
     readonly height: number;
 }
 
+/** How a muscle is shaded, as on the body map; null for a part that's never shaded. */
+export type MuscleTone = 'main' | 'supporting' | 'idle' | 'other';
+
+export function muscleTone(
+    muscle: MuscleGroup | null,
+    main: readonly MuscleGroup[],
+    supporting: readonly MuscleGroup[]
+): MuscleTone {
+    if (muscle === null) {
+        return 'other';
+    }
+    return main.includes(muscle) ? 'main' : supporting.includes(muscle) ? 'supporting' : 'idle';
+}
+
 const dir = (angle: number): Point => {
     const radians = (angle * Math.PI) / 180;
     return [Math.sin(radians), Math.cos(radians)];
 };
+/** The angle a line points, as `dir()` takes it. */
+const angleOf = (from: Point, to: Point) =>
+    (Math.atan2(to[0] - from[0], to[1] - from[1]) * 180) / Math.PI;
 const add = (a: Point, b: Point): Point => [a[0] + b[0], a[1] + b[1]];
 const sub = (a: Point, b: Point): Point => [a[0] - b[0], a[1] - b[1]];
 const scale = (a: Point, by: number): Point => [a[0] * by, a[1] * by];
@@ -167,6 +160,19 @@ const lerpPoint = (a: Point, b: Point, t: number): Point => [
     lerp(a[0], b[0], t),
     lerp(a[1], b[1], t),
 ];
+
+/**
+ * Where a point of a part's drawing lands on the figure: mirrored if the part is, then turned
+ * so its +y runs along `angle` (SVG's `translate() rotate(-angle) scale(-1, 1)`).
+ */
+export function placePoint(part: PlacedPart, [x, y]: Point): Point {
+    const radians = (-part.angle * Math.PI) / 180;
+    const across = part.mirror ? -x : x;
+    return [
+        part.at[0] + across * Math.cos(radians) - y * Math.sin(radians),
+        part.at[1] + across * Math.sin(radians) + y * Math.cos(radians),
+    ];
+}
 
 /**
  * The elbow or knee and the hand or ankle of a limb from `root`, by its angles, or by two-joint
@@ -199,154 +205,124 @@ export function solveLimb(
     return [add(root, scale(turned, upper)), add(root, scale(along, reach))];
 }
 
-const worked = (part: keyof typeof PART_MUSCLES, muscles: readonly MuscleGroup[]): Tone =>
-    PART_MUSCLES[part].some((muscle) => muscles.includes(muscle)) ? 'worked' : 'body';
-
-/** The figure in `pose`, as shapes to draw, with the parts holding `muscles` shaded. */
-export function drawFigure(
-    pose: Pose,
-    motion: ExerciseMotion,
-    muscles: readonly MuscleGroup[]
-): FigureLayers {
+/** The figure in `pose`: its parts placed, and its kit, in drawing order. */
+export function drawFigure(pose: Pose, motion: ExerciseMotion): FigureLayers {
     const view = VIEWS[motion.view];
+    const art = FIGURE_ART[motion.view];
+    const side = motion.view === 'side';
     const props = motion.props ?? [];
     const up = dir(pose.torso);
     // Square to the torso: forwards from the side, to your right from the front
     const across: Point = [-up[1], up[0]];
     const shoulders = add(pose.hips, scale(up, BODY.torso));
     const sideOf = (point: Point, by: number): Point => add(point, scale(across, by));
-    const bar =
-        motion.view === 'side'
-            ? add(sideOf(shoulders, -11), scale(up, -2))
-            : add(shoulders, scale(up, -2));
+    const bar = side ? add(sideOf(shoulders, -11), scale(up, -2)) : add(shoulders, scale(up, -2));
+    const place = (name: PartName, at: Point, angle: number, mirror = false): PlacedPart => ({
+        type: 'part',
+        name,
+        art: art[name],
+        at,
+        angle,
+        mirror,
+    });
 
-    const far: Shape[] = [];
-    const body: Shape[] = [];
-    const near: Shape[] = [];
+    const far: FigureItem[] = [];
+    const body: FigureItem[] = [];
+    const near: FigureItem[] = [];
     // From the front nothing is behind, but the legs go under the torso and the arms over it
-    const legLayer = motion.view === 'side' ? [near, far] : [body, body];
-    const armLayer = motion.view === 'side' ? [near, far] : [near, near];
+    const legLayer = side ? [near, far] : [body, body];
+    const armLayer = side ? [near, far] : [near, near];
+    // From the front the near limbs (on your left) are the far ones flipped, outer side out
+    const flip = (index: 0 | 1) => !side && index === 0;
 
-    const drawLeg = (index: 0 | 1, into: Shape[]) => {
+    // The lower part of each limb first, so the knee or elbow sits over it
+    const drawLeg = (index: 0 | 1, into: FigureItem[]) => {
         const hip = sideOf(pose.hips, view.hipSpread * (index === 0 ? -1 : 1));
         const [knee, ankle] = solveLimb(hip, pose.legs[index], BODY.thigh, BODY.shin, bar);
-        const foot = dir(pose.feet?.[index] ?? view.footAngle);
         into.push(
-            {
-                type: 'line',
-                from: hip,
-                to: knee,
-                width: WIDTH.thigh,
-                tone: worked('thigh', muscles),
-            },
-            {
-                type: 'line',
-                from: knee,
-                to: ankle,
-                width: WIDTH.shin,
-                tone: worked('shin', muscles),
-            },
-            {
-                type: 'line',
-                from: add(ankle, scale(foot, -view.heel)),
-                to: add(ankle, scale(foot, view.foot - view.heel)),
-                width: WIDTH.foot,
-                tone: 'end',
-            }
+            place('shin', knee, angleOf(knee, ankle), flip(index)),
+            place('foot', ankle, pose.feet?.[index] ?? view.footAngle, flip(index)),
+            place('thigh', hip, angleOf(hip, knee), flip(index))
         );
     };
-    const drawArm = (index: 0 | 1, into: Shape[]) => {
+    const drawArm = (index: 0 | 1, into: FigureItem[]) => {
         const root = add(
             sideOf(shoulders, view.shoulderSpread * (index === 0 ? -1 : 1)),
             scale(up, -4)
         );
         const [elbow, hand] = solveLimb(root, pose.arms[index], BODY.upperArm, BODY.forearm, bar);
-        into.push(
-            {
-                type: 'line',
-                from: root,
-                to: elbow,
-                width: WIDTH.upperArm,
-                tone: worked('upperArm', muscles),
-            },
-            {
-                type: 'line',
-                from: elbow,
-                to: hand,
-                width: WIDTH.forearm,
-                tone: worked('forearm', muscles),
-            }
-        );
         if (props.includes('dumbbells')) {
-            // Seen end on, from the side or the front
-            into.push({ type: 'circle', at: hand, r: 7, tone: 'prop' });
+            // Seen end on, from the side or the front, in the hand
+            into.push({ type: 'circle', at: hand, r: 7.5, tone: 'plate' });
         }
-        into.push({ type: 'circle', at: hand, r: WIDTH.handRadius, tone: 'end' });
+        into.push(
+            place('forearm', elbow, angleOf(elbow, hand), flip(index)),
+            place('upperArm', root, angleOf(root, elbow), flip(index))
+        );
     };
     const barbell = props.includes('barbell-on-back');
-    // From the side, the plate goes behind the body (in front it would hide the head), with
-    // the bar's end in front
-    const drawPlate = () => body.push({ type: 'circle', at: bar, r: 17, tone: 'prop' });
-    const drawBarEnd = () => near.push({ type: 'circle', at: bar, r: 3, tone: 'end' });
-    // From the front, the bar across the shoulders with a plate at each end
-    const drawFrontBarbell = () => {
-        const plate = (by: number): Shape => ({
-            type: 'line',
-            from: add(sideOf(bar, by), scale(up, 17)),
-            to: add(sideOf(bar, by), scale(up, -17)),
-            width: 7,
-            tone: 'prop',
-        });
-        body.push(
-            { type: 'line', from: sideOf(bar, -62), to: sideOf(bar, 62), width: 3.5, tone: 'end' },
-            plate(-52),
-            plate(52)
-        );
-    };
 
     drawLeg(1, legLayer[1]);
     drawArm(1, armLayer[1]);
     drawLeg(0, legLayer[0]);
-    if (barbell && motion.view === 'side') {
-        drawPlate();
+    if (barbell && side) {
+        // Behind the body, as in front it would hide the head; the bar's end goes in front
+        body.push({ type: 'circle', at: bar, r: 17, tone: 'plate' });
     }
-
-    const head = dir(pose.head ?? pose.torso);
     body.push(
-        {
-            type: 'polygon',
-            points: [
-                sideOf(pose.hips, -view.hipHalf),
-                sideOf(pose.hips, view.hipHalf),
-                sideOf(shoulders, view.shoulderHalf),
-                sideOf(shoulders, -view.shoulderHalf),
-            ],
-            round: WIDTH.torsoRound,
-            tone: worked('torso', muscles),
-        },
-        {
-            type: 'line',
-            from: add(shoulders, scale(up, -2)),
-            to: add(shoulders, scale(head, BODY.neck)),
-            width: WIDTH.neck,
-            tone: worked('neck', muscles),
-        },
-        {
-            type: 'circle',
-            at: add(shoulders, scale(head, BODY.neck + BODY.headRadius - 2)),
-            r: BODY.headRadius,
-            tone: 'end',
-        }
+        // Hanging from the shoulders, so the torso's drawing is the right way up
+        place('torso', shoulders, pose.torso + 180),
+        // Its drawing faces +x; from the side, flipped to face forwards
+        place('head', add(shoulders, scale(up, -1)), pose.head ?? pose.torso, side)
     );
-
-    if (barbell && motion.view === 'front') {
-        drawFrontBarbell();
+    if (barbell && !side) {
+        // Across the shoulders, a plate at each end
+        const plate = (by: number): PlacedProp => ({
+            type: 'line',
+            from: add(sideOf(bar, by), scale(up, 17)),
+            to: add(sideOf(bar, by), scale(up, -17)),
+            width: 7,
+            tone: 'plate',
+        });
+        body.push(
+            { type: 'line', from: sideOf(bar, -62), to: sideOf(bar, 62), width: 3.5, tone: 'bar' },
+            plate(-52),
+            plate(52)
+        );
     }
     drawArm(0, armLayer[0]);
-    if (barbell && motion.view === 'side') {
-        drawBarEnd();
+    if (barbell && side) {
+        near.push({ type: 'circle', at: bar, r: 3, tone: 'bar' });
     }
     return { far, body, near };
+}
+
+/** The box around an item as drawn: [left, top, right, bottom]. */
+export function itemBounds(item: FigureItem): readonly [number, number, number, number] {
+    if (item.type === 'circle') {
+        return [item.at[0] - item.r, item.at[1] - item.r, item.at[0] + item.r, item.at[1] + item.r];
+    }
+    if (item.type === 'line') {
+        const half = item.width / 2;
+        return [
+            Math.min(item.from[0], item.to[0]) - half,
+            Math.min(item.from[1], item.to[1]) - half,
+            Math.max(item.from[0], item.to[0]) + half,
+            Math.max(item.from[1], item.to[1]) + half,
+        ];
+    }
+    const [left, top, right, bottom] = item.art.bounds;
+    const corners = (
+        [
+            [left, top],
+            [right, top],
+            [right, bottom],
+            [left, bottom],
+        ] as const
+    ).map((corner) => placePoint(item, corner));
+    const xs = corners.map(([x]) => x);
+    const ys = corners.map(([, y]) => y);
+    return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
 }
 
 function lerpLimb(a: Limb, b: Limb, t: number): Limb {
@@ -407,39 +383,27 @@ export function poseAt(motion: ExerciseMotion, elapsed: number): Pose {
 
 /** The box around everything the motion draws, in all its positions, and the floor under it. */
 export function motionBox(motion: ExerciseMotion): Box {
-    let minX = Infinity;
-    let minY = Infinity;
-    let maxX = -Infinity;
-    let maxY = 0;
-    const grow = ([x, y]: Point, by: number) => {
-        minX = Math.min(minX, x - by);
-        maxX = Math.max(maxX, x + by);
-        minY = Math.min(minY, y - by);
-        maxY = Math.max(maxY, y + by);
-    };
+    let [minX, minY, maxX, maxY] = [Infinity, Infinity, -Infinity, 0];
     // The key positions, and halfway between each, which an IK limb can swing out past
     const poses = motion.frames.flatMap((frame, i) => [
         frame.pose,
         lerpPose(frame.pose, motion.frames[(i + 1) % motion.frames.length].pose, 0.5, motion.view),
     ]);
     for (const pose of poses) {
-        const layers = drawFigure(pose, motion, []);
-        for (const shape of [...layers.far, ...layers.body, ...layers.near]) {
-            if (shape.type === 'line') {
-                grow(shape.from, shape.width / 2);
-                grow(shape.to, shape.width / 2);
-            } else if (shape.type === 'circle') {
-                grow(shape.at, shape.r);
-            } else {
-                shape.points.forEach((point) => grow(point, shape.round / 2));
-            }
+        const layers = drawFigure(pose, motion);
+        for (const item of [...layers.far, ...layers.body, ...layers.near]) {
+            const [left, top, right, bottom] = itemBounds(item);
+            minX = Math.min(minX, left);
+            minY = Math.min(minY, top);
+            maxX = Math.max(maxX, right);
+            maxY = Math.max(maxY, bottom);
         }
     }
-    const pad = 8;
+    const pad = 6;
     return {
         x: minX - pad,
         y: minY - pad,
         width: maxX - minX + 2 * pad,
-        height: Math.max(maxY, 0) - minY + 2 * pad,
+        height: maxY - minY + 2 * pad,
     };
 }

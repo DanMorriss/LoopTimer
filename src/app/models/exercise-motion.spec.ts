@@ -1,16 +1,22 @@
 import { BUILT_IN_EXERCISE_MOTION } from './built-in-exercise-motion';
 import { BUILT_IN_EXERCISES } from './built-in-exercises';
+import { MUSCLE_LABELS } from './exercise';
+import { FIGURE_ART } from './exercise-figure-art';
 import {
     BODY,
     drawFigure,
     ExerciseMotion,
+    FigureLayers,
+    itemBounds,
     Limb,
     loopLength,
     motionBox,
+    muscleTone,
+    PlacedPart,
+    placePoint,
     Point,
     Pose,
     poseAt,
-    Shape,
     solveLimb,
 } from './exercise-motion';
 
@@ -94,44 +100,109 @@ describe('poseAt', () => {
     });
 });
 
+describe('muscleTone', () => {
+    it('shades a muscle as the body map does: main over supporting, else unworked', () => {
+        expect(muscleTone('quads', ['quads'], ['quads'])).toBe('main');
+        expect(muscleTone('hamstrings', ['quads'], ['hamstrings'])).toBe('supporting');
+        expect(muscleTone('calves', ['quads'], ['hamstrings'])).toBe('idle');
+        expect(muscleTone(null, ['quads'], [])).toBe('other');
+    });
+});
+
 describe('drawFigure', () => {
-    const tonesOf = (shapes: readonly Shape[]) => shapes.map((shape) => shape.tone);
+    const items = (layers: FigureLayers) => [...layers.far, ...layers.body, ...layers.near];
+    const parts = (layers: FigureLayers) =>
+        items(layers).filter((item): item is PlacedPart => item.type === 'part');
 
-    it('shades the parts holding the worked muscles, and never the head, hands and feet', () => {
-        const layers = drawFigure(standing, squat, ['quads']);
-        const all = [...layers.far, ...layers.body, ...layers.near];
+    it('draws every part: a torso and head, and two of each limb part', () => {
+        const names = parts(drawFigure(standing, squat)).map((part) => part.name);
 
-        // A thigh each side
-        expect(tonesOf(all).filter((tone) => tone === 'worked')).toHaveLength(2);
-        expect(tonesOf(all)).toContain('end');
-        expect(tonesOf(drawFigure(standing, squat, []).near)).not.toContain('worked');
+        expect(names.filter((name) => name === 'torso')).toHaveLength(1);
+        expect(names.filter((name) => name === 'head')).toHaveLength(1);
+        for (const name of ['upperArm', 'forearm', 'thigh', 'shin', 'foot'] as const) {
+            expect(names.filter((other) => other === name)).toHaveLength(2);
+        }
+    });
+
+    it('puts each part at its joint, pointing along the limb', () => {
+        const thighs = parts(drawFigure(standing, squat)).filter((part) => part.name === 'thigh');
+
+        // Straight down from the hips to the feet
+        for (const thigh of thighs) {
+            expect(thigh.at[0]).toBeCloseTo(0);
+            expect(thigh.at[1]).toBeCloseTo(-92);
+            expect(thigh.angle).toBeCloseTo(0);
+            // The knee, at the thigh's length along it
+            const knee = placePoint(thigh, [0, BODY.thigh]);
+            expect(knee[1]).toBeCloseTo(-48);
+        }
+    });
+
+    it("turns a part's front the way the figure faces", () => {
+        const layers = drawFigure(squatting, squat);
+        const torso = parts(layers).find((part) => part.name === 'torso')!;
+        const head = parts(layers).find((part) => part.name === 'head')!;
+
+        // Leaning forwards, the chest (+x in its drawing) is in front of the back (-x)
+        expect(placePoint(torso, [10, 10])[0]).toBeGreaterThan(placePoint(torso, [-10, 10])[0]);
+        // The face (+x) is to the right of the back of the head, and the crown (+y) above
+        expect(placePoint(head, [10, 18])[0]).toBeGreaterThan(placePoint(head, [-10, 18])[0]);
+        expect(placePoint(head, [0, 30])[1]).toBeLessThan(head.at[1]);
     });
 
     it('puts the far arm and leg behind the body from the side, and nothing from the front', () => {
-        expect(drawFigure(standing, squat, []).far.length).toBeGreaterThan(0);
-        expect(drawFigure(standing, { ...squat, view: 'front' }, []).far).toHaveLength(0);
+        expect(drawFigure(standing, squat).far.length).toBeGreaterThan(0);
+        expect(drawFigure(standing, { ...squat, view: 'front' }).far).toHaveLength(0);
+    });
+
+    it('flips the near limbs from the front, so their outer sides face out', () => {
+        const front = parts(drawFigure(standing, { ...squat, view: 'front' }));
+        const thighs = front.filter((part) => part.name === 'thigh');
+
+        expect(thighs.map((thigh) => thigh.mirror).sort()).toEqual([false, true]);
+        for (const thigh of thighs) {
+            // The outer side (+x) is further from the middle than the inner
+            expect(Math.abs(placePoint(thigh, [8, 10])[0])).toBeGreaterThan(
+                Math.abs(placePoint(thigh, [-6, 10])[0])
+            );
+        }
     });
 
     it('draws its props', () => {
-        const props = (motion: ExerciseMotion) => {
-            const layers = drawFigure(standing, motion, []);
-            return tonesOf([...layers.far, ...layers.body, ...layers.near]).filter(
-                (tone) => tone === 'prop'
-            ).length;
-        };
+        const props = (motion: ExerciseMotion) =>
+            items(drawFigure(standing, motion)).filter((item) => item.type !== 'part').length;
 
         expect(props(squat)).toBe(0);
         expect(props({ ...squat, props: ['dumbbells'] })).toBe(2);
-        expect(props({ ...squat, props: ['barbell-on-back'] })).toBe(1);
+        // The plate behind and the bar's end in front
+        expect(props({ ...squat, props: ['barbell-on-back'] })).toBe(2);
+    });
+});
+
+describe('FIGURE_ART', () => {
+    it('draws every muscle group the body map has, from the side and from the front', () => {
+        const drawn = (view: 'side' | 'front') =>
+            new Set(
+                Object.values(FIGURE_ART[view]).flatMap((art) =>
+                    art.pieces.map((piece) => piece.muscle).filter((muscle) => muscle !== null)
+                )
+            );
+        const muscles = Object.keys(MUSCLE_LABELS);
+
+        // Not the inner thigh from the side, nor the lower back from the front
+        expect([...drawn('side')].sort()).toEqual(muscles.filter((m) => m !== 'adductors').sort());
+        expect([...drawn('front')].sort()).toEqual(
+            muscles.filter((m) => !['glutes', 'hamstrings', 'lower-back'].includes(m)).sort()
+        );
     });
 });
 
 describe('motionBox', () => {
     it('holds the figure in every position, and the floor', () => {
         const box = motionBox(squat);
-        const head = BODY.torso + BODY.neck + 2 * BODY.headRadius;
 
-        expect(box.y).toBeLessThan(standing.hips[1] - head);
+        // The top of the head, above the shoulders
+        expect(box.y).toBeLessThan(standing.hips[1] - BODY.torso - 30);
         expect(box.y + box.height).toBeGreaterThan(0);
     });
 });
@@ -170,15 +241,18 @@ describe('BUILT_IN_EXERCISE_MOTION', () => {
         const steps = 40;
         for (let i = 0; i < steps; i++) {
             const pose = poseAt(motion, (loopLength(motion) * i) / steps);
-            const layers = drawFigure(pose, motion, []);
-            for (const shape of [...layers.far, ...layers.body, ...layers.near]) {
+            const layers = drawFigure(pose, motion);
+            for (const item of [...layers.far, ...layers.body, ...layers.near]) {
+                // A part's lowest point drawn: the points its curves run through and bend to
                 const lowest =
-                    shape.type === 'line'
-                        ? Math.max(shape.from[1], shape.to[1]) + shape.width / 2
-                        : shape.type === 'circle'
-                          ? shape.at[1] + shape.r
-                          : Math.max(...shape.points.map(([, y]) => y)) + shape.round / 2;
-                // A shin's rounded end can tuck a little under the floor, behind the foot
+                    item.type === 'part'
+                        ? Math.max(
+                              ...[item.art.outline, ...item.art.pieces.map((piece) => piece.d)]
+                                  .flatMap((d) => d.match(/-?[\d.]+ -?[\d.]+/g) ?? [])
+                                  .map((pair) => pair.split(' ').map(Number) as [number, number])
+                                  .map((point) => placePoint(item, point)[1])
+                          )
+                        : itemBounds(item)[3];
                 expect(lowest).toBeLessThan(2);
             }
         }

@@ -7,7 +7,7 @@
     width: 100%;
     height: auto;
     // As big as the space allows, in the motion's own shape, no taller than its holder says
-    max-height: var(--figure-max-height, 12rem);
+    max-height: var(--figure-max-height, 15rem);
     overflow: visible;
 }
 
@@ -19,43 +19,54 @@
 
 // The far arm and leg, behind the body from the side
 .figure__layer--far {
-    opacity: 0.55;
+    opacity: 0.5;
 }
 
-.figure__outline,
-.figure__fill {
+// As the body map draws its figure: an outlined silhouette, the page showing between the
+// muscles on it. Filled here, as the parts overlap as they move.
+.figure__silhouette {
+    fill: var(--page-bg);
+    stroke: var(--muscle-outline);
+    stroke-width: 1.5;
+    vector-effect: non-scaling-stroke;
+}
+
+.figure__muscle {
+    fill: var(--muscle-idle);
+    stroke: var(--muscle-outline);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+
+    &--main {
+        fill: var(--muscle-main);
+    }
+
+    &--supporting {
+        fill: var(--muscle-supporting);
+    }
+
+    // Head, hands, feet and knees, never shaded
+    &--other {
+        fill: var(--muscle-other);
+    }
+}
+
+.figure__prop {
+    fill: var(--muscle-other);
+    stroke: var(--muscle-outline);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+
+    &--bar {
+        fill: var(--text-muted);
+    }
+}
+
+.figure__bar {
     stroke-linecap: round;
-    stroke-linejoin: round;
-    fill: var(--part);
-    stroke: var(--part);
-}
+    stroke: var(--text-muted);
 
-// A circle is drawn at its size by its radius alone
-circle.figure__outline,
-circle.figure__fill {
-    stroke: none;
-}
-
-.figure__outline {
-    --part: var(--muscle-outline);
-}
-
-// As the body map shades them: worked as its main muscles, the rest unworked, and the
-// head, hands and feet as its parts that are never shaded
-.figure__fill {
-    &--body {
-        --part: var(--muscle-idle);
-    }
-
-    &--worked {
-        --part: var(--muscle-main);
-    }
-
-    &--end {
-        --part: var(--muscle-other);
-    }
-
-    &--prop {
-        --part: var(--text-muted);
+    &--plate {
+        stroke: var(--muscle-other);
     }
 }

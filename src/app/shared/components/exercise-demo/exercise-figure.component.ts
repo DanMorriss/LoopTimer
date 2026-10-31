@@ -4,15 +4,16 @@ import {
     drawFigure,
     ExerciseMotion,
     motionBox,
-    Point,
+    muscleTone,
+    PlacedPart,
     Pose,
 } from '../../../models/exercise-motion';
 
 /**
- * The figure of an exercise's demo in one pose (EXR-13), on the floor, with the parts holding
- * the worked muscles shaded as the body map's main ones. Every pose of a motion is drawn in
- * the same box, so the figure doesn't jump about as it moves. Hidden from screen readers:
- * the how-to steps say the same in words.
+ * The figure of an exercise's demo in one pose (EXR-13), drawn as the body map is: a
+ * silhouette with each muscle on it outlined and shaded, main and supporting, and the rest
+ * left unworked. Every pose of a motion is drawn in the same box, so the figure doesn't jump
+ * about as it moves. Hidden from screen readers: the how-to steps say the same in words.
  */
 @Component({
     selector: 'app-exercise-figure',
@@ -23,8 +24,8 @@ import {
 export class ExerciseFigureComponent {
     readonly motion = input.required<ExerciseMotion>();
     readonly pose = input.required<Pose>();
-    /** The muscles to shade. */
-    readonly worked = input<readonly MuscleGroup[]>([]);
+    readonly main = input<readonly MuscleGroup[]>([]);
+    readonly supporting = input<readonly MuscleGroup[]>([]);
 
     protected readonly box = computed(() => motionBox(this.motion()));
     protected readonly viewBox = computed(() => {
@@ -32,22 +33,21 @@ export class ExerciseFigureComponent {
         return `${box.x} ${box.y} ${box.width} ${box.height}`;
     });
     protected readonly layers = computed(() => {
-        const layers = drawFigure(this.pose(), this.motion(), this.worked());
+        const layers = drawFigure(this.pose(), this.motion());
         return [
-            { name: 'far', shapes: layers.far },
-            { name: 'body', shapes: layers.body },
-            { name: 'near', shapes: layers.near },
+            { name: 'far', items: layers.far },
+            { name: 'body', items: layers.body },
+            { name: 'near', items: layers.near },
         ];
     });
-    /**
-     * Each layer is drawn twice: first every shape a little bigger in the outline colour, then
-     * every shape in its own, so the parts of a layer join into one outlined silhouette.
-     */
-    protected readonly passes = ['outline', 'fill'] as const;
-    /** How much bigger the outline pass draws each shape. */
-    protected readonly outline = 3;
 
-    protected points(points: readonly Point[]): string {
-        return points.map((point) => point.join(',')).join(' ');
+    protected toneOf(muscle: MuscleGroup | null): string {
+        return muscleTone(muscle, this.main(), this.supporting());
+    }
+
+    /** Moves a part's drawing into place: see `placePoint()`. */
+    protected transformOf(part: PlacedPart): string {
+        const turn = `translate(${part.at[0]} ${part.at[1]}) rotate(${-part.angle})`;
+        return part.mirror ? `${turn} scale(-1 1)` : turn;
     }
 }

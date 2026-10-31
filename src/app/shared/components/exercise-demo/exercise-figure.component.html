@@ -15,32 +15,33 @@
     />
     @for (layer of layers(); track layer.name) {
         <g [class]="'figure__layer figure__layer--' + layer.name">
-            @for (pass of passes; track pass) {
-                @let grow = pass === 'outline' ? outline : 0;
-                @for (shape of layer.shapes; track $index) {
-                    @if (shape.type === 'line') {
-                        <line
-                            [class]="'figure__' + pass + ' figure__' + pass + '--' + shape.tone"
-                            [attr.x1]="shape.from[0]"
-                            [attr.y1]="shape.from[1]"
-                            [attr.x2]="shape.to[0]"
-                            [attr.y2]="shape.to[1]"
-                            [attr.stroke-width]="shape.width + grow"
-                        />
-                    } @else if (shape.type === 'circle') {
-                        <circle
-                            [class]="'figure__' + pass + ' figure__' + pass + '--' + shape.tone"
-                            [attr.cx]="shape.at[0]"
-                            [attr.cy]="shape.at[1]"
-                            [attr.r]="shape.r + grow / 2"
-                        />
-                    } @else {
-                        <polygon
-                            [class]="'figure__' + pass + ' figure__' + pass + '--' + shape.tone"
-                            [attr.points]="points(shape.points)"
-                            [attr.stroke-width]="shape.round + grow"
-                        />
-                    }
+            @for (item of layer.items; track $index) {
+                @if (item.type === 'part') {
+                    <g [attr.transform]="transformOf(item)">
+                        <path class="figure__silhouette" [attr.d]="item.art.outline" />
+                        @for (piece of item.art.pieces; track $index) {
+                            <path
+                                [class]="'figure__muscle figure__muscle--' + toneOf(piece.muscle)"
+                                [attr.d]="piece.d"
+                            />
+                        }
+                    </g>
+                } @else if (item.type === 'circle') {
+                    <circle
+                        [class]="'figure__prop figure__prop--' + item.tone"
+                        [attr.cx]="item.at[0]"
+                        [attr.cy]="item.at[1]"
+                        [attr.r]="item.r"
+                    />
+                } @else {
+                    <line
+                        [class]="'figure__bar figure__bar--' + item.tone"
+                        [attr.x1]="item.from[0]"
+                        [attr.y1]="item.from[1]"
+                        [attr.x2]="item.to[0]"
+                        [attr.y2]="item.to[1]"
+                        [attr.stroke-width]="item.width"
+                    />
                 }
             }
         </g>
