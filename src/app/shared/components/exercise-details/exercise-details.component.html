@@ -45,6 +45,7 @@
 @if (words?.steps?.length) {
     <section class="exercise__section" [attr.aria-labelledby]="id + '-how'">
         <h3 [id]="id + '-how'" class="exercise__heading">How to do it</h3>
+        <app-exercise-demo class="exercise__demo" [exercise]="shown" />
         <ol class="exercise__steps">
             @for (step of words!.steps; track $index) {
                 <li>{{ step }}</li>

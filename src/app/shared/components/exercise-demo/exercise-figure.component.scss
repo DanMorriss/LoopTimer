@@ -1,0 +1,61 @@
+:host {
+    display: block;
+}
+
+.figure {
+    display: block;
+    width: 100%;
+    height: auto;
+    // As big as the space allows, in the motion's own shape, no taller than its holder says
+    max-height: var(--figure-max-height, 12rem);
+    overflow: visible;
+}
+
+.figure__floor {
+    stroke: var(--border);
+    stroke-width: 1.5;
+    vector-effect: non-scaling-stroke;
+}
+
+// The far arm and leg, behind the body from the side
+.figure__layer--far {
+    opacity: 0.55;
+}
+
+.figure__outline,
+.figure__fill {
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: var(--part);
+    stroke: var(--part);
+}
+
+// A circle is drawn at its size by its radius alone
+circle.figure__outline,
+circle.figure__fill {
+    stroke: none;
+}
+
+.figure__outline {
+    --part: var(--muscle-outline);
+}
+
+// As the body map shades them: worked as its main muscles, the rest unworked, and the
+// head, hands and feet as its parts that are never shaded
+.figure__fill {
+    &--body {
+        --part: var(--muscle-idle);
+    }
+
+    &--worked {
+        --part: var(--muscle-main);
+    }
+
+    &--end {
+        --part: var(--muscle-other);
+    }
+
+    &--prop {
+        --part: var(--text-muted);
+    }
+}

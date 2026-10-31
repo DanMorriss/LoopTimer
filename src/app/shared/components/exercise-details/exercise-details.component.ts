@@ -2,19 +2,20 @@ import { Component, computed, inject, input } from '@angular/core';
 import { capitalise, equipmentPhrases, Exercise, isBuiltIn } from '../../../models/exercise';
 import { ExerciseStore } from '../../state/exercise-store.service';
 import { BodyMapComponent } from '../body-map/body-map.component';
+import { ExerciseDemoComponent } from '../exercise-demo/exercise-demo.component';
 
 let nextId = 0;
 
 /**
- * What an exercise is (EXR-7, EXR-8): its other names, what it needs and how it's measured as
- * chips, its description and your note on it, then the muscles it works on the body map,
- * how to do it and tips. Everything but its name, which goes in whatever holds it: its page,
- * or the details dialog in Create. Buttons for it (e.g. Edit) can be put inside, and show
+ * What an exercise is (EXR-7, EXR-8, EXR-13): its other names, what it needs and how it's
+ * measured as chips, its description and your note on it, then the muscles it works on the
+ * body map, how to do it (with its animated demo, where it has one) and tips. Everything but
+ * its name, which goes in whatever holds it: its page, or the details dialog in Create. Buttons for it (e.g. Edit) can be put inside, and show
  * under the description and note.
  */
 @Component({
     selector: 'app-exercise-details',
-    imports: [BodyMapComponent],
+    imports: [BodyMapComponent, ExerciseDemoComponent],
     templateUrl: './exercise-details.component.html',
     styleUrl: './exercise-details.component.scss',
 })
