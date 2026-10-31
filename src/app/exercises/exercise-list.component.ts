@@ -2,14 +2,11 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseEditorComponent } from '../shared/components/exercise-editor/exercise-editor.component';
-import { ToggleSwitchComponent } from '../shared/components/toggle-switch/toggle-switch.component';
+import { EquipmentFilterComponent } from '../shared/components/equipment-filter/equipment-filter.component';
 import { BodyMapComponent } from '../shared/components/body-map/body-map.component';
 import {
     canDoWith,
     capitalise,
-    Equipment,
-    EQUIPMENT_CHOICES,
-    equipmentLabel,
     equipmentPhrases,
     Exercise,
     exercisePath,
@@ -48,7 +45,7 @@ const MUSCLES = Object.keys(MUSCLE_LABELS) as MuscleGroup[];
     selector: 'app-exercise-list',
     imports: [
         MatIconModule,
-        ToggleSwitchComponent,
+        EquipmentFilterComponent,
         BodyMapComponent,
         ExerciseEditorComponent,
         ExerciseCardComponent,
@@ -65,8 +62,6 @@ export class ExerciseListComponent {
 
     protected readonly muscles = MUSCLES;
     protected readonly muscleLabels = MUSCLE_LABELS;
-    protected readonly equipmentChoices = EQUIPMENT_CHOICES;
-    protected readonly equipmentLabel = equipmentLabel;
 
     protected readonly query = signal('');
     /** Main muscles the list is cut down to, or empty for all. */
@@ -75,7 +70,6 @@ export class ExerciseListComponent {
         const muscles = serialiseMusclesParam(this.selectedMuscles());
         return muscles ? { muscles } : {};
     });
-    protected readonly kitOpen = signal(false);
     protected readonly hiddenOpen = signal(false);
     /** A blank exercise of your own in the editor, made when it's saved. */
     protected readonly drafting = signal(false);
@@ -135,14 +129,6 @@ export class ExerciseListComponent {
             this.selectedMuscles().length > 0 ||
             this.onlyMyEquipment()
     );
-    protected readonly kitSummary = computed(() => {
-        const count = this.myEquipment().length;
-        if (count === 0) {
-            return 'none';
-        }
-        return count === 1 ? '1 piece' : `${count} pieces`;
-    });
-
     protected onSearch(event: Event) {
         this.query.set((event.target as HTMLInputElement).value);
     }
@@ -170,18 +156,6 @@ export class ExerciseListComponent {
 
     protected setOnlyMine(only: boolean) {
         this.settings.update({ onlyMyEquipment: only });
-    }
-
-    protected hasEquipment(equipment: Equipment): boolean {
-        return this.myEquipment().includes(equipment);
-    }
-
-    protected toggleEquipment(equipment: Equipment) {
-        const mine = this.hasEquipment(equipment)
-            ? this.myEquipment().filter((e) => e !== equipment)
-            : [...this.myEquipment(), equipment];
-        // In the order it's offered, as it's saved
-        this.settings.update({ myEquipment: EQUIPMENT_CHOICES.filter((e) => mine.includes(e)) });
     }
 
     protected clearFilters() {

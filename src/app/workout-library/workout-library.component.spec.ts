@@ -84,6 +84,11 @@ describe('WorkoutLibraryComponent', () => {
             expect(all('.btn-main')).toHaveLength(1);
             expect(el('.library-add-button')).toBeNull();
         });
+
+        it('offers the ready-made workouts too', () => {
+            expect(el('.library-ready-made-button')?.getAttribute('href')).toBe('/ready-made');
+            expect(el('.library__ready-made')).toBeNull();
+        });
     });
 
     describe('with workouts', () => {
@@ -111,6 +116,11 @@ describe('WorkoutLibraryComponent', () => {
             expect(text()).not.toContain('Nothing in the library yet');
             expect(card(0).textContent).toContain('Sprints');
             expect(card(0).textContent).toContain('01:05 - 00:20 x 4');
+        });
+
+        it('offers the ready-made workouts under the cards', () => {
+            expect(el('.library__ready-made')?.getAttribute('href')).toBe('/ready-made');
+            expect(el('.library-ready-made-button')).toBeNull();
         });
 
         it('labels a workout with a blank title as "Untitled workout"', () => {

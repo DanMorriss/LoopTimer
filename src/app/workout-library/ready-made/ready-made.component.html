@@ -1,0 +1,65 @@
+<div
+    class="flex justify-center"
+    [appSwipeBack]="'/library'"
+    [swipeBackDisabled]="previewing() !== null"
+>
+    <div
+        class="m-4 w-full max-w-md rounded-xl border border-(--panel-border) bg-(--panel) p-6 shadow-xl shadow-(color:--shadow)"
+    >
+        <app-back-link url="/library" label="Library" />
+        <h2 class="ready__title">Ready-made workouts</h2>
+        <p class="ready__hint">
+            Pick one to see what's in it. Added to your library, it's yours to start, change or
+            plan.
+        </p>
+
+        <app-equipment-filter class="ready__kit" idPrefix="ready-made" things="Workouts" />
+        @if (hiddenText()) {
+            <p class="ready__hint">{{ hiddenText() }}</p>
+        }
+
+        @for (section of sections(); track section.group) {
+            <section class="ready__section" [attr.aria-labelledby]="'ready-made-' + section.group">
+                <h3 class="ready__group" [id]="'ready-made-' + section.group">
+                    {{ section.label }}
+                </h3>
+                <ul class="ready__list">
+                    @for (card of section.cards; track card.workout.id) {
+                        <li>
+                            <button
+                                type="button"
+                                class="ready__card"
+                                aria-haspopup="dialog"
+                                [attr.data-ready-made]="card.workout.id"
+                                (click)="open(card)"
+                            >
+                                <span class="ready__name">{{ card.workout.title }}</span>
+                                {{ ' ' }}
+                                <span class="ready__description">{{
+                                    card.workout.description
+                                }}</span>
+                                {{ ' ' }}
+                                <span class="ready__meta">
+                                    {{ card.meta }}
+                                    @if (card.inLibrary) {
+                                        <span class="ready__in-library">· In your library</span>
+                                    }
+                                </span>
+                            </button>
+                        </li>
+                    }
+                </ul>
+            </section>
+        }
+    </div>
+</div>
+
+@if (previewing(); as card) {
+    <app-ready-made-dialog
+        animate.leave="dialog-leave"
+        [card]="card"
+        (closed)="close()"
+        (added)="add(card)"
+        (started)="addAndStart(card)"
+    />
+}

@@ -28,7 +28,7 @@
 
     @if (!existingWorkouts) {
         <div class="flex flex-col items-center justify-center">
-            <p>Nothing in the library yet, best go make a workout.</p>
+            <p>Nothing in the library yet. Make a workout, or start with a ready-made one.</p>
             <button
                 type="button"
                 class="btn-main library-create-button mt-12"
@@ -37,6 +37,14 @@
                 <mat-icon aria-hidden="true">add</mat-icon>
                 Create a workout
             </button>
+            <a
+                href="/ready-made"
+                class="btn-pill library-ready-made-button mt-4"
+                (click)="slide.follow($event, '/ready-made', 'in')"
+            >
+                <mat-icon aria-hidden="true">auto_awesome</mat-icon>
+                Browse ready-made workouts
+            </a>
         </div>
     }
 
@@ -77,6 +85,21 @@
         }
     </ul>
     <div class="sr-only" aria-live="polite">{{ announcement() }}</div>
+
+    <!-- More to add from the ready-made workouts (LIB-6), which slide in over the library -->
+    @if (existingWorkouts) {
+        <a
+            href="/ready-made"
+            class="library__ready-made"
+            (click)="$event.stopPropagation(); slide.follow($event, '/ready-made', 'in')"
+        >
+            <span class="library__ready-made-text">
+                <span class="library__ready-made-title">Ready-made workouts</span>
+                <span class="library__ready-made-hint">Need ideas? Add one to your library.</span>
+            </span>
+            <mat-icon aria-hidden="true">chevron_right</mat-icon>
+        </a>
+    }
 
     <!-- The muscle groups the library's workouts leave out, to find exercises for -->
     @let muscles = libraryMuscles();

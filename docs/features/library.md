@@ -7,6 +7,7 @@
 - **LIB-3** As a user I want to put my workouts in the order I want, so the ones I do most are easy to find.
 - **LIB-4** As a user I want to see which muscles a workout works and when I last did it, so I can choose what to do today.
 - **LIB-5** As a user I want to see which muscle groups none of my workouts work, so I can fill the gaps.
+- **LIB-6** As a user I want ready-made workouts to pick from, so I don't have to make my own to get started.
 
 ## Rules
 
@@ -42,7 +43,24 @@
     - Then those only ever worked as a supporting muscle: "Only lightly, as a supporting muscle:".
     - Each is a link to the Exercises list cut down to that muscle (`/exercises?muscles=calves`).
     - All worked as a main muscle somewhere: "Your workouts work every muscle group."
-- **Empty library**: "Nothing in the library yet, best go make a workout." with a **Create a workout** button, and no **New** (one way to add a workout at a time).
+- **Empty library**: "Nothing in the library yet. Make a workout, or start with a ready-made one." with a **Create a workout** button, and no **New** (one way to make a workout at a time), and **Browse ready-made workouts** under it.
+- **Ready-made workouts** (LIB-6): once there's a workout, a link under the cards, "Ready-made workouts: Need ideas? Add one to your library." Either way in, the page slides in over the library, as Plan does, with ‹ Library and a swipe right back.
+
+### Ready-made workouts (LIB-6)
+
+- Workouts that come with the app, made of built-in exercises (see [exercises](exercises.md)), in groups by what they need: **No equipment**, **Kettlebell**, **Dumbbells**, **Gym**. They're written into the app, not saved as your data: they don't sync, can't be changed or deleted, and can be improved in any release. Their ids (`builtin:<title-in-kebab-case>`) never change once released.
+- The page: its title, "Ready-made workouts", a line on what it's for, then **Only what I have** and **My equipment**, the same switch and pieces as on the Exercises list (one setting, so it's set once for both). Then the groups, each with its workouts as cards: the title, a one-line description, and "5 exercises · Dumbbells, Bench" (or "No equipment").
+- **Only what I have** on hides any workout needing a piece you haven't picked, as the Exercises list hides exercises, and says how many are hidden: "4 more need equipment you haven't picked." A group left empty isn't shown. No-equipment workouts always show.
+- What a workout **needs** is every need of its exercises, once; a choice (a dumbbell or a kettlebell) that's met by a piece it needs anyway is left out, as it changes nothing about who can do it.
+- A card opens its **preview**, a dialog over the page, growing out of the card:
+    - The title, the description, and what it needs as chips.
+    - **What's in it**: how many times it goes round ("Once through", "3 rounds of all of it", "As many rounds as you can in 20:00"), then its headings, and each exercise with its sets, e.g. "Goblet squat 3 × 10, rest 1:00", "Back squat 3 sets: 12, 10, 8, rest 2:30", "Side plank 2 × 0:30 each side", and each superset with its rounds and its steps set in under it.
+    - **Muscles it works**: the body map, as in a workout's Details.
+    - **Add and start**, **Add to library** and **Close** (Escape or a tap outside close it too, with focus back on its card).
+- **Add to library** saves a copy as a new workout of your own, at the end of the library, which is then like any other: start it, edit it, plan it, delete it. The page stays open, to add more, and the Undo bar says "Added "Gym legs" to your library", with Undo taking it out again. **Add and start** does the same and starts it, opening the workout page.
+- Its steps have **no weights**, as everyone's are their own: Last time and the suggested weight fill in from the first run.
+- A card whose title is already a workout's in the library says **In your library**, and its preview says so too, as adding it again makes a second copy.
+
 
 ## Acceptance criteria
 
@@ -63,10 +81,17 @@
 - Given a workout of Back squat only, when I open its Details, then the body map shades the quads and glutes as main, and the hamstrings, adductors and lower back as supporting.
 - Given workouts of Back squat and Bench press, then Missing muscle groups lists Biceps, Forearms, Abs, Obliques, Traps, Upper back, Abductors, Calves, Shins and Neck, and, apart, Shoulders, Triceps, Lower back, Adductors and Hamstrings as only lightly worked.
 - Given no step linked to an exercise, then there's no Missing muscle groups section.
+- Given no workouts, then Browse ready-made workouts shows under Create a workout; given workouts, then Ready-made workouts shows under the cards.
+- Given the ready-made workouts, then they're listed under No equipment, Kettlebell, Dumbbells and Gym.
+- Given only a kettlebell picked and Only what I have on, then only the No equipment and Kettlebell workouts show, and it says how many more need equipment I haven't picked.
+- Given Gym legs previewed, then it reads "Back squat 3 sets: 12, 10, 8, rest 2:30" and shows the muscles it works.
+- Given a ready-made workout previewed, when I press Add to library, then a copy is at the end of my library, its card says In your library, and Undo takes it out again.
+- Given a ready-made workout previewed, when I press Add and start, then a copy is in my library and it's running.
 - Given I delete a workout, then it's gone at once, and when it was the last one, the empty message shows; when I press Undo, then it's back where it was.
 
 ## Platform notes
 
 - **Web:** `WorkoutLibraryComponent`, `WorkoutCardComponent` and `WorkoutDetailsDialogComponent` (`src/app/workout-library/`), at `/library`. The card's swipe uses `project()`, `rubberband()` and `VelocityTracker` from `src/app/shared/gesture.ts`, and springs with `criticallyDampedSpring()` from `src/app/shared/spring.ts`. Dragging is the CDK's drop list (`cdkDropList`, mixed orientation as the cards wrap into columns on wide screens), with a start delay of the card's hold time (`HOLD_MS`), so moving sooner leaves the press to the card's swipe or the page's scroll; the card lifts itself when the hold time is up. The cards close up and open out around a deleted one with `captureLayout()` (`src/app/shared/layout-change.ts`). Workouts are saved by `WorkoutStore`, in the library's order (`moveWorkout()`, which also saves when it was moved, for `mergeLibraryOrder()`). The muscles come from `musclesWorked()` and `musclesMissed()` in `src/app/models/workout-muscles.ts`.
-- **iOS:** a `List` where tapping a row starts it, with `.swipeActions` for Delete (a full swipe deletes), `.onMove` for dragging rows, a `.contextMenu` for Details, Edit, Move and Delete on a hold, and the same Undo. Details is a sheet.
+- **Web, ready-made workouts:** `ReadyMadeComponent` and `ReadyMadeDialogComponent` (`src/app/workout-library/ready-made/`), at `/ready-made` (held by the Library tab). The workouts are `BUILT_IN_WORKOUTS` in `src/app/models/built-in-workouts.ts`, written with its small builders (`sets()`, `superset()`, `reps()`, `timed()`, …) and only loaded with the page; `builtInWorkoutEquipment()` says what one needs and `copyOfBuiltIn()` makes the copy for `WorkoutStore.addWorkout()`. The preview's lines are `outline()` and `repeatsText()` in `src/app/models/workout-outline.ts`. Only what I have and My equipment are `EquipmentFilterComponent` (`src/app/shared/components/equipment-filter/`), shared with the Exercises list. Each workout is checked by `built-in-workouts.spec.ts`: its exercises exist and are named as they are, it reads back as a saved workout, and its supersets have more than one round.
+- **iOS:** a `List` where tapping a row starts it, with `.swipeActions` for Delete (a full swipe deletes), `.onMove` for dragging rows, a `.contextMenu` for Details, Edit, Move and Delete on a hold, and the same Undo. Details is a sheet. The ready-made workouts are a pushed view, with the preview as a sheet.
 - **Open question:** deleting the workout that's running doesn't stop the run on the web; after a reload the run is gone. Decide what a port should do.

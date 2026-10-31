@@ -32,56 +32,7 @@
             </span>
         </label>
 
-        <div class="exercises__kit">
-            <div class="exercises__kit-row">
-                <div class="exercises__kit-text">
-                    <span id="exercise-list-only-mine" class="exercises__kit-label"
-                        >Only what I have</span
-                    >
-                    <button
-                        type="button"
-                        class="exercises__kit-edit"
-                        aria-controls="exercise-list-kit"
-                        [attr.aria-expanded]="kitOpen()"
-                        (click)="kitOpen.set(!kitOpen())"
-                    >
-                        My equipment: {{ kitSummary() }}
-                        <mat-icon aria-hidden="true">{{
-                            kitOpen() ? 'expand_less' : 'expand_more'
-                        }}</mat-icon>
-                    </button>
-                </div>
-                <app-toggle-switch
-                    labelledBy="exercise-list-only-mine"
-                    [checked]="onlyMyEquipment()"
-                    (checkedChange)="setOnlyMine($event)"
-                />
-            </div>
-            @if (kitOpen()) {
-                <fieldset id="exercise-list-kit" class="exercises__kit-pick">
-                    <legend class="exercises__kit-legend">
-                        What you have. Exercises that need nothing always show.
-                    </legend>
-                    <div class="exercises__chips exercises__chips--wrap">
-                        @for (equipment of equipmentChoices; track equipment) {
-                            <button
-                                type="button"
-                                class="exercises__chip"
-                                [attr.aria-pressed]="hasEquipment(equipment)"
-                                (click)="toggleEquipment(equipment)"
-                            >
-                                @if (hasEquipment(equipment)) {
-                                    <mat-icon class="exercises__chip-icon" aria-hidden="true"
-                                        >check</mat-icon
-                                    >
-                                }
-                                {{ equipmentLabel(equipment) }}
-                            </button>
-                        }
-                    </div>
-                </fieldset>
-            }
-        </div>
+        <app-equipment-filter class="exercises__kit" idPrefix="exercise-list" things="Exercises" />
 
         <div
             class="exercises__chips exercises__chips--scroll"

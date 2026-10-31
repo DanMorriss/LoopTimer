@@ -1,6 +1,7 @@
 @use 'type' as *;
 
 @use 'interaction' as *;
+@use 'chip' as *;
 
 :host {
     display: block;
@@ -46,33 +47,9 @@
 
 .exercises__kit {
     margin-bottom: 0.9rem;
-    padding: 0.6rem 0.75rem;
-    border: 1px solid var(--border-soft);
-    border-radius: 0.75rem;
-    background: var(--card);
-}
-
-.exercises__kit-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-}
-
-.exercises__kit-text {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    min-width: 0;
-}
-
-.exercises__kit-label {
-    color: var(--text-strong);
-    font-size: 0.9rem;
 }
 
 // A link-like disclosure: the equipment you have, opening the chips to change it
-.exercises__kit-edit,
 .exercises__hidden-toggle {
     display: inline-flex;
     align-items: center;
@@ -103,19 +80,6 @@
     }
 }
 
-.exercises__kit-pick {
-    margin: 0.4rem 0 0.2rem;
-    padding: 0;
-    border: 0;
-}
-
-.exercises__kit-legend {
-    margin-bottom: 0.5rem;
-    padding: 0;
-    color: var(--text-muted);
-    font-size: 0.8rem;
-}
-
 .exercises__chips {
     display: flex;
     gap: 0.4rem;
@@ -135,49 +99,11 @@
 
 // A toggle: picked ones are outlined in the accent and filled, so it isn't colour alone
 .exercises__chip {
-    display: inline-flex;
-    flex: none;
-    align-items: center;
-    gap: 0.2rem;
-    min-height: 36px;
-    padding: 0 0.8rem;
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    background: var(--control);
-    color: var(--text);
-    font: inherit;
-    font-size: 0.85rem;
-    white-space: nowrap;
-    cursor: pointer;
-
-    // 36px drawn, 44px to a finger
-    @include hit-area(4px);
-
-    @include hover {
-        background: var(--control-hover);
-    }
-
-    @include pressed {
-        background: var(--control-hover);
-    }
-
-    &:focus-visible {
-        outline: 2px solid var(--accent);
-        outline-offset: 2px;
-    }
-
-    &[aria-pressed='true'] {
-        border-color: var(--glow-text);
-        background: var(--accent-soft);
-        color: var(--text-strong);
-        box-shadow: inset 0 0 0 1px var(--glow-text);
-    }
+    @include chip;
 }
 
 .exercises__chip-icon {
-    width: 1rem;
-    height: 1rem;
-    font-size: 1rem;
+    @include chip-icon;
 }
 
 .exercises__map {

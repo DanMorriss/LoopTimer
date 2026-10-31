@@ -1,0 +1,287 @@
+import { BUILT_IN_EXERCISES } from './built-in-exercises';
+import { EquipmentNeed } from './exercise';
+import {
+    Block,
+    RepSetAmount,
+    RepStep,
+    Step,
+    StepGroup,
+    TimedStep,
+    UNTIL_STOPPED,
+    WorkoutFields,
+    allSteps,
+} from './workout';
+
+/** Which part of the ready-made list a workout is in, by what it needs. */
+export type BuiltInWorkoutGroup = 'bodyweight' | 'kettlebell' | 'dumbbells' | 'gym';
+
+/** Each part's heading, in the order they're listed. */
+export const BUILT_IN_WORKOUT_GROUPS: readonly { group: BuiltInWorkoutGroup; label: string }[] = [
+    { group: 'bodyweight', label: 'No equipment' },
+    { group: 'kettlebell', label: 'Kettlebell' },
+    { group: 'dumbbells', label: 'Dumbbells' },
+    { group: 'gym', label: 'Gym' },
+];
+
+/**
+ * A workout that comes with the app (LIB-6): never saved as it is, but copied into the
+ * library, where it's yours to start, change or plan. Its steps are built-in exercises, with
+ * no weights, as everyone's are their own.
+ */
+export interface BuiltInWorkout extends WorkoutFields {
+    /** Fixed for good: `builtin:<title-in-kebab-case>`. */
+    id: `builtin:${string}`;
+    /** One line: what it is, and who or what it's for. */
+    description: string;
+    group: BuiltInWorkoutGroup;
+}
+
+/** A built-in exercise's step name, by its id without `builtin:`. */
+function exercise(id: string): { name: string; exerciseId: string } {
+    const found = BUILT_IN_EXERCISES.find((e) => e.id === `builtin:${id}`);
+    if (!found) {
+        throw new Error(`No built-in exercise ${id}`);
+    }
+    return { name: found.name, exerciseId: found.id };
+}
+
+/** A rep step: `reps('push-up', 10)`, or `reps('reverse-lunge', 8, { eachSide: true })`. */
+function reps(id: string, count: number, options: { eachSide?: true } = {}): RepStep {
+    return { kind: 'reps', reps: count, ...exercise(id), ...options };
+}
+
+/** A rep step whose sets vary, e.g. 12, 10, 8: its group needs as many rounds. */
+function repsEachSet(id: string, counts: number[]): RepStep {
+    const sets: RepSetAmount[] = counts.map((count) => ({ reps: count }));
+    return { kind: 'reps', reps: counts[0], ...exercise(id), sets };
+}
+
+/** A timed step: `timed('plank', 30)`. */
+function timed(id: string, seconds: number, options: { eachSide?: true } = {}): TimedStep {
+    return { kind: 'work', seconds, ...exercise(id), ...options };
+}
+
+function rest(seconds: number): StepGroup {
+    return {
+        kind: 'group',
+        rounds: 1,
+        restSeconds: 0,
+        steps: [{ kind: 'rest', seconds, name: '' }],
+    };
+}
+
+/** An exercise and its sets, with the rest after each: `sets(3, 60, reps('goblet-squat', 10))`. */
+function sets(rounds: number, restSeconds: number, step: Step): StepGroup {
+    return { kind: 'group', rounds, restSeconds: rounds > 1 ? restSeconds : 0, steps: [step] };
+}
+
+/** A step done once a round, straight after the last, as in a circuit. */
+function once(step: Step): StepGroup {
+    return sets(1, 0, step);
+}
+
+/** A superset (or giant set, of three or more) and its rounds, with the rest after each. */
+function superset(rounds: number, restSeconds: number, ...steps: Step[]): StepGroup {
+    return { kind: 'group', rounds, restSeconds, steps };
+}
+
+function heading(text: string): Block {
+    return { kind: 'heading', text };
+}
+
+/**
+ * The ready-made workouts, in the order they're listed in each group. Ids never change once
+ * released. In batches; each reviewed before the next is written.
+ */
+export const BUILT_IN_WORKOUTS: readonly BuiltInWorkout[] = [
+    {
+        id: 'builtin:bodyweight-basics',
+        title: 'Bodyweight basics',
+        description: 'A full-body circuit to start with: legs, push, glutes and core, three times.',
+        group: 'bodyweight',
+        repeats: 1,
+        blocks: [
+            superset(
+                3,
+                90,
+                reps('bodyweight-squat', 15),
+                reps('push-up', 10),
+                reps('reverse-lunge', 8, { eachSide: true }),
+                reps('glute-bridge', 15),
+                timed('plank', 30)
+            ),
+        ],
+    },
+    {
+        id: 'builtin:20-minute-amrap',
+        title: '20-minute AMRAP',
+        description: 'As many rounds as you can in 20 minutes. Rest when you need to.',
+        group: 'bodyweight',
+        repeats: UNTIL_STOPPED,
+        timeLimitSeconds: 20 * 60,
+        blocks: [
+            once(reps('burpee', 5)),
+            once(reps('push-up', 10)),
+            once(reps('jump-squat', 15)),
+            once(timed('mountain-climber', 30)),
+        ],
+    },
+    {
+        id: 'builtin:cardio-intervals',
+        title: 'Cardio intervals',
+        description: '40 seconds on, 20 off, four moves, three rounds. About 12 minutes.',
+        group: 'bodyweight',
+        repeats: 3,
+        blocks: [
+            once(timed('jumping-jack', 40)),
+            rest(20),
+            once(timed('burpee', 40)),
+            rest(20),
+            once(timed('mountain-climber', 40)),
+            rest(20),
+            once(timed('jump-squat', 40)),
+            rest(60),
+        ],
+    },
+    {
+        id: 'builtin:core-in-15',
+        title: 'Core in 15',
+        description: 'Abs, obliques and holds, three rounds, in about 15 minutes.',
+        group: 'bodyweight',
+        repeats: 1,
+        blocks: [
+            superset(
+                3,
+                60,
+                reps('dead-bug', 10),
+                reps('crunch', 15),
+                reps('bicycle-crunch', 20),
+                timed('side-plank', 30, { eachSide: true }),
+                timed('plank', 45)
+            ),
+        ],
+    },
+    {
+        id: 'builtin:kettlebell-full-body',
+        title: 'Kettlebell full body',
+        description: 'Squat, swing, press and row with one kettlebell, then a carry to finish.',
+        group: 'kettlebell',
+        repeats: 1,
+        blocks: [
+            heading('Warmup'),
+            once(reps('kettlebell-halo', 8)),
+            heading('Main'),
+            sets(3, 60, reps('goblet-squat', 10)),
+            sets(3, 60, reps('kettlebell-swing', 15)),
+            sets(3, 60, reps('kettlebell-press', 8, { eachSide: true })),
+            sets(3, 60, reps('chainsaw-row', 10, { eachSide: true })),
+            sets(2, 60, timed('farmers-carry', 45)),
+        ],
+    },
+    {
+        id: 'builtin:kettlebell-swing-ladder',
+        title: 'Kettlebell swing ladder',
+        description:
+            'Swings up a ladder and back down: 10, 15, 20, 25, 20, 15, 10. A quick finisher.',
+        group: 'kettlebell',
+        repeats: 1,
+        blocks: [sets(7, 45, repsEachSet('kettlebell-swing', [10, 15, 20, 25, 20, 15, 10]))],
+    },
+    {
+        id: 'builtin:dumbbell-full-body',
+        title: 'Dumbbell full body',
+        description: 'Every main muscle with a pair of dumbbells and a bench, finishing on arms.',
+        group: 'dumbbells',
+        repeats: 1,
+        blocks: [
+            sets(3, 90, reps('goblet-squat', 12)),
+            sets(3, 90, reps('dumbbell-bench-press', 10)),
+            sets(3, 60, reps('dumbbell-row', 10, { eachSide: true })),
+            sets(3, 60, reps('single-leg-romanian-deadlift', 8, { eachSide: true })),
+            sets(3, 60, reps('dumbbell-shoulder-press', 10)),
+            superset(3, 60, reps('dumbbell-curl', 10), reps('skull-crusher', 12)),
+        ],
+    },
+    {
+        id: 'builtin:gym-push',
+        title: 'Gym push',
+        description: 'Chest, shoulders and triceps: two heavy lifts, then lighter work.',
+        group: 'gym',
+        repeats: 1,
+        blocks: [
+            heading('Main lifts'),
+            sets(4, 120, reps('bench-press', 8)),
+            sets(3, 120, reps('overhead-press', 8)),
+            heading('Accessories'),
+            sets(3, 90, reps('incline-dumbbell-press', 10)),
+            superset(3, 60, reps('lateral-raise', 12), reps('triceps-pushdown', 12)),
+        ],
+    },
+    {
+        id: 'builtin:gym-pull',
+        title: 'Gym pull',
+        description: 'Back and biceps: a heavy deadlift, then pulldowns, rows and curls.',
+        group: 'gym',
+        repeats: 1,
+        blocks: [
+            heading('Main lifts'),
+            sets(3, 150, reps('deadlift', 5)),
+            sets(3, 90, reps('lat-pulldown', 10)),
+            heading('Accessories'),
+            sets(3, 90, reps('seated-cable-row', 10)),
+            superset(3, 60, reps('face-pull', 15), reps('dumbbell-curl', 10)),
+        ],
+    },
+    {
+        id: 'builtin:gym-legs',
+        title: 'Gym legs',
+        description: 'Squats getting heavier each set (12, 10, 8), then hamstrings and calves.',
+        group: 'gym',
+        repeats: 1,
+        blocks: [
+            heading('Main lifts'),
+            sets(3, 150, repsEachSet('back-squat', [12, 10, 8])),
+            sets(3, 120, reps('romanian-deadlift', 10)),
+            heading('Accessories'),
+            sets(3, 90, reps('leg-press', 12)),
+            superset(3, 60, reps('leg-curl', 12), reps('seated-calf-raise', 15)),
+        ],
+    },
+];
+
+/**
+ * Everything a built-in workout needs, every need of its exercises once, so it can be
+ * checked against what someone has with `canDoWith()`. A choice met by a piece it needs
+ * anyway is left out (a goblet squat's dumbbell or kettlebell, beside a kettlebell swing),
+ * which changes nothing about who can do it, and reads more simply.
+ */
+export function builtInWorkoutEquipment(workout: Pick<BuiltInWorkout, 'blocks'>): EquipmentNeed[] {
+    const needs: EquipmentNeed[] = [];
+    const seen = new Set<string>();
+    for (const step of allSteps(workout)) {
+        const found = BUILT_IN_EXERCISES.find((e) => e.id === step.exerciseId);
+        for (const need of found?.equipment ?? []) {
+            const key = JSON.stringify(need);
+            if (need !== 'none' && !seen.has(key)) {
+                seen.add(key);
+                needs.push(need);
+            }
+        }
+    }
+    const pieces = needs.filter((need) => typeof need === 'string');
+    const left = needs.filter(
+        (need) => typeof need === 'string' || !need.some((piece) => pieces.includes(piece))
+    );
+    return left.length ? left : ['none'];
+}
+
+/** A built-in workout as a new one for the library: its own copy, to change as you like. */
+export function copyOfBuiltIn(workout: BuiltInWorkout): WorkoutFields {
+    const { title, blocks, repeats, timeLimitSeconds } = workout;
+    return {
+        title,
+        blocks: structuredClone(blocks),
+        repeats,
+        ...(timeLimitSeconds === undefined ? {} : { timeLimitSeconds }),
+    };
+}

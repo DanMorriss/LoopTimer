@@ -196,7 +196,7 @@ The run in progress in a tab moves too (`activeTimerId`, `activeTimerStartedAt` 
 }
 ```
 
-`theme` is `dark`, `light` or `system`. `weightUnit` is `kg` or `lb`. `bodyFigure` is `male` or `female`. `myEquipment` is the equipment you have, picked on the Exercises page, in the order it's offered there (unknown pieces are dropped); `onlyMyEquipment` is its Only what I have switch. `eachSideFirst` is `left` (the default) or `right`, and `switchSidesSeconds` 0 (Off) to 30, 5 by default (BLD-10); anything else is the default.
+`theme` is `dark`, `light` or `system`. `weightUnit` is `kg` or `lb`. `bodyFigure` is `male` or `female`. `myEquipment` is the equipment you have, picked on the Exercises page or the ready-made workouts, in the order it's offered there (unknown pieces are dropped); `onlyMyEquipment` is its Only what I have switch, which filters both. `eachSideFirst` is `left` (the default) or `right`, and `switchSidesSeconds` 0 (Off) to 30, 5 by default (BLD-10); anything else is the default.
 
 ### `sb-cpgacyzlfyskifzhkotu-auth-token`: who's signed in
 
