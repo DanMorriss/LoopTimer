@@ -21,11 +21,22 @@ export type Point = readonly [x: number, y: number];
  * or by where its end (the hand or the ankle) should be, with the elbow or knee bent
  * clockwise or anticlockwise as drawn. An end that stays put, such as a foot on the floor,
  * is best given by where it is, so it doesn't slide as the figure moves. `'bar'` puts the
- * hand on the barbell.
+ * hand on the barbell on the back.
+ *
+ * Or by a point on the body it should touch, which moves with it: `touch` is how far in
+ * front of the shoulders (or to your right, from the front) and how far up the torso from
+ * them, so negative is towards the hips. A hand on the chest, say, or behind the head.
+ *
+ * By angles, a part can be drawn shorter by `scale`, as a part pointing towards you looks:
+ * a thigh seen from the front when sitting, say.
  */
 export type Limb =
-    | { readonly angles: readonly [upper: number, lower: number] }
-    | { readonly reach: Point | 'bar'; readonly bend: 'cw' | 'ccw' };
+    | {
+          readonly angles: readonly [upper: number, lower: number];
+          readonly scale?: readonly [upper: number, lower: number];
+      }
+    | { readonly reach: Point | 'bar'; readonly bend: 'cw' | 'ccw' }
+    | { readonly touch: Point; readonly bend: 'cw' | 'ccw' };
 
 /**
  * One position of the figure. From the side, near is the side facing you and far the
@@ -42,10 +53,39 @@ export interface Pose {
     readonly legs: readonly [near: Limb, far: Limb];
     /** The angle of each foot, from the ankle to the toes; flat on the floor if not given. */
     readonly feet?: readonly [near: number, far: number];
+    /** How far the shoulders are drawn up, as in a shrug: the arms rise with them. */
+    readonly shrug?: number;
 }
 
-/** Equipment drawn with the figure. */
-export type Prop = 'barbell-on-back' | 'dumbbells';
+/**
+ * Equipment the figure carries, drawn where its hands or feet are: a barbell on the back or
+ * in the hands, a dumbbell in each hand or one in the near hand, one kettlebell hanging from
+ * the near hand, an ab wheel under the hands, a band between them, a machine's roller on the
+ * front of the shins or behind the ankles, or a leg press's plate under the feet.
+ */
+export type Prop =
+    | 'barbell-on-back'
+    | 'barbell'
+    | 'dumbbells'
+    | 'dumbbell'
+    | 'kettlebell'
+    | 'ab-wheel'
+    | 'band'
+    | 'roller-on-shins'
+    | 'roller-behind-ankles'
+    | 'foot-plate';
+
+/**
+ * Equipment that stays put, behind the figure: a bench's or seat's cushion (along its middle),
+ * a frame's post or rail, a bar end on (to hang from or hold), a step or box (its opposite
+ * corners), or a cable from a pulley to the nearer hand.
+ */
+export type Kit =
+    | { readonly kind: 'pad'; readonly from: Point; readonly to: Point }
+    | { readonly kind: 'frame'; readonly from: Point; readonly to: Point }
+    | { readonly kind: 'bar'; readonly at: Point }
+    | { readonly kind: 'block'; readonly from: Point; readonly to: Point }
+    | { readonly kind: 'cable'; readonly from: Point };
 
 export interface MotionFrame {
     /** What the position is called, under its still when motion is reduced, e.g. "Bottom". */
@@ -60,6 +100,7 @@ export interface MotionFrame {
 export interface ExerciseMotion {
     readonly view: MotionView;
     readonly props?: readonly Prop[];
+    readonly kit?: readonly Kit[];
     readonly frames: readonly MotionFrame[];
 }
 
@@ -99,9 +140,11 @@ export interface PlacedPart {
     readonly angle: number;
     /** Flipped across its length: the near limbs from the front, and the head from the side. */
     readonly mirror: boolean;
+    /** How much of its length shows, if less than all (see `Limb`). */
+    readonly stretch?: number;
 }
 
-/** Kit drawn with the figure: a circle (a plate or dumbbell end on), or a bar. */
+/** Kit drawn with the figure: a circle (a plate or dumbbell end on), a bar, or a shape. */
 export type PlacedProp =
     | { readonly type: 'circle'; readonly at: Point; readonly r: number; readonly tone: PropTone }
     | {
@@ -110,15 +153,20 @@ export type PlacedProp =
           readonly to: Point;
           readonly width: number;
           readonly tone: PropTone;
-      };
+      }
+    | { readonly type: 'shape'; readonly points: readonly Point[]; readonly tone: PropTone };
 
-/** A plate or a dumbbell, or the bar (the end of a bar seen from the side). */
-export type PropTone = 'plate' | 'bar';
+/** Something solid (a plate, a bell, a cushion), metal (a bar), or a cable or band. */
+export type PropTone = 'plate' | 'bar' | 'cable';
 
 export type FigureItem = PlacedPart | PlacedProp;
 
-/** What's drawn in drawing order: behind the figure (its far side), its body, then in front. */
+/**
+ * What's drawn in drawing order: the kit that stays put, behind the figure (its far side),
+ * its body, then in front.
+ */
 export interface FigureLayers {
+    readonly kit: readonly FigureItem[];
     readonly far: readonly FigureItem[];
     readonly body: readonly FigureItem[];
     readonly near: readonly FigureItem[];
@@ -155,6 +203,7 @@ const angleOf = (from: Point, to: Point) =>
 const add = (a: Point, b: Point): Point => [a[0] + b[0], a[1] + b[1]];
 const sub = (a: Point, b: Point): Point => [a[0] - b[0], a[1] - b[1]];
 const scale = (a: Point, by: number): Point => [a[0] * by, a[1] * by];
+const distance = (a: Point, b: Point) => Math.hypot(a[0] - b[0], a[1] - b[1]);
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 const lerpPoint = (a: Point, b: Point, t: number): Point => [
     lerp(a[0], b[0], t),
@@ -168,6 +217,7 @@ const lerpPoint = (a: Point, b: Point, t: number): Point => [
 export function placePoint(part: PlacedPart, [x, y]: Point): Point {
     const radians = (-part.angle * Math.PI) / 180;
     const across = part.mirror ? -x : x;
+    y *= part.stretch ?? 1;
     return [
         part.at[0] + across * Math.cos(radians) - y * Math.sin(radians),
         part.at[1] + across * Math.sin(radians) + y * Math.cos(radians),
@@ -180,14 +230,15 @@ export function placePoint(part: PlacedPart, [x, y]: Point): Point {
  */
 export function solveLimb(
     root: Point,
-    limb: Limb,
+    limb: Exclude<Limb, { touch: Point }>,
     upper: number,
     lower: number,
     bar: Point
 ): readonly [mid: Point, end: Point] {
     if ('angles' in limb) {
-        const mid = add(root, scale(dir(limb.angles[0]), upper));
-        return [mid, add(mid, scale(dir(limb.angles[1]), lower))];
+        const [upperScale, lowerScale] = limb.scale ?? [1, 1];
+        const mid = add(root, scale(dir(limb.angles[0]), upper * upperScale));
+        return [mid, add(mid, scale(dir(limb.angles[1]), lower * lowerScale))];
     }
     const target = limb.reach === 'bar' ? bar : limb.reach;
     const toTarget = sub(target, root);
@@ -210,22 +261,80 @@ export function drawFigure(pose: Pose, motion: ExerciseMotion): FigureLayers {
     const view = VIEWS[motion.view];
     const art = FIGURE_ART[motion.view];
     const side = motion.view === 'side';
-    const props = motion.props ?? [];
+    const props = new Set(motion.props ?? []);
     const up = dir(pose.torso);
     // Square to the torso: forwards from the side, to your right from the front
     const across: Point = [-up[1], up[0]];
     const shoulders = add(pose.hips, scale(up, BODY.torso));
     const sideOf = (point: Point, by: number): Point => add(point, scale(across, by));
     const bar = side ? add(sideOf(shoulders, -11), scale(up, -2)) : add(shoulders, scale(up, -2));
-    const place = (name: PartName, at: Point, angle: number, mirror = false): PlacedPart => ({
+    const place = (
+        name: PartName,
+        at: Point,
+        angle: number,
+        mirror = false,
+        stretch = 1
+    ): PlacedPart => ({
         type: 'part',
         name,
         art: art[name],
         at,
         angle,
         mirror,
+        ...(stretch === 1 ? {} : { stretch }),
     });
+    const circle = (at: Point, r: number, tone: PropTone = 'plate'): PlacedProp => ({
+        type: 'circle',
+        at,
+        r,
+        tone,
+    });
+    const line = (from: Point, to: Point, width: number, tone: PropTone = 'bar'): PlacedProp => ({
+        type: 'line',
+        from,
+        to,
+        width,
+        tone,
+    });
+    /** A cushion or plate `thick` deep along a line, square-ended. */
+    const slab = (from: Point, to: Point, thick: number): PlacedProp => {
+        const along = sub(to, from);
+        const length = Math.hypot(along[0], along[1]) || 1;
+        const out = scale([-along[1] / length, along[0] / length], thick / 2);
+        return {
+            type: 'shape',
+            points: [add(from, out), add(to, out), sub(to, out), sub(from, out)],
+            tone: 'plate',
+        };
+    };
 
+    const solve = (limbs: 'arms' | 'legs', index: 0 | 1) => {
+        const legs = limbs === 'legs';
+        const root = legs
+            ? sideOf(pose.hips, view.hipSpread * (index === 0 ? -1 : 1))
+            : add(
+                  sideOf(shoulders, view.shoulderSpread * (index === 0 ? -1 : 1)),
+                  scale(up, (pose.shrug ?? 0) - 4)
+              );
+        const given = pose[limbs][index];
+        const limb =
+            'touch' in given
+                ? {
+                      reach: add(sideOf(shoulders, given.touch[0]), scale(up, given.touch[1])),
+                      bend: given.bend,
+                  }
+                : given;
+        const [mid, end] = legs
+            ? solveLimb(root, limb, BODY.thigh, BODY.shin, bar)
+            : solveLimb(root, limb, BODY.upperArm, BODY.forearm, bar);
+        const [upperScale, lowerScale] = ('angles' in limb && limb.scale) || [1, 1];
+        return { root, mid, end, upperScale, lowerScale };
+    };
+    const arms = [solve('arms', 0), solve('arms', 1)] as const;
+    const legs = [solve('legs', 0), solve('legs', 1)] as const;
+    const hands = [arms[0].end, arms[1].end] as const;
+
+    const kit: FigureItem[] = [];
     const far: FigureItem[] = [];
     const body: FigureItem[] = [];
     const near: FigureItem[] = [];
@@ -235,39 +344,89 @@ export function drawFigure(pose: Pose, motion: ExerciseMotion): FigureLayers {
     // From the front the near limbs (on your left) are the far ones flipped, outer side out
     const flip = (index: 0 | 1) => !side && index === 0;
 
+    for (const piece of motion.kit ?? []) {
+        if (piece.kind === 'pad') {
+            kit.push(slab(piece.from, piece.to, 7));
+        } else if (piece.kind === 'frame') {
+            kit.push(line(piece.from, piece.to, 3));
+        } else if (piece.kind === 'bar') {
+            kit.push(circle(piece.at, 2.5, 'bar'));
+        } else if (piece.kind === 'block') {
+            const [[x1, y1], [x2, y2]] = [piece.from, piece.to];
+            kit.push({
+                type: 'shape',
+                points: [
+                    [x1, y1],
+                    [x2, y1],
+                    [x2, y2],
+                    [x1, y2],
+                ],
+                tone: 'plate',
+            });
+        } else {
+            const hand = distance(piece.from, hands[0]) <= distance(piece.from, hands[1]) ? 0 : 1;
+            kit.push(line(piece.from, hands[hand], 0.8, 'cable'), circle(piece.from, 3.5));
+        }
+    }
+
     // The lower part of each limb first, so the knee or elbow sits over it
     const drawLeg = (index: 0 | 1, into: FigureItem[]) => {
-        const hip = sideOf(pose.hips, view.hipSpread * (index === 0 ? -1 : 1));
-        const [knee, ankle] = solveLimb(hip, pose.legs[index], BODY.thigh, BODY.shin, bar);
-        into.push(
-            place('shin', knee, angleOf(knee, ankle), flip(index)),
-            place('foot', ankle, pose.feet?.[index] ?? view.footAngle, flip(index)),
-            place('thigh', hip, angleOf(hip, knee), flip(index))
-        );
+        const { root, mid, end, upperScale, lowerScale } = legs[index];
+        const footAngle = pose.feet?.[index] ?? view.footAngle;
+        const foot = place('foot', end, footAngle, flip(index));
+        const shinAngle = angleOf(mid, end);
+        into.push(place('shin', mid, shinAngle, flip(index), lowerScale), foot);
+        if (props.has('foot-plate') && index === 0) {
+            // Under the sole, the length of the foot
+            into.push(slab(placePoint(foot, [-6, -8]), placePoint(foot, [-6, 22]), 4));
+        }
+        if (props.has('roller-on-shins') || props.has('roller-behind-ankles')) {
+            const front = props.has('roller-on-shins') ? 1 : -1;
+            const shin = place('shin', mid, shinAngle, flip(index), lowerScale);
+            into.push(circle(placePoint(shin, [front * 9, BODY.shin - 8]), 5));
+        }
+        into.push(place('thigh', root, angleOf(root, mid), flip(index), upperScale));
     };
     const drawArm = (index: 0 | 1, into: FigureItem[]) => {
-        const root = add(
-            sideOf(shoulders, view.shoulderSpread * (index === 0 ? -1 : 1)),
-            scale(up, -4)
-        );
-        const [elbow, hand] = solveLimb(root, pose.arms[index], BODY.upperArm, BODY.forearm, bar);
-        if (props.includes('dumbbells')) {
+        const { root, mid, end, upperScale, lowerScale } = arms[index];
+        if (props.has('dumbbells') || (props.has('dumbbell') && index === 0)) {
             // Seen end on, from the side or the front, in the hand
-            into.push({ type: 'circle', at: hand, r: 7.5, tone: 'plate' });
+            into.push(circle(end, 7.5));
+        }
+        if (props.has('kettlebell') && index === 0) {
+            // Hanging from the hand, swung out a little along the forearm
+            const along = dir(angleOf(mid, end));
+            const hang = add(scale(along, 0.6), [0, 1]);
+            const length = Math.hypot(hang[0], hang[1]);
+            into.push(circle(add(end, scale(hang, 10 / length)), 8), circle(end, 3.5, 'bar'));
+        }
+        if (props.has('ab-wheel') && index === 0) {
+            into.push(circle(end, 10), circle(end, 2.5, 'bar'));
         }
         into.push(
-            place('forearm', elbow, angleOf(elbow, hand), flip(index)),
-            place('upperArm', root, angleOf(root, elbow), flip(index))
+            place('forearm', mid, angleOf(mid, end), flip(index), lowerScale),
+            place('upperArm', root, angleOf(root, mid), flip(index), upperScale)
         );
     };
-    const barbell = props.includes('barbell-on-back');
+    /** A barbell across the figure, from the front: its bar and a plate at each end. */
+    const barAcross = (middle: Point, square: Point, into: FigureItem[]) => {
+        const at = (by: number) => add(middle, scale(square, by));
+        const plateUp: Point = [-square[1] * 17, square[0] * 17];
+        into.push(
+            line(at(-62), at(62), 3.5),
+            line(sub(at(-52), plateUp), add(at(-52), plateUp), 7, 'plate'),
+            line(sub(at(52), plateUp), add(at(52), plateUp), 7, 'plate')
+        );
+    };
+    const onBack = props.has('barbell-on-back');
+    const inHands = props.has('barbell');
 
     drawLeg(1, legLayer[1]);
     drawArm(1, armLayer[1]);
     drawLeg(0, legLayer[0]);
-    if (barbell && side) {
+    if (side && (onBack || inHands)) {
         // Behind the body, as in front it would hide the head; the bar's end goes in front
-        body.push({ type: 'circle', at: bar, r: 17, tone: 'plate' });
+        body.push(circle(onBack ? bar : hands[0], 17));
     }
     body.push(
         // Hanging from the shoulders, so the torso's drawing is the right way up
@@ -275,32 +434,32 @@ export function drawFigure(pose: Pose, motion: ExerciseMotion): FigureLayers {
         // Its drawing faces +x; from the side, flipped to face forwards
         place('head', add(shoulders, scale(up, -1)), pose.head ?? pose.torso, side)
     );
-    if (barbell && !side) {
-        // Across the shoulders, a plate at each end
-        const plate = (by: number): PlacedProp => ({
-            type: 'line',
-            from: add(sideOf(bar, by), scale(up, 17)),
-            to: add(sideOf(bar, by), scale(up, -17)),
-            width: 7,
-            tone: 'plate',
-        });
-        body.push(
-            { type: 'line', from: sideOf(bar, -62), to: sideOf(bar, 62), width: 3.5, tone: 'bar' },
-            plate(-52),
-            plate(52)
-        );
+    if (onBack && !side) {
+        barAcross(bar, across, body);
+    }
+    if (inHands && !side) {
+        // Level, between the hands, in front of the body and under the fingers
+        barAcross(lerpPoint(hands[0], hands[1], 0.5), [1, 0], near);
+    }
+    if (props.has('band') && !side) {
+        near.push(line(hands[0], hands[1], 2, 'cable'));
     }
     drawArm(0, armLayer[0]);
-    if (barbell && side) {
-        near.push({ type: 'circle', at: bar, r: 3, tone: 'bar' });
+    if (side && (onBack || inHands)) {
+        near.push(circle(onBack ? bar : hands[0], 3, 'bar'));
     }
-    return { far, body, near };
+    return { kit, far, body, near };
 }
 
 /** The box around an item as drawn: [left, top, right, bottom]. */
 export function itemBounds(item: FigureItem): readonly [number, number, number, number] {
     if (item.type === 'circle') {
         return [item.at[0] - item.r, item.at[1] - item.r, item.at[0] + item.r, item.at[1] + item.r];
+    }
+    if (item.type === 'shape') {
+        const xs = item.points.map(([x]) => x);
+        const ys = item.points.map(([, y]) => y);
+        return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
     }
     if (item.type === 'line') {
         const half = item.width / 2;
@@ -327,7 +486,21 @@ export function itemBounds(item: FigureItem): readonly [number, number, number, 
 
 function lerpLimb(a: Limb, b: Limb, t: number): Limb {
     if ('angles' in a && 'angles' in b) {
-        return { angles: [lerp(a.angles[0], b.angles[0], t), lerp(a.angles[1], b.angles[1], t)] };
+        const angles = [
+            lerp(a.angles[0], b.angles[0], t),
+            lerp(a.angles[1], b.angles[1], t),
+        ] as const;
+        if (!a.scale && !b.scale) {
+            return { angles };
+        }
+        const [scaleA, scaleB] = [a.scale ?? [1, 1], b.scale ?? [1, 1]];
+        return {
+            angles,
+            scale: [lerp(scaleA[0], scaleB[0], t), lerp(scaleA[1], scaleB[1], t)],
+        };
+    }
+    if ('touch' in a && 'touch' in b) {
+        return { touch: lerpPoint(a.touch, b.touch, t), bend: a.bend };
     }
     if ('reach' in a && 'reach' in b) {
         if (a.reach === 'bar' || b.reach === 'bar') {
@@ -351,6 +524,7 @@ export function lerpPose(a: Pose, b: Pose, t: number, view: MotionView): Pose {
         arms: [lerpLimb(a.arms[0], b.arms[0], t), lerpLimb(a.arms[1], b.arms[1], t)],
         legs: [lerpLimb(a.legs[0], b.legs[0], t), lerpLimb(a.legs[1], b.legs[1], t)],
         feet: [lerp(feetA[0], feetB[0], t), lerp(feetA[1], feetB[1], t)],
+        ...(a.shrug || b.shrug ? { shrug: lerp(a.shrug ?? 0, b.shrug ?? 0, t) } : {}),
     };
 }
 
@@ -391,7 +565,7 @@ export function motionBox(motion: ExerciseMotion): Box {
     ]);
     for (const pose of poses) {
         const layers = drawFigure(pose, motion);
-        for (const item of [...layers.far, ...layers.body, ...layers.near]) {
+        for (const item of [...layers.kit, ...layers.far, ...layers.body, ...layers.near]) {
             const [left, top, right, bottom] = itemBounds(item);
             minX = Math.min(minX, left);
             minY = Math.min(minY, top);

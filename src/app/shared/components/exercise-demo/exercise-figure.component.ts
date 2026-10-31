@@ -6,6 +6,7 @@ import {
     motionBox,
     muscleTone,
     PlacedPart,
+    Point,
     Pose,
 } from '../../../models/exercise-motion';
 
@@ -35,6 +36,7 @@ export class ExerciseFigureComponent {
     protected readonly layers = computed(() => {
         const layers = drawFigure(this.pose(), this.motion());
         return [
+            { name: 'kit', items: layers.kit },
             { name: 'far', items: layers.far },
             { name: 'body', items: layers.body },
             { name: 'near', items: layers.near },
@@ -45,9 +47,16 @@ export class ExerciseFigureComponent {
         return muscleTone(muscle, this.main(), this.supporting());
     }
 
+    protected pointsOf(points: readonly Point[]): string {
+        return points.map((point) => point.join(',')).join(' ');
+    }
+
     /** Moves a part's drawing into place: see `placePoint()`. */
     protected transformOf(part: PlacedPart): string {
         const turn = `translate(${part.at[0]} ${part.at[1]}) rotate(${-part.angle})`;
-        return part.mirror ? `${turn} scale(-1 1)` : turn;
+        const stretch = part.stretch ?? 1;
+        return part.mirror || stretch !== 1
+            ? `${turn} scale(${part.mirror ? -1 : 1} ${stretch})`
+            : turn;
     }
 }

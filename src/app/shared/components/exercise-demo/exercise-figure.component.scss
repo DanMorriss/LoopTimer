@@ -51,10 +51,12 @@
     }
 }
 
+// Kit: plates, bells and cushions solid, bars metal
 .figure__prop {
     fill: var(--muscle-other);
     stroke: var(--muscle-outline);
     stroke-width: 1;
+    stroke-linejoin: round;
     vector-effect: non-scaling-stroke;
 
     &--bar {
@@ -68,5 +70,9 @@
 
     &--plate {
         stroke: var(--muscle-other);
+    }
+
+    &--cable {
+        stroke: var(--text-muted);
     }
 }

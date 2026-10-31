@@ -1,6 +1,7 @@
 @if (motion(); as motion) {
-    @if (reduced()) {
-        <!-- Its key positions, still. Hidden from screen readers with the figures: the steps say it -->
+    @if (reduced() || motion.frames.length === 1) {
+        <!-- Its key positions, still, or the one position of a hold. Hidden from screen readers
+             with the figures: the steps say it -->
         <ul class="demo__stills" aria-hidden="true">
             @for (frame of motion.frames; track $index) {
                 <li class="demo__still">
