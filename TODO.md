@@ -17,7 +17,7 @@ Accounts and sync are built and working (SYN-3, SYN-4, SYN-7 with Google, SYN-8,
 A prototype is built: an animated figure for back squat, push-up and lateral raise, at the top of How to do it (see The animated demo in `docs/features/exercises.md`). Decide from it whether the drawn figure is good enough, or whether licensed videos or commissioned animations are worth paying for instead. If it's kept:
 
 - [ ] **A posing tool:** a page only in development builds, with sliders for each joint and the figure drawn live, that prints the pose to paste into `built-in-exercise-motion.ts`. Each pose is written by hand as numbers for now, which is slow (the push-up's were worked out with a calculator).
-- [ ] **Motions for the other 94 built-in exercises**, in batches, as their words were. Some need more of the rig: a bench, a pull-up bar, a cable or a kettlebell; lying on the back; a view from above or behind (e.g. a rear delt fly); and moves that turn (Turkish get-up, kettlebell halo, around the world), which a flat figure draws poorly.
+- [ ] **Motions for the other 94 built-in exercises**, in batches, as their words were. Some need more of the rig: a bench, a pull-up bar, a cable or a kettlebell; lying on the back; a view from behind (e.g. a rear delt fly, which would need the figure drawn from the back too: its glutes, hamstrings and lower back only show from the side now); and moves that turn (Turkish get-up, kettlebell halo, around the world), which a flat figure draws poorly.
 - [ ] **Check it on an iPhone:** that it runs smoothly, and stops when paused or scrolled away.
 
 ### Alarms (any time)

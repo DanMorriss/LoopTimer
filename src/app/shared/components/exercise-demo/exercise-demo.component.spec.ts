@@ -11,10 +11,10 @@ describe('ExerciseDemoComponent', () => {
     const builtIn = (id: string) => BUILT_IN_EXERCISES.find((exercise) => exercise.id === id)!;
     const el = (): HTMLElement => fixture.nativeElement;
     const toggle = () => el().querySelector<HTMLButtonElement>('.demo__toggle');
-    /** Where the figure's lines are drawn now, to tell whether it moved. */
+    /** Where the figure's parts are placed now, to tell whether it moved. */
     const drawing = () =>
-        Array.from(el().querySelectorAll('line'))
-            .map((line) => `${line.getAttribute('x1')},${line.getAttribute('y1')}`)
+        Array.from(el().querySelectorAll('g[transform]'))
+            .map((part) => part.getAttribute('transform'))
             .join(' ');
     const frames = (count: number) =>
         new Promise<void>((resolve) => {
@@ -50,8 +50,9 @@ describe('ExerciseDemoComponent', () => {
         await create(builtIn('builtin:back-squat'));
 
         expect(el().querySelector('app-exercise-figure')?.getAttribute('aria-hidden')).toBe('true');
-        // A thigh each side, for the quads and glutes
-        expect(el().querySelectorAll('.figure__fill--worked')).toHaveLength(2);
+        // Its quads and glutes as main, and its hamstrings, adductors and lower back as supporting
+        expect(el().querySelectorAll('.figure__muscle--main').length).toBeGreaterThan(0);
+        expect(el().querySelectorAll('.figure__muscle--supporting').length).toBeGreaterThan(0);
         expect(toggle()?.textContent?.trim()).toBe('Pause');
         expect(toggle()?.getAttribute('aria-label')).toBe('Pause the demo');
 
