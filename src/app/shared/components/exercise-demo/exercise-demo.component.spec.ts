@@ -37,9 +37,16 @@ describe('ExerciseDemoComponent', () => {
         localStorage.clear();
     });
 
-    it('shows nothing for an exercise without a demo', async () => {
+    it('shows nothing for your own exercise, which has no demo', async () => {
         fakeReducedMotion(false);
-        await create(builtIn('builtin:deadlift'));
+        await create({
+            ...builtIn('builtin:deadlift'),
+            id: 'my-deadlift',
+            description: '',
+            steps: [],
+            tips: [],
+            updatedAt: 0,
+        });
 
         expect(el().querySelector('app-exercise-figure')).toBeNull();
         expect(toggle()).toBeNull();
@@ -81,6 +88,17 @@ describe('ExerciseDemoComponent', () => {
         expect(labels).toEqual(['Top', 'Bottom']);
         expect(el().querySelectorAll('app-exercise-figure')).toHaveLength(2);
         expect(el().querySelector('.demo__stills')?.getAttribute('aria-hidden')).toBe('true');
+        expect(toggle()).toBeNull();
+    });
+
+    it('shows a hold, such as a plank, still, with nothing to pause', async () => {
+        fakeReducedMotion(false);
+        await create(builtIn('builtin:plank'));
+
+        const labels = Array.from(el().querySelectorAll('.demo__label')).map((label) =>
+            label.textContent?.trim()
+        );
+        expect(labels).toEqual(['Hold']);
         expect(toggle()).toBeNull();
     });
 

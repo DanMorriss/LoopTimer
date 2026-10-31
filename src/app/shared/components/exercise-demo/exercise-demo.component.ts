@@ -18,7 +18,8 @@ import { ExerciseFigureComponent } from './exercise-figure.component';
 
 /**
  * An exercise's animated demo (EXR-13): a figure doing the exercise, in a loop, with a button
- * to pause it. With reduced motion asked for, its key positions stand side by side instead.
+ * to pause it. With reduced motion asked for, its key positions stand side by side instead;
+ * a hold, such as a plank, with one position, is always still.
  * Nothing for an exercise without a motion (your own, and built-in ones not done yet).
  */
 @Component({
@@ -48,7 +49,11 @@ export class ExerciseDemoComponent {
         void this.exercises.loadMotion();
 
         effect((onCleanup) => {
-            if (!this.motion() || !this.playing() || this.reduced() || !this.onScreen()) {
+            const motion = this.motion();
+            if (!motion || motion.frames.length < 2) {
+                return;
+            }
+            if (!this.playing() || this.reduced() || !this.onScreen()) {
                 return;
             }
             let last: number | null = null;

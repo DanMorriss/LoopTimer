@@ -110,7 +110,16 @@ describe('muscleTone', () => {
 });
 
 describe('drawFigure', () => {
-    const items = (layers: FigureLayers) => [...layers.far, ...layers.body, ...layers.near];
+    const items = (layers: FigureLayers) => [
+        ...layers.kit,
+        ...layers.far,
+        ...layers.body,
+        ...layers.near,
+    ];
+    const hands = (layers: FigureLayers) =>
+        parts(layers)
+            .filter((part) => part.name === 'forearm')
+            .map((forearm) => placePoint(forearm, [0, BODY.forearm]));
     const parts = (layers: FigureLayers) =>
         items(layers).filter((item): item is PlacedPart => item.type === 'part');
 
@@ -176,6 +185,65 @@ describe('drawFigure', () => {
         expect(props({ ...squat, props: ['dumbbells'] })).toBe(2);
         // The plate behind and the bar's end in front
         expect(props({ ...squat, props: ['barbell-on-back'] })).toBe(2);
+        expect(props({ ...squat, props: ['barbell'] })).toBe(2);
+        // The bar and two plates, from the front
+        expect(props({ ...squat, view: 'front', props: ['barbell'] })).toBe(3);
+        // One, in the near hand: the bell and its handle
+        expect(props({ ...squat, props: ['kettlebell'] })).toBe(2);
+        expect(props({ ...squat, props: ['dumbbell'] })).toBe(1);
+    });
+
+    it('draws kit that stays put behind the figure, a cable running to the nearer hand', () => {
+        const layers = drawFigure(standing, {
+            ...squat,
+            view: 'front',
+            kit: [
+                { kind: 'pad', from: [-20, -50], to: [20, -50] },
+                { kind: 'cable', from: [-80, -200] },
+            ],
+        });
+        const near = hands(layers).find((hand) => hand[0] < 0)!;
+        const cable = layers.kit.find((item) => item.type === 'line');
+
+        expect(layers.kit.map((item) => item.type)).toEqual(['shape', 'line', 'circle']);
+        expect(cable?.type === 'line' && cable.to).toEqual(near);
+        expect(near[0]).toBeLessThan(0);
+    });
+
+    it('keeps a hand that touches the body on it as the body moves', () => {
+        const touching: Pose = {
+            ...standing,
+            arms: [
+                { touch: [12, -2], bend: 'cw' },
+                { touch: [12, -2], bend: 'cw' },
+            ],
+        };
+        const upright = hands(drawFigure(touching, squat))[0];
+        const leaning = hands(drawFigure({ ...touching, torso: 90 }, squat))[0];
+
+        // 12 in front of the shoulders and 2 down: upright, in front; lying forwards, below
+        expect(upright[0]).toBeCloseTo(12);
+        expect(upright[1]).toBeCloseTo(-92 - BODY.torso + 2);
+        expect(leaning[0]).toBeCloseTo(BODY.torso - 2);
+        expect(leaning[1]).toBeCloseTo(-92 + 12);
+    });
+
+    it('draws a part shorter by its scale, and raises the arms with a shrug', () => {
+        const short = drawFigure(
+            { ...standing, arms: [{ angles: [0, 0], scale: [0.5, 0.5] }, { angles: [0, 0] }] },
+            squat
+        );
+        // The far arm is drawn first, behind
+        const [far, near] = hands(short);
+        const [shruggedFar] = hands(drawFigure({ ...standing, shrug: 5 }, squat));
+
+        expect(far[1] - near[1]).toBeCloseTo(30);
+        expect(
+            parts(short)
+                .filter((part) => part.name === 'upperArm')
+                .map((part) => part.stretch)
+        ).toEqual([undefined, 0.5]);
+        expect(shruggedFar[1]).toBeCloseTo(far[1] - 5);
     });
 });
 
@@ -210,14 +278,28 @@ describe('motionBox', () => {
 describe('BUILT_IN_EXERCISE_MOTION', () => {
     const motions = Object.entries(BUILT_IN_EXERCISE_MOTION) as [string, ExerciseMotion][];
     const kindOf = (limb: Limb) =>
-        'angles' in limb ? 'angles' : limb.reach === 'bar' ? 'bar' : `reach ${limb.bend}`;
+        'angles' in limb
+            ? 'angles'
+            : 'touch' in limb
+              ? `touch ${limb.bend}`
+              : limb.reach === 'bar'
+                ? 'bar'
+                : `reach ${limb.bend}`;
+
+    it('has a demo for every built-in exercise', () => {
+        const missing = BUILT_IN_EXERCISES.filter(
+            (exercise) => !(exercise.id in BUILT_IN_EXERCISE_MOTION)
+        );
+
+        expect(missing.map((exercise) => exercise.id)).toEqual([]);
+    });
 
     it.each(motions)('%s is a built-in exercise', (id) => {
         expect(BUILT_IN_EXERCISES.some((exercise) => exercise.id === id)).toBe(true);
     });
 
-    it.each(motions)('%s moves between labelled positions', (_, motion) => {
-        expect(motion.frames.length).toBeGreaterThanOrEqual(2);
+    it.each(motions)('%s moves between labelled positions, or holds one', (_, motion) => {
+        expect(motion.frames.length).toBeGreaterThanOrEqual(1);
         for (const frame of motion.frames) {
             expect(frame.label.trim()).not.toBe('');
             expect(frame.ms).toBeGreaterThan(0);

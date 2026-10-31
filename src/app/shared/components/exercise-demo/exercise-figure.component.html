@@ -33,6 +33,11 @@
                         [attr.cy]="item.at[1]"
                         [attr.r]="item.r"
                     />
+                } @else if (item.type === 'shape') {
+                    <polygon
+                        [class]="'figure__prop figure__prop--' + item.tone"
+                        [attr.points]="pointsOf(item.points)"
+                    />
                 } @else {
                     <line
                         [class]="'figure__bar figure__bar--' + item.tone"
