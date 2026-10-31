@@ -18,6 +18,7 @@ import {
     OwnExerciseDetails,
 } from '../../models/exercise';
 import { ExerciseFinder, findByName } from '../../models/exercise-links';
+import { ExerciseMotion } from '../../models/exercise-motion';
 import { Deletion, mergeRecords, newId } from '../../models/sync';
 import { DeletionStore } from './deletion-store.service';
 import { SyncClock } from './sync-clock.service';
@@ -86,6 +87,34 @@ export class ExerciseStore {
      */
     textOf(exercise: Exercise): ExerciseText | undefined {
         return isBuiltIn(exercise) ? this.builtInText()?.[exercise.id] : exercise;
+    }
+
+    /** How the built-in exercises move, once `loadMotion()` has it. */
+    private readonly builtInMotion = signal<Readonly<
+        Partial<Record<string, ExerciseMotion>>
+    > | null>(null);
+    private motionLoading: Promise<void> | null = null;
+
+    /**
+     * Loads how the built-in exercises move, for their animated demos (EXR-13), which isn't in
+     * the first download, as `loadText()` does their words.
+     */
+    loadMotion(): Promise<void> {
+        this.motionLoading ??= import('../../models/built-in-exercise-motion').then(
+            ({ BUILT_IN_EXERCISE_MOTION }) => this.builtInMotion.set(BUILT_IN_EXERCISE_MOTION),
+            () => {
+                this.motionLoading = null;
+            }
+        );
+        return this.motionLoading;
+    }
+
+    /**
+     * How an exercise moves, once `loadMotion()` has loaded it: only built-in ones, and not
+     * all of them yet.
+     */
+    motionOf(exercise: Exercise): ExerciseMotion | undefined {
+        return isBuiltIn(exercise) ? this.builtInMotion()?.[exercise.id] : undefined;
     }
 
     byId(id: string): Exercise | undefined {

@@ -1,0 +1,48 @@
+:host {
+    display: block;
+}
+
+.demo__stage {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.25rem;
+}
+
+.demo__figure {
+    width: 100%;
+    --figure-max-height: 12rem;
+
+    &--still {
+        --figure-max-height: 9rem;
+    }
+}
+
+.demo__icon {
+    width: 1.1rem;
+    height: 1.1rem;
+    fill: currentColor;
+}
+
+.demo__stills {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.demo__still {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    min-width: 0;
+}
+
+.demo__label {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}

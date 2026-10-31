@@ -1,0 +1,45 @@
+@if (motion(); as motion) {
+    @if (reduced()) {
+        <!-- Its key positions, still. Hidden from screen readers with the figures: the steps say it -->
+        <ul class="demo__stills" aria-hidden="true">
+            @for (frame of motion.frames; track $index) {
+                <li class="demo__still">
+                    <app-exercise-figure
+                        class="demo__figure demo__figure--still"
+                        [motion]="motion"
+                        [pose]="frame.pose"
+                        [worked]="exercise().mainMuscles"
+                    />
+                    <span class="demo__label">{{ frame.label }}</span>
+                </li>
+            }
+        </ul>
+    } @else {
+        <div class="demo__stage">
+            <app-exercise-figure
+                class="demo__figure"
+                [motion]="motion"
+                [pose]="pose()!"
+                [worked]="exercise().mainMuscles"
+            />
+            <button
+                type="button"
+                class="btn-pill demo__toggle"
+                [attr.aria-label]="playing() ? 'Pause the demo' : 'Play the demo'"
+                (click)="toggle()"
+            >
+                <svg class="demo__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    @if (playing()) {
+                        <rect x="6" y="5" width="4" height="14" rx="1" />
+                        <rect x="14" y="5" width="4" height="14" rx="1" />
+                    } @else {
+                        <path
+                            d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"
+                        />
+                    }
+                </svg>
+                {{ playing() ? 'Pause' : 'Play' }}
+            </button>
+        </div>
+    }
+}

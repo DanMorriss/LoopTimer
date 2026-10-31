@@ -498,6 +498,33 @@ for (const theme of ['dark', 'light'] as const) {
                 await expectNoViolations();
             });
 
+            it("a built-in exercise's animated demo, paused", async () => {
+                await TestBed.inject(ExerciseStore).loadMotion();
+                await open('/exercises/back-squat');
+                expect(fixture.nativeElement.querySelector('app-exercise-figure')).not.toBeNull();
+                click('.demo__toggle');
+                await settle();
+                await expectNoViolations();
+            });
+
+            it("a built-in exercise's demo as stills, with reduced motion", async () => {
+                // Reduced motion asked for, leaving the app's other media queries (its theme) be
+                const matchMedia = window.matchMedia.bind(window);
+                vi.spyOn(window, 'matchMedia').mockImplementation((query) =>
+                    query === '(prefers-reduced-motion: reduce)'
+                        ? ({
+                              matches: true,
+                              addEventListener: () => undefined,
+                              removeEventListener: () => undefined,
+                          } as unknown as MediaQueryList)
+                        : matchMedia(query)
+                );
+                await TestBed.inject(ExerciseStore).loadMotion();
+                await open('/exercises/lateral-raise');
+                expect(fixture.nativeElement.querySelector('.demo__stills')).not.toBeNull();
+                await expectNoViolations();
+            });
+
             it('adding an exercise to a workout, one of them full', async () => {
                 store.addWorkout(makeWorkout({ title: 'Legs' }));
                 store.addWorkout(
